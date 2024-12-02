@@ -32,22 +32,24 @@ type Field = {
   size?: number;
   depends_on?: string;
   config?: any; // For custom configurations like `list<key-value>`
+  info?: string;
 };
 
 type CardConfig = {
   type: string;
   label: string;
   sub_label?: string;
+  info?: string;
   fields: Field[];
 };
 
 type Values = {
   [x: string]: any;
-}
+};
 
 type Props = {
-  config: CardConfig[],
-  values?: Values
+  config: CardConfig[];
+  values?: Values;
 };
 
 const DynamicForm: React.FC<Props> = ({ config, values }) => {
@@ -57,121 +59,131 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const renderField = (field: Field, values: Values = {}) => {
-    const { name, label, type, required, value, options, placeholder, hint, error_text, depends_on, config } = field;
-
-    if (depends_on) {
-      const conditionMet = new Function('values', `return ${depends_on};`)(values);
-      if (!conditionMet) return null;
+  const validCondition = (field: Field, values: Values = {}): boolean => {
+    if (field?.depends_on) {
+      const conditionMet = new Function(
+        "values",
+        `return ${field.depends_on};`
+      )(values);
+      if (!conditionMet) return false;
     }
+    return true;
+  };
+
+  const renderField = (field: Field) => {
+    const {
+      name,
+      type,
+      required,
+      value,
+      options,
+      placeholder,
+      hint,
+      error_text,
+      config,
+    } = field;
 
     switch (type) {
       case "text":
         return (
-          <>
-            {field.label && <label style={{ display: "block", marginBottom: "8px" }}>{field.label}</label>}
-            <TextField
-              fullWidth
-              required={!!required}
-              value={formData[name] || value || ""}
-              placeholder={placeholder}
-              helperText={hint || error_text}
-              onChange={(e) => handleChange(name, e.target.value)}
-            />
-          </>
-
+          <TextField
+            fullWidth
+            required={!!required}
+            value={formData[name] || value || ""}
+            placeholder={placeholder}
+            helperText={hint || error_text}
+            onChange={(e) => handleChange(name, e.target.value)}
+          />
         );
 
       case "radio":
         return (
-          <>
-            {field.label && <label style={{ display: "block", marginBottom: "8px" }}>{field.label}</label>}
-            <FormControl fullWidth required={!!required}>
-              <RadioGroup
-                value={formData[name] || value || ""}
-                onChange={(e) => handleChange(name, e.target.value)}
-              >
-                {options?.map((option) => (
-                  <FormControlLabel
-                    key={option.value}
-                    value={option.value}
-                    control={<Radio />}
-                    label={option.label}
-                    disabled={option.disabled}
-                  />
-                ))}
-              </RadioGroup>
-            </FormControl>
-          </>
-
+          <FormControl fullWidth required={!!required}>
+            <RadioGroup
+              value={formData[name] || value || ""}
+              onChange={(e) => handleChange(name, e.target.value)}
+            >
+              {options?.map((option) => (
+                <FormControlLabel
+                  key={option.value}
+                  value={option.value}
+                  control={<Radio />}
+                  label={option.label}
+                  disabled={option.disabled}
+                />
+              ))}
+            </RadioGroup>
+          </FormControl>
         );
 
       case "select":
         return (
-          <>
-            {field.label && <label style={{ display: "block", marginBottom: "8px" }}>{field.label}</label>}
-            <FormControl fullWidth required={!!required}>
-              <Select
-                value={formData[name] || value || ""}
-                onChange={(e) => handleChange(name, e.target.value)}
-              >
-                {options?.map((option) => (
-                  <MenuItem key={option.value} value={option.value} disabled={option.disabled}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </>
+          <FormControl fullWidth required={!!required}>
+            <Select
+              value={formData[name] || value || ""}
+              onChange={(e) => handleChange(name, e.target.value)}
+            >
+              {options?.map((option) => (
+                <MenuItem
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.disabled}
+                >
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         );
 
       case "list<key-value>":
         return (
           <div>
-            {field.label && <label style={{ display: "block", marginBottom: "8px" }}>{field.label}</label>}
-            {(formData[name] || Object.entries(value || {})).map(([key, val]: [string, string], index: number) => (
-              <Grid container spacing={2} alignItems="center" key={index}>
-                <Grid item xs={config.key.size}>
-                  <TextField
-                    label={config.key.label}
-                    required={config.key.required}
-                    value={key}
-                    onChange={(e) => {
-                      const updatedList = { ...(formData[name] || {}) };
-                      const oldKey = Object.keys(updatedList)[index];
-                      delete updatedList[oldKey];
-                      updatedList[e.target.value] = val;
-                      handleChange(name, updatedList);
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={config.value.size}>
-                  <TextField
-                    label={config.value.label}
-                    value={val}
-                    onChange={(e) => {
-                      const updatedList = { ...(formData[name] || {}) };
-                      updatedList[key] = e.target.value;
-                      handleChange(name, updatedList);
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={config.remove_button.size}>
-                  <Tooltip title={config.remove_button.label}>
-                    <IconButton
-                      onClick={() => {
+            {(formData[name] || Object.entries(value || {})).map(
+              ([key, val]: [string, string], index: number) => (
+                <Grid container spacing={2} alignItems="center" key={index}>
+                  <Grid item xs={config.key.size}>
+                    <TextField
+                      label={config.key.label}
+                      required={config.key.required}
+                      value={key}
+                      onChange={(e) => {
                         const updatedList = { ...(formData[name] || {}) };
                         const oldKey = Object.keys(updatedList)[index];
                         delete updatedList[oldKey];
+                        updatedList[e.target.value] = val;
                         handleChange(name, updatedList);
                       }}
-                    >
-                      <DeleteIcon style={config.remove_button.style} />
-                    </IconButton>
-                  </Tooltip>
+                    />
+                  </Grid>
+                  <Grid item xs={config.value.size}>
+                    <TextField
+                      label={config.value.label}
+                      value={val}
+                      onChange={(e) => {
+                        const updatedList = { ...(formData[name] || {}) };
+                        updatedList[key] = e.target.value;
+                        handleChange(name, updatedList);
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={config.remove_button.size}>
+                    <Tooltip title={config.remove_button.label}>
+                      <IconButton
+                        onClick={() => {
+                          const updatedList = { ...(formData[name] || {}) };
+                          const oldKey = Object.keys(updatedList)[index];
+                          delete updatedList[oldKey];
+                          handleChange(name, updatedList);
+                        }}
+                      >
+                        <DeleteIcon style={config.remove_button.style} />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
                 </Grid>
-              </Grid>
-            ))}
+              )
+            )}
             <Button
               variant={config.add_button.variant}
               onClick={() => {
@@ -194,16 +206,113 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
     <div>
       {config.map((card, index) => (
         <Card key={index} style={{ marginBottom: "16px", padding: "16px" }}>
-          <h3 style={{
-            margin: "0 0 10px",
-            borderBottom: "1px solid #f4f4f4"
-          }}>{card.label}</h3>
+          <h3
+            style={{
+              margin: "0 0 10px",
+              borderBottom: "1px solid #f4f4f4",
+            }}
+          >
+            {card.label}
+            {card?.info && (
+              <Tooltip
+                title={
+                  <div
+                    style={{
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                      padding: "10px",
+                    }}
+                  >
+                    {card?.info}
+                  </div>
+                }
+                arrow
+                placement="top"
+                sx={{
+                  "& .MuiTooltip-tooltip": {
+                    backgroundColor: "#333",
+                    color: "#fff",
+                    fontSize: "1rem",
+                    borderRadius: "8px",
+                    maxHeight: "200px",
+                    overflowY: "auto",
+                  },
+                  "& .MuiTooltip-arrow": {
+                    color: "#333",
+                  },
+                }}
+              >
+                <strong
+                  style={{
+                    fontSize: ".8rem",
+                    fontWeight: "bolder",
+                    color: "#007BFF",
+                    margin: "0 .8rem",
+                    marginBottom: "3px",
+                  }}
+                >
+                  info
+                </strong>
+              </Tooltip>
+            )}
+          </h3>
+
           <Grid container spacing={2}>
-            {card.fields.map((field) => (
-              <Grid item xs={field.size || 12} key={field.name}>
-                {renderField(field, values)}
-              </Grid>
-            ))}
+            {card.fields.map(
+              (field) =>
+                validCondition(field, values) && (
+                  <Grid item xs={field.size || 12} key={field.name}>
+                    {field.label && (
+                      <label style={{ display: "block", marginBottom: "8px" }}>
+                        {field.label}
+                        {field?.info && (
+                          <Tooltip
+                            title={
+                              <div
+                                style={{
+                                  maxHeight: "200px",
+                                  overflowY: "auto",
+                                  padding: "10px",
+                                }}
+                              >
+                                {field?.info}
+                              </div>
+                            }
+                            arrow
+                            placement="top"
+                            sx={{
+                              "& .MuiTooltip-tooltip": {
+                                backgroundColor: "#333",
+                                color: "#fff",
+                                fontSize: "1rem",
+                                borderRadius: "8px",
+                                maxHeight: "200px",
+                                overflowY: "auto",
+                              },
+                              "& .MuiTooltip-arrow": {
+                                color: "#333",
+                              },
+                            }}
+                          >
+                            <strong
+                              style={{
+                                fontSize: ".8rem",
+                                fontWeight: "bolder",
+                                color: "#007BFF",
+                                margin: "0 .8rem",
+                                marginBottom: "3px",
+                              }}
+                            >
+                              info
+                            </strong>
+                          </Tooltip>
+                        )}
+                      </label>
+                    )}
+                    {renderField(field)}
+                  </Grid>
+                )
+            )}
           </Grid>
         </Card>
       ))}
@@ -301,4 +410,3 @@ export default DynamicForm;
 // };
 
 // export default DynamicForm;
-
