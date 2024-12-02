@@ -46,7 +46,7 @@ type CustomNodeProps = {
             type: string;
         }>;
         values: {
-            [x: string]: string;
+            [x: string]: any;
         };
     };
 };
@@ -128,7 +128,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
                     maxHeight: "calc(100vh - 300px)",
                     overflowY: "auto"
                 }}>
-                    <DynamicForm config={data?.fields}></DynamicForm>
+                    <DynamicForm config={data?.fields} values={data?.values}></DynamicForm>
                 </AccordionDetails>
             </Accordion>
         </>
