@@ -1,0 +1,44 @@
+/* Header.module.css */
+.appBar {
+    background-color: #1976d2;
+    /* Material UI primary blue */
+    box-shadow: none;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+}
+
+.logoIcon {
+    margin-right: 8px;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.controlItem {
+    min-width: 120px;
+}
+
+.switchContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.switchLabel {
+    color: white;
+}

@@ -1,0 +1,113 @@
+.wrapperHeader {
+    font-size: 1.6rem;
+    margin: 10px 0 5px 16px;
+}
+
+.wrapperHeaderLight {
+    color: #333;
+}
+
+.wrapperHeaderDark {
+    color: #ddd;
+}
+
+.cardList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 10px 20px;
+}
+
+/* Card styles */
+.card {
+    position: relative;
+    width: 220px;
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: var(--card-bg, #fff);
+    /* Default for light theme */
+    color: var(--card-color, #333);
+    /* Default for light theme */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: scale(1.05);
+}
+
+.card .clouldTypeLogo {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 10;
+    width: 24px;
+    height: 24px;
+    padding: 8px;
+    border-radius: 32px 0 32px 32px;
+}
+  
+
+/* Reduce spacing for h3 */
+.cardTitle {
+    font-size: 1.2rem;
+    margin: 10px 0 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Reduce spacing for paragraph */
+.cardDescription {
+    font-size: 0.9rem;
+    margin: 5px 0 10px 0;
+    color: var(--text-color, #666);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Image styles */
+.cardImage {
+    width: 100%;
+    min-height: 150px;
+    max-height: 150px;
+    object-fit: cover;
+}
+
+/* Light and dark theme styles */
+.cardListLight .card,
+.cardListLight .clouldTypeLogo {
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.cardListDark .card,
+.cardListDark .clouldTypeLogo {
+    background-color: #444;
+    color: #ddd;
+}
+
+.cardListLight .card .clouldTypeLogo {
+    box-shadow: 0 0 3px black;
+}
+
+.cardListDark .card .clouldTypeLogo {
+    box-shadow: 0 0 3px whitesmoke;
+}
+
+
+
+.cardBlank {
+    display: flex;
+    flex-direction: column; /* Stack items vertically */
+    align-items: center;    /* Center horizontally */
+    justify-content: center; /* Center vertically */
+    height: 100%;           /* Ensure the card takes full height */
+    text-align: center;     /* Center align text inside <p> */
+}
+  
+  
