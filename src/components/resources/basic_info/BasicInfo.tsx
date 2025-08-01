@@ -11,10 +11,11 @@ interface FormData {
 
 interface BasicInfoProps {
   formData: FormData;
+  formErrors: FormData;
   handleChange: (e: React.ChangeEvent<HTMLInputElement| HTMLTextAreaElement> | SelectChangeEvent<string>) => void;
 }
 
-const BasicInfo: React.FC<BasicInfoProps> = ({ formData, handleChange }) => {
+const BasicInfo: React.FC<BasicInfoProps> = ({ formData, formErrors, handleChange }) => {
   return (
     <Grid container spacing={2}>
       <Grid item xs={12} sm={6}>
@@ -24,6 +25,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ formData, handleChange }) => {
           value={formData.id}
           onChange={handleChange}
           fullWidth
+          error={!!formErrors.id}
+          helperText={formErrors.id}
         />
       </Grid>
       <Grid item xs={12} sm={6}>
@@ -50,6 +53,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ formData, handleChange }) => {
           value={formData.resourceName}
           onChange={handleChange}
           fullWidth
+          error={!!formErrors.resourceName}
+          helperText={formErrors.resourceName}
         />
       </Grid>
       <Grid item xs={12}>
@@ -59,6 +64,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ formData, handleChange }) => {
           value={formData.terraformCorePath}
           onChange={handleChange}
           fullWidth
+          error={!!formErrors.terraformCorePath}
+          helperText={formErrors.terraformCorePath}
         />
       </Grid>
       <Grid item xs={12}>
@@ -68,6 +75,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ formData, handleChange }) => {
           value={formData.terraformTemplatePath}
           onChange={handleChange}
           fullWidth
+          error={!!formErrors.terraformTemplatePath}
+          helperText={formErrors.terraformTemplatePath}
         />
       </Grid>
     </Grid>

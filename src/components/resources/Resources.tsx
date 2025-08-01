@@ -23,6 +23,7 @@ const steps = [
 const Resources: React.FC = () => {
   const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
+  const [isValid, setIsValid] = useState(true);
   const [formData, setFormData] = useState({
     id: "",
     cloudProvider: "",
@@ -30,6 +31,14 @@ const Resources: React.FC = () => {
     terraformCorePath: "",
     terraformTemplatePath: "",
   });
+  const [formErrors, setFormErrors] = useState({
+    id: "",
+    cloudProvider: "",
+    resourceName: "",
+    terraformCorePath: "",
+    terraformTemplatePath: "",
+  });
+  const [resourceNode, setResourceNode] = useState('{\n  "example": true\n}');
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
@@ -47,16 +56,68 @@ const Resources: React.FC = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const [resourceNode, setResourceNode] = useState('{\n  "example": true\n}');
+  useEffect(() => {
+    setIsValid(validateStep(activeStep));
+  }, [formData, activeStep]);
+
+  const validateStep = (step: number): boolean => {
+    const errors: typeof formErrors = {
+      id: "",
+      cloudProvider: "",
+      resourceName: "",
+      terraformCorePath: "",
+      terraformTemplatePath: "",
+    };
+
+    let valid = true;
+
+    if (step === 0) {
+      if (!formData.id.trim()) {
+        errors.id = "ID is required.";
+        valid = false;
+      }
+      if (!formData.cloudProvider.trim()) {
+        errors.cloudProvider = "Cloud provider is required.";
+        valid = false;
+      }
+      if (!formData.resourceName.trim()) {
+        errors.resourceName = "Resource name is required.";
+        valid = false;
+      }
+    }
+
+    if (step === 2) {
+      if (!formData.terraformCorePath.trim()) {
+        errors.terraformCorePath = "Terraform core path is required.";
+        valid = false;
+      }
+    }
+
+    if (step === 3) {
+      if (!formData.terraformTemplatePath.trim()) {
+        errors.terraformTemplatePath = "Terraform template path is required.";
+        valid = false;
+      }
+    }
+
+    setFormErrors(errors);
+    return valid;
+  };
 
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
-        return <BasicInfo formData={formData} handleChange={handleChange} />;
-
+        return (
+          <BasicInfo
+            formData={formData}
+            handleChange={handleChange}
+            formErrors={formErrors}
+          />
+        );
       case 1:
         return (
           <NodeInfo
+            formData={formData}
             resourceNode={resourceNode}
             setResourceNode={setResourceNode}
           ></NodeInfo>
@@ -125,7 +186,7 @@ const Resources: React.FC = () => {
           variant="contained"
           color="primary"
           onClick={handleNext}
-          disabled={activeStep === steps.length - 1}
+          disabled={!isValid}
           sx={{
             backgroundColor: theme.palette.primary.main,
             "&:hover": {
