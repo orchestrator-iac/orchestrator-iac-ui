@@ -19,6 +19,7 @@
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
     "@xyflow/react": "^12.3.0",
+    "ace-builds": "^1.43.2",
     "axios": "^1.7.7",
     "elkjs": "^0.9.3",
     "handlebars": "^4.7.8",
@@ -28,9 +29,10 @@
     "match-sorter": "^6.3.4",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
+    "react-ace": "^14.0.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3",
-    "sort-by": "^1.2.0"
+    "sort-by": "^0.0.2"
   },
   "license": "MIT",
   "devDependencies": {

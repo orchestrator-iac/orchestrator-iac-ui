@@ -1,15 +1,29 @@
 /* index.css or App.css */
-body.light {
-    background-color: #ffffff;
-    color: #000000;
+:root {
+  --bg-color: #fafafa;
+  --card-bg: #fff;
+  --card-color: #333;
+  --text-color: #666;
 }
 
-body.dark {
-    background-color: #121212;
-    color: #ffffff;
+[data-theme='dark'] {
+  --bg-color: #121212;
+  --card-bg: #444;
+  --card-color: #ddd;
+  --text-color: #aaa;
 }
 
-.component-body {
-    max-height: calc(100vh - 64px);
-    overflow-y: auto;
+[data-theme='light'] {
+  --bg-color: #fafafa;
+  --card-bg: #f4f4f4;
+  --card-color: #333;
+  --text-color: #666;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }

@@ -15,6 +15,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
 import Home from "./components/home/Home";
+import Resources from "./components/resources/Resources";
 import Orchestrator from "./components/orchestrator/Orchestrator";
 import Header from "./components/shared/header/Header";
 
@@ -22,6 +23,10 @@ import Header from "./components/shared/header/Header";
 library.add(fab, fas);
 
 const router = createBrowserRouter([
+  {
+    path: "/resources/:resource_id",
+    element: <Resources />,
+  },
   {
     path: "/orchestrator/:template_id",
     element: <Orchestrator />,

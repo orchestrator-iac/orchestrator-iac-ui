@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useThemeContext } from "./../shared/theme/useThemeContext";
+import { Paper, useTheme } from "@mui/material";
 import styles from "./Home.module.css";
 import apiService from './../../services/apiService';
 import awsLogo from './../../assets/aws_logo.svg';
@@ -24,26 +24,24 @@ const logoMap: Record<string, string> = {
 
 interface CardLogoProps {
   cloudType: string;
-  className?: string; // Allow optional className
+  className?: string;
 }
 
 const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className }) => {
   const logoSrc = logoMap[cloudType];
 
-  if (!logoSrc) {
-    return <img alt={`${cloudType} logo`} className={className} />;
-  }
-
   return <img src={logoSrc} alt={`${cloudType} logo`} className={className} />;
 };
 
-
 const Home: React.FC = () => {
-  const { theme } = useThemeContext();
+  const theme = useTheme();
   const navigate = useNavigate();
-  const [customWrappers, setCustomWrappers] = useState<Array<Card>>([]);
-  const [allWrappers, setAllWrappers] = useState<Array<Card>>([]);
-  const themeClass = theme === 'dark' ? styles.cardListDark : styles.cardListLight;
+  const [customWrappers, setCustomWrappers] = useState<Card[]>([]);
+  const [allWrappers, setAllWrappers] = useState<Card[]>([]);
+
+  useEffect(() => {
+    document.body.setAttribute("data-theme", theme.palette.mode);
+  }, [theme.palette.mode]);
 
   useEffect(() => {
     apiService.get('/wrapper/custom').then((data) => {
@@ -59,20 +57,30 @@ const Home: React.FC = () => {
   };
 
   return (
-    <>
-      <h3 className={`${styles.wrapperHeader} ${themeClass}`}>Recently Worked</h3>
-      <div className={`${styles.cardList} ${themeClass}`}>
+    <Paper
+      elevation={3}
+      sx={{
+        m: 4,
+        p: 4,
+        borderRadius: 2,
+        backgroundColor: theme.palette.background.paper,
+        color: theme.palette.text.primary,
+      }}
+    >
+      <h3 className={styles.wrapperHeader}>Recently Worked</h3>
+      <div className={styles.cardList}>
         {customWrappers.map((card) => (
           <div key={card.template_id} className={styles.card}>
-            <CardLogo cloudType={card.cloud_type} className={`${styles.clouldTypeLogo} ${themeClass}`} />
+            <CardLogo cloudType={card.cloud_type} className={styles.clouldTypeLogo} />
             <img src={card.image} alt={card.label} className={styles.cardImage} />
             <h3 className={styles.cardTitle} onClick={() => navigateOrchestrator(card.template_id, "custom")}>{card.label}</h3>
             <p className={styles.cardDescription}>{card.description}</p>
           </div>
         ))}
       </div>
-      <h3 className={`${styles.wrapperHeader} ${themeClass}`}>Templates</h3>
-      <div className={`${styles.cardList} ${themeClass}`}>
+
+      <h3 className={styles.wrapperHeader}>Templates</h3>
+      <div className={styles.cardList}>
         <div className={styles.card}>
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
@@ -81,14 +89,14 @@ const Home: React.FC = () => {
         </div>
         {allWrappers.map((card) => (
           <div key={card.template_id} className={styles.card}>
-            <CardLogo cloudType={card.cloud_type} className={`${styles.clouldTypeLogo} ${themeClass}`} />
+            <CardLogo cloudType={card.cloud_type} className={styles.clouldTypeLogo} />
             <img src={card.image} alt={card.label} className={styles.cardImage} />
             <h3 className={styles.cardTitle} onClick={() => navigateOrchestrator(card.template_id, "all")}>{card.label}</h3>
             <p className={styles.cardDescription}>{card.description}</p>
           </div>
         ))}
       </div>
-    </>
+    </Paper>
   );
 };
 

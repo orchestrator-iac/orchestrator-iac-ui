@@ -1,18 +1,17 @@
 // Header.tsx
 import React, { useEffect } from "react";
-import { AppBar, Toolbar, Typography, Select, MenuItem, FormControl, InputLabel, Switch } from "@mui/material";
+import { AppBar, Toolbar, Typography, Switch } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLayerGroup } from "@fortawesome/free-solid-svg-icons";
-import { useThemeContext } from "./../theme/useThemeContext"; // Import the hook
+import { useThemeContext } from "../theme/useThemeContext";
 import styles from "./Header.module.css";
 
 const Header: React.FC = () => {
-  const { theme, cloudProvider, toggleTheme, setCloudProvider } = useThemeContext();
+  const { mode, toggleTheme } = useThemeContext();
 
-  // Update the page theme based on the selected value
   useEffect(() => {
-    document.body.className = theme; // Apply theme globally
-  }, [theme]);
+    document.body.className = mode;
+  }, [mode]);
 
   return (
     <AppBar position="static" className={styles.appBar}>
@@ -22,22 +21,10 @@ const Header: React.FC = () => {
           Orchestrator
         </Typography>
         <div className={styles.controls}>
-          <FormControl variant="filled" className={styles.controlItem}>
-            <InputLabel>Cloud Provider</InputLabel>
-            <Select
-              value={cloudProvider}
-              onChange={(e) => setCloudProvider(e.target.value as "aws" | "azure" | "google")}
-              label="Cloud Provider"
-            >
-              <MenuItem value="aws">AWS</MenuItem>
-              <MenuItem value="azure">Azure</MenuItem>
-              <MenuItem value="google">Google Cloud</MenuItem>
-            </Select>
-          </FormControl>
           <div className={styles.switchContainer}>
             <label htmlFor="theme-switch" className={styles.switchLabel}>Dark Theme</label>
             <Switch
-              checked={theme === 'dark'}
+              checked={mode === 'dark'}
               onChange={toggleTheme}
               name="theme-switch"
               color="default"

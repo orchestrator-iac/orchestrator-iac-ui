@@ -1,33 +1,29 @@
 // ThemeContext.tsx
 import React, { createContext, useState, ReactNode } from 'react';
+import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
+import { lightTheme, darkTheme } from './theme';
 
-type Theme = 'light' | 'dark';
-type CloudProvider = 'aws' | 'azure' | 'google';
+type ThemeMode = 'light' | 'dark';
 
 interface ThemeContextType {
-  theme: Theme;
-  cloudProvider: CloudProvider;
+  mode: ThemeMode;
   toggleTheme: () => void;
-  setCloudProvider: (provider: CloudProvider) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
-  const [cloudProvider, setCloudProvider] = useState<CloudProvider>('aws');
+  const [mode, setMode] = useState<ThemeMode>('light');
 
   const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  const handleCloudProviderChange = (provider: CloudProvider) => {
-    setCloudProvider(provider);
-  };
+  const theme = mode === 'light' ? lightTheme : darkTheme;
 
   return (
-    <ThemeContext.Provider value={{ theme, cloudProvider, toggleTheme, setCloudProvider: handleCloudProviderChange }}>
-      {children}
+    <ThemeContext.Provider value={{ mode, toggleTheme }}>
+      <MUIThemeProvider theme={theme}>{children}</MUIThemeProvider>
     </ThemeContext.Provider>
   );
 };
