@@ -43,9 +43,31 @@ const Resources: React.FC = () => {
 
   const { handleSubmit, trigger } = methods;
 
+  const [terraformFiles, setTerraformFiles] = React.useState({
+    main: "",
+    variables: "",
+    outputs: "",
+  });
+
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
   }, [theme.palette.mode]);
+
+  const handleTerraformFileChange = (
+    fileType: keyof typeof terraformFiles,
+    content: string
+  ) => {
+    setTerraformFiles((prev) => ({ ...prev, [fileType]: content }));
+  };
+
+  const validateTerraformFiles = () => {
+    const { main, variables, outputs } = terraformFiles;
+    return (
+      main.trim().length > 0 &&
+      variables.trim().length > 0 &&
+      outputs.trim().length > 0
+    );
+  };
 
   const onNext = async () => {
     switch (activeStep) {
@@ -56,6 +78,12 @@ const Resources: React.FC = () => {
       }
       case 1: {
         if (resourceNodeValid) setActiveStep((prev) => prev + 1);
+        break;
+      }
+      case 2: {
+        if (validateTerraformFiles()) {
+          setActiveStep((prev) => prev + 1);
+        }
         break;
       }
       default: {
@@ -81,7 +109,12 @@ const Resources: React.FC = () => {
           />
         );
       case 2:
-        return <TerraformCore />;
+        return (
+          <TerraformCore
+            terraformFiles={terraformFiles}
+            onFileChange={handleTerraformFileChange}
+          />
+        );
       case 3:
         return <Typography>Terraform Template details go here</Typography>;
       default:
