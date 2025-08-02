@@ -40,8 +40,8 @@ export interface Field {
   error_text?: string;
   size?: number;
   required?: boolean | string; // Using a union type `boolean | string` allows the property to be either a boolean or a string
-  info?: object;
-  placehoder?: string;
+  info?: string;
+  placeholder?: string;
   options?: Array<Option>;
 }
 

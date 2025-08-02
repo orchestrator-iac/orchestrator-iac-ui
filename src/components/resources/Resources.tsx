@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   Box,
   Stepper,
@@ -8,10 +8,12 @@ import {
   Typography,
   Paper,
   useTheme,
-  SelectChangeEvent,
 } from "@mui/material";
 import BasicInfo from "./basic_info/BasicInfo";
 import NodeInfo from "./node_info/NodeInfo";
+import { NodeInfo as NodeInfoType } from "../../types/node-info";
+import { useForm, FormProvider } from "react-hook-form";
+import TerraformCore from "./terraform_core/TerraformCore";
 
 const steps = [
   "Basic Info",
@@ -22,182 +24,116 @@ const steps = [
 
 const Resources: React.FC = () => {
   const theme = useTheme();
-  const [activeStep, setActiveStep] = useState(0);
-  const [isValid, setIsValid] = useState(true);
-  const [formData, setFormData] = useState({
-    id: "",
-    cloudProvider: "",
-    resourceName: "",
-    terraformCorePath: "",
-    terraformTemplatePath: "",
-  });
-  const [formErrors, setFormErrors] = useState({
-    id: "",
-    cloudProvider: "",
-    resourceName: "",
-    terraformCorePath: "",
-    terraformTemplatePath: "",
-  });
-  const [resourceNode, setResourceNode] = useState('{\n  "example": true\n}');
+  const [activeStep, setActiveStep] = React.useState(0);
+  const [resourceNode, setResourceNode] = React.useState<NodeInfoType | null>(
+    null
+  );
+  const [resourceNodeValid, setResourceNodeValid] = React.useState(true);
 
-  useEffect(() => {
-    document.body.setAttribute("data-theme", theme.palette.mode);
-  }, [theme.palette.mode]);
-
-  const handleNext = () => setActiveStep((prev) => prev + 1);
-  const handleBack = () => setActiveStep((prev) => prev - 1);
-
-  const handleChange = (
-    e:
-      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      | SelectChangeEvent<string>
-  ) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  useEffect(() => {
-    setIsValid(validateStep(activeStep));
-  }, [formData, activeStep]);
-
-  const validateStep = (step: number): boolean => {
-    const errors: typeof formErrors = {
+  const methods = useForm({
+    defaultValues: {
       id: "",
       cloudProvider: "",
       resourceName: "",
       terraformCorePath: "",
       terraformTemplatePath: "",
-    };
+    },
+    mode: "onTouched",
+  });
 
-    let valid = true;
+  const { handleSubmit, trigger } = methods;
 
-    if (step === 0) {
-      if (!formData.id.trim()) {
-        errors.id = "ID is required.";
-        valid = false;
-      }
-      if (!formData.cloudProvider.trim()) {
-        errors.cloudProvider = "Cloud provider is required.";
-        valid = false;
-      }
-      if (!formData.resourceName.trim()) {
-        errors.resourceName = "Resource name is required.";
-        valid = false;
-      }
-    }
+  useEffect(() => {
+    document.body.setAttribute("data-theme", theme.palette.mode);
+  }, [theme.palette.mode]);
 
-    if (step === 2) {
-      if (!formData.terraformCorePath.trim()) {
-        errors.terraformCorePath = "Terraform core path is required.";
-        valid = false;
+  const onNext = async () => {
+    switch (activeStep) {
+      case 0: {
+        const valid = await trigger();
+        if (valid) setActiveStep((prev) => prev + 1);
+        break;
       }
-    }
-
-    if (step === 3) {
-      if (!formData.terraformTemplatePath.trim()) {
-        errors.terraformTemplatePath = "Terraform template path is required.";
-        valid = false;
+      case 1: {
+        if (resourceNodeValid) setActiveStep((prev) => prev + 1);
+        break;
+      }
+      default: {
+        setActiveStep((prev) => prev + 1);
+        break;
       }
     }
-
-    setFormErrors(errors);
-    return valid;
   };
+
+  const onBack = () => setActiveStep((prev) => prev - 1);
 
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
-        return (
-          <BasicInfo
-            formData={formData}
-            handleChange={handleChange}
-            formErrors={formErrors}
-          />
-        );
+        return <BasicInfo />;
       case 1:
         return (
           <NodeInfo
-            formData={formData}
+            formData={methods.getValues()}
             resourceNode={resourceNode}
             setResourceNode={setResourceNode}
-          ></NodeInfo>
+            onValidationChange={setResourceNodeValid}
+          />
         );
-
       case 2:
-        return (
-          <Typography color={theme.palette.text.primary}>
-            Terraform Core details go here
-          </Typography>
-        );
-
+        return <TerraformCore />;
       case 3:
-        return (
-          <Typography color={theme.palette.text.primary}>
-            Terraform Template details go here
-          </Typography>
-        );
-
+        return <Typography>Terraform Template details go here</Typography>;
       default:
         return <Typography>Unknown Step</Typography>;
     }
   };
 
+  const onSubmit = (data: any) => {
+    console.log("Final form data:", data);
+  };
+
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        m: 4,
-        p: 4,
-        borderRadius: 2,
-        backgroundColor: theme.palette.background.paper,
-        color: theme.palette.text.primary,
-      }}
-    >
-      <Stepper
-        activeStep={activeStep}
-        alternativeLabel
-        sx={{
-          "& .MuiStepLabel-label": {
-            color: theme.palette.text.secondary,
-          },
-          "& .MuiStepIcon-root.Mui-active": {
-            color: theme.palette.primary.main,
-          },
-        }}
-      >
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
-
-      <Box mt={4}>{renderStepContent(activeStep)}</Box>
-
-      <Box mt={4} display="flex" justifyContent="space-between">
-        <Button
-          disabled={activeStep === 0}
-          onClick={handleBack}
-          sx={{ color: theme.palette.primary.main }}
-        >
-          Back
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleNext}
-          disabled={!isValid}
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Paper
+          elevation={3}
           sx={{
-            backgroundColor: theme.palette.primary.main,
-            "&:hover": {
-              backgroundColor: theme.palette.primary.dark,
-            },
+            m: 4,
+            p: 4,
+            borderRadius: 2,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
           }}
         >
-          {activeStep === steps.length - 1 ? "Finish" : "Next"}
-        </Button>
-      </Box>
-    </Paper>
+          <Stepper activeStep={activeStep} alternativeLabel>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          <Box mt={4}>{renderStepContent(activeStep)}</Box>
+
+          <Box mt={4} display="flex" justifyContent="space-between">
+            <Button disabled={activeStep === 0} onClick={onBack}>
+              Back
+            </Button>
+
+            {activeStep === steps.length - 1 ? (
+              <Button variant="contained" type="submit">
+                Finish
+              </Button>
+            ) : (
+              <Button variant="contained" onClick={onNext}>
+                Next
+              </Button>
+            )}
+          </Box>
+        </Paper>
+      </form>
+    </FormProvider>
   );
 };
 

@@ -1,82 +1,116 @@
-import { FormControl, Grid, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from "@mui/material";
+// basic_info/BasicInfo.tsx
 import React from "react";
+import {
+  Grid,
+  TextField,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  FormHelperText,
+} from "@mui/material";
+import { Controller, useFormContext } from "react-hook-form";
 
-interface FormData {
-  id: string;
-  cloudProvider: string;
-  resourceName: string;
-  terraformCorePath: string;
-  terraformTemplatePath: string;
-}
+const BasicInfo: React.FC = () => {
+  const { control, formState } = useFormContext(); // from RHF context
+  const { errors } = formState;
 
-interface BasicInfoProps {
-  formData: FormData;
-  formErrors: FormData;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement| HTMLTextAreaElement> | SelectChangeEvent<string>) => void;
-}
-
-const BasicInfo: React.FC<BasicInfoProps> = ({ formData, formErrors, handleChange }) => {
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          label="ID"
+    <Grid container spacing={2} sx={{padding: "0 150px"}}>
+      <Grid item xs={12}>
+        <Controller
           name="id"
-          value={formData.id}
-          onChange={handleChange}
-          fullWidth
-          error={!!formErrors.id}
-          helperText={formErrors.id}
+          control={control}
+          rules={{ required: "ID is required." }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="ID"
+              required
+              fullWidth
+              error={!!errors.id}
+              helperText={errors.id?.message as string}
+            />
+          )}
         />
       </Grid>
-      <Grid item xs={12} sm={6}>
-        <FormControl fullWidth>
-          <InputLabel id="cloud-provider-label">Cloud Provider</InputLabel>
-          <Select
-            labelId="cloud-provider-label"
-            id="cloud-provider-select"
-            value={formData.cloudProvider}
-            label="Cloud Provider"
+
+      <Grid item xs={12}>
+        <Controller
+          name="resourceName"
+          control={control}
+          rules={{ required: "Resource name is required." }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Resource Name"
+              fullWidth
+              required
+              error={!!errors.resourceName}
+              helperText={errors.resourceName?.message as string}
+            />
+          )}
+        />
+      </Grid>
+
+      <Grid item xs={12}>
+        <FormControl fullWidth error={!!errors.cloudProvider}>
+          <InputLabel id="cloud-provider-label">Cloud Provider *</InputLabel>
+          <Controller
             name="cloudProvider"
-            onChange={handleChange}
-          >
-            <MenuItem value={'aws'}>AWS</MenuItem>
-            <MenuItem value={'azure'}>Azure</MenuItem>
-            <MenuItem value={'gcp'}>GCP</MenuItem>
-          </Select>
+            control={control}
+            rules={{ required: "Cloud provider is required." }}
+            render={({ field }) => (
+              <Select
+                {...field}
+                labelId="cloud-provider-label"
+                label="Cloud Provider *"
+              >
+                <MenuItem value={"aws"}>AWS</MenuItem>
+                <MenuItem value={"azure"}>Azure</MenuItem>
+                <MenuItem value={"gcp"}>GCP</MenuItem>
+              </Select>
+            )}
+          />
+          {typeof errors.cloudProvider?.message === 'string' && (
+            <FormHelperText>{errors.cloudProvider.message}</FormHelperText>
+          )}
         </FormControl>
       </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          label="Resource Name"
-          name="resourceName"
-          value={formData.resourceName}
-          onChange={handleChange}
-          fullWidth
-          error={!!formErrors.resourceName}
-          helperText={formErrors.resourceName}
-        />
-      </Grid>
+
       <Grid item xs={12}>
-        <TextField
-          label="Terraform Core Path"
+        <Controller
           name="terraformCorePath"
-          value={formData.terraformCorePath}
-          onChange={handleChange}
-          fullWidth
-          error={!!formErrors.terraformCorePath}
-          helperText={formErrors.terraformCorePath}
+          control={control}
+          rules={{ required: "Terraform core path is required." }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Terraform Core Path"
+              fullWidth
+              required
+              error={!!errors.terraformCorePath}
+              helperText={errors.terraformCorePath?.message as string}
+            />
+          )}
         />
       </Grid>
+
       <Grid item xs={12}>
-        <TextField
-          label="Terraform Template Path"
+        <Controller
           name="terraformTemplatePath"
-          value={formData.terraformTemplatePath}
-          onChange={handleChange}
-          fullWidth
-          error={!!formErrors.terraformTemplatePath}
-          helperText={formErrors.terraformTemplatePath}
+          control={control}
+          rules={{ required: "Terraform template path is required." }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Terraform Template Path"
+              fullWidth
+              required
+              error={!!errors.terraformTemplatePath}
+              helperText={errors.terraformTemplatePath?.message as string}
+            />
+          )}
         />
       </Grid>
     </Grid>

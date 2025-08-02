@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
+
+import { Box, Grid, Typography, useTheme } from "@mui/material";
+import type { Ace } from "ace-builds";
+
 import CodeEditor from "../../shared/code_editor/CodeEditor";
 import { useThemeContext } from "../../shared/theme/useThemeContext";
+import CustomNode from "../../orchestrator/CustomNode";
+import { NodeInfoSchema } from "../../../types/node-info-schema";
+import { NodeInfo as NodeInfoType } from "../../../types/node-info";
 
 interface FormData {
   id: string;
@@ -12,17 +19,23 @@ interface FormData {
 
 interface NodeInfoProps {
   formData: FormData;
-  resourceNode: string;
-  setResourceNode: (value: string) => void;
+  resourceNode: NodeInfoType | null;
+  setResourceNode: (value: NodeInfoType | null) => void;
+  onValidationChange: (isValid: boolean) => void;
 }
 
 const NodeInfo: React.FC<NodeInfoProps> = ({
   formData,
   resourceNode,
   setResourceNode,
+  onValidationChange,
 }) => {
+  const theme = useTheme();
   const { mode } = useThemeContext();
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [resourceNodeTemp, setResourceNodeTemp] = useState<string>(
+    JSON.stringify(resourceNode, null, 2)
+  );
   const default_info = {
     type: "customNode",
     component_name: formData.id,
@@ -49,16 +62,29 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   };
 
   useEffect(() => {
-    if (resourceNode) {
+    if (resourceNodeTemp) {
       try {
-        JSON.parse(resourceNode);
+        const parsed = JSON.parse(resourceNodeTemp);
+        NodeInfoSchema.parse(parsed);
         setErrorMessage("");
-      } catch (e) {
-        console.error("Failed to parse resourceNode JSON:", e);
-        setErrorMessage("Invalid JSON format. Please correct the syntax.");
+        onValidationChange(true);
+        setResourceNode(parsed);
+      } catch (e: any) {
+        console.error("Validation failed:", e);
+        onValidationChange(false);
+        setResourceNode(null);
+        if (e.name === "ZodError") {
+          setErrorMessage(
+            e.errors
+              ?.map((err: any) => `${err.path.join(".")}: ${err.message}`)
+              .join("\n") || "Schema validation failed."
+          );
+        } else {
+          setErrorMessage("Invalid JSON format. Please correct the syntax.");
+        }
       }
     }
-  }, [resourceNode]);
+  }, [resourceNodeTemp]);
 
   const getSchemaSuggestions = (
     path: string[]
@@ -96,14 +122,21 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   };
 
   const customCompleter = {
-    getCompletions(editor, session, pos, prefix, callback) {
+    getCompletions(
+      _editor: Ace.Editor,
+      session: Ace.EditSession,
+      pos: Ace.Point,
+      _prefix: string,
+      callback: (error: null, results: Ace.Completion[]) => void
+    ) {
       const lines = session.getValue().split("\n");
       const indentSize = 2;
 
       const path = [];
       for (let i = pos.row - 1; i >= 0; i--) {
         const line = lines[i].trim();
-        const match = line.match(/^"([^"]+)":\s*{\s*$/);
+        const regex = /^"([^"]+)":\s*{\s*$/;
+        const match = regex.exec(line);
 
         if (match) {
           const indentLevel = lines[i].search(/\S|$/) / indentSize;
@@ -118,15 +151,64 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   };
 
   return (
-    <CodeEditor
-      value={resourceNode}
-      onChange={setResourceNode}
-      language="json"
-      themeMode={mode}
-      completers={[customCompleter]}
-      placeholder="Enter resource node details here..."
-      errorMessage={errorMessage}
-    />
+    <Box sx={{ flexGrow: 1, padding: 2 }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={8}>
+          <CodeEditor
+            value={resourceNodeTemp}
+            onChange={setResourceNodeTemp}
+            language="json"
+            themeMode={mode}
+            completers={[customCompleter]}
+            placeholder="Enter resource node details here..."
+            errorMessage={errorMessage}
+            height="calc(100vh - 180px)"
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          {(() => {
+            const isDarkMode = theme.palette.mode === "dark";
+            const hasData = !!resourceNode?.data;
+            let previewBgColor: string;
+
+            if (hasData) {
+              previewBgColor = "transparent";
+            } else if (isDarkMode) {
+              previewBgColor = theme.palette.grey[900];
+            } else {
+              previewBgColor = theme.palette.grey[100];
+            }
+
+            return (
+              <Box
+                sx={{
+                  height: "calc(100vh - 180px)",
+                  overflowY: "auto",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: previewBgColor,
+                }}
+              >
+                {hasData ? (
+                  <CustomNode data={resourceNode.data} />
+                ) : (
+                  <Box textAlign="center">
+                    <Typography variant="body1" color="error" fontWeight="bold">
+                      Invalid JSON or schema validation failed.
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      Please correct the input to display the preview.
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            );
+          })()}
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 
