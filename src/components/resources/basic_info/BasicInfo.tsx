@@ -17,33 +17,33 @@ const BasicInfo: React.FC = () => {
 
   return (
     <Grid container spacing={2} sx={{padding: "0 150px"}}>
-      <Grid item xs={12}>
+      <Grid item xs={12} md={6}>
         <Controller
-          name="id"
+          name="resourceId"
           control={control}
-          rules={{ required: "ID is required." }}
+          rules={{ required: "Id is required." }}
           render={({ field }) => (
             <TextField
               {...field}
-              label="ID"
+              label="Id"
               required
               fullWidth
-              error={!!errors.id}
-              helperText={errors.id?.message as string}
+              error={!!errors.resourceId}
+              helperText={errors.resourceId?.message as string}
             />
           )}
         />
       </Grid>
 
-      <Grid item xs={12}>
+      <Grid item xs={12} md={6}>
         <Controller
           name="resourceName"
           control={control}
-          rules={{ required: "Resource name is required." }}
+          rules={{ required: "Name is required." }}
           render={({ field }) => (
             <TextField
               {...field}
-              label="Resource Name"
+              label="Name"
               fullWidth
               required
               error={!!errors.resourceName}
@@ -53,7 +53,7 @@ const BasicInfo: React.FC = () => {
         />
       </Grid>
 
-      <Grid item xs={12}>
+      <Grid item xs={12} md={6}>
         <FormControl fullWidth error={!!errors.cloudProvider}>
           <InputLabel id="cloud-provider-label">Cloud Provider *</InputLabel>
           <Controller
@@ -78,7 +78,25 @@ const BasicInfo: React.FC = () => {
         </FormControl>
       </Grid>
 
-      <Grid item xs={12}>
+      <Grid item xs={12} md={6}>
+        <Controller
+          name="resourceVersion"
+          control={control}
+          rules={{ required: "Version is required." }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Version"
+              fullWidth
+              required
+              error={!!errors.resourceVersion}
+              helperText={errors.resourceVersion?.message as string}
+            />
+          )}
+        />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
         <Controller
           name="terraformCorePath"
           control={control}
@@ -96,7 +114,7 @@ const BasicInfo: React.FC = () => {
         />
       </Grid>
 
-      <Grid item xs={12}>
+      <Grid item xs={12} md={6}>
         <Controller
           name="terraformTemplatePath"
           control={control}
@@ -109,6 +127,26 @@ const BasicInfo: React.FC = () => {
               required
               error={!!errors.terraformTemplatePath}
               helperText={errors.terraformTemplatePath?.message as string}
+            />
+          )}
+        />
+      </Grid>
+
+      <Grid item xs={12}>
+        <Controller
+          name="resourceDescription"
+          control={control}
+          rules={{ required: "Description is required." }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Description"
+              fullWidth
+              required
+              error={!!errors.resourceDescription}
+              helperText={errors.resourceDescription?.message as string}
+              multiline
+              rows={4}
             />
           )}
         />

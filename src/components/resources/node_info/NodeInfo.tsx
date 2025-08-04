@@ -10,7 +10,7 @@ import { NodeInfoSchema } from "../../../types/node-info-schema";
 import { NodeInfo as NodeInfoType } from "../../../types/node-info";
 
 interface FormData {
-  id: string;
+  resourceId: string;
   cloudProvider: string;
   resourceName: string;
   terraformCorePath: string;
@@ -38,10 +38,10 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   );
   const default_info = {
     type: "customNode",
-    component_name: formData.id,
+    component_name: formData.resourceId,
     data: {
       header: {
-        icon: formData.id,
+        icon: formData.resourceId,
         label: formData.resourceName,
         sub_label: formData.resourceName,
         info: `<><h2 style={{ borderBottom: "1px solid #eaeded" }}>${formData.resourceName}</h2><p>${formData.resourceName}</p><>`,
