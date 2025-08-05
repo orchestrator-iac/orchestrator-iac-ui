@@ -1,5 +1,7 @@
 // services/auth.ts
-import { Login, Register } from "../types/auth";
+import { ZodError, z } from "zod";
+
+import { Login, Register, UserProfile } from "../types/auth";
 import { LoginSchema, RegisterSchema } from "../types/auth-schema";
 import apiService from "./apiService";
 
@@ -7,32 +9,60 @@ import apiService from "./apiService";
 export const loginUser = async (login: Login) => {
   try {
     LoginSchema.parse(login);
-    const res = await apiService.post('/login', login);
-    return res.data.token;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Validation failed: ${error.message}`);
+    const res = await apiService.post("/user/login", login);
+    return res.access_token;
+  } catch (error: any) {
+    if (error instanceof ZodError) {
+      const validationError = new Error("Validation error");
+
+      Object.assign(validationError, {
+        type: "validation",
+        errors: z.treeifyError(error),
+      });
+
+      throw validationError;
     }
-    throw error;
+
+    if (error instanceof Error) {
+      const apiError = new Error("API error");
+
+      Object.assign(apiError, {
+        type: "api",
+        status: (error as any)?.response?.status,
+        message: error.message,
+      });
+
+      throw apiError;
+    }
+
+    const unknownError = new Error("Unknown error");
+    Object.assign(unknownError, {
+      type: "unknown",
+      error,
+    });
+    throw unknownError;
   }
 };
 
 export const registerUser = async (register: Register) => {
   try {
     RegisterSchema.parse(register);
-    await apiService.post('/register', register);
+    await apiService.post('/user/register', register);
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Validation failed: ${error.message}`);
+      console.log(error.message)
+      throw new Error(error.message);
     }
     throw error;
   }
   
 };
 
-export const getProfile = async (token: string) => {
-  const res = await apiService.get('/profile', {
-    headers: { Authorization: `Bearer ${token}` },
+export const getProfile = async (token: string): Promise<UserProfile> => {
+  const res = await apiService.get("/user/profile", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
-  return res.data;
+  return res;
 };

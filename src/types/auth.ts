@@ -11,3 +11,18 @@ export interface Login {
     email: string;
     password: string;
 }
+
+export interface UserProfile {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    company?: string;
+}
+
+export interface AuthContextType {
+  token: string | null;
+  user: UserProfile | null;
+  login: (token: string) => void;
+  logout: () => void;
+}

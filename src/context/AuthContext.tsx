@@ -6,23 +6,10 @@ import {
   PropsWithChildren,
   useMemo,
 } from "react";
+import { jwtDecode } from "jwt-decode";
+
 import { getProfile } from "../services/auth";
-
-// Define your User type instead of using `any`
-interface UserProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  // Add more fields as per your backend response
-}
-
-interface AuthContextType {
-  token: string | null;
-  user: UserProfile | null;
-  login: (token: string) => void;
-  logout: () => void;
-}
+import { AuthContextType, UserProfile } from "../types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -33,10 +20,27 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    if (token) {
+    if (!token) return;
+
+    try {
+      const decoded = jwtDecode<{ exp: number }>(token);
+      const isExpired = decoded.exp * 1000 < Date.now();
+
+      if (isExpired) {
+        console.warn("JWT expired");
+        logout();
+        return;
+      }
+
       getProfile(token)
-        .then((profile) => setUser(profile))
-        .catch(() => logout());
+        .then(setUser)
+        .catch(() => {
+          console.warn("Invalid token, logging out");
+          logout();
+        });
+    } catch (err) {
+      console.error("Failed to decode token:", err);
+      logout();
     }
   }, [token]);
 
