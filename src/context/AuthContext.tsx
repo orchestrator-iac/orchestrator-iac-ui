@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
         return;
       }
 
-      getProfile(token)
+      getProfile()
         .then(setUser)
         .catch(() => {
           console.warn("Invalid token, logging out");

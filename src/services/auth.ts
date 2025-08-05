@@ -1,7 +1,7 @@
 // services/auth.ts
 import { ZodError, z } from "zod";
 
-import { Login, Register, UserProfile } from "../types/auth";
+import { ImageUpdate, Login, Register, UserProfile } from "../types/auth";
 import { LoginSchema, RegisterSchema } from "../types/auth-schema";
 import apiService from "./apiService";
 
@@ -58,11 +58,12 @@ export const registerUser = async (register: Register) => {
   
 };
 
-export const getProfile = async (token: string): Promise<UserProfile> => {
-  const res = await apiService.get("/user/profile", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getProfile = async (): Promise<UserProfile> => {
+  const res = await apiService.get("/user/profile");
+  return res;
+};
+
+export const uploadProfileImage = async (formData: ImageUpdate) => {
+  const res = await apiService.put("/user/profile/image", formData);
   return res;
 };

@@ -1,5 +1,6 @@
 // Resources.tsx
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Stepper,
@@ -24,6 +25,8 @@ import TerraformTemplate, {
   TerraformTemplateData,
 } from "./terraform_template/TerraformTemplate";
 import apiService from "../../services/apiService";
+import { useAuth } from "../../context/AuthContext";
+
 
 const steps = [
   "Basic Info",
@@ -33,7 +36,9 @@ const steps = [
 ];
 
 const Resources: React.FC = () => {
+  const { user } = useAuth();
   const theme = useTheme();
+  const navigate = useNavigate();
   const [snackbar, setSnackbar] = React.useState<{
     open: boolean;
     message: string;
@@ -168,6 +173,8 @@ const Resources: React.FC = () => {
       resourceNode,
       terraformCore: terraformFiles,
       terraformTemplate: templateFiles,
+      publishedBy: user?._id,
+      publishedAt: new Date().toISOString()
     };
     console.log("Final payload", fullData);
 
@@ -179,8 +186,8 @@ const Resources: React.FC = () => {
         },
       });
       console.log("Response from API:", response);
-      console.log("Success!");
       showSnackbar("Configuration saved successfully!", "success");
+      navigate("/home");
     } catch (error: any) {
       console.error("Submission error:", error);
       if (error?.response?.status === 409) {

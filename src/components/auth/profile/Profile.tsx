@@ -1,16 +1,21 @@
 // pages/Profile.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
+  IconButton,
   MenuItem,
   TextField,
   Typography,
   useTheme,
+  Fade,
+  Grid,
 } from "@mui/material";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import axios from "axios";
 
 import { useAuth } from "../../../context/AuthContext";
+import { uploadProfileImage } from "../../../services/auth";
 import { UserProfile } from "../../../types/auth";
 
 const roles = [
@@ -24,9 +29,11 @@ const roles = [
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const theme = useTheme();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [updated, setUpdated] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
@@ -35,11 +42,13 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (user) {
       setProfile({
+        _id: user._id ?? "",
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
         email: user.email ?? "",
         role: user.role ?? "",
         company: user.company ?? "",
+        imageUrl: user.imageUrl ?? "",
       });
     }
   }, [user]);
@@ -92,90 +101,183 @@ const Profile: React.FC = () => {
     setUpdated(false);
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = {
+      imageBase64: await convertToBase64(file),
+    };
+
+    const res = await uploadProfileImage(formData);
+
+    const imageUrl = res.data.imageUrl;
+
+    setProfile((prev) => (prev ? { ...prev, imageUrl } : null));
+    setUpdated(true);
+  };
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   if (!profile) return <div>Loading...</div>;
 
   return (
-    <Box maxWidth="sm" mx="auto" mt={4} sx={{
-        p: 4,
-        boxShadow: "0 0 3px",
-        borderRadius: 2,
-    }}>
+    <Box
+      maxWidth="md"
+      mx="auto"
+      mt={4}
+      mb={4}
+    >
       <Typography variant="h5" mb={2}>
         Edit Profile
       </Typography>
-      <Box display="flex" flexDirection="column" alignItems="center" mb={2}>
+      <Box display="flex" justifyContent="center" mb={2}>
         <Box
-          component="img"
-          src={`https://ui-avatars.com/api/?name=${profile.firstName}+${profile.lastName}`}
-          alt="Profile"
-          sx={{ width: 80, height: 80, borderRadius: "50%", mb: 2 }}
-        />
+          position="relative"
+          width={200}
+          height={200}
+          sx={{
+            borderRadius: "50%",
+            boxShadow: "0 0 5px",
+          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          {/* Profile Image */}
+          <Box
+            component="img"
+            src={
+              profile.imageUrl
+                ? profile.imageUrl
+                : `https://ui-avatars.com/api/?name=${profile.firstName}+${profile.lastName}`
+            }
+            alt="Profile"
+            sx={{
+              width: "100%",
+              height: "100%",
+              borderRadius: "50%",
+              objectFit: "cover",
+              pointer: "cursor",
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          />
+
+          <Fade in={hovered}>
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              width="100%"
+              height="100%"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              sx={{
+                borderRadius: "50%",
+                backgroundColor: "rgba(0, 0, 0, 0.4)",
+                cursor: "pointer",
+              }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <IconButton sx={{ color: "white", pointer: "cursor" }}>
+                <PhotoCameraIcon />
+              </IconButton>
+            </Box>
+          </Fade>
+
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            hidden
+            onChange={handleFileChange}
+          />
+        </Box>
       </Box>
-      <TextField
-        fullWidth
-        label="First Name"
-        name="firstName"
-        value={profile.firstName}
-        onChange={handleChange}
-        margin="normal"
-        required
-        error={!!errors.firstName}
-        helperText={errors.firstName}
-      />
-      <TextField
-        fullWidth
-        label="Last Name"
-        name="lastName"
-        value={profile.lastName}
-        onChange={handleChange}
-        margin="normal"
-        required
-        error={!!errors.lastName}
-        helperText={errors.lastName}
-      />
-      <TextField
-        fullWidth
-        label="Email"
-        name="email"
-        value={profile.email}
-        onChange={handleChange}
-        margin="normal"
-        disabled
-        required
-        error={!!errors.email}
-        helperText={errors.email}
-      />
-      <TextField
-        fullWidth
-        select
-        label="Role"
-        name="role"
-        value={profile.role}
-        onChange={handleChange}
-        margin="normal"
-        required
-        error={!!errors.role}
-        helperText={errors.role}
-      >
-        {roles.map((role) => (
-          <MenuItem key={role} value={role}>
-            {role}
-          </MenuItem>
-        ))}
-      </TextField>
-      <TextField
-        fullWidth
-        label="Company"
-        name="company"
-        value={profile.company}
-        onChange={handleChange}
-        margin="normal"
-      />
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Email"
+            name="email"
+            value={profile.email}
+            onChange={handleChange}
+            margin="normal"
+            disabled
+            required
+            error={!!errors.email}
+            helperText={errors.email}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="First Name"
+            name="firstName"
+            value={profile.firstName}
+            onChange={handleChange}
+            margin="normal"
+            required
+            error={!!errors.firstName}
+            helperText={errors.firstName}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Last Name"
+            name="lastName"
+            value={profile.lastName}
+            onChange={handleChange}
+            margin="normal"
+            required
+            error={!!errors.lastName}
+            helperText={errors.lastName}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            select
+            label="Role"
+            name="role"
+            value={profile.role}
+            onChange={handleChange}
+            margin="normal"
+            required
+            error={!!errors.role}
+            helperText={errors.role}
+          >
+            {roles.map((role) => (
+              <MenuItem key={role} value={role}>
+                {role}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Company"
+            name="company"
+            value={profile.company}
+            onChange={handleChange}
+            margin="normal"
+          />
+        </Grid>
+      </Grid>
       <Button
         variant="contained"
         onClick={handleSave}
         disabled={!updated}
-        sx={{ mt: 2 }}
+        sx={{ mt: 2, mb: 4 }}
       >
         Save Changes
       </Button>

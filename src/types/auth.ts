@@ -13,11 +13,13 @@ export interface Login {
 }
 
 export interface UserProfile {
+    _id?: string;
     firstName: string;
     lastName: string;
     email: string;
     role: string;
     company?: string;
+    imageUrl?: string
 }
 
 export interface AuthContextType {
@@ -25,4 +27,8 @@ export interface AuthContextType {
   user: UserProfile | null;
   login: (token: string) => void;
   logout: () => void;
+}
+
+export interface ImageUpdate {
+    imageBase64: string
 }

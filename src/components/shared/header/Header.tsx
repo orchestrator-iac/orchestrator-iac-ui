@@ -23,7 +23,7 @@ const Header: React.FC = () => {
   const { mode, toggleTheme } = useThemeContext();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
+  const hasImage = user?.imageUrl && user?.imageUrl !== "";
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
@@ -50,16 +50,23 @@ const Header: React.FC = () => {
   };
 
   return (
-    <AppBar className={styles.appBar} position="fixed">
+    <AppBar className={styles.appBar} position="static">
       <Toolbar className={styles.toolbar}>
-        <Typography component="a" href="/home" className={styles.logo} sx={{ fontSize: "1.5rem" }}>
+        <Typography
+          component="a"
+          href="/home"
+          className={styles.logo}
+          sx={{ fontSize: "1.5rem" }}
+        >
           <FontAwesomeIcon icon={faLayerGroup} className={styles.logoIcon} />
           Orchestrator
         </Typography>
 
         <div className={styles.controls}>
           <div className={styles.switchContainer}>
-            <label htmlFor="theme-switch" className={styles.switchLabel}>Dark Theme</label>
+            <label htmlFor="theme-switch" className={styles.switchLabel}>
+              Dark Theme
+            </label>
             <Switch
               checked={mode === "dark"}
               onChange={toggleTheme}
@@ -69,12 +76,32 @@ const Header: React.FC = () => {
           </div>
           {user && (
             <>
+              {/* <Box
+                component="img"
+                onClick={handleMenuOpen}
+                src={
+                  user.imageUrl ??
+                  `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&bold=true&color=${theme.palette.primary.main}&background=${theme.palette.background.default}`
+                }
+                alt="Profile"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                }}
+              /> */}
               <IconButton onClick={handleMenuOpen} size="small">
-                <Avatar sx={{
-                  bgcolor: theme.palette.background.default,
-                  color: theme.palette.primary.main,
-                  fontWeight: 'bold',
-                }}>{user.firstName.charAt(0).toUpperCase()}</Avatar>
+                <Avatar
+                  sx={{
+                    bgcolor: theme.palette.background.default,
+                    color: theme.palette.primary.main,
+                    fontWeight: "bold",
+                  }}
+                  alt={user.firstName}
+                  src={hasImage ? user.imageUrl : undefined}
+                >
+                  {!hasImage && user.firstName.charAt(0).toUpperCase()}
+                </Avatar>
               </IconButton>
               <Menu
                 anchorEl={anchorEl}
