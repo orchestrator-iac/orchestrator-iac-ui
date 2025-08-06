@@ -1,7 +1,7 @@
 .wrapperHeader {
   font-size: 1.6rem;
   margin: 10px 0 5px 16px;
-  color: var(--card-color);
+  color: var(--primary);
 }
 
 .cardList {
@@ -37,7 +37,7 @@
   height: 24px;
   padding: 8px;
   border-radius: 32px 0 32px 32px;
-  background-color: var(--card-bg);
+  background-color: var(--secondary);
   box-shadow: 0 0 3px var(--text-color);
 }
 
@@ -46,6 +46,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--secondary)
 }
 
 .cardDescription {

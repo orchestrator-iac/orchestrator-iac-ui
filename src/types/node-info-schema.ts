@@ -20,7 +20,7 @@ export const FieldSchema = z.object({
   required: z.union([z.boolean(), z.string()]).optional(),
   info: z.string().nullable().optional(),
   placeholder: z.string().nullable().optional(), // fixed typo from 'placehoder'
-  options: z.array(OptionSchema).optional(),
+  options: z.array(OptionSchema).nullable().optional(),
 });
 
 export const FieldGroupSchema = z.object({

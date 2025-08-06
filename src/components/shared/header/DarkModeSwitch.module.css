@@ -1,0 +1,18 @@
+.switchContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--card-bg);
+  color: var(--text-color);
+  border-radius: 1.5rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  width: fit-content;
+  gap: 1rem;
+}
+
+.switchLabel {
+  font-weight: 500;
+  font-size: 1rem;
+  white-space: nowrap;
+}

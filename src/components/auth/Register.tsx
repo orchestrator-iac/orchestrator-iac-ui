@@ -67,17 +67,29 @@ export default function Register() {
   return (
     <Box
       display="flex"
-      justifyContent="center"
+      justifyContent="space-around"
       alignItems="center"
       minHeight="100vh"
       mx="auto"
       sx={{
-        backgroundImage: "url('/login.svg')",
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundImage:
+          "radial-gradient(ellipse farthest-corner at 65% 50%, var(--primary), var(--secondary), var(--bg-color))",
+        // backgroundImage: "url('/login.svg')",
+        // backgroundRepeat: "no-repeat",
+        // backgroundSize: "cover",
+        // backgroundPosition: "center",
       }}
     >
+      <Box
+        sx={{
+          height: "60vh",
+          width: "60vh",
+          backgroundImage: "url('/logo-name.png')",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "contain",
+          backgroundPosition: "center",
+        }}
+      />
       <Paper
         sx={{
           p: 4,

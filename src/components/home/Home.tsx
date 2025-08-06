@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Box, Paper, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../store";
@@ -11,32 +11,13 @@ import {
 } from "../../store/homeSlice";
 
 import styles from "./Home.module.css";
-// import apiService from "./../../services/apiService";
 import awsLogo from "./../../assets/aws_logo.svg";
 import azLogo from "./../../assets/az_logo.svg";
 import gcpLogo from "./../../assets/gcp_logo.svg";
 
-// interface Card {
-//   template_id: string;
-//   label: string;
-//   description: string;
-//   image: string;
-//   cloud_type: string;
-// }
-
-// interface Resources {
-//   _id: string;
-//   cloudProvider: string;
-//   resourceName: string;
-//   resourceVersion: string;
-//   resourceDescription: string;
-//   publishedBy: string;
-//   publishedAt: string;
-// }
-
 const logoMap: Record<string, string> = {
   aws: awsLogo,
-  az: azLogo,
+  azure: azLogo,
   gcp: gcpLogo,
 };
 
@@ -54,10 +35,6 @@ const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className }) => {
 const Home: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  // const [customWrappers, setCustomWrappers] = useState<Card[]>([]);
-  // const [allWrappers, setAllWrappers] = useState<Card[]>([]);
-  // const [resources, setResources] = useState<Resources[]>([]);
-
   const dispatch = useDispatch<AppDispatch>();
   const { customWrappers, allWrappers, resources } = useSelector(
     (state: RootState) => state.home
@@ -73,28 +50,12 @@ const Home: React.FC = () => {
     document.body.setAttribute("data-theme", theme.palette.mode);
   }, [theme.palette.mode]);
 
-  // useEffect(() => {
-  //   apiService.get("/wrapper/custom").then((data) => {
-  //     setCustomWrappers(data?.data ?? []);
-  //   });
-  //   apiService.get("/wrapper/all").then((data) => {
-  //     setAllWrappers(data?.data ?? []);
-  //   });
-  //   apiService
-  //     .get(
-  //       "/configs?fields=_id,cloudProvider,resourceName,resourceVersion,resourceDescription,publishedBy,publishedAt"
-  //     )
-  //     .then((data) => {
-  //       setResources(data ?? []);
-  //     });
-  // }, []);
-
-  const navigateResource = () => {
-    navigate("/resources/new");
+  const navigateResource = (resourceId: string | undefined) => {
+    navigate(`/resources/${resourceId ?? "new"}`);
   };
 
-  const navigateTemplates = () => {
-    navigate("/orchestrator/new");
+  const navigateTemplates = (templateID: string | undefined) => {
+    navigate(`/orchestrator/${templateID ?? "new"}`);
   };
 
   return (
@@ -128,47 +89,49 @@ const Home: React.FC = () => {
 
       <h3 className={styles.wrapperHeader}>Templates</h3>
       <div className={styles.cardList}>
-        <Box className={styles.card} onClick={navigateTemplates}>
+        <Box className={styles.card} onClick={() => navigateTemplates(undefined)}>
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
             <p className={styles.cardDescription}>Blank Template</p>
           </div>
         </Box>
         {allWrappers.map((card) => (
-          <div key={card.template_id} className={styles.card}>
-            <CardLogo
-              cloudType={card.cloud_type}
-              className={styles.clouldTypeLogo}
-            />
-            <img
-              src={card.image}
-              alt={card.label}
-              className={styles.cardImage}
-            />
-            <h3 className={styles.cardTitle}>
-              <Link
-                to={`/orchestrator/${card.template_id}?&template_type=all`}
-                style={{ textDecoration: "none", color: "inherit" }}
-                aria-label={`View details for ${card.label}`}
-              >
-                {card.label}
-              </Link>
-            </h3>
-            <p className={styles.cardDescription}>{card.description}</p>
-          </div>
+          <Box
+            key={card._id}
+            className={styles.card}
+            onClick={() => navigateTemplates(card._id)}
+          >
+            <div key={card.template_id} className={styles.card}>
+              <CardLogo
+                cloudType={card.cloud_type}
+                className={styles.clouldTypeLogo}
+              />
+              <img
+                src={card.image}
+                alt={card.label}
+                className={styles.cardImage}
+              />
+              <h3 className={styles.cardTitle}>{card.label}</h3>
+              <p className={styles.cardDescription}>{card.description}</p>
+            </div>
+          </Box>
         ))}
       </div>
 
       <h3 className={styles.wrapperHeader}>Resource</h3>
       <div className={styles.cardList}>
-        <Box className={styles.card} onClick={navigateResource}>
+        <Box className={styles.card} onClick={() => navigateResource(undefined)}>
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
             <p className={styles.cardDescription}>New Resource</p>
           </div>
         </Box>
         {resources.map((resource) => (
-          <div key={resource._id} className={styles.card}>
+          <Box
+            key={resource._id}
+            className={styles.card}
+            onClick={() => navigateResource(resource._id)}
+          >
             <CardLogo
               cloudType={resource.cloudProvider}
               className={styles.clouldTypeLogo}
@@ -186,7 +149,7 @@ const Home: React.FC = () => {
               {resource.resourceDescription}
             </p>
             <code>Version - {resource.resourceVersion}</code>
-          </div>
+          </Box>
         ))}
       </div>
     </Box>

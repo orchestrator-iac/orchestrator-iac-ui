@@ -2,21 +2,20 @@
 import React, { useEffect, useState } from "react";
 import {
   AppBar,
+  Box,
   Toolbar,
   Typography,
-  Switch,
   IconButton,
   Menu,
   MenuItem,
   Avatar,
   useTheme,
 } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLayerGroup } from "@fortawesome/free-solid-svg-icons";
+import { Link, useNavigate } from "react-router-dom";
 import { useThemeContext } from "../theme/useThemeContext";
 import { useAuth } from "../../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import styles from "./Header.module.css";
+import PillToggle from "./PillToggle";
 
 const Header: React.FC = () => {
   const theme = useTheme();
@@ -50,46 +49,43 @@ const Header: React.FC = () => {
   };
 
   return (
-    <AppBar className={styles.appBar} position="static">
+    <AppBar
+      position="static"
+      className={styles.appBar}
+      sx={{
+        backgroundImage: "linear-gradient(to left, var(--primary), var(--secondary), var(--bg-color))",
+      }}
+    >
       <Toolbar className={styles.toolbar}>
         <Typography
-          component="a"
-          href="/home"
+          component={Link}
+          to="/home"
           className={styles.logo}
-          sx={{ fontSize: "1.5rem" }}
+          sx={{
+            fontSize: "1.5rem",
+            textDecoration: "none",
+            color: "var(--primary)",
+            fontWeight: "bold",
+          }}
         >
-          <FontAwesomeIcon icon={faLayerGroup} className={styles.logoIcon} />
+          <Box
+            sx={{
+              height: 30,
+              width: 60,
+              marginRight: 1,
+              backgroundImage: "url('/logo.png')",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "contain",
+              backgroundPosition: "center",
+            }}
+          ></Box>
           Orchestrator
         </Typography>
 
         <div className={styles.controls}>
-          <div className={styles.switchContainer}>
-            <label htmlFor="theme-switch" className={styles.switchLabel}>
-              Dark Theme
-            </label>
-            <Switch
-              checked={mode === "dark"}
-              onChange={toggleTheme}
-              name="theme-switch"
-              color="default"
-            />
-          </div>
+          <PillToggle mode={mode} toggleTheme={toggleTheme} />
           {user && (
             <>
-              {/* <Box
-                component="img"
-                onClick={handleMenuOpen}
-                src={
-                  user.imageUrl ??
-                  `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&bold=true&color=${theme.palette.primary.main}&background=${theme.palette.background.default}`
-                }
-                alt="Profile"
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                }}
-              /> */}
               <IconButton onClick={handleMenuOpen} size="small">
                 <Avatar
                   sx={{

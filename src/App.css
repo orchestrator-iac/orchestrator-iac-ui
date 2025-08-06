@@ -1,23 +1,47 @@
 /* index.css or App.css */
 :root {
+  --primary: #205a5a;
+  --secondary: #4bbebe;
+  --ternary: #52c9c9;
   --bg-color: #fafafa;
   --card-bg: #fff;
   --card-color: #333;
   --text-color: #666;
+  --pastel: #d4a5a5;
+  --text1: #000000;
+  --text2: #333333;
+  --text3: #666666;
+  --text4: #999999;
 }
 
 [data-theme='dark'] {
+  --primary: #43adad;
+  --secondary: #88cfcf;
+  --ternary: #8ecacc;
   --bg-color: #121212;
   --card-bg: #444;
   --card-color: #ddd;
   --text-color: #aaa;
+  --pastel: #f7d9d9;
+  --text1: #ffffff;
+  --text2: #dddddd;
+  --text3: #bbbbbb;
+  --text4: #999999;
 }
 
 [data-theme='light'] {
+  --primary: #205a5a;
+  --secondary: #4bbebe;
+  --ternary: #52c9c9;
   --bg-color: #fafafa;
   --card-bg: #f4f4f4;
   --card-color: #333;
   --text-color: #666;
+  --pastel: #d4a5a5;
+  --text1: #000000;
+  --text2: #333333;
+  --text3: #666666;
+  --text4: #999999;
 }
 
 body {

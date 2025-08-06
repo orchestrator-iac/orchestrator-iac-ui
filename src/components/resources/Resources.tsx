@@ -13,10 +13,15 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
+import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../store";
+import { fetchResourceById, clearResource } from "../../store/resourceSlice";
+import { useForm, FormProvider } from "react-hook-form";
+
 import BasicInfo from "./basic_info/BasicInfo";
 import NodeInfo from "./node_info/NodeInfo";
 import { NodeInfo as NodeInfoType } from "../../types/node-info";
-import { useForm, FormProvider } from "react-hook-form";
 import TerraformCore, {
   TerraformFileKey,
   TerraformFileType,
@@ -26,7 +31,6 @@ import TerraformTemplate, {
 } from "./terraform_template/TerraformTemplate";
 import apiService from "../../services/apiService";
 import { useAuth } from "../../context/AuthContext";
-
 
 const steps = [
   "Basic Info",
@@ -48,6 +52,11 @@ const Resources: React.FC = () => {
     message: "",
     severity: "success",
   });
+  const { resource_id } = useParams();
+  const dispatch = useDispatch<AppDispatch>();
+  const resourceData = useSelector(
+    (state: RootState) => state.resource.resource
+  );
 
   const [activeStep, setActiveStep] = React.useState(0);
   const [resourceNode, setResourceNode] = React.useState<NodeInfoType | null>(
@@ -90,6 +99,50 @@ const Resources: React.FC = () => {
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
   }, [theme.palette.mode]);
+
+  useEffect(() => {
+    if (resource_id && resource_id !== "new") {
+      dispatch(fetchResourceById(resource_id));
+    }
+
+    return () => {
+      dispatch(clearResource());
+    };
+  }, [resource_id, dispatch]);
+
+  useEffect(() => {
+    if (resourceData) {
+      // Set form values
+      methods.reset({
+        resourceId: resourceData.resourceId || "",
+        cloudProvider: resourceData.cloudProvider || "",
+        resourceName: resourceData.resourceName || "",
+        resourceVersion: resourceData.resourceVersion || "",
+        resourceDescription: resourceData.resourceDescription || "",
+        terraformCorePath: resourceData.terraformCorePath || "",
+        terraformTemplatePath: resourceData.terraformTemplatePath || "",
+      });
+
+      setTerraformFiles(
+        resourceData.terraformCore || {
+          main: "",
+          variables: "",
+          outputs: "",
+        }
+      );
+
+      setTemplateFiles(
+        resourceData.terraformTemplate || {
+          module: "",
+          variables: "",
+          outputs: "",
+          tfvars: "",
+        }
+      );
+
+      setResourceNode(resourceData.resourceNode || null);
+    }
+  }, [resourceData]);
 
   const showSnackbar = (message: string, severity: "success" | "error") => {
     setSnackbar({ open: true, message, severity });
@@ -174,13 +227,15 @@ const Resources: React.FC = () => {
       terraformCore: terraformFiles,
       terraformTemplate: templateFiles,
       publishedBy: user?._id,
-      publishedAt: new Date().toISOString()
+      publishedAt: new Date().toISOString(),
     };
     console.log("Final payload", fullData);
 
     try {
-      const response = await apiService.post("/configs", fullData, {
-        method: "POST",
+      const method = resource_id !== "new" ? "put" : "post";
+      const url = resource_id !== "new" ? `/configs/${resource_id}` : "/configs";
+
+      const response = await apiService[method](url, fullData, {
         headers: {
           "Content-Type": "application/json",
         },

@@ -1,6 +1,6 @@
 /* Header.module.css */
 .appBar {
-    background-color: #1976d2;
+    background-color: #057474;
     /* Material UI primary blue */
     box-shadow: none;
 }
@@ -15,12 +15,9 @@
 .logo {
     display: flex;
     align-items: center;
-    color: white;
+    color: var(--main);
     text-decoration: none;
-}
-
-.logoIcon {
-    margin-right: 8px;
+    font-weight: bold;
 }
 
 .controls {
@@ -37,8 +34,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    font-weight: bolder;
 }
 
 .switchLabel {
-    color: white;
+    color: var(--text1);
 }

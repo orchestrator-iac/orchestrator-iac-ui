@@ -469,7 +469,7 @@ const OrchestratorReactFlow: React.FC = () => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { getLayoutedElements } = useLayoutedElements();
   const drawerWidth = 240;
   const { fitView } = useReactFlow();
