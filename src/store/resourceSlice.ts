@@ -10,7 +10,7 @@ export const fetchResourceById = createAsyncThunk(
 );
 
 interface ResourceState {
-  resource: any | null;
+  resource: any;
   loading: boolean;
   error: string | null;
 }

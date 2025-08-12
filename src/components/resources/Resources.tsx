@@ -1,6 +1,5 @@
 // Resources.tsx
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Box,
   Stepper,
@@ -13,7 +12,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { fetchResourceById, clearResource } from "../../store/resourceSlice";
@@ -90,6 +89,10 @@ const Resources: React.FC = () => {
       resourceDescription: "",
       terraformCorePath: "",
       terraformTemplatePath: "",
+      resourceIcon: {
+        id: "",
+        url: "",
+      },
     },
     mode: "onTouched",
   });
@@ -119,6 +122,10 @@ const Resources: React.FC = () => {
         resourceName: resourceData.resourceName || "",
         resourceVersion: resourceData.resourceVersion || "",
         resourceDescription: resourceData.resourceDescription || "",
+        resourceIcon: resourceData.resourceIcon || {
+          id: "",
+          url: ""
+        },
         terraformCorePath: resourceData.terraformCorePath || "",
         terraformTemplatePath: resourceData.terraformTemplatePath || "",
       });
@@ -233,7 +240,8 @@ const Resources: React.FC = () => {
 
     try {
       const method = resource_id !== "new" ? "put" : "post";
-      const url = resource_id !== "new" ? `/configs/${resource_id}` : "/configs";
+      const url =
+        resource_id !== "new" ? `/configs/${resource_id}` : "/configs";
 
       const response = await apiService[method](url, fullData, {
         headers: {

@@ -2,11 +2,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import homeReducer from './homeSlice';
 import resourceReducer from './resourceSlice';
+import iconReducer from './iconsSlice';
 
 export const store = configureStore({
   reducer: {
     home: homeReducer,
     resource: resourceReducer,
+    icons: iconReducer,
   },
 });
 
