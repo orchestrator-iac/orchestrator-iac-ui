@@ -6,7 +6,7 @@ type Props = {
   toggleTheme: () => void;
 };
 
-export default function PillToggle({ mode, toggleTheme }: Props) {
+export default function PillToggle({ mode, toggleTheme }: Readonly<Props>) {
   const isDark = mode === "dark";
 
   return (

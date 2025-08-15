@@ -17,7 +17,7 @@ import { AuthProvider } from "./context/AuthContext";
 import Home from "./components/home/Home";
 import Resources from "./components/resources/Resources";
 import Orchestrator from "./components/orchestrator/Orchestrator";
-import Login from "./components/auth/Login";
+import Login from "./components/auth/login/Login";
 import Register from "./components/auth/Register";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import Layout from "./components/shared/layout/Layout";

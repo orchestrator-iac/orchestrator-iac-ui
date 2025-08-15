@@ -28,7 +28,7 @@
   transform: scale(1.05);
 }
 
-.card .clouldTypeLogo {
+.card .cloudTypeLogo {
   position: absolute;
   top: 24px;
   right: 24px;
@@ -37,7 +37,7 @@
   height: 24px;
   padding: 8px;
   border-radius: 32px 0 32px 32px;
-  background-color: var(--secondary);
+  background-color: var(--card-bg);
   box-shadow: 0 0 3px var(--text-color);
 }
 
@@ -64,6 +64,12 @@
   min-height: 150px;
   max-height: 150px;
   object-fit: cover;
+  opacity: 0.7;
+  transition: opacity 0.1s ease 0.1s;
+}
+
+.card:hover .cardImage {
+  opacity: 1;
 }
 
 .cardBlank {

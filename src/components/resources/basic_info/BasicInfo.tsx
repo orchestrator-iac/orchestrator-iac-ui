@@ -25,8 +25,9 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { Controller, useFormContext } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
-const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 import { fetchIcons, resetIcons } from "../../../store/iconsSlice";
+
+const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
 const BasicInfo: React.FC = () => {
   const { control, formState, setValue } = useFormContext();
@@ -191,12 +192,6 @@ const BasicInfo: React.FC = () => {
             )}
           />
         </Grid>
-
-        {/* <Grid item xs={12} md={2}>
-          <Button variant="outlined" onClick={handleOpen}>
-            Upload Icon
-          </Button>
-        </Grid> */}
 
         <Grid item xs={12} md={2}>
           <Controller
