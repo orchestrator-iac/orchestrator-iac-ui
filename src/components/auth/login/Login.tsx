@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { TextField, Button, Typography, Box, useTheme } from "@mui/material";
 import { loginUser } from "../../../services/auth";
 import { useAuth } from "../../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import styles from "./Login.module.css";
+import NightSky from "../../shared/night-sky/NightSky";
 
-export default function Login() {
+const Login: React.FC = () => {
   const { login } = useAuth();
   const theme = useTheme();
   const navigate = useNavigate();
@@ -13,29 +13,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const container = document.getElementById("star-container");
-    if (!container) return;
-
-    const starCount = 240;
-    for (let i = 0; i < starCount; i++) {
-      const star = document.createElement("div");
-      star.className = styles.star;
-      star.style.top = `${Math.random() * 100}%`;
-      star.style.left = `${Math.random() * 100}%`;
-
-      const size = Math.random() * 2 + 1;
-      star.style.width = `${size}px`;
-      star.style.height = `${size}px`;
-
-      // set CSS vars for random twinkle
-      star.style.setProperty("--twinkle-duration", `${2 + Math.random() * 4}s`);
-      star.style.setProperty("--twinkle-delay", `${Math.random() * 15}s`);
-
-      container.appendChild(star);
-    }
-  }, []);
 
   const handleLogin = async () => {
     setError("");
@@ -55,9 +32,7 @@ export default function Login() {
         );
         setFieldErrors(errors);
       } else if (err?.status === 401) {
-        setError(
-          "The email or password you entered is incorrect. Please try again."
-        );
+        setError("The email or password you entered is incorrect.");
       } else {
         setError(err.message || "Login failed");
       }
@@ -65,25 +40,22 @@ export default function Login() {
   };
 
   return (
-    <Box className={styles.sky}>
-      {/* Rotating stars layer */}
-      <div className={styles.starsLayer}>
-        <div id="star-container"></div>
-      </div>
+    <Box position="relative" height="100vh">
+      <NightSky />
       <Box
         display="flex"
-        justifyContent="space-around"
+        justifyContent="center"
         alignItems="center"
         minHeight="100vh"
+        sx={{ position: "relative", zIndex: 2 }}
       >
         <Box
           sx={{
             p: 4,
-            zIndex: 2,
             maxWidth: "25vw",
             width: "100%",
             borderRadius: 2,
-            backgroundColor: `${theme.palette.background.default}`,
+            backgroundColor: theme.palette.background.default,
           }}
         >
           <Typography variant="h5">Login</Typography>
@@ -109,7 +81,7 @@ export default function Login() {
           {error && <Typography color="error">{error}</Typography>}
           <Box mt={2} display="flex" justifyContent="space-between">
             <Typography variant="body2" color="textSecondary">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Box
                 component="span"
                 sx={{ color: "primary.main", cursor: "pointer" }}
@@ -142,3 +114,5 @@ export default function Login() {
     </Box>
   );
 }
+
+export default Login;

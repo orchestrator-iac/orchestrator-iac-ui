@@ -5,7 +5,7 @@ import styles from "./Layout.module.css";
 
 const Layout = () => {
   const location = useLocation();
-  const noHeaderRoutes = ["/login", "/register"];
+  const noHeaderRoutes = ["/login", "/register", "/register-success", "/confirm"];
   const hideHeader = noHeaderRoutes.includes(location.pathname);
 
   return (

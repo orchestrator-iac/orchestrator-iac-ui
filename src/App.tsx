@@ -18,10 +18,13 @@ import Home from "./components/home/Home";
 import Resources from "./components/resources/Resources";
 import Orchestrator from "./components/orchestrator/Orchestrator";
 import Login from "./components/auth/login/Login";
-import Register from "./components/auth/Register";
+import Register from "./components/auth/register/Register";
+import RegisterSuccessPage from "./components/auth/register/RegisterSuccessPage";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import Layout from "./components/shared/layout/Layout";
 import Profile from "./components/auth/profile/Profile";
+import ConfirmEmail from "./components/auth/ConfirmEmail";
+
 
 // Add FontAwesome icon packs
 library.add(fab, fas);
@@ -37,6 +40,14 @@ const router = createBrowserRouter([
       {
         path: "/register",
         element: <Register />,
+      },
+      {
+        path: "/register-success",
+        element: <RegisterSuccessPage />,
+      },
+      {
+        path: "/confirm",
+        element: <ConfirmEmail />,
       },
       {
         path: "/profile",

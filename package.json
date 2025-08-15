@@ -36,6 +36,7 @@
     "react-hook-form": "^7.61.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.30.1",
+    "react-toastify": "^11.0.5",
     "sort-by": "^0.0.2",
     "zod": "^4.0.14"
   },
