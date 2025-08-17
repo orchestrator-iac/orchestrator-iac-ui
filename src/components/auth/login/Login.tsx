@@ -13,6 +13,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [resendEmailVerification, setResendEmailVerification] = useState(false);
 
   const handleLogin = async () => {
     setError("");
@@ -33,6 +34,9 @@ const Login: React.FC = () => {
         setFieldErrors(errors);
       } else if (err?.status === 401) {
         setError("The email or password you entered is incorrect.");
+      } else if (err?.status === 403) {
+        setError("Email verification required. Please check your inbox.");
+        setResendEmailVerification(true);
       } else {
         setError(err.message || "Login failed");
       }
@@ -79,6 +83,16 @@ const Login: React.FC = () => {
             helperText={fieldErrors.password}
           />
           {error && <Typography color="error">{error}</Typography>}
+          {resendEmailVerification && (
+            <Typography
+              variant="body2"
+              color="primary"
+              sx={{ cursor: "pointer" }}
+              onClick={() => navigate("/email-verification/verify")}
+            >
+              Resend Email Verification
+            </Typography>
+          )}
           <Box mt={2} display="flex" justifyContent="space-between">
             <Typography variant="body2" color="textSecondary">
               Don&apos;t have an account?{" "}
@@ -94,7 +108,7 @@ const Login: React.FC = () => {
               variant="body2"
               color="primary"
               sx={{ cursor: "pointer" }}
-              onClick={() => navigate("/forgot-password")}
+              onClick={() => navigate("/email-verification/forgot")}
             >
               Forgot Password?
             </Typography>
@@ -113,6 +127,6 @@ const Login: React.FC = () => {
       </Box>
     </Box>
   );
-}
+};
 
 export default Login;

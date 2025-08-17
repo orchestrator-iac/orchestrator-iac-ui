@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import styles from "./NightSky.module.css";
 
 interface NightSkyProps {
@@ -6,11 +6,12 @@ interface NightSkyProps {
 }
 
 export default function NightSky({ starCount = 240 }: Readonly<NightSkyProps>) {
+  const [scale, setScale] = useState(1);
+
   useEffect(() => {
     const container = document.getElementById("star-container");
     if (!container) return;
 
-    // Clear previous stars (in case component remounts)
     container.innerHTML = "";
 
     for (let i = 0; i < starCount; i++) {
@@ -19,7 +20,17 @@ export default function NightSky({ starCount = 240 }: Readonly<NightSkyProps>) {
       star.style.top = `${Math.random() * 100}%`;
       star.style.left = `${Math.random() * 100}%`;
 
-      const size = Math.random() * 2 + 1;
+      // 1 in 100 chance → big star
+      let size: number;
+      if (Math.random() < 0.01) {
+        // pick from 8, 14, or 24
+        const bigSizes = [8, 14, 24];
+        size = bigSizes[Math.floor(Math.random() * bigSizes.length)];
+        star.classList.add(styles.bigStar); // optional extra glow
+      } else {
+        // normal small star
+        size = Math.random() * 2 + 1;
+      }
       star.style.width = `${size}px`;
       star.style.height = `${size}px`;
 
@@ -30,10 +41,31 @@ export default function NightSky({ starCount = 240 }: Readonly<NightSkyProps>) {
     }
   }, [starCount]);
 
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        setScale((prev) => Math.min(prev + 0.1, 2));
+      } else {
+        setScale((prev) => Math.max(prev - 0.1, 0.5));
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, []);
+
   return (
     <div className={styles.sky}>
-      <div className={styles.starsLayer}>
-        <div id="star-container"></div>
+      <div
+        className={styles.starsLayer}
+        style={{
+          transform: `scale(${scale})`,
+        }}
+      >
+        <div className={styles.rotateLayer}>
+          <div id="star-container"></div>
+        </div>
       </div>
     </div>
   );

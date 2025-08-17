@@ -24,6 +24,8 @@ import ProtectedRoute from "./components/shared/ProtectedRoute";
 import Layout from "./components/shared/layout/Layout";
 import Profile from "./components/auth/profile/Profile";
 import ConfirmEmail from "./components/auth/ConfirmEmail";
+import NotFound from "./components/shared/NotFound";
+import ResendEmailForm from "./components/auth/ResendEmailForm";
 
 
 // Add FontAwesome icon packs
@@ -48,6 +50,10 @@ const router = createBrowserRouter([
       {
         path: "/confirm",
         element: <ConfirmEmail />,
+      },
+      {
+        path: "/email-verification/:type",
+        element: <ResendEmailForm />,
       },
       {
         path: "/profile",
@@ -83,8 +89,22 @@ const router = createBrowserRouter([
       },
       {
         path: "/",
-        element: <Home />,
+        element: (
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        ),
       },
+      {
+        path: "*",
+        element: (
+          <ProtectedRoute>
+            <NotFound />
+          </ProtectedRoute>
+        ),
+        errorElement: <NotFound />,
+      },
+
     ],
   },
 ]);

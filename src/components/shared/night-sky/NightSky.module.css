@@ -1,19 +1,26 @@
 .sky {
     position: fixed;
-    width: 100%;
-    height: 100vh;
+    inset: 0;
     overflow: hidden;
     background: radial-gradient(circle at center, #0D1B2A 0%, #000000 100%);
+    z-index: 0;
+    pointer-events: none;
 }
 
 .starsLayer {
     position: absolute;
     width: 200%;
-    height: 200%;
-    top: -50%;
+    height: 400%;
+    top: -150%;
     left: -50%;
-    transform-origin: center;
-    animation: rotateStars 900s linear infinite;
+    transform-origin: center center;
+    transition: transform 0.3s ease-out;
+}
+
+.rotateLayer {
+    width: 100%;
+    height: 100%;
+    animation: rotateStars 300s linear infinite;
 }
 
 @keyframes rotateStars {
@@ -35,6 +42,7 @@
     animation: twinkle var(--twinkle-duration) ease-in-out var(--twinkle-delay) infinite alternate;
 }
 
+
 .star::before,
 .star::after {
     content: "";
@@ -53,6 +61,7 @@
     top: -25%;
     left: 50%;
 }
+
 
 @keyframes twinkle {
     0% {
