@@ -11,6 +11,10 @@ const Layout = () => {
     "/register-success",
     "/confirm",
     "/email-verification/forgot",
+    "/email-verification/verify",
+    "/night-sky",
+    "/black-hole",
+    "/update-password",
   ];
   const hideHeader = noHeaderRoutes.includes(location.pathname);
 

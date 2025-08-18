@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 
 import { store } from "./store";
 import App from "./App";
+import { DnDProvider } from "./components/orchestrator/sidebar/DnDContext";
 
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-text";
@@ -19,8 +20,10 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
+    <DnDProvider>
+      <Provider store={store}>
+        <App />
+      </Provider>
+    </DnDProvider>
   </React.StrictMode>
 );

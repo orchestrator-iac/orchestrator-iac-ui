@@ -4,24 +4,26 @@ import {
   ReactFlowProvider,
   Background,
   Controls,
-  Node,
   MiniMap,
   useNodesState,
   useEdgesState,
   addEdge,
-  Edge,
   useReactFlow,
+  Node,
+  Edge,
+  Position,
 } from "@xyflow/react";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { useParams, useSearchParams } from "react-router-dom";
+import { v4 as uuidv4 } from 'uuid';
 import apiService from "./../../services/apiService";
 import CustomNode from "./CustomNode";
 import { components } from "./../../initial-elements";
 import { useTheme } from "@mui/material/styles";
 
 import { Box } from "@mui/material";
-import { Position } from "@xyflow/react";
 import Sidebar from "./sidebar/Sidebar";
+import { useDnD } from "./sidebar/DnDContext";
 
 const initialNodes: Node[] = [
   {
@@ -417,6 +419,7 @@ const initialNodes: Node[] = [
     },
   },
 ];
+
 const initialEdges: Edge[] = [];
 const elk = new ELK();
 
@@ -472,10 +475,30 @@ const OrchestratorReactFlow: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { getLayoutedElements } = useLayoutedElements();
   const drawerWidth = 240;
-  const { fitView } = useReactFlow();
+  const { fitView, screenToFlowPosition } = useReactFlow();
+  const [id] = useDnD();
+
+  // Dummy handlers to avoid errors
+  const onDrop = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    console.log("onDrop");
+    if (!id) {
+      return;
+    }
+    console.log(id)
+    const node = components?.[id]
+    node["id"] = `${id}-${uuidv4()}`
+    node["position"] = { x: 100, y: 100 }
+    setNodes((nds) => nds.concat(node));
+  }, [screenToFlowPosition, id]);
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    console.log("onDragOver");
+    event.dataTransfer.dropEffect = "move";
+  }, []);
 
   useEffect(() => {
-    // Wait a short time before calling fitView so DOM updates finish
     const timeout = setTimeout(() => {
       fitView();
     }, 300);
@@ -507,7 +530,6 @@ const OrchestratorReactFlow: React.FC = () => {
 
         setEdges(wrapperData?.edges ?? []);
 
-        // Run layout after nodes/edges are updated
         setTimeout(() => {
           getLayoutedElements({
             "elk.algorithm": "layered",
@@ -526,8 +548,8 @@ const OrchestratorReactFlow: React.FC = () => {
     <Box
       sx={{
         height: "calc(100vh - 65px)",
-        display: 'flex',
-        flexDirection: 'row',
+        display: "flex",
+        flexDirection: "row",
         backgroundColor: theme.palette.background.default,
         color: theme.palette.text.primary,
       }}
@@ -536,25 +558,27 @@ const OrchestratorReactFlow: React.FC = () => {
       <Box
         sx={{
           flexGrow: 1,
-          width: sidebarOpen ? `calc(100% - ${drawerWidth}px)` : '100%',
-          transition: 'width 0.3s ease',
+          width: sidebarOpen ? `calc(100% - ${drawerWidth}px)` : "100%",
+          transition: "width 0.3s ease",
         }}
       >
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        colorMode={theme.palette.mode}
-        nodeTypes={{ customNode: CustomNode }}
-        proOptions={{ hideAttribution: true }}
-        fitView
-      >
-        <Background />
-        <Controls />
-        <MiniMap nodeStrokeWidth={3} zoomable pannable />
-      </ReactFlow>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          colorMode={theme.palette.mode}
+          nodeTypes={{ customNode: CustomNode }}
+          proOptions={{ hideAttribution: true }}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          fitView
+        >
+          <Background />
+          <Controls />
+          <MiniMap nodeStrokeWidth={3} zoomable pannable />
+        </ReactFlow>
       </Box>
     </Box>
   );

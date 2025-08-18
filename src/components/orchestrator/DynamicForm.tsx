@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   TextField,
@@ -58,6 +58,10 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
   const handleChange = (name: string, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  useEffect(() => {
+    console.log(config);
+  }, [config])
 
   const validCondition = (field: Field, values: Values = {}): boolean => {
     if (field?.depends_on) {
@@ -258,7 +262,7 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
           </h3>
 
           <Grid container spacing={2}>
-            {card.fields.map(
+            {card.fields.length > 0 && card.fields.map(
               (field) =>
                 validCondition(field, values) && (
                   <Grid item xs={field.size || 12} key={field.name}>

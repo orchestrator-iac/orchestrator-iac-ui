@@ -32,3 +32,12 @@ export interface AuthContextType {
 export interface ImageUpdate {
     imageBase64: string
 }
+
+export interface UpdatePasswordRequest {
+  token: string | null;
+  newPassword: string;
+}
+
+export interface UpdatePasswordResponse {
+  msg: string;
+}

@@ -24,6 +24,10 @@ const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
     }
   }, [data?.header?.icon]);
 
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
   return (
     <Accordion
       sx={{

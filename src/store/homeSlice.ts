@@ -21,7 +21,7 @@ export const fetchResources = createAsyncThunk(
   'home/fetchResources',
   async () => {
     const response = await apiService.get(
-      '/configs?fields=_id,cloudProvider,resourceName,resourceVersion,resourceDescription,publishedBy,publishedAt,resourceIcon'
+      '/configs?fields=_id,cloudProvider,resourceName,resourceVersion,resourceDescription,publishedBy,publishedAt,resourceIcon,resourceId'
     );
     return response ?? [];
   }

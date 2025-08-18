@@ -5,7 +5,7 @@ interface NightSkyProps {
   starCount?: number;
 }
 
-export default function NightSky({ starCount = 240 }: Readonly<NightSkyProps>) {
+export default function NightSky({ starCount = 480 }: Readonly<NightSkyProps>) {
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -20,22 +20,25 @@ export default function NightSky({ starCount = 240 }: Readonly<NightSkyProps>) {
       star.style.top = `${Math.random() * 100}%`;
       star.style.left = `${Math.random() * 100}%`;
 
-      // 1 in 100 chance → big star
       let size: number;
-      if (Math.random() < 0.01) {
-        // pick from 8, 14, or 24
-        const bigSizes = [8, 14, 24];
+      if (Math.random() < 0.001) {
+        const bigSizes = [22, 24, 26];
         size = bigSizes[Math.floor(Math.random() * bigSizes.length)];
-        star.classList.add(styles.bigStar); // optional extra glow
+        star.classList.add(styles.bigStar);
+      } else if (Math.random() < 0.2) {
+        const bigSizes = [6, 8, 10, 12];
+        size = bigSizes[Math.floor(Math.random() * bigSizes.length)];
+        star.classList.add(styles.bigStar);
       } else {
         // normal small star
         size = Math.random() * 2 + 1;
+        star.style.setProperty("--twinkle-duration", `${2 + Math.random() * 4}s`);
+        star.style.setProperty("--twinkle-delay", `${Math.random() * 15}s`);
       }
       star.style.width = `${size}px`;
       star.style.height = `${size}px`;
 
-      star.style.setProperty("--twinkle-duration", `${2 + Math.random() * 4}s`);
-      star.style.setProperty("--twinkle-delay", `${Math.random() * 15}s`);
+      
 
       container.appendChild(star);
     }

@@ -18,6 +18,7 @@ import {
   KeyboardArrowLeft as KeyboardArrowLeftIcon,
 } from "@mui/icons-material";
 
+import { useDnD } from "./DnDContext";
 import { RootState, AppDispatch } from "../../../store";
 import { fetchResources } from "../../../store/homeSlice";
 
@@ -36,6 +37,16 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   const toggleDrawer = () => setOpen(!open);
   const dispatch = useDispatch<AppDispatch>();
   const { resources } = useSelector((state: RootState) => state.home);
+
+  const [, setId] = useDnD();
+
+  const onDragStart = (
+    event: React.DragEvent<HTMLDivElement>,
+    resourceId: string
+  ) => {
+    setId(resourceId);
+    event.dataTransfer.effectAllowed = "move";
+  };
 
   useEffect(() => {
     dispatch(fetchResources());
@@ -120,6 +131,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
             <ListItemButton
               key={resource.resourceName}
               sx={{ alignItems: "flex-start", py: 1.5 }}
+              className="dndnode"
+              onDragStart={(event) => onDragStart(event, resource.resourceId)}
+              draggable
             >
               <Box
                 component="img"

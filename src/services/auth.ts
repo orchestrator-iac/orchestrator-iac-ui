@@ -1,10 +1,16 @@
 // services/auth.ts
 import { ZodError, z } from "zod";
 
-import { ImageUpdate, Login, Register, UserProfile } from "../types/auth";
+import {
+  ImageUpdate,
+  Login,
+  Register,
+  UpdatePasswordRequest,
+  UpdatePasswordResponse,
+  UserProfile,
+} from "../types/auth";
 import { LoginSchema, RegisterSchema } from "../types/auth-schema";
 import apiService from "./apiService";
-
 
 export const loginUser = async (login: Login) => {
   try {
@@ -47,15 +53,14 @@ export const loginUser = async (login: Login) => {
 export const registerUser = async (register: Register) => {
   try {
     RegisterSchema.parse(register);
-    await apiService.post('/user/register', register);
+    await apiService.post("/user/register", register);
   } catch (error) {
     if (error instanceof Error) {
-      console.log(error.message)
+      console.log(error.message);
       throw new Error(error.message);
     }
     throw error;
   }
-  
 };
 
 export const getProfile = async (): Promise<UserProfile> => {
@@ -66,4 +71,11 @@ export const getProfile = async (): Promise<UserProfile> => {
 export const uploadProfileImage = async (formData: ImageUpdate) => {
   const res = await apiService.put("/user/profile/image", formData);
   return res;
+};
+
+export const updatePassword = async (
+  data: UpdatePasswordRequest
+): Promise<UpdatePasswordResponse> => {
+  const response = await apiService.post("/user/update-password", data);
+  return response.data;
 };

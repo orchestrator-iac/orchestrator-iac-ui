@@ -3,7 +3,7 @@ import { z } from "zod";
 export const OptionSchema = z.object({
   label: z.string(),
   sub_label: z.string().nullable().optional(),
-  value: z.string().nullable().optional(),
+  value: z.any().nullable().optional(),
   disabled: z.boolean().optional(),
 });
 
@@ -16,7 +16,7 @@ export const FieldSchema = z.object({
   value: z.any().optional(),
   hint: z.string().nullable().optional(),
   error_text: z.string().nullable().optional(),
-  size: z.number().optional(),
+  size: z.union([z.number(), z.string()]).optional(),
   required: z.union([z.boolean(), z.string()]).optional(),
   info: z.string().nullable().optional(),
   placeholder: z.string().nullable().optional(), // fixed typo from 'placehoder'

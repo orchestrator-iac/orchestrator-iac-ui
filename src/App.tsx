@@ -26,6 +26,9 @@ import Profile from "./components/auth/profile/Profile";
 import ConfirmEmail from "./components/auth/ConfirmEmail";
 import NotFound from "./components/shared/NotFound";
 import ResendEmailForm from "./components/auth/ResendEmailForm";
+import NightSky from "./components/shared/night-sky/NightSky";
+import BlackHoleDemo from "./components/shared/black-hole/BlackHoleDemo";
+import UpdatePassword from "./components/auth/login/UpdatePassword";
 
 
 // Add FontAwesome icon packs
@@ -50,6 +53,18 @@ const router = createBrowserRouter([
       {
         path: "/confirm",
         element: <ConfirmEmail />,
+      },
+      {
+        path: "/night-sky",
+        element: <NightSky />,
+      },
+      {
+        path: "/black-hole",
+        element: <BlackHoleDemo />,
+      },
+      {
+        path: "/update-password",
+        element: <UpdatePassword />,
       },
       {
         path: "/email-verification/:type",
