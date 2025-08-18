@@ -36,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
 
   const toggleDrawer = () => setOpen(!open);
   const dispatch = useDispatch<AppDispatch>();
-  const { resources } = useSelector((state: RootState) => state.home);
+  const { resources, resourcesStatus } = useSelector((state: RootState) => state.home);
 
   const [, setId] = useDnD();
 
@@ -49,12 +49,10 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   };
 
   useEffect(() => {
-    dispatch(fetchResources());
-  }, [dispatch]);
-
-  useEffect(() => {
-    console.log(resources);
-  }, [resources]);
+    if (resourcesStatus === 'idle') {
+      dispatch(fetchResources());
+    }
+  }, [dispatch, resourcesStatus]);
 
   return (
     <>

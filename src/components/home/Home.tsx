@@ -30,7 +30,6 @@ interface CardLogoProps {
 
 const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className }) => {
   const logoSrc = logoMap[cloudType];
-
   return <img src={logoSrc} alt={`${cloudType} logo`} className={className} />;
 };
 
@@ -38,15 +37,27 @@ const Home: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { customWrappers, allWrappers, resources } = useSelector(
-    (state: RootState) => state.home
-  );
+
+  const {
+    customWrappers,
+    allWrappers,
+    resources,
+    customWrappersStatus,
+    allWrappersStatus,
+    resourcesStatus,
+  } = useSelector((state: RootState) => state.home);
 
   useEffect(() => {
-    dispatch(fetchCustomWrappers());
-    dispatch(fetchAllWrappers());
-    dispatch(fetchResources());
-  }, [dispatch]);
+    if (customWrappersStatus === "idle") {
+      dispatch(fetchCustomWrappers());
+    }
+    if (allWrappersStatus === "idle") {
+      dispatch(fetchAllWrappers());
+    }
+    if (resourcesStatus === "idle") {
+      dispatch(fetchResources());
+    }
+  }, [dispatch, customWrappersStatus, allWrappersStatus, resourcesStatus]);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
@@ -91,7 +102,10 @@ const Home: React.FC = () => {
 
       <h3 className={styles.wrapperHeader}>Templates</h3>
       <div className={styles.cardList}>
-        <Box className={styles.card} onClick={() => navigateTemplates(undefined)}>
+        <Box
+          className={styles.card}
+          onClick={() => navigateTemplates(undefined)}
+        >
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
             <p className={styles.cardDescription}>Blank Template</p>
@@ -122,7 +136,10 @@ const Home: React.FC = () => {
 
       <h3 className={styles.wrapperHeader}>Resource</h3>
       <div className={styles.cardList}>
-        <Box className={styles.card} onClick={() => navigateResource(undefined)}>
+        <Box
+          className={styles.card}
+          onClick={() => navigateResource(undefined)}
+        >
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
             <p className={styles.cardDescription}>New Resource</p>
@@ -139,10 +156,10 @@ const Home: React.FC = () => {
               className={styles.cloudTypeLogo}
             />
             <img
-                src={`${API_HOST_URL}${resource?.resourceIcon?.url}`}
-                alt={resource.label}
-                className={styles.cardImage}
-              />
+              src={`${API_HOST_URL}${resource?.resourceIcon?.url}`}
+              alt={resource.label}
+              className={styles.cardImage}
+            />
             <h2 className={styles.cardTitle}>
               <Link
                 to={`/resources/${resource._id}`}
