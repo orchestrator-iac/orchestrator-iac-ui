@@ -20,10 +20,9 @@ import {
 
 import { useDnD } from "./DnDContext";
 import { RootState, AppDispatch } from "../../../store";
-import { fetchResources } from "../../../store/homeSlice";
+import { fetchResources } from "../../../store/resourcesSlice";
 
 const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
-
 const drawerWidth = 240;
 
 interface SidebarProps {
@@ -33,10 +32,12 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   const theme = useTheme();
-
   const toggleDrawer = () => setOpen(!open);
+
   const dispatch = useDispatch<AppDispatch>();
-  const { resources, resourcesStatus } = useSelector((state: RootState) => state.home);
+  const { data: resources, status: resourcesStatus } = useSelector(
+    (state: RootState) => state.resources
+  );
 
   const [, setId] = useDnD();
 
@@ -49,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   };
 
   useEffect(() => {
-    if (resourcesStatus === 'idle') {
+    if (resourcesStatus === "idle") {
       dispatch(fetchResources());
     }
   }, [dispatch, resourcesStatus]);
@@ -125,12 +126,12 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
         <Divider />
 
         <List>
-          {resources.map((resource) => (
+          {resources.map((resource: any) => (
             <ListItemButton
-              key={resource.resourceName}
+              key={resource._id}
               sx={{ alignItems: "flex-start", py: 1.5 }}
               className="dndnode"
-              onDragStart={(event) => onDragStart(event, resource.resourceId)}
+              onDragStart={(event) => onDragStart(event, resource._id)}
               draggable
             >
               <Box

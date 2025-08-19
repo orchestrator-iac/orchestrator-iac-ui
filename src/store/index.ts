@@ -1,14 +1,17 @@
-// src/store/index.ts
 import { configureStore } from '@reduxjs/toolkit';
-import homeReducer from './homeSlice';
 import resourceReducer from './resourceSlice';
 import iconReducer from './iconsSlice';
+import customWrappersReducer from './customWrappersSlice';
+import wrappersTemplateReducer from './wrappersTemplateSlice';
+import resourcesReducer from './resourcesSlice';
 
 export const store = configureStore({
   reducer: {
-    home: homeReducer,
     resource: resourceReducer,
     icons: iconReducer,
+    customWrappers: customWrappersReducer,
+    wrappersTemplate: wrappersTemplateReducer,
+    resources: resourcesReducer,
   },
 });
 

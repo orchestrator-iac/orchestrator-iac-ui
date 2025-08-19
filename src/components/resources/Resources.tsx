@@ -1,4 +1,3 @@
-// Resources.tsx
 import React, { useEffect } from "react";
 import {
   Box,
@@ -15,7 +14,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
-import { fetchResourceById, clearResource } from "../../store/resourceSlice";
+import { fetchResourceById } from "../../store/resourceSlice";
 import { useForm, FormProvider } from "react-hook-form";
 
 import BasicInfo from "./basic_info/BasicInfo";
@@ -42,19 +41,12 @@ const Resources: React.FC = () => {
   const { user } = useAuth();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [snackbar, setSnackbar] = React.useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "error";
-  }>({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+
   const { resource_id } = useParams();
   const dispatch = useDispatch<AppDispatch>();
-  const resourceData = useSelector(
-    (state: RootState) => state.resource.resource
+
+  const resourceData = useSelector((state: RootState) =>
+    resource_id ? state.resource.resources[resource_id] : null
   );
 
   const [activeStep, setActiveStep] = React.useState(0);
@@ -80,6 +72,16 @@ const Resources: React.FC = () => {
       tfvars: "",
     });
   const [templateValid, setTemplateValid] = React.useState(true);
+  const [snackbar, setSnackbar] = React.useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   const methods = useForm({
     defaultValues: {
       resourceId: "",
@@ -99,6 +101,7 @@ const Resources: React.FC = () => {
 
   const { trigger } = methods;
 
+  // theme switch sync
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
   }, [theme.palette.mode]);
@@ -107,15 +110,11 @@ const Resources: React.FC = () => {
     if (resource_id && resource_id !== "new") {
       dispatch(fetchResourceById(resource_id));
     }
-
-    return () => {
-      dispatch(clearResource());
-    };
   }, [resource_id, dispatch]);
 
+  // set form + local state when resourceData is loaded
   useEffect(() => {
     if (resourceData) {
-      // Set form values
       methods.reset({
         resourceId: resourceData.resourceId || "",
         cloudProvider: resourceData.cloudProvider || "",
@@ -124,7 +123,7 @@ const Resources: React.FC = () => {
         resourceDescription: resourceData.resourceDescription || "",
         resourceIcon: resourceData.resourceIcon || {
           id: "",
-          url: ""
+          url: "",
         },
         terraformCorePath: resourceData.terraformCorePath || "",
         terraformTemplatePath: resourceData.terraformTemplatePath || "",
@@ -149,7 +148,7 @@ const Resources: React.FC = () => {
 
       setResourceNode(resourceData.resourceNode || null);
     }
-  }, [resourceData]);
+  }, [resourceData, methods]);
 
   const showSnackbar = (message: string, severity: "success" | "error") => {
     setSnackbar({ open: true, message, severity });

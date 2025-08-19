@@ -4,11 +4,10 @@ import { Box, useTheme } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../store";
-import {
-  fetchAllWrappers,
-  fetchCustomWrappers,
-  fetchResources,
-} from "../../store/homeSlice";
+
+import { fetchCustomWrappers } from "../../store/customWrappersSlice";
+import { fetchWrappersTemplate } from "../../store/wrappersTemplateSlice";
+import { fetchResources } from "../../store/resourcesSlice";
 
 import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
@@ -38,26 +37,31 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  const {
-    customWrappers,
-    allWrappers,
-    resources,
-    customWrappersStatus,
-    allWrappersStatus,
-    resourcesStatus,
-  } = useSelector((state: RootState) => state.home);
+  const { data: customWrappers, status: customWrappersStatus } = useSelector(
+    (state: RootState) => state.customWrappers
+  );
+  const { data: wrappersTemplate, status: wrappersTemplateStatus } =
+    useSelector((state: RootState) => state.wrappersTemplate);
+  const { data: resources, status: resourcesStatus } = useSelector(
+    (state: RootState) => state.resources
+  );
 
   useEffect(() => {
     if (customWrappersStatus === "idle") {
       dispatch(fetchCustomWrappers());
     }
-    if (allWrappersStatus === "idle") {
-      dispatch(fetchAllWrappers());
+    if (wrappersTemplateStatus === "idle") {
+      dispatch(fetchWrappersTemplate());
     }
     if (resourcesStatus === "idle") {
       dispatch(fetchResources());
     }
-  }, [dispatch, customWrappersStatus, allWrappersStatus, resourcesStatus]);
+  }, [
+    dispatch,
+    customWrappersStatus,
+    wrappersTemplateStatus,
+    resourcesStatus,
+  ]);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
@@ -102,44 +106,36 @@ const Home: React.FC = () => {
 
       <h3 className={styles.wrapperHeader}>Templates</h3>
       <div className={styles.cardList}>
-        <Box
-          className={styles.card}
-          onClick={() => navigateTemplates(undefined)}
-        >
+        <Box className={styles.card} onClick={() => navigateTemplates(undefined)}>
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
             <p className={styles.cardDescription}>Blank Template</p>
           </div>
         </Box>
-        {allWrappers.map((card) => (
+        {wrappersTemplate.map((card) => (
           <Box
             key={card._id}
             className={styles.card}
             onClick={() => navigateTemplates(card._id)}
           >
-            <div key={card.template_id} className={styles.card}>
-              <CardLogo
-                cloudType={card.cloud_type}
-                className={styles.cloudTypeLogo}
-              />
-              <img
-                src={card?.resourceIcon?.url}
-                alt={card.label}
-                className={styles.cardImage}
-              />
-              <h3 className={styles.cardTitle}>{card.label}</h3>
-              <p className={styles.cardDescription}>{card.description}</p>
-            </div>
+            <CardLogo
+              cloudType={card.cloud_type}
+              className={styles.cloudTypeLogo}
+            />
+            <img
+              src={card?.resourceIcon?.url}
+              alt={card.label}
+              className={styles.cardImage}
+            />
+            <h3 className={styles.cardTitle}>{card.label}</h3>
+            <p className={styles.cardDescription}>{card.description}</p>
           </Box>
         ))}
       </div>
 
       <h3 className={styles.wrapperHeader}>Resource</h3>
       <div className={styles.cardList}>
-        <Box
-          className={styles.card}
-          onClick={() => navigateResource(undefined)}
-        >
+        <Box className={styles.card} onClick={() => navigateResource(undefined)}>
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
             <p className={styles.cardDescription}>New Resource</p>
@@ -157,7 +153,7 @@ const Home: React.FC = () => {
             />
             <img
               src={`${API_HOST_URL}${resource?.resourceIcon?.url}`}
-              alt={resource.label}
+              alt={resource.resourceName}
               className={styles.cardImage}
             />
             <h2 className={styles.cardTitle}>

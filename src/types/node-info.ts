@@ -6,16 +6,16 @@ export interface NodeInfo {
 
 export interface NodeData {
   header: Header;
-  fields: Array<FieldGroup>; // Using Array<Type> is a common way to denote arrays of a specific type.
+  fields: Array<FieldGroup>;
   footer: Footer;
   handles: Array<Handle>;
   values: {
-    [x: string]: any; // This allows for dynamic keys where the value can be of any type.
+    [x: string]: any;
   };
 }
 
 export interface Header {
-  icon?: string; // Properties can be made optional using the '?' operator.
+  icon?: string;
   label: string;
   sub_label?: string;
   info?: string;
@@ -26,7 +26,7 @@ export interface FieldGroup {
   sub_label?: string;
   info?: string;
   type: string;
-  fields: Array<Field>;
+  fields?: Array<Field>;
 }
 
 export interface Field {
@@ -38,18 +38,25 @@ export interface Field {
   value?: any;
   hint?: string;
   error_text?: string;
-  size?: number;
-  required?: boolean | string; // Using a union type `boolean | string` allows the property to be either a boolean or a string
+  size?: number | string;
+  required?: boolean | string;
   info?: string;
   placeholder?: string;
   options?: Array<Option>;
+  disabled?: boolean;
+  config?: FieldConfig;
 }
 
 export interface Option {
   label: string;
   sub_label?: string;
-  value?: string;
+  value?: any;
   disabled?: boolean;
+  name?: string;
+}
+
+export interface FieldConfig {
+  [key: string]: any;
 }
 
 export interface Footer {

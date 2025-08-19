@@ -12,23 +12,28 @@ import {
   Node,
   Edge,
 } from "@xyflow/react";
+import { useDispatch } from "react-redux";
 import ELK from "elkjs/lib/elk.bundled.js";
 import { useParams, useSearchParams } from "react-router-dom";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
+import { useTheme } from "@mui/material/styles";
+import { Box } from "@mui/material";
+
 import apiService from "./../../services/apiService";
 import CustomNode from "./CustomNode";
 import { components } from "./../../initial-elements";
-import { useTheme } from "@mui/material/styles";
 
-import { Box } from "@mui/material";
 import Sidebar from "./sidebar/Sidebar";
 import { useDnD } from "./sidebar/DnDContext";
+
+import { AppDispatch } from "../../store";
+import { fetchResourceById } from "../../store/resourceSlice";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 const elk = new ELK();
 
-const useLayoutedElements = () => {
+const useLayoutElements = () => {
   const { getNodes, setNodes, getEdges, fitView } = useReactFlow();
 
   const defaultOptions = {
@@ -37,7 +42,7 @@ const useLayoutedElements = () => {
     "elk.spacing.nodeNode": 80,
   };
 
-  const getLayoutedElements = useCallback(
+  const getLayoutElements = useCallback(
     (options = {}) => {
       const layoutOptions = { ...defaultOptions, ...options };
 
@@ -66,11 +71,12 @@ const useLayoutedElements = () => {
     [getNodes, getEdges, setNodes, fitView]
   );
 
-  return { getLayoutedElements };
+  return { getLayoutElements };
 };
 
 const OrchestratorReactFlow: React.FC = () => {
   const theme = useTheme();
+  const dispatch = useDispatch<AppDispatch>();
   const { template_id } = useParams<{ template_id: string }>();
   const [searchParams] = useSearchParams();
   const template_type = searchParams.get("template_type");
@@ -78,24 +84,58 @@ const OrchestratorReactFlow: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { getLayoutedElements } = useLayoutedElements();
+  const { getLayoutElements } = useLayoutElements();
   const drawerWidth = 240;
   const { fitView, screenToFlowPosition } = useReactFlow();
   const [id] = useDnD();
 
-  // Dummy handlers to avoid errors
-  const onDrop = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    console.log("onDrop");
-    if (!id) {
-      return;
-    }
-    console.log(id)
-    const node = components?.[id]
-    node["id"] = `${id}-${uuidv4()}`
-    node["position"] = { x: 100, y: 100 }
-    setNodes((nds) => nds.concat(node));
-  }, [screenToFlowPosition, id]);
+  // const onDrop = useCallback(
+  //   (event: React.DragEvent) => {
+  //     event.preventDefault();
+  //     console.log("onDrop");
+  //     if (!id) {
+  //       return;
+  //     }
+  //     console.log(id);
+  //     const node = components?.[id];
+  //     node["id"] = `${id}-${uuidv4()}`;
+  //     node["position"] = { x: 100, y: 100 };
+  //     setNodes((nds) => nds.concat(node));
+  //   },
+  //   [screenToFlowPosition, id]
+  // );
+
+  const onDrop = useCallback(
+    async (event: React.DragEvent) => {
+      event.preventDefault();
+      if (!id) return;
+
+      console.log("Dropped id:", id);
+
+      const resultAction = await dispatch(fetchResourceById(id));
+
+      if (fetchResourceById.fulfilled.match(resultAction)) {
+        const resourceData = resultAction.payload;
+        const newNode = {
+          ...resourceData?.data?.resourceNode,
+          id: `${id}-${uuidv4()}`,
+          position: { x: 100, y: 100 },
+        };
+
+        setNodes((nds) => nds.concat(newNode));
+
+        setTimeout(() => {
+          getLayoutElements({
+            "elk.algorithm": "layered",
+            "elk.direction": "DOWN",
+          });
+        }, 100);
+      } else {
+        console.error("Failed to fetch resource", resultAction.error);
+      }
+    },
+    [id, setNodes, dispatch, getLayoutElements, screenToFlowPosition]
+  );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -136,13 +176,13 @@ const OrchestratorReactFlow: React.FC = () => {
         setEdges(wrapperData?.edges ?? []);
 
         setTimeout(() => {
-          getLayoutedElements({
+          getLayoutElements({
             "elk.algorithm": "layered",
             "elk.direction": "DOWN",
           });
         }, 100);
       });
-  }, [template_id, template_type, setNodes, setEdges, getLayoutedElements]);
+  }, [template_id, template_type, setNodes, setEdges, getLayoutElements]);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
