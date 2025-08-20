@@ -1,3 +1,4 @@
+import { HandleType, Position } from "@xyflow/react";
 import { z } from "zod";
 
 export const OptionSchema = z.object({
@@ -48,8 +49,8 @@ export const FooterSchema = z.object({
 });
 
 export const HandleSchema = z.object({
-  position: z.string(),
-  type: z.string(),
+  position: z.enum(Position),
+  type: z.string() as z.ZodType<HandleType>,
 });
 
 export const NodeDataSchema = z.object({

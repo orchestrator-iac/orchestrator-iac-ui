@@ -11,9 +11,11 @@ import {
   useReactFlow,
   Node,
   Edge,
+  ConnectionMode,
+  MarkerType,
 } from "@xyflow/react";
 import { useDispatch } from "react-redux";
-import ELK from "elkjs/lib/elk.bundled.js";
+import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
 import { useParams, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { useTheme } from "@mui/material/styles";
@@ -32,41 +34,56 @@ import { fetchResourceById } from "../../store/resourceSlice";
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 const elk = new ELK();
+const defaultOptions: Record<string, string> = {
+  "elk.algorithm": "layered",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "100",
+  "elk.spacing.nodeNode": "80",
+};
 
 const useLayoutElements = () => {
   const { getNodes, setNodes, getEdges, fitView } = useReactFlow();
 
-  const defaultOptions = {
-    "elk.algorithm": "layered",
-    "elk.layered.spacing.nodeNodeBetweenLayers": 100,
-    "elk.spacing.nodeNode": 80,
-  };
-
   const getLayoutElements = useCallback(
-    (options = {}) => {
+    async (options: Record<string, string> = {}) => {
       const layoutOptions = { ...defaultOptions, ...options };
 
-      const graph = {
+      const nodes = getNodes();
+      const edges = getEdges();
+
+      const graph: ElkNode = {
         id: "root",
         layoutOptions,
-        children: getNodes().map((node) => ({
-          ...node,
-          width: 180,
-          height: 40,
+        children: nodes.map((node) => ({
+          id: node.id,
+          width: node.width || 450,
+          height: node.height || 500,
         })),
-        edges: getEdges(),
+        edges: edges.map((edge) => ({
+          id: edge.id,
+          sources: [edge.source],
+          targets: [edge.target],
+        })),
       };
 
-      elk.layout(graph).then(({ children }) => {
-        children.forEach((node) => {
-          node.position = { x: node.x, y: node.y };
+      try {
+        const { children } = await elk.layout(graph);
+
+        const layoutedNodes = nodes.map((node) => {
+          const elkNode = children?.find((n) => n.id === node.id);
+          return {
+            ...node,
+            position: {
+              x: elkNode?.x ?? node.position.x,
+              y: elkNode?.y ?? node.position.y,
+            },
+          };
         });
 
-        setNodes(children);
-        window.requestAnimationFrame(() => {
-          fitView();
-        });
-      });
+        setNodes(layoutedNodes);
+        requestAnimationFrame(() => fitView({ padding: 0.2 }));
+      } catch (err) {
+        console.error("ELK layout error:", err);
+      }
     },
     [getNodes, getEdges, setNodes, fitView]
   );
@@ -89,28 +106,10 @@ const OrchestratorReactFlow: React.FC = () => {
   const { fitView, screenToFlowPosition } = useReactFlow();
   const [id] = useDnD();
 
-  // const onDrop = useCallback(
-  //   (event: React.DragEvent) => {
-  //     event.preventDefault();
-  //     console.log("onDrop");
-  //     if (!id) {
-  //       return;
-  //     }
-  //     console.log(id);
-  //     const node = components?.[id];
-  //     node["id"] = `${id}-${uuidv4()}`;
-  //     node["position"] = { x: 100, y: 100 };
-  //     setNodes((nds) => nds.concat(node));
-  //   },
-  //   [screenToFlowPosition, id]
-  // );
-
   const onDrop = useCallback(
     async (event: React.DragEvent) => {
       event.preventDefault();
       if (!id) return;
-
-      console.log("Dropped id:", id);
 
       const resultAction = await dispatch(fetchResourceById(id));
 
@@ -127,7 +126,7 @@ const OrchestratorReactFlow: React.FC = () => {
         setTimeout(() => {
           getLayoutElements({
             "elk.algorithm": "layered",
-            "elk.direction": "DOWN",
+            "elk.direction": "RIGHT",
           });
         }, 100);
       } else {
@@ -139,7 +138,6 @@ const OrchestratorReactFlow: React.FC = () => {
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    console.log("onDragOver");
     event.dataTransfer.dropEffect = "move";
   }, []);
 
@@ -178,14 +176,23 @@ const OrchestratorReactFlow: React.FC = () => {
         setTimeout(() => {
           getLayoutElements({
             "elk.algorithm": "layered",
-            "elk.direction": "DOWN",
+            "elk.direction": "RIGHT",
           });
         }, 100);
       });
   }, [template_id, template_type, setNodes, setEdges, getLayoutElements]);
 
   const onConnect = useCallback(
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
+    (params: any) =>
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            markerEnd: { type: MarkerType.ArrowClosed },
+          },
+          eds
+        )
+      ),
     [setEdges]
   );
 
@@ -218,10 +225,18 @@ const OrchestratorReactFlow: React.FC = () => {
           proOptions={{ hideAttribution: true }}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          connectionMode={ConnectionMode.Loose}
           fitView
         >
           <Background />
-          <Controls />
+          <Controls
+            onFitView={() =>
+              getLayoutElements({
+                "elk.algorithm": "layered",
+                "elk.direction": "RIGHT",
+              })
+            }
+          />
           <MiniMap nodeStrokeWidth={3} zoomable pannable />
         </ReactFlow>
       </Box>

@@ -4,16 +4,23 @@ import {
   AccordionSummary,
   AccordionDetails,
   Tooltip,
+  useTheme,
+  Box,
+  Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import parse from "html-react-parser";
 import DynamicForm from "./DynamicForm";
 import { NodeData } from "../../types/node-info";
+import { Handle } from "@xyflow/react";
 
 type CustomNodeProps = {
   data: NodeData;
+  isOrchestrator?: boolean;
 };
 
-const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
+const CustomNode: React.FC<CustomNodeProps> = ({ data, isOrchestrator = true }) => {
+  const theme = useTheme();
   const [iconSrc, setIconSrc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,14 +31,15 @@ const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
     }
   }, [data?.header?.icon]);
 
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
+  const renderInfo = (info?: string | JSX.Element) => {
+    if (!info) return null;
+    return typeof info === "string" ? parse(info) : info;
+  };
 
   return (
     <Accordion
       sx={{
-        boxShadow: "0 0 3px #c4c4c4",
+        boxShadow: `0 0 3px ${theme.palette.background.paper}`,
         width: "400px",
       }}
       defaultExpanded
@@ -39,7 +47,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         sx={{
-          borderBottom: "1px solid #f4f4f4",
+          borderBottom: `1px solid ${theme.palette.background.paper}`,
         }}
       >
         {iconSrc && (
@@ -47,72 +55,87 @@ const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
             src={iconSrc}
             alt={data?.header?.label}
             style={{
-              boxShadow: "0 0 3px #000",
+              boxShadow: "0 0 3px ",
               borderRadius: "16px",
               marginRight: "16px",
               height: "48px",
             }}
           />
         )}
-        <div>
-          <div style={{ fontSize: "1.25rem", fontWeight: "bold" }}>
+        <Box>
+          <Box style={{ fontSize: "1.25rem", fontWeight: "bold" }}>
             {data?.header?.label}
             {data?.header?.info && (
               <Tooltip
                 title={
-                  <div
+                  <Box
                     style={{
                       maxHeight: "200px",
                       overflowY: "auto",
                       padding: "10px",
                     }}
                   >
-                    {data?.header?.info}
-                  </div>
+                    {renderInfo(data?.header?.info)}
+                  </Box>
                 }
                 arrow
                 placement="top"
-                sx={{
-                  "& .MuiTooltip-tooltip": {
-                    backgroundColor: "#333",
-                    color: "#fff",
-                    fontSize: "1rem",
-                    borderRadius: "8px",
-                    maxHeight: "200px",
-                    overflowY: "auto",
-                  },
-                  "& .MuiTooltip-arrow": {
-                    color: "#333",
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      bgcolor: theme.palette.background.paper,
+                      color: theme.palette.textVariants.text1,
+                      "& .MuiTooltip-arrow": {
+                        color: theme.palette.background.paper,
+                      },
+                    },
                   },
                 }}
               >
-                <strong
-                  style={{
-                    fontSize: ".8rem",
+                <Typography
+                  component="strong"
+                  sx={{
+                    fontSize: "0.8rem",
                     fontWeight: "bolder",
-                    color: "#007BFF",
-                    margin: "0 .8rem",
-                    marginBottom: "3px",
+                    color: "primary.main",
+                    mx: "0.8rem",
+                    mb: "3px",
+                    cursor: "pointer",
                   }}
                 >
                   info
-                </strong>
+                </Typography>
               </Tooltip>
             )}
-          </div>
+          </Box>
           {data?.header?.sub_label && (
-            <div
+            <Box
               style={{
                 fontSize: "0.8rem",
                 color: "#777",
               }}
             >
               {data?.header?.sub_label}
-            </div>
+            </Box>
           )}
-        </div>
+        </Box>
+        {isOrchestrator && data?.handles?.length > 0 &&
+          data?.handles?.map((handle) => (
+            <Handle
+              key={handle?.type}
+              type={handle?.type}
+              position={handle?.position}
+              style={{
+                width: 10,
+                height: 15,
+                borderRadius: "15%",
+              }}
+              isConnectable={true}
+            />
+          ))}
       </AccordionSummary>
       <AccordionDetails
+        className="nowheel"
         sx={{
           maxHeight: "calc(100vh - 300px)",
           overflowY: "auto",

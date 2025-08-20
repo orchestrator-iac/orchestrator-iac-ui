@@ -108,11 +108,10 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
         valueToSuggest = valueToSuggest.replace(
           /\}$/,
           " ".repeat(spaces - 2) + "}"
-        ); // Add indentation for closing brace
+        );
       } else {
-        valueToSuggest = `"${current[key]}"`; // Otherwise, keep it as a string literal
+        valueToSuggest = `"${current[key]}"`;
       }
-      console.log("key", key, "valueToSuggest", valueToSuggest);
       return {
         caption: key,
         value: `"${key}": ${valueToSuggest}`,
@@ -192,7 +191,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
                 }}
               >
                 {hasData ? (
-                  <CustomNode data={resourceNode.data} />
+                  <CustomNode data={resourceNode.data} isOrchestrator={false} />
                 ) : (
                   <Box textAlign="center">
                     <Typography variant="body1" color="error" fontWeight="bold">

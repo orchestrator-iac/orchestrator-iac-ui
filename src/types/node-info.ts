@@ -1,3 +1,5 @@
+import { HandleType, Position } from "@xyflow/react";
+
 export interface NodeInfo {
   type: string;
   component_name: string;
@@ -64,6 +66,6 @@ export interface Footer {
 }
 
 export interface Handle {
-  position: string;
-  type: string;
+  position: Position;
+  type: HandleType;
 }
