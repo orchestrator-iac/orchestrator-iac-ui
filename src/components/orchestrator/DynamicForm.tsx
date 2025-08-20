@@ -15,6 +15,7 @@ import {
   Typography,
   Box,
   useTheme,
+  Checkbox,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -120,6 +121,79 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
             </Select>
           </FormControl>
         );
+
+      case "checkbox": {
+        const handleCheckboxChange = (
+          fieldName: string,
+          optionValue: string,
+          checked: boolean
+        ) => {
+          const currentValues: string[] = formData[fieldName] ?? value ?? [];
+          let updatedValues = [...currentValues];
+
+          if (checked) {
+            updatedValues.push(optionValue);
+          } else {
+            updatedValues = updatedValues.filter((v) => v !== optionValue);
+          }
+
+          handleChange(fieldName, updatedValues);
+        };
+
+        return (
+          <FormControl fullWidth required={!!required}>
+            {options && options.length > 0 ? (
+              options.map((option) => {
+                const currentValues: string[] = formData[name] ?? value ?? [];
+                return (
+                  <FormControlLabel
+                    key={option.value}
+                    control={
+                      <Checkbox
+                        checked={currentValues.includes(option.value)}
+                        onChange={(e) =>
+                          handleCheckboxChange(
+                            name,
+                            option.value,
+                            e.target.checked
+                          )
+                        }
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">
+                          {option.label}
+                        </Typography>
+                        {option.sub_label && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                          >
+                            {option.sub_label}
+                          </Typography>
+                        )}
+                      </Box>
+                    }
+                    disabled={option.disabled}
+                  />
+                );
+              })
+            ) : (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData[name] ?? value ?? false}
+                    onChange={(e) => handleChange(name, e.target.checked)}
+                  />
+                }
+                label={placeholder || name}
+              />
+            )}
+          </FormControl>
+        );
+      }
 
       case "list<key-value>":
         return (
