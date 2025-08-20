@@ -1,7 +1,7 @@
 // TerraformTemplateTabs.tsx
 import { Box, Tab, Tabs, Typography } from "@mui/material";
 import React from "react";
-import CodeEditor from "../../shared/code_editor/CodeEditor";
+import CodeEditor from "../../shared/code-editor/CodeEditor";
 import { useThemeContext } from "../../shared/theme/useThemeContext";
 
 export interface TerraformTemplateData {

@@ -41,7 +41,7 @@ export interface Field {
   hint?: string;
   error_text?: string;
   size?: number | string;
-  required?: boolean | string;
+  required?: boolean;
   info?: string;
   placeholder?: string;
   options?: Array<Option>;

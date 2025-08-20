@@ -3,7 +3,7 @@ import { Box, Tab, Tabs } from "@mui/material";
 import React from "react";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
-import CodeEditor from "../../shared/code_editor/CodeEditor";
+import CodeEditor from "../../shared/code-editor/CodeEditor";
 import { useThemeContext } from "../../shared/theme/useThemeContext";
 
 export type TerraformFileType = {

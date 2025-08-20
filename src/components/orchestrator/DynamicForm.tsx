@@ -20,8 +20,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import parse from "html-react-parser";
 import { Field, FieldGroup } from "../../types/node-info";
-import CodeEditor from "../shared/code_editor/CodeEditor";
-import { useThemeContext } from "../shared/theme/useThemeContext";
+import { CodeEditorField } from "../shared/code-editor/CodeEditorField";
 
 type Values = {
   [x: string]: any;
@@ -34,7 +33,6 @@ type Props = {
 
 const DynamicForm: React.FC<Props> = ({ config, values }) => {
   const theme = useTheme();
-  const { mode } = useThemeContext();
   const [formData, setFormData] = useState<Record<string, any>>({});
 
   const handleChange = (name: string, value: any) => {
@@ -193,6 +191,16 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
           </>
         );
 
+      case "code-editor":
+        return (
+          <CodeEditorField
+            value={value}
+            placeholder={placeholder}
+            errorMessage={error_text}
+            required={required}
+          />
+        );
+
       default:
         return null;
     }
@@ -228,10 +236,10 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
                 componentsProps={{
                   tooltip: {
                     sx: {
-                      bgcolor: theme.palette.background.paper, // Set your desired background color here
-                      color: theme.palette.textVariants.text1, // Optional: Change text color for contrast
+                      bgcolor: theme.palette.background.paper,
+                      color: theme.palette.textVariants.text1,
                       "& .MuiTooltip-arrow": {
-                        color: theme.palette.background.paper, // Optional: Match arrow color to background
+                        color: theme.palette.background.paper,
                       },
                     },
                   },
@@ -285,10 +293,10 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
                               componentsProps={{
                                 tooltip: {
                                   sx: {
-                                    bgcolor: theme.palette.background.paper, // Set your desired background color here
-                                    color: theme.palette.textVariants.text1, // Optional: Change text color for contrast
+                                    bgcolor: theme.palette.background.paper,
+                                    color: theme.palette.textVariants.text1,
                                     "& .MuiTooltip-arrow": {
-                                      color: theme.palette.background.paper, // Optional: Match arrow color to background
+                                      color: theme.palette.background.paper,
                                     },
                                   },
                                 },

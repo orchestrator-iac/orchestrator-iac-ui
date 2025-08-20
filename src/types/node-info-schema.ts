@@ -21,7 +21,7 @@ export const FieldSchema = z.object({
   hint: z.string().nullable().optional(),
   error_text: z.string().nullable().optional(),
   size: z.union([z.number(), z.string()]).nullable().optional(),
-  required: z.union([z.boolean(), z.string()]).nullable().optional(),
+  required: z.boolean().nullable().optional(),
   info: z.string().nullable().optional(),
   placeholder: z.string().nullable().optional(),
   options: z.array(OptionSchema).nullable().optional(),
