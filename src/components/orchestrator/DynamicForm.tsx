@@ -106,6 +106,7 @@ const DynamicForm: React.FC<Props> = ({ config, values }) => {
         return (
           <FormControl fullWidth required={!!required}>
             <Select
+              className="nodrag"
               value={formData[name] ?? value ?? ""}
               onChange={(e) => handleChange(name, e.target.value)}
             >

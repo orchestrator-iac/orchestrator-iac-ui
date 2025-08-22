@@ -60,9 +60,9 @@
 
 .cardImage {
   width: 100%;
-  min-height: 150px;
-  max-height: 150px;
-  object-fit: cover;
+  min-height: 220px;
+  max-height: 220px;
+  object-fit: contain;
   opacity: 0.7;
   transition: opacity 0.1s ease 0.1s;
 }

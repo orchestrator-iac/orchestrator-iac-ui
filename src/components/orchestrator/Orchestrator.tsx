@@ -13,13 +13,17 @@ import {
   Edge,
   ConnectionMode,
   MarkerType,
+  Panel,
 } from "@xyflow/react";
 import { useDispatch } from "react-redux";
 import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
 import { useParams, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { useTheme } from "@mui/material/styles";
-import { Box } from "@mui/material";
+import DeblurIcon from "@mui/icons-material/Deblur";
+import CloudCircleIcon from "@mui/icons-material/CloudCircle";
+import SouthAmericaIcon from "@mui/icons-material/SouthAmerica";
+import { Box, Chip } from "@mui/material";
 
 import apiService from "./../../services/apiService";
 import CustomNode from "./CustomNode";
@@ -30,6 +34,9 @@ import { useDnD } from "./sidebar/DnDContext";
 
 import { AppDispatch } from "../../store";
 import { fetchResourceById } from "../../store/resourceSlice";
+import InitPopup from "./orchestrator-info/InitPopup";
+import { useAuth } from "../../context/AuthContext";
+import { CloudConfig } from "../../types/clouds-info";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -55,8 +62,8 @@ const useLayoutElements = () => {
         layoutOptions,
         children: nodes.map((node) => ({
           id: node.id,
-          width: node.width || 450,
-          height: node.height || 500,
+          width: node.measured.width || 450,
+          height: node.measured.height || 500,
         })),
         edges: edges.map((edge) => ({
           id: edge.id,
@@ -92,19 +99,31 @@ const useLayoutElements = () => {
 };
 
 const OrchestratorReactFlow: React.FC = () => {
+  const { user } = useAuth();
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
   const { template_id } = useParams<{ template_id: string }>();
+  const { getLayoutElements } = useLayoutElements();
+  const { fitView, screenToFlowPosition } = useReactFlow();
   const [searchParams] = useSearchParams();
   const template_type = searchParams.get("template_type");
-
+  const [id] = useDnD();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { getLayoutElements } = useLayoutElements();
+  const [initOpen, setInitOpen] = useState(true);
+  const [templateInfo, setTemplateInfo] = useState<CloudConfig>({
+    templateName: "",
+    cloud: "aws",
+    region: "",
+  });
+
   const drawerWidth = 240;
-  const { fitView, screenToFlowPosition } = useReactFlow();
-  const [id] = useDnD();
+
+  const handleInitSubmit = (data: any) => {
+    setTemplateInfo(data);
+    setInitOpen(false);
+  };
 
   const onDrop = useCallback(
     async (event: React.DragEvent) => {
@@ -115,11 +134,25 @@ const OrchestratorReactFlow: React.FC = () => {
 
       if (fetchResourceById.fulfilled.match(resultAction)) {
         const resourceData = resultAction.payload;
-        const newNode = {
+        let newNode = {
           ...resourceData?.data?.resourceNode,
           id: `${id}-${uuidv4()}`,
           position: { x: 100, y: 100 },
         };
+        if (newNode?.data?.header) {
+          newNode = {
+            ...newNode,
+            data: {
+              ...newNode.data,
+              header: {
+                ...newNode.data.header,
+                icon: resourceData?.data?.resourceIcon?.url,
+              },
+              templateInfo: templateInfo,
+              userInfo: user,
+            },
+          };
+        }
 
         setNodes((nds) => nds.concat(newNode));
 
@@ -206,7 +239,9 @@ const OrchestratorReactFlow: React.FC = () => {
         color: theme.palette.text.primary,
       }}
     >
-      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      {templateInfo?.cloud && (
+        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      )}
       <Box
         sx={{
           flexGrow: 1,
@@ -228,6 +263,43 @@ const OrchestratorReactFlow: React.FC = () => {
           connectionMode={ConnectionMode.Loose}
           fitView
         >
+          <Panel>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                margin: "10px 20px",
+              }}
+            >
+              {templateInfo?.templateName && (
+                <Chip
+                  icon={<DeblurIcon />}
+                  label={templateInfo?.templateName}
+                  onClick={() => {
+                    setInitOpen(true);
+                  }}
+                />
+              )}
+              {templateInfo?.cloud && (
+                <Chip
+                  icon={<CloudCircleIcon />}
+                  label={templateInfo?.cloud.toUpperCase()}
+                  onClick={() => {
+                    setInitOpen(true);
+                  }}
+                />
+              )}
+              {templateInfo?.region && (
+                <Chip
+                  icon={<SouthAmericaIcon />}
+                  label={templateInfo?.region}
+                  onClick={() => {
+                    setInitOpen(true);
+                  }}
+                />
+              )}
+            </Box>
+          </Panel>
           <Background />
           <Controls
             onFitView={() =>
@@ -240,6 +312,17 @@ const OrchestratorReactFlow: React.FC = () => {
           <MiniMap nodeStrokeWidth={3} zoomable pannable />
         </ReactFlow>
       </Box>
+      <InitPopup
+        open={initOpen}
+        onClose={() => setInitOpen(false)}
+        onSubmit={handleInitSubmit}
+      />
+
+      <InitPopup
+        open={initOpen}
+        onClose={() => setInitOpen(false)}
+        onSubmit={handleInitSubmit}
+      />
     </Box>
   );
 };

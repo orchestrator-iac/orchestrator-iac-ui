@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
           position: "fixed",
           top: "110px",
           left: open ? "223px" : "16px",
-          zIndex: 1301,
+          zIndex: 101,
           width: 36,
           height: 36,
           borderRadius: "50%",
@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
             boxSizing: "border-box",
             display: open ? "flex" : "none",
             flexDirection: "column",
-            zIndex: 1300,
+            zIndex: 100,
           },
         }}
       >

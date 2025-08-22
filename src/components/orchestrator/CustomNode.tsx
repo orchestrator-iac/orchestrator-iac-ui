@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Accordion,
   AccordionSummary,
@@ -8,28 +8,24 @@ import {
   Box,
   Typography,
 } from "@mui/material";
+import { Handle } from "@xyflow/react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import parse from "html-react-parser";
 import DynamicForm from "./DynamicForm";
 import { NodeData } from "../../types/node-info";
-import { Handle } from "@xyflow/react";
+
+const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
 type CustomNodeProps = {
   data: NodeData;
   isOrchestrator?: boolean;
 };
 
-const CustomNode: React.FC<CustomNodeProps> = ({ data, isOrchestrator = true }) => {
+const CustomNode: React.FC<CustomNodeProps> = ({
+  data,
+  isOrchestrator = true,
+}) => {
   const theme = useTheme();
-  const [iconSrc, setIconSrc] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (data?.header?.icon) {
-      import(`./../../assets/${data?.header?.icon}.svg`)
-        .then((module) => setIconSrc(module.default))
-        .catch((err) => console.error("Error loading image:", err));
-    }
-  }, [data?.header?.icon]);
 
   const renderInfo = (info?: string | JSX.Element) => {
     if (!info) return null;
@@ -50,15 +46,18 @@ const CustomNode: React.FC<CustomNodeProps> = ({ data, isOrchestrator = true }) 
           borderBottom: `1px solid ${theme.palette.background.paper}`,
         }}
       >
-        {iconSrc && (
-          <img
-            src={iconSrc}
-            alt={data?.header?.label}
-            style={{
-              boxShadow: "0 0 3px ",
-              borderRadius: "16px",
-              marginRight: "16px",
-              height: "48px",
+        {data?.header?.icon && (
+          <Box
+            component="img"
+            src={`${API_HOST_URL}${data?.header?.icon}`}
+            alt="Selected Icon"
+            sx={{
+              width: 50,
+              height: 50,
+              borderRadius: "8px",
+              mr: 2,
+              objectFit: "contain",
+              boxShadow: `0 0 2px ${theme.palette.secondary.main}`,
             }}
           />
         )}
@@ -119,7 +118,8 @@ const CustomNode: React.FC<CustomNodeProps> = ({ data, isOrchestrator = true }) 
             </Box>
           )}
         </Box>
-        {isOrchestrator && data?.handles?.length > 0 &&
+        {isOrchestrator &&
+          data?.handles?.length > 0 &&
           data?.handles?.map((handle) => (
             <Handle
               key={handle?.type}
