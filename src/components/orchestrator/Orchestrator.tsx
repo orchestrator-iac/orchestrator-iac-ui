@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -134,16 +134,24 @@ const OrchestratorReactFlow: React.FC = () => {
 
       if (fetchResourceById.fulfilled.match(resultAction)) {
         const resourceData = resultAction.payload;
-        let newNode = {
+
+        // base node coming from backend
+        let newNode: any = {
           ...resourceData?.data?.resourceNode,
           id: `${id}-${uuidv4()}`,
           position: { x: 100, y: 100 },
         };
+
+        // Preserve the domain/resource type BEFORE we override with renderer type
+        const resourceType = resourceData?.data?.resourceId;
+
         if (newNode?.data?.header) {
           newNode = {
             ...newNode,
             data: {
               ...newNode.data,
+              // 👇 preserve the actual resource type for rule checks
+              __nodeType: resourceType,
               header: {
                 ...newNode.data.header,
                 icon: resourceData?.data?.resourceIcon?.url,
@@ -153,6 +161,9 @@ const OrchestratorReactFlow: React.FC = () => {
             },
           };
         }
+
+        // Ensure renderer type remains "customNode"
+        newNode = { ...newNode, type: "customNode" };
 
         setNodes((nds) => nds.concat(newNode));
 
@@ -166,7 +177,15 @@ const OrchestratorReactFlow: React.FC = () => {
         console.error("Failed to fetch resource", resultAction.error);
       }
     },
-    [id, setNodes, dispatch, getLayoutElements, screenToFlowPosition]
+    [
+      id,
+      setNodes,
+      dispatch,
+      getLayoutElements,
+      screenToFlowPosition,
+      templateInfo,
+      user,
+    ]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -194,10 +213,19 @@ const OrchestratorReactFlow: React.FC = () => {
         if (wrapperData?.nodes) {
           const updatedNodes = wrapperData.nodes.map((node: any) => {
             const component = components?.[node.component_name];
+
+            // Preserve domain type on data.__nodeType for rule checks
+            const resourceType = node.type;
+
             return {
               ...node,
               ...(component ?? {}),
+              // renderer type (your component map may set this to "customNode")
               type: component ? component.type : "customNode",
+              data: {
+                ...node.data,
+                __nodeType: resourceType, // 👈 keep the real resource type here
+              },
             };
           });
 
@@ -215,18 +243,115 @@ const OrchestratorReactFlow: React.FC = () => {
       });
   }, [template_id, template_type, setNodes, setEdges, getLayoutElements]);
 
+  /**
+   * Schema-driven onConnect:
+   * - Reads target.data.links to determine if the connection is allowed
+   * - Uses source.data.__nodeType (fallback source.type) to match fromTypes
+   * - Enforces cardinality:
+   *    - "1": only one edge of that relation to the target (removes old)
+   *    - "many": allows multiple (avoids duplicates)
+   * - Mirrors the selected link into target.data.values[bind]
+   */
   const onConnect = useCallback(
-    (params: any) =>
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            markerEnd: { type: MarkerType.ArrowClosed },
+    (conn: any) => {
+      const source = nodes.find((n) => n.id === conn.source);
+      const target = nodes.find((n) => n.id === conn.target);
+      if (!source || !target) return;
+
+      const sourceType = (source.data as any)?.__nodeType ?? source.type;
+      const rules = (target.data as any)?.links ?? [];
+
+      const rule = rules.find(
+        (r: any) =>
+          Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType)
+      );
+      if (!rule) return; // disallow unrelated connections
+
+      const edgeKind = rule.edgeData?.kind ?? rule.bind;
+      const cardinality = (rule.cardinality ?? "1") as "1" | "many";
+
+      if (cardinality === "1") {
+        // remove existing edge(s) of this relation into this target
+        setEdges((eds) =>
+          eds.filter(
+            (e) =>
+              !(
+                e.target === target.id &&
+                (e.data?.kind ?? rule.bind) === edgeKind
+              )
+          )
+        );
+      } else {
+        // prevent duplicate edge for "many"
+        const exists = edges.some(
+          (e) =>
+            e.source === source.id &&
+            e.target === target.id &&
+            (e.data?.kind ?? rule.bind) === edgeKind
+        );
+        if (exists) return;
+      }
+
+      const newEdge: Edge = {
+        id: `${source.id}->${target.id}:${rule.bind}`,
+        source: source.id,
+        target: target.id,
+        data: rule.edgeData ?? { kind: rule.bind },
+        markerEnd: { type: MarkerType.ArrowClosed },
+      };
+
+      setEdges((eds) => addEdge(newEdge, eds));
+
+      // mirror into target's bound field
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== target.id) return n;
+
+          const currentValues = (n.data as any)?.values ?? {};
+          if (cardinality === "1") {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                values: { ...currentValues, [rule.bind]: source.id },
+              },
+            };
+          } else {
+            // store as an array for "many" relations
+            const currArr: string[] = Array.isArray(currentValues[rule.bind])
+              ? currentValues[rule.bind]
+              : [];
+            const nextArr = currArr.includes(source.id)
+              ? currArr
+              : [...currArr, source.id];
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                values: { ...currentValues, [rule.bind]: nextArr },
+              },
+            };
+          }
+        })
+      );
+    },
+    [nodes, edges, setNodes, setEdges]
+  );
+
+  // (optional) inject helpers into node.data if you later want DynamicForm to build options from graph
+  const nodesWithHelpers = useMemo(
+    () =>
+      nodes.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          __helpers: {
+            allNodes: nodes,
+            allEdges: edges,
           },
-          eds
-        )
-      ),
-    [setEdges]
+        },
+      })),
+    [nodes, edges]
   );
 
   return (
@@ -240,7 +365,11 @@ const OrchestratorReactFlow: React.FC = () => {
       }}
     >
       {templateInfo?.cloud && (
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} cloudProvider={templateInfo.cloud} />
+        <Sidebar
+          open={sidebarOpen}
+          setOpen={setSidebarOpen}
+          cloudProvider={templateInfo.cloud}
+        />
       )}
       <Box
         sx={{
@@ -250,7 +379,7 @@ const OrchestratorReactFlow: React.FC = () => {
         }}
       >
         <ReactFlow
-          nodes={nodes}
+          nodes={nodesWithHelpers}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
@@ -312,12 +441,6 @@ const OrchestratorReactFlow: React.FC = () => {
           <MiniMap nodeStrokeWidth={3} zoomable pannable />
         </ReactFlow>
       </Box>
-      <InitPopup
-        open={initOpen}
-        onClose={() => setInitOpen(false)}
-        onSubmit={handleInitSubmit}
-      />
-
       <InitPopup
         open={initOpen}
         onClose={() => setInitOpen(false)}
