@@ -62,8 +62,8 @@ const useLayoutElements = () => {
         layoutOptions,
         children: nodes.map((node) => ({
           id: node.id,
-          width: node.measured.width || 450,
-          height: node.measured.height || 500,
+          width: node?.measured?.width ?? 450,
+          height: node?.measured?.height ?? 500,
         })),
         edges: edges.map((edge) => ({
           id: edge.id,
