@@ -32,7 +32,12 @@ type Props = {
 
   /** graph-aware additions (provided by CustomNode → Orchestrator) */
   nodeId: string;
-  links?: Array<{ bind: string; fromTypes: string[]; cardinality?: string; edgeData?: any }>;
+  links?: Array<{
+    bind: string;
+    fromTypes: string[];
+    cardinality?: string;
+    edgeData?: any;
+  }>;
   allNodes?: any[]; // React Flow nodes
   allEdges?: any[]; // React Flow edges
   onLinkFieldChange?: (bind: string, newSourceId: string) => void;
@@ -64,7 +69,10 @@ const DynamicForm: React.FC<Props> = ({
   /** keep your existing conditional rendering semantics */
   const validCondition = (field: Field, vals: Values = {}) => {
     if (field?.depends_on) {
-      const conditionMet = new Function("values", `return ${field.depends_on};`)(vals);
+      const conditionMet = new Function(
+        "values",
+        `return ${field.depends_on};`
+      )(vals);
       if (!conditionMet) return false;
     }
     return true;
@@ -75,32 +83,40 @@ const DynamicForm: React.FC<Props> = ({
     return typeof info === "string" ? parse(info) : info;
   };
 
-  /** turn "from:nodes:type=vpc" into option list from the current graph */
   const resolveOptions = (
     options: any
   ): { value: string; label: string; disabled?: boolean }[] | undefined => {
     if (typeof options !== "string") return options;
-
     if (!options.startsWith("from:nodes:")) return undefined;
+
     const [, , filter] = options.split(":"); // e.g., "type=vpc"
     const [k, v] = filter.split("=");
 
     const nodes = allNodes ?? [];
-    return nodes
-      .filter((n: any) =>
-        k === "type"
-          ? // prefer preserved domain type (data.__nodeType) when present
-            (n.data && n.data.__nodeType ? n.data.__nodeType === v : n.type === v)
-          : n?.data?.[k] === v
-      )
-      .map((n: any) => ({
-        value: n.id,
-        label:
-          n?.data?.values?.vpc_name ??
-          n?.data?.values?.name ??
-          n?.data?.header?.label ??
-          n.id,
-      }));
+    // match by preserved domain type first
+    const candidates = nodes.filter((n: any) =>
+      k === "type"
+        ? n.data && n.data.__nodeType
+          ? n.data.__nodeType === v
+          : n.type === v
+        : n?.data?.[k] === v
+    );
+
+    // build stable, user-friendly labels
+    return candidates.map((n: any, idx: number) => {
+      const seq = String(idx + 1).padStart(4, "0"); // 0001, 0002...
+      const baseLabel =
+        n?.data?.values?.vpc_name ??
+        n?.data?.values?.name ??
+        n?.data?.header?.label ??
+        `vpc-${seq}`;
+      // if no explicit name and header, show vpc-000X; if a name exists, append the code
+      const label = baseLabel.includes("vpc-")
+        ? baseLabel
+        : `${baseLabel} (vpc-${seq})`;
+
+      return { value: n.id, label };
+    });
   };
 
   const renderField = (field: Field) => {
@@ -174,7 +190,11 @@ const DynamicForm: React.FC<Props> = ({
               }}
             >
               {(resolvedOptions ?? options ?? []).map((option: any) => (
-                <MenuItem key={option.value} value={option.value} disabled={option.disabled}>
+                <MenuItem
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.disabled}
+                >
                   {option.label}
                 </MenuItem>
               ))}
@@ -183,7 +203,11 @@ const DynamicForm: React.FC<Props> = ({
         );
 
       case "checkbox": {
-        const handleCheckboxChange = (fieldName: string, optionValue: string, checked: boolean) => {
+        const handleCheckboxChange = (
+          fieldName: string,
+          optionValue: string,
+          checked: boolean
+        ) => {
           const currentValues: string[] = formData[fieldName] ?? value ?? [];
           let updatedValues = [...currentValues];
 
@@ -211,7 +235,13 @@ const DynamicForm: React.FC<Props> = ({
                     control={
                       <Checkbox
                         checked={currentValues.includes(option.value)}
-                        onChange={(e) => handleCheckboxChange(name, option.value, e.target.checked)}
+                        onChange={(e) =>
+                          handleCheckboxChange(
+                            name,
+                            option.value,
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label={
@@ -220,7 +250,11 @@ const DynamicForm: React.FC<Props> = ({
                           {option.label}
                         </Typography>
                         {option.sub_label && (
-                          <Typography variant="caption" color="text.secondary" display="block">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                          >
                             {option.sub_label}
                           </Typography>
                         )}
@@ -250,49 +284,56 @@ const DynamicForm: React.FC<Props> = ({
           <>
             {fieldCfg && (
               <div>
-                {Object.entries(formData[name] ?? value ?? {}).map(([key, val], index) => (
-                  <Grid container spacing={2} alignItems="center" key={`${key}-${index}`}>
-                    <Grid item xs={fieldCfg.key.size}>
-                      <TextField
-                        label={fieldCfg.key.label}
-                        required={fieldCfg.key.required}
-                        value={key}
-                        onChange={(e) => {
-                          const updatedList = { ...(formData[name] ?? {}) };
-                          const oldKey = Object.keys(updatedList)[index];
-                          delete updatedList[oldKey];
-                          updatedList[e.target.value] = val;
-                          handleChange(name, updatedList);
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={fieldCfg.value.size}>
-                      <TextField
-                        label={fieldCfg.value.label}
-                        value={val}
-                        onChange={(e) => {
-                          const updatedList = { ...(formData[name] ?? {}) };
-                          (updatedList as any)[key] = e.target.value;
-                          handleChange(name, updatedList);
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={fieldCfg.remove_button.size}>
-                      <Tooltip title={fieldCfg.remove_button.label}>
-                        <IconButton
-                          onClick={() => {
+                {Object.entries(formData[name] ?? value ?? {}).map(
+                  ([key, val], index) => (
+                    <Grid
+                      container
+                      spacing={2}
+                      alignItems="center"
+                      key={`${key}-${index}`}
+                    >
+                      <Grid item xs={fieldCfg.key.size}>
+                        <TextField
+                          label={fieldCfg.key.label}
+                          required={fieldCfg.key.required}
+                          value={key}
+                          onChange={(e) => {
                             const updatedList = { ...(formData[name] ?? {}) };
                             const oldKey = Object.keys(updatedList)[index];
-                            delete (updatedList as any)[oldKey];
+                            delete updatedList[oldKey];
+                            updatedList[e.target.value] = val;
                             handleChange(name, updatedList);
                           }}
-                        >
-                          <DeleteIcon sx={fieldCfg.remove_button.style} />
-                        </IconButton>
-                      </Tooltip>
+                        />
+                      </Grid>
+                      <Grid item xs={fieldCfg.value.size}>
+                        <TextField
+                          label={fieldCfg.value.label}
+                          value={val}
+                          onChange={(e) => {
+                            const updatedList = { ...(formData[name] ?? {}) };
+                            (updatedList as any)[key] = e.target.value;
+                            handleChange(name, updatedList);
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={fieldCfg.remove_button.size}>
+                        <Tooltip title={fieldCfg.remove_button.label}>
+                          <IconButton
+                            onClick={() => {
+                              const updatedList = { ...(formData[name] ?? {}) };
+                              const oldKey = Object.keys(updatedList)[index];
+                              delete (updatedList as any)[oldKey];
+                              handleChange(name, updatedList);
+                            }}
+                          >
+                            <DeleteIcon sx={fieldCfg.remove_button.style} />
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                ))}
+                  )
+                )}
                 <Button
                   variant={fieldCfg.add_button.variant}
                   onClick={() => {
@@ -338,7 +379,13 @@ const DynamicForm: React.FC<Props> = ({
             {card?.info && (
               <Tooltip
                 title={
-                  <Box sx={{ maxHeight: "200px", overflowY: "auto", padding: "10px" }}>
+                  <Box
+                    sx={{
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                      padding: "10px",
+                    }}
+                  >
                     {renderInfo(card.info)}
                   </Box>
                 }
@@ -378,15 +425,27 @@ const DynamicForm: React.FC<Props> = ({
               card?.fields?.length > 0 &&
               card.fields.map(
                 (field) =>
-                  validCondition(field, { ...(values ?? {}), ...(formData ?? {}) }) && (
+                  validCondition(field, {
+                    ...(values ?? {}),
+                    ...(formData ?? {}),
+                  }) && (
                     <Grid item xs={field.size ?? 12} key={field.name}>
                       {field.label && (
-                        <Typography component="label" sx={{ display: "block", mb: 1 }}>
+                        <Typography
+                          component="label"
+                          sx={{ display: "block", mb: 1 }}
+                        >
                           {field.label}
                           {field?.info && (
                             <Tooltip
                               title={
-                                <Box sx={{ maxHeight: "200px", overflowY: "auto", padding: "10px" }}>
+                                <Box
+                                  sx={{
+                                    maxHeight: "200px",
+                                    overflowY: "auto",
+                                    padding: "10px",
+                                  }}
+                                >
                                   {renderInfo(field.info)}
                                 </Box>
                               }

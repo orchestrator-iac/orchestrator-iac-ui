@@ -338,7 +338,84 @@ const OrchestratorReactFlow: React.FC = () => {
     [nodes, edges, setNodes, setEdges]
   );
 
-  // (optional) inject helpers into node.data if you later want DynamicForm to build options from graph
+  // ⬇️ Add this handler
+  const onLinkFieldChange = useCallback(
+    ({
+      nodeId,
+      bind,
+      newSourceId,
+    }: {
+      nodeId: string;
+      bind: string;
+      newSourceId: string;
+    }) => {
+      const target = nodes.find((n) => n.id === nodeId);
+      if (!target) return;
+
+      const rules = (target.data as any)?.links ?? [];
+      const rule = rules.find((r: any) => r.bind === bind);
+      const edgeKind = rule?.edgeData?.kind ?? bind;
+      const cardinality: "1" | "many" = (rule?.cardinality ?? "1") as any;
+
+      // 1) remove existing edges of this relation into this target if single
+      setEdges((eds) =>
+        eds.filter(
+          (e) => !(e.target === nodeId && (e.data?.kind ?? bind) === edgeKind)
+        )
+      );
+
+      // 2) update node.values
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const current = (n.data as any)?.values ?? {};
+          if (!newSourceId) {
+            // cleared selection
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                values: {
+                  ...current,
+                  [bind]: cardinality === "many" ? [] : "",
+                },
+              },
+            };
+          }
+          if (cardinality === "many") {
+            const arr = Array.isArray(current[bind]) ? current[bind] : [];
+            const next = arr.includes(newSourceId)
+              ? arr
+              : [...arr, newSourceId];
+            return {
+              ...n,
+              data: { ...n.data, values: { ...current, [bind]: next } },
+            };
+          } else {
+            return {
+              ...n,
+              data: { ...n.data, values: { ...current, [bind]: newSourceId } },
+            };
+          }
+        })
+      );
+
+      // 3) add edge if a source is chosen
+      if (newSourceId) {
+        const newEdge: Edge = {
+          id: `${newSourceId}->${nodeId}:${bind}`,
+          source: newSourceId,
+          target: nodeId,
+          data: rule?.edgeData ?? { kind: bind },
+          markerEnd: { type: MarkerType.ArrowClosed },
+        };
+        setEdges((eds) => addEdge(newEdge, eds));
+      }
+    },
+    [nodes, setNodes, setEdges]
+  );
+
+  // ⬇️ Inject helpers into each node's data
   const nodesWithHelpers = useMemo(
     () =>
       nodes.map((n) => ({
@@ -348,10 +425,11 @@ const OrchestratorReactFlow: React.FC = () => {
           __helpers: {
             allNodes: nodes,
             allEdges: edges,
+            onLinkFieldChange, // <- KEY: give the form a way to rewire edges
           },
         },
       })),
-    [nodes, edges]
+    [nodes, edges, onLinkFieldChange]
   );
 
   return (
