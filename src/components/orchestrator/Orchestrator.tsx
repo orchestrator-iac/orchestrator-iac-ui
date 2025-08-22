@@ -114,7 +114,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const [initOpen, setInitOpen] = useState(true);
   const [templateInfo, setTemplateInfo] = useState<CloudConfig>({
     templateName: "",
-    cloud: "aws",
+    cloud: undefined,
     region: "",
   });
 
@@ -240,7 +240,7 @@ const OrchestratorReactFlow: React.FC = () => {
       }}
     >
       {templateInfo?.cloud && (
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} cloudProvider={templateInfo.cloud} />
       )}
       <Box
         sx={{

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Drawer,
@@ -21,16 +21,18 @@ import {
 import { useDnD } from "./DnDContext";
 import { RootState, AppDispatch } from "../../../store";
 import { fetchResources } from "../../../store/resourcesSlice";
+import { CloudProvider } from "../../../types/clouds-info";
 
 const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 const drawerWidth = 240;
 
 interface SidebarProps {
   open: boolean;
+  cloudProvider: CloudProvider;
   setOpen: (value: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
+const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   const theme = useTheme();
   const toggleDrawer = () => setOpen(!open);
 
@@ -38,6 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   const { data: resources, status: resourcesStatus } = useSelector(
     (state: RootState) => state.resources
   );
+  const [filteredResource, setFilteredResource] = useState<any[]>([]);
 
   const [, setId] = useDnD();
 
@@ -50,10 +53,20 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   };
 
   useEffect(() => {
-    if (resourcesStatus === "idle") {
+    if (resourcesStatus === "idle" || resources.length == 0) {
       dispatch(fetchResources());
     }
   }, [dispatch, resourcesStatus]);
+
+  useEffect(() => {
+    if (resources.length > 0) {
+      setFilteredResource(
+        resources.filter(
+          (resource) => resource?.cloudProvider === cloudProvider
+        )
+      );
+    }
+  }, [resources, cloudProvider]);
 
   return (
     <>
@@ -126,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
         <Divider />
 
         <List>
-          {resources.map((resource: any) => (
+          {filteredResource.map((resource: any) => (
             <ListItemButton
               key={resource._id}
               sx={{ alignItems: "flex-start", py: 1.5 }}
