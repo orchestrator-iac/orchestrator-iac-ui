@@ -7,6 +7,7 @@ import {
   useTheme,
   Box,
   Typography,
+  Chip,
 } from "@mui/material";
 import { Handle, NodeProps } from "@xyflow/react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -18,7 +19,6 @@ const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
 type CustomNodeProps = NodeProps & {
   data: NodeData & {
-    /** Helpers injected by Orchestrator (used by DynamicForm for graph-aware selects & edge sync) */
     __helpers?: {
       allNodes?: any[];
       allEdges?: any[];
@@ -28,15 +28,14 @@ type CustomNodeProps = NodeProps & {
         newSourceId: string;
       }) => void;
     };
-    /** Optional schema-driven link rules */
     links?: Array<{
       bind: string;
       fromTypes: string[];
-      cardinality?: string;
+      cardinality?: "1" | "many" | string;
       edgeData?: any;
     }>;
-    /** Preserved domain type (set by Orchestrator); not used here directly but available if needed */
-    __nodeType?: string;
+    __nodeType?: string; // domain type (e.g., "vpc", "subnet")
+    resourceId?: string; // optional, if you also carry this
   };
   isOrchestrator?: boolean;
 };
@@ -53,6 +52,23 @@ const CustomNode: React.FC<CustomNodeProps> = ({
     return typeof info === "string" ? parse(info) : info;
   };
 
+  // Friendly ID chip like vpc-0001 based on __nodeType and index among same type
+  const typeCode = data?.__nodeType ?? "";
+  const indexWithinType = React.useMemo(() => {
+    const all = data?.__helpers?.allNodes ?? [];
+    if (!typeCode || !Array.isArray(all)) return null;
+    const sameType = all.filter(
+      (n: any) => (n.data && n.data.__nodeType) === typeCode
+    );
+    const pos = sameType.findIndex((n: any) => n.id === id);
+    return pos >= 0 ? pos + 1 : null;
+  }, [data?.__helpers?.allNodes, typeCode, id]);
+
+  const friendlyId =
+    typeCode && indexWithinType
+      ? `${typeCode}-${String(indexWithinType).padStart(4, "0")}`
+      : id;
+
   return (
     <Accordion
       sx={{
@@ -65,6 +81,8 @@ const CustomNode: React.FC<CustomNodeProps> = ({
         expandIcon={<ExpandMoreIcon />}
         sx={{
           borderBottom: `1px solid ${theme.palette.background.paper}`,
+          alignItems: "center",
+          gap: 1,
         }}
       >
         {data?.header?.icon && (
@@ -73,28 +91,39 @@ const CustomNode: React.FC<CustomNodeProps> = ({
             src={`${API_HOST_URL}${data?.header?.icon}`}
             alt={data?.header?.label || "Resource Icon"}
             sx={{
-              width: 50,
-              height: 50,
+              width: 42,
+              height: 42,
               borderRadius: "8px",
-              mr: 2,
+              mr: 1.5,
               objectFit: "contain",
               boxShadow: `0 0 2px ${theme.palette.secondary.main}`,
             }}
           />
         )}
-        <Box>
-          <Box style={{ fontSize: "1.25rem", fontWeight: "bold" }}>
-            {data?.header?.label}
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box
+            sx={{
+              fontSize: "1.05rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Box
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {data?.header?.label}
+            </Box>
             {data?.header?.info && (
               <Tooltip
                 title={
-                  <Box
-                    style={{
-                      maxHeight: "200px",
-                      overflowY: "auto",
-                      padding: "10px",
-                    }}
-                  >
+                  <Box sx={{ maxHeight: 200, overflowY: "auto", p: 1 }}>
                     {renderInfo(data?.header?.info)}
                   </Box>
                 }
@@ -115,11 +144,9 @@ const CustomNode: React.FC<CustomNodeProps> = ({
                 <Typography
                   component="strong"
                   sx={{
-                    fontSize: "0.8rem",
-                    fontWeight: "bolder",
+                    fontSize: "0.75rem",
+                    fontWeight: 800,
                     color: "primary.main",
-                    mx: "0.8rem",
-                    mb: "3px",
                     cursor: "pointer",
                   }}
                 >
@@ -128,17 +155,29 @@ const CustomNode: React.FC<CustomNodeProps> = ({
               </Tooltip>
             )}
           </Box>
+
           {data?.header?.sub_label && (
             <Box
-              style={{
+              sx={{
                 fontSize: "0.8rem",
-                color: "#777",
+                color: `${theme.palette.textVariants.text4}`,
               }}
             >
               {data?.header?.sub_label}
             </Box>
           )}
         </Box>
+
+        <Chip
+          size="small"
+          label={friendlyId}
+          sx={{
+            ml: "auto",
+            mt: "10px",
+            color: `${theme.palette.textVariants.text4}`,
+          }}
+          variant="outlined"
+        />
 
         {isOrchestrator &&
           (data?.handles ?? []).map((handle, idx) => (
@@ -154,20 +193,23 @@ const CustomNode: React.FC<CustomNodeProps> = ({
 
       <AccordionDetails
         className="nowheel"
-        sx={{
-          maxHeight: "calc(100vh - 300px)",
-          overflowY: "auto",
-        }}
+        sx={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}
       >
         <DynamicForm
+          /* form schema + current values */
           config={data?.fields ?? []}
           values={data?.values ?? {}}
+          /* graph-aware props for dynamic options + link sync */
           nodeId={id}
           links={data?.links}
           allNodes={data?.__helpers?.allNodes}
           allEdges={data?.__helpers?.allEdges}
           onLinkFieldChange={(bind, newSourceId) =>
-            data?.__helpers?.onLinkFieldChange?.({ nodeId: id, bind, newSourceId })
+            data?.__helpers?.onLinkFieldChange?.({
+              nodeId: id,
+              bind,
+              newSourceId,
+            })
           }
         />
       </AccordionDetails>

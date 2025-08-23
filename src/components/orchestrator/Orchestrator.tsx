@@ -104,7 +104,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { template_id } = useParams<{ template_id: string }>();
   const { getLayoutElements } = useLayoutElements();
-  const { fitView, screenToFlowPosition } = useReactFlow();
+  const { fitView } = useReactFlow();
   const [searchParams] = useSearchParams();
   const template_type = searchParams.get("template_type");
   const [id] = useDnD();
@@ -135,23 +135,23 @@ const OrchestratorReactFlow: React.FC = () => {
       if (fetchResourceById.fulfilled.match(resultAction)) {
         const resourceData = resultAction.payload;
 
-        // base node coming from backend
+        // node from backend
         let newNode: any = {
           ...resourceData?.data?.resourceNode,
           id: `${id}-${uuidv4()}`,
           position: { x: 100, y: 100 },
         };
 
-        // Preserve the domain/resource type BEFORE we override with renderer type
-        const resourceType = resourceData?.data?.resourceId;
+        // use resourceId as canonical domain type
+        const resourceType =
+          resourceData?.data?.resourceId ?? newNode?.type ?? "unknown";
 
         if (newNode?.data?.header) {
           newNode = {
             ...newNode,
             data: {
               ...newNode.data,
-              // 👇 preserve the actual resource type for rule checks
-              __nodeType: resourceType,
+              __nodeType: resourceType, // keep the real resource type for rules/labels
               header: {
                 ...newNode.data.header,
                 icon: resourceData?.data?.resourceIcon?.url,
@@ -162,7 +162,7 @@ const OrchestratorReactFlow: React.FC = () => {
           };
         }
 
-        // Ensure renderer type remains "customNode"
+        // renderer type
         newNode = { ...newNode, type: "customNode" };
 
         setNodes((nds) => nds.concat(newNode));
@@ -177,15 +177,7 @@ const OrchestratorReactFlow: React.FC = () => {
         console.error("Failed to fetch resource", resultAction.error);
       }
     },
-    [
-      id,
-      setNodes,
-      dispatch,
-      getLayoutElements,
-      screenToFlowPosition,
-      templateInfo,
-      user,
-    ]
+    [id, setNodes, dispatch, getLayoutElements, templateInfo, user]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -213,18 +205,15 @@ const OrchestratorReactFlow: React.FC = () => {
         if (wrapperData?.nodes) {
           const updatedNodes = wrapperData.nodes.map((node: any) => {
             const component = components?.[node.component_name];
-
-            // Preserve domain type on data.__nodeType for rule checks
-            const resourceType = node.type;
-
+            const resourceType =
+              node?.data?.resourceId ?? node.type ?? "unknown";
             return {
               ...node,
               ...(component ?? {}),
-              // renderer type (your component map may set this to "customNode")
               type: component ? component.type : "customNode",
               data: {
                 ...node.data,
-                __nodeType: resourceType, // 👈 keep the real resource type here
+                __nodeType: resourceType,
               },
             };
           });
@@ -243,15 +232,7 @@ const OrchestratorReactFlow: React.FC = () => {
       });
   }, [template_id, template_type, setNodes, setEdges, getLayoutElements]);
 
-  /**
-   * Schema-driven onConnect:
-   * - Reads target.data.links to determine if the connection is allowed
-   * - Uses source.data.__nodeType (fallback source.type) to match fromTypes
-   * - Enforces cardinality:
-   *    - "1": only one edge of that relation to the target (removes old)
-   *    - "many": allows multiple (avoids duplicates)
-   * - Mirrors the selected link into target.data.values[bind]
-   */
+  // Drag edge → update target form (values[bind]) + enforce rules
   const onConnect = useCallback(
     (conn: any) => {
       const source = nodes.find((n) => n.id === conn.source);
@@ -265,13 +246,12 @@ const OrchestratorReactFlow: React.FC = () => {
         (r: any) =>
           Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType)
       );
-      if (!rule) return; // disallow unrelated connections
+      if (!rule) return;
 
       const edgeKind = rule.edgeData?.kind ?? rule.bind;
       const cardinality = (rule.cardinality ?? "1") as "1" | "many";
 
       if (cardinality === "1") {
-        // remove existing edge(s) of this relation into this target
         setEdges((eds) =>
           eds.filter(
             (e) =>
@@ -282,7 +262,6 @@ const OrchestratorReactFlow: React.FC = () => {
           )
         );
       } else {
-        // prevent duplicate edge for "many"
         const exists = edges.some(
           (e) =>
             e.source === source.id &&
@@ -297,16 +276,20 @@ const OrchestratorReactFlow: React.FC = () => {
         source: source.id,
         target: target.id,
         data: rule.edgeData ?? { kind: rule.bind },
-        markerEnd: { type: MarkerType.ArrowClosed },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+        style: rule.edgeData?.style ?? {
+          strokeWidth: 4,
+          strokeDasharray: "8 2",
+        },
+        animated: rule.edgeData?.animated ?? false,
       };
 
       setEdges((eds) => addEdge(newEdge, eds));
 
-      // mirror into target's bound field
+      // mirror into target's bound field immediately
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== target.id) return n;
-
           const currentValues = (n.data as any)?.values ?? {};
           if (cardinality === "1") {
             return {
@@ -316,29 +299,25 @@ const OrchestratorReactFlow: React.FC = () => {
                 values: { ...currentValues, [rule.bind]: source.id },
               },
             };
-          } else {
-            // store as an array for "many" relations
-            const currArr: string[] = Array.isArray(currentValues[rule.bind])
-              ? currentValues[rule.bind]
-              : [];
-            const nextArr = currArr.includes(source.id)
-              ? currArr
-              : [...currArr, source.id];
-            return {
-              ...n,
-              data: {
-                ...n.data,
-                values: { ...currentValues, [rule.bind]: nextArr },
-              },
-            };
           }
+          const arr: string[] = Array.isArray(currentValues[rule.bind])
+            ? currentValues[rule.bind]
+            : [];
+          const next = arr.includes(source.id) ? arr : [...arr, source.id];
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              values: { ...currentValues, [rule.bind]: next },
+            },
+          };
         })
       );
     },
     [nodes, edges, setNodes, setEdges]
   );
 
-  // ⬇️ Add this handler
+  // Dropdown change → rewire edges & values
   const onLinkFieldChange = useCallback(
     ({
       nodeId,
@@ -355,22 +334,21 @@ const OrchestratorReactFlow: React.FC = () => {
       const rules = (target.data as any)?.links ?? [];
       const rule = rules.find((r: any) => r.bind === bind);
       const edgeKind = rule?.edgeData?.kind ?? bind;
-      const cardinality: "1" | "many" = (rule?.cardinality ?? "1") as any;
+      const cardinality: "1" | "many" = rule?.cardinality ?? "1";
 
-      // 1) remove existing edges of this relation into this target if single
+      // remove existing edges for this relation into this target
       setEdges((eds) =>
         eds.filter(
           (e) => !(e.target === nodeId && (e.data?.kind ?? bind) === edgeKind)
         )
       );
 
-      // 2) update node.values
+      // update values on the node
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== nodeId) return n;
           const current = (n.data as any)?.values ?? {};
           if (!newSourceId) {
-            // cleared selection
             return {
               ...n,
               data: {
@@ -391,23 +369,27 @@ const OrchestratorReactFlow: React.FC = () => {
               ...n,
               data: { ...n.data, values: { ...current, [bind]: next } },
             };
-          } else {
-            return {
-              ...n,
-              data: { ...n.data, values: { ...current, [bind]: newSourceId } },
-            };
           }
+          return {
+            ...n,
+            data: { ...n.data, values: { ...current, [bind]: newSourceId } },
+          };
         })
       );
 
-      // 3) add edge if a source is chosen
+      // add edge if a source is chosen
       if (newSourceId) {
         const newEdge: Edge = {
           id: `${newSourceId}->${nodeId}:${bind}`,
           source: newSourceId,
           target: nodeId,
           data: rule?.edgeData ?? { kind: bind },
-          markerEnd: { type: MarkerType.ArrowClosed },
+          markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+          style: rule.edgeData?.style ?? {
+            strokeWidth: 4,
+            strokeDasharray: "8 2",
+          },
+          animated: rule.edgeData?.animated ?? false,
         };
         setEdges((eds) => addEdge(newEdge, eds));
       }
@@ -415,7 +397,50 @@ const OrchestratorReactFlow: React.FC = () => {
     [nodes, setNodes, setEdges]
   );
 
-  // ⬇️ Inject helpers into each node's data
+  // Edge → Form sync: reconcile node.values from edges (covers manual drag & deletes)
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        const rules = (n.data as any)?.links ?? [];
+        if (!Array.isArray(rules) || rules.length === 0) return n;
+
+        const current = (n.data as any)?.values ?? {};
+        const nextValues: Record<string, any> = { ...current };
+        let changed = false;
+
+        rules.forEach((rule: any) => {
+          const edgeKind = rule?.edgeData?.kind ?? rule.bind;
+          const incoming = edges.filter(
+            (e) => e.target === n.id && (e.data?.kind ?? rule.bind) === edgeKind
+          );
+
+          if ((rule.cardinality ?? "1") === "many") {
+            const srcs = incoming.map((e) => e.source).sort(); // deterministic
+            const prev = Array.isArray(nextValues[rule.bind])
+              ? [...nextValues[rule.bind]].sort()
+              : [];
+            const same =
+              prev.length === srcs.length &&
+              prev.every((v, i) => v === srcs[i]);
+            if (!same) {
+              nextValues[rule.bind] = srcs;
+              changed = true;
+            }
+          } else {
+            const src = incoming[0]?.source ?? "";
+            if (nextValues[rule.bind] !== src) {
+              nextValues[rule.bind] = src;
+              changed = true;
+            }
+          }
+        });
+
+        return changed ? { ...n, data: { ...n.data, values: nextValues } } : n;
+      })
+    );
+  }, [edges, setNodes]);
+
+  // Inject helpers for DynamicForm (dynamic options + dropdown→edge sync)
   const nodesWithHelpers = useMemo(
     () =>
       nodes.map((n) => ({
@@ -425,7 +450,7 @@ const OrchestratorReactFlow: React.FC = () => {
           __helpers: {
             allNodes: nodes,
             allEdges: edges,
-            onLinkFieldChange, // <- KEY: give the form a way to rewire edges
+            onLinkFieldChange,
           },
         },
       })),
@@ -471,38 +496,26 @@ const OrchestratorReactFlow: React.FC = () => {
           fitView
         >
           <Panel>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 2,
-                margin: "10px 20px",
-              }}
-            >
+            <Box sx={{ display: "flex", gap: 2, margin: "10px 20px" }}>
               {templateInfo?.templateName && (
                 <Chip
                   icon={<DeblurIcon />}
                   label={templateInfo?.templateName}
-                  onClick={() => {
-                    setInitOpen(true);
-                  }}
+                  onClick={() => setInitOpen(true)}
                 />
               )}
               {templateInfo?.cloud && (
                 <Chip
                   icon={<CloudCircleIcon />}
                   label={templateInfo?.cloud.toUpperCase()}
-                  onClick={() => {
-                    setInitOpen(true);
-                  }}
+                  onClick={() => setInitOpen(true)}
                 />
               )}
               {templateInfo?.region && (
                 <Chip
                   icon={<SouthAmericaIcon />}
                   label={templateInfo?.region}
-                  onClick={() => {
-                    setInitOpen(true);
-                  }}
+                  onClick={() => setInitOpen(true)}
                 />
               )}
             </Box>
