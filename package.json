@@ -25,6 +25,7 @@
     "ace-builds": "^1.43.2",
     "axios": "^1.11.0",
     "elkjs": "^0.9.3",
+    "fuse.js": "^7.1.0",
     "handlebars": "^4.7.8",
     "html-react-parser": "^5.2.6",
     "html-to-image": "^1.11.11",

@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { refreshAccessToken } from './auth'; 
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -6,10 +7,18 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+
+let isRefreshing = false;
+let refreshPromise: Promise<string> | null = null;
+const waiters: Array<(t: string) => void> = [];
+const onRefreshed = (token: string) => waiters.splice(0).forEach(fn => fn(token));
+
 
 // Request interceptor (e.g., for adding Authorization headers)
 apiClient.interceptors.request.use(
@@ -23,13 +32,41 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor (e.g., for error handling)
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.error('Unauthorized. Redirecting to login...');
+  async (error) => {
+    const original: any = error.config;
+    const status = error?.response?.status;
+
+    if (status === 401 && !original?._retry) {
+      original._retry = true;
+
+      try {
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshPromise = refreshAccessToken()
+            .then((newToken) => {
+              localStorage.setItem('token', newToken);
+              onRefreshed(newToken);
+              return newToken;
+            })
+            .finally(() => {
+              isRefreshing = false;
+              refreshPromise = null;
+            });
+        }
+
+        const newToken = await (refreshPromise as Promise<string>);
+        original.headers = original.headers ?? {};
+        original.headers.Authorization = `Bearer ${newToken}`;
+        return apiClient(original); // retry
+      } catch (e) {
+        // refresh failed -> clear and bubble up
+        localStorage.removeItem('token');
+        return Promise.reject(e);
+      }
     }
+
     return Promise.reject(error);
   }
 );

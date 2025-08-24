@@ -79,3 +79,13 @@ export const updatePassword = async (
   const response = await apiService.post("/user/update-password", data);
   return response.data;
 };
+
+
+export const refreshAccessToken = async (): Promise<string> => {
+  const res = await apiService.post(
+    "/user/refresh",
+    {},
+    { withCredentials: true, headers: { "Content-Type": "application/json" } }
+  );
+  return res.data.access_token as string;
+};

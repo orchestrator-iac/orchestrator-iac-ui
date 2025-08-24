@@ -52,9 +52,11 @@
 .cardDescription {
   font-size: 0.9rem;
   margin: 5px 0 10px 0;
-  color: var(--text-color);
+  color: var(--text4);
   display: -webkit-box;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4; /* change number for how many lines to show */
+  line-clamp: 4;
   overflow: hidden;
 }
 

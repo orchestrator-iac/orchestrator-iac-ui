@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Drawer,
@@ -17,6 +17,7 @@ import {
   KeyboardArrowRight as KeyboardArrowRightIcon,
   KeyboardArrowLeft as KeyboardArrowLeftIcon,
 } from "@mui/icons-material";
+import Fuse from "fuse.js"; // NEW ✅
 
 import { useDnD } from "./DnDContext";
 import { RootState, AppDispatch } from "../../../store";
@@ -32,6 +33,10 @@ interface SidebarProps {
   setOpen: (value: boolean) => void;
 }
 
+/**
+ * Sidebar shows provider-scoped resources and supports fuzzy search via Fuse.js.
+ * Search matches across name, description, version, and tags with weighted relevance.
+ */
 const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   const theme = useTheme();
   const toggleDrawer = () => setOpen(!open);
@@ -40,10 +45,20 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   const { data: resources, status: resourcesStatus } = useSelector(
     (state: RootState) => state.resources
   );
-  const [filteredResource, setFilteredResource] = useState<any[]>([]);
 
+  // --- local state for search ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Keep DnD id hookup
   const [, setId] = useDnD();
 
+  /**
+   * Handle drag start for a resource card.
+   *
+   * @param event - Drag event from the resource item.
+   * @param resourceId - Unique identifier of the resource.
+   */
   const onDragStart = (
     event: React.DragEvent<HTMLDivElement>,
     resourceId: string
@@ -52,21 +67,56 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
     event.dataTransfer.effectAllowed = "move";
   };
 
+  // Fetch once when idle/empty
   useEffect(() => {
-    if (resourcesStatus === "idle" || resources.length == 0) {
+    if (resourcesStatus === "idle" || resources.length === 0) {
       dispatch(fetchResources());
     }
-  }, [dispatch, resourcesStatus]);
+  }, [dispatch, resourcesStatus, resources.length]);
 
+  // Debounce search input for smoother typing
   useEffect(() => {
-    if (resources.length > 0) {
-      setFilteredResource(
-        resources.filter(
-          (resource) => resource?.cloudProvider === cloudProvider
-        )
-      );
-    }
+    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 160);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  /**
+   * Provider-scoped resources computed once per changes to source or provider.
+   * This preserves your original filter by cloudProvider. :contentReference[oaicite:1]{index=1}
+   */
+  const providerScoped = useMemo(() => {
+    return (resources || []).filter(
+      (r: any) => r?.cloudProvider === cloudProvider
+    );
   }, [resources, cloudProvider]);
+
+  /**
+   * Build Fuse index for fuzzy matching.
+   * - Weighted keys favor the resource name, then description, then version/tags.
+   */
+  const fuse = useMemo(() => {
+    return new Fuse(providerScoped, {
+      includeScore: true,
+      threshold: 0.36, // lower = stricter; tweak between 0.3–0.5
+      ignoreLocation: true,
+      minMatchCharLength: 2,
+      keys: [
+        { name: "resourceName", weight: 0.55 },
+        { name: "resourceDescription", weight: 0.3 },
+        { name: "resourceVersion", weight: 0.1 },
+        { name: "tags", weight: 0.05 }, // optional if you have tags array
+      ],
+    });
+  }, [providerScoped]);
+
+  /**
+   * Final list shown: fuzzy-searched if query present, otherwise providerScoped.
+   */
+  const visibleResources = useMemo(() => {
+    if (!debouncedSearch) return providerScoped;
+    const results = fuse.search(debouncedSearch);
+    return results.map((r) => r.item);
+  }, [debouncedSearch, fuse, providerScoped]);
 
   return (
     <>
@@ -130,8 +180,11 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
           >
             <SearchIcon fontSize="small" />
             <InputBase
-              placeholder="Search..."
+              placeholder="Search name, description, version…"
               sx={{ ml: 1, flex: 1, fontSize: 14 }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              inputProps={{ "aria-label": "Sidebar fuzzy search" }}
             />
           </Paper>
         </Box>
@@ -139,10 +192,10 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
         <Divider />
 
         <List>
-          {filteredResource.map((resource: any) => (
+          {visibleResources.map((resource: any) => (
             <ListItemButton
               key={resource._id}
-              sx={{ alignItems: "flex-start", py: 1.5 }}
+              sx={{ alignItems: "center", py: 1.5 }}
               className="dndnode"
               onDragStart={(event) => onDragStart(event, resource._id)}
               draggable
@@ -188,9 +241,14 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
                   },
                 }}
                 secondaryTypographyProps={{
+                  noWrap: true,
                   sx: {
                     fontSize: "0.85rem",
                     color: theme.palette.text.secondary,
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                    maxWidth: "100%",
                   },
                 }}
               />

@@ -8,7 +8,7 @@ import {
 } from "react";
 import { jwtDecode } from "jwt-decode";
 
-import { getProfile } from "../services/auth";
+import { getProfile, refreshAccessToken } from "../services/auth";
 import { AuthContextType, UserProfile } from "../types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +22,8 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   useEffect(() => {
     if (!token) return;
 
+    let refreshTimer: number | undefined;
+
     try {
       const decoded = jwtDecode<{ exp: number }>(token);
       const isExpired = decoded.exp * 1000 < Date.now();
@@ -31,6 +33,19 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
         logout();
         return;
       }
+
+      // Proactive refresh ~2 minutes before expiry
+      const msToExpiry = decoded.exp * 1000 - Date.now();
+      const refreshIn = Math.max(msToExpiry - 2 * 60 * 1000, 0);
+      refreshTimer = window.setTimeout(async () => {
+        try {
+          const newTok = await refreshAccessToken();
+          login(newTok);
+        } catch {
+          console.warn("Refresh failed; logging out");
+          logout();
+        }
+      }, refreshIn);
 
       getProfile()
         .then(setUser)
@@ -42,6 +57,10 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
       console.error("Failed to decode token:", err);
       logout();
     }
+
+    return () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+    };
   }, [token]);
 
   const login = (newToken: string) => {
@@ -61,9 +80,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   );
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
 

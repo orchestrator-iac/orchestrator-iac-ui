@@ -17,6 +17,7 @@ import {
   useTheme,
   Checkbox,
   Autocomplete,
+  Chip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -191,37 +192,87 @@ const DynamicForm: React.FC<Props> = ({
           </FormControl>
         );
 
-      case "select+text":
-      case "selectOrText": {
-        const resolved = resolveOptions(options) ?? [];
-        const currentVal = formData[name] ?? value ?? "";
+      case "select+text": {
+        // Resolve options to { value, label, disabled }
+        const opts = (resolvedOptions ?? options ?? []).map((o: any) => ({
+          label: String(o.label),
+          value: String(o.value),
+          disabled: !!o.disabled,
+        })) as Array<{ label: string; value: string; disabled?: boolean }>;
+
+        const currentVal = String(formData[name] ?? value ?? "");
+        const matched = opts.find((o) => o.value === currentVal) || null;
 
         return (
           <Autocomplete
-            freeSolo // 👈 allows typing custom text
-            options={resolved.map((opt) => String(opt.value))}
-            value={currentVal}
-            onChange={(e, newVal) => {
-              // triggered when user picks an option
-              const val = newVal ?? "";
-              handleChange(name, val);
-              if (
-                onLinkFieldChange &&
-                resolved.some((o) => String(o.value) === val)
-              ) {
-                onLinkFieldChange(name, val); // only fire link if it's a node
+            freeSolo
+            fullWidth
+            options={opts}
+            // value can be string (custom) or option object (selected)
+            value={matched ?? currentVal}
+            getOptionLabel={(opt) =>
+              typeof opt === "string" ? opt : opt?.label ?? ""
+            }
+            isOptionEqualToValue={(opt, val) =>
+              typeof val === "string"
+                ? opt.value === val
+                : opt.value === val?.value
+            }
+            // allow clearing via "x" and Esc
+            clearOnEscape
+            onChange={(_e, newVal) => {
+              // Fires when user picks an option OR clears the input
+              if (newVal == null) {
+                // cleared -> drop value & remove edge
+                handleChange(name, "");
+                if (onLinkFieldChange) onLinkFieldChange(name, "");
+                return;
               }
+
+              if (typeof newVal === "string") {
+                // freeSolo commit via Enter/blur, treat as custom text (no edge)
+                handleChange(name, newVal);
+                // (optional) if it exactly equals some option's value, you could auto-wire:
+                // const hit = opts.find(o => o.value === newVal);
+                // if (hit && onLinkFieldChange) onLinkFieldChange(name, hit.value);
+                return;
+              }
+
+              // Picked a real option -> set value and wire edge
+              const pickedVal = String(newVal.value ?? "");
+              handleChange(name, pickedVal);
+              if (onLinkFieldChange) onLinkFieldChange(name, pickedVal);
             }}
-            onInputChange={(e, newInput) => {
-              // triggered when user types custom
-              handleChange(name, newInput);
-              // don’t fire onLinkFieldChange here (custom free text)
+            onInputChange={(_e, newInput, reason) => {
+              // While typing (reason === "input"), if we WERE on a real option and now diverge,
+              // immediately drop the edge (switching to custom).
+              if (reason === "input") {
+                const divergedFromOption =
+                  !!matched &&
+                  !opts.some((o) => o.value === String(newInput ?? ""));
+                if (divergedFromOption && onLinkFieldChange) {
+                  onLinkFieldChange(name, ""); // remove old edge right away
+                }
+                handleChange(name, String(newInput ?? ""));
+              }
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder={placeholder ?? "Enter or select"}
+                placeholder={placeholder ?? "Select or type an ID"}
+                required={!!required}
+                helperText={error_text || hint}
               />
+            )}
+            // use MenuItem to respect disabled & correct ARIA
+            renderOption={(props, option) => (
+              <MenuItem
+                {...props}
+                key={option.value}
+                disabled={option.disabled}
+              >
+                {option.label}
+              </MenuItem>
             )}
           />
         );
