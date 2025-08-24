@@ -10,6 +10,12 @@ import {
   Chip,
 } from "@mui/material";
 import { Handle, NodeProps } from "@xyflow/react";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import IconButton from "@mui/material/IconButton";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import parse from "html-react-parser";
 import DynamicForm from "./DynamicForm";
@@ -27,15 +33,17 @@ type CustomNodeProps = NodeProps & {
         bind: string;
         newSourceId: string;
       }) => void;
+      onCloneNode?: (nodeId: string) => void;
+      onDeleteNode?: (nodeId: string) => void;
     };
     links?: Array<{
       bind: string;
       fromTypes: string[];
-      cardinality?: "1" | "many" | string;
+      cardinality?: "1" | "many";
       edgeData?: any;
     }>;
-    __nodeType?: string; // domain type (e.g., "vpc", "subnet")
-    resourceId?: string; // optional, if you also carry this
+    __nodeType?: string;
+    resourceId?: string;
   };
   isOrchestrator?: boolean;
 };
@@ -46,6 +54,8 @@ const CustomNode: React.FC<CustomNodeProps> = ({
   isOrchestrator = true,
 }) => {
   const theme = useTheme();
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
   const renderInfo = (info?: string | JSX.Element) => {
     if (!info) return null;
@@ -57,17 +67,28 @@ const CustomNode: React.FC<CustomNodeProps> = ({
   const indexWithinType = React.useMemo(() => {
     const all = data?.__helpers?.allNodes ?? [];
     if (!typeCode || !Array.isArray(all)) return null;
-    const sameType = all.filter(
-      (n: any) => (n.data && n.data.__nodeType) === typeCode
-    );
+    const sameType = all.filter((n: any) => n.data?.__nodeType === typeCode);
     const pos = sameType.findIndex((n: any) => n.id === id);
     return pos >= 0 ? pos + 1 : null;
   }, [data?.__helpers?.allNodes, typeCode, id]);
 
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) =>
+    setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleDuplicate = () => {
+    handleMenuClose();
+    data?.__helpers?.onCloneNode?.(id);
+  };
+  const handleDelete = () => {
+    handleMenuClose();
+    data?.__helpers?.onDeleteNode?.(id);
+  };
+
   const friendlyId =
     typeCode && indexWithinType
       ? `${typeCode}-${String(indexWithinType).padStart(4, "0")}`
-      : id;
+      : "";
 
   return (
     <Accordion
@@ -160,7 +181,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
             <Box
               sx={{
                 fontSize: "0.8rem",
-                color: `${theme.palette.textVariants.text4}`,
+                color: theme.palette.textVariants.text4,
               }}
             >
               {data?.header?.sub_label}
@@ -168,16 +189,44 @@ const CustomNode: React.FC<CustomNodeProps> = ({
           )}
         </Box>
 
-        <Chip
-          size="small"
-          label={friendlyId}
-          sx={{
-            ml: "auto",
-            mt: "10px",
-            color: `${theme.palette.textVariants.text4}`,
-          }}
-          variant="outlined"
-        />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Chip
+            size="small"
+            label={friendlyId}
+            sx={{ ml: "auto", color: theme.palette.textVariants.text4 }}
+            variant="filled"
+          />
+          <IconButton
+            aria-label="node actions"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMenuOpen(e);
+            }}
+            size="small"
+            sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
+            onClose={(e) => {
+              (e as any)?.stopPropagation?.();
+              handleMenuClose();
+            }}
+            onClick={(e) => (e as any).stopPropagation()}
+            elevation={3}
+          >
+            <MenuItem onClick={handleDuplicate}>
+              <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
+              Duplicate
+            </MenuItem>
+            <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+              <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8 }} />
+              Delete
+            </MenuItem>
+          </Menu>
+        </Box>
 
         {isOrchestrator &&
           (data?.handles ?? []).map((handle, idx) => (
@@ -193,7 +242,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
 
       <AccordionDetails
         className="nowheel"
-        sx={{ maxHeight: "calc(100vh - 300px)", overflowY: "auto" }}
+        sx={{ maxHeight: "min(calc(100vh - 300px), 400px)", overflowY: "auto" }}
       >
         <DynamicForm
           /* form schema + current values */

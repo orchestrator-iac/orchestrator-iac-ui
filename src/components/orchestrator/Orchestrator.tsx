@@ -23,6 +23,9 @@ import { useTheme } from "@mui/material/styles";
 import DeblurIcon from "@mui/icons-material/Deblur";
 import CloudCircleIcon from "@mui/icons-material/CloudCircle";
 import SouthAmericaIcon from "@mui/icons-material/SouthAmerica";
+import Snackbar from "@mui/material/Snackbar";
+import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
 import { Box, Chip } from "@mui/material";
 
 import apiService from "./../../services/apiService";
@@ -112,6 +115,11 @@ const OrchestratorReactFlow: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [initOpen, setInitOpen] = useState(true);
+  const [undoStack, setUndoStack] = useState<{
+    nodes: Node[];
+    edges: Edge[];
+  } | null>(null);
+  const [snackOpen, setSnackOpen] = useState(false);
   const [templateInfo, setTemplateInfo] = useState<CloudConfig>({
     templateName: "",
     cloud: undefined,
@@ -195,6 +203,48 @@ const OrchestratorReactFlow: React.FC = () => {
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
   }, [theme.palette.mode]);
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        const rules = (n.data as any)?.links ?? [];
+        if (!Array.isArray(rules) || rules.length === 0) return n;
+
+        const current = (n.data as any)?.values ?? {};
+        const nextValues: Record<string, any> = { ...current };
+        let changed = false;
+
+        rules.forEach((rule: any) => {
+          const edgeKind = rule?.edgeData?.kind ?? rule.bind;
+          const incoming = edges.filter(
+            (e) => e.target === n.id && (e.data?.kind ?? rule.bind) === edgeKind
+          );
+
+          if ((rule.cardinality ?? "1") === "many") {
+            const srcs = incoming.map((e) => e.source).sort(); // deterministic
+            const prev = Array.isArray(nextValues[rule.bind])
+              ? [...nextValues[rule.bind]].sort()
+              : [];
+            const same =
+              prev.length === srcs.length &&
+              prev.every((v, i) => v === srcs[i]);
+            if (!same) {
+              nextValues[rule.bind] = srcs;
+              changed = true;
+            }
+          } else {
+            const src = incoming[0]?.source ?? "";
+            if (nextValues[rule.bind] !== src) {
+              nextValues[rule.bind] = src;
+              changed = true;
+            }
+          }
+        });
+
+        return changed ? { ...n, data: { ...n.data, values: nextValues } } : n;
+      })
+    );
+  }, [edges, setNodes]);
 
   useEffect(() => {
     apiService
@@ -397,48 +447,86 @@ const OrchestratorReactFlow: React.FC = () => {
     [nodes, setNodes, setEdges]
   );
 
-  // Edge → Form sync: reconcile node.values from edges (covers manual drag & deletes)
-  useEffect(() => {
-    setNodes((nds) =>
-      nds.map((n) => {
-        const rules = (n.data as any)?.links ?? [];
-        if (!Array.isArray(rules) || rules.length === 0) return n;
+  const onCloneNode = useCallback(
+    (nodeId: string) => {
+      setNodes((nds) => {
+        const original = nds.find((n) => n.id === nodeId);
+        if (!original) return nds;
+        const cloneId = `${nodeId}-copy-${(Math.random() * 1e5).toFixed(0)}`;
+        const offset = { x: 40, y: 40 };
+        const clone: Node = {
+          ...original,
+          id: cloneId,
+          position: {
+            x: original.position.x + offset.x,
+            y: original.position.y + offset.y,
+          },
+          data: {
+            ...original.data,
+            // reset values if you want a clean clone:
+            // values: {},
+          },
+        };
+        return nds.concat(clone);
+      });
+    },
+    [setNodes]
+  );
 
-        const current = (n.data as any)?.values ?? {};
-        const nextValues: Record<string, any> = { ...current };
-        let changed = false;
+  const actuallyDeleteNode = useCallback(
+    (nodeId: string) => {
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setEdges((eds) =>
+        eds.filter((e) => e.source !== nodeId && e.target !== nodeId)
+      );
+    },
+    [setNodes, setEdges]
+  );
 
-        rules.forEach((rule: any) => {
-          const edgeKind = rule?.edgeData?.kind ?? rule.bind;
-          const incoming = edges.filter(
-            (e) => e.target === n.id && (e.data?.kind ?? rule.bind) === edgeKind
-          );
+  const onDeleteNode = useCallback(
+    (nodeId: string) => {
+      // snapshot for undo
+      setUndoStack({ nodes: [...nodes], edges: [...edges] });
+      setSnackOpen(true);
+      // perform delete
+      actuallyDeleteNode(nodeId);
+    },
+    [nodes, edges, actuallyDeleteNode]
+  );
 
-          if ((rule.cardinality ?? "1") === "many") {
-            const srcs = incoming.map((e) => e.source).sort(); // deterministic
-            const prev = Array.isArray(nextValues[rule.bind])
-              ? [...nextValues[rule.bind]].sort()
-              : [];
-            const same =
-              prev.length === srcs.length &&
-              prev.every((v, i) => v === srcs[i]);
-            if (!same) {
-              nextValues[rule.bind] = srcs;
-              changed = true;
-            }
-          } else {
-            const src = incoming[0]?.source ?? "";
-            if (nextValues[rule.bind] !== src) {
-              nextValues[rule.bind] = src;
-              changed = true;
-            }
-          }
-        });
+  // Delete selected edges via keyboard/backspace is automatic if you enable deleteKeyCode,
+  // but add this as well so we can snapshot for undo when edges are deleted via UI:
+  const onEdgesDelete = useCallback(
+    (deleted: Edge[]) => {
+      setUndoStack({ nodes: [...nodes], edges: [...edges] });
+      setSnackOpen(true);
+      setEdges((eds) => eds.filter((e) => !deleted.some((d) => d.id === e.id)));
+    },
+    [nodes, edges, setEdges]
+  );
 
-        return changed ? { ...n, data: { ...n.data, values: nextValues } } : n;
-      })
-    );
-  }, [edges, setNodes]);
+  // Optional: onNodesDelete for consistency (if you allow multi-select deletions)
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
+      setUndoStack({ nodes: [...nodes], edges: [...edges] });
+      setSnackOpen(true);
+      const ids = new Set(deleted.map((n) => n.id));
+      setNodes((nds) => nds.filter((n) => !ids.has(n.id)));
+      setEdges((eds) =>
+        eds.filter((e) => !ids.has(e.source) && !ids.has(e.target))
+      );
+    },
+    [nodes, edges, setNodes, setEdges]
+  );
+
+  // Undo handler
+  const handleUndo = () => {
+    if (!undoStack) return;
+    setNodes(undoStack.nodes);
+    setEdges(undoStack.edges);
+    setUndoStack(null);
+    setSnackOpen(false);
+  };
 
   // Inject helpers for DynamicForm (dynamic options + dropdown→edge sync)
   const nodesWithHelpers = useMemo(
@@ -448,13 +536,16 @@ const OrchestratorReactFlow: React.FC = () => {
         data: {
           ...n.data,
           __helpers: {
+            ...(n.data as any).__helpers,
             allNodes: nodes,
             allEdges: edges,
             onLinkFieldChange,
+            onCloneNode,
+            onDeleteNode,
           },
         },
       })),
-    [nodes, edges, onLinkFieldChange]
+    [nodes, edges, onLinkFieldChange, onCloneNode, onDeleteNode]
   );
 
   return (
@@ -492,7 +583,10 @@ const OrchestratorReactFlow: React.FC = () => {
           proOptions={{ hideAttribution: true }}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          onEdgesDelete={onEdgesDelete}
+          onNodesDelete={onNodesDelete}
           connectionMode={ConnectionMode.Loose}
+          deleteKeyCode={["Delete", "Backspace"]}
           fitView
         >
           <Panel>
@@ -537,6 +631,38 @@ const OrchestratorReactFlow: React.FC = () => {
         onClose={() => setInitOpen(false)}
         onSubmit={handleInitSubmit}
       />
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={5000}
+        onClose={() => setSnackOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          elevation={3}
+          variant="filled"
+          sx={{
+            bgcolor: theme.palette.background.paper,
+            color: theme.palette.textVariants.text1,
+            "& .MuiAlert-icon": { color: theme.palette.primary.main },
+            "& .MuiAlert-message .MuiButton-root": {
+              color: theme.palette.background.paper,
+            },
+            border: `1px solid ${theme.palette.divider}`,
+          }}
+          action={
+            <Button
+              size="small"
+              sx={{ color: theme.palette.primary.main }}
+              onClick={handleUndo}
+            >
+              UNDO
+            </Button>
+          }
+          onClose={() => setSnackOpen(false)}
+        >
+          Changes applied
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -16,6 +16,7 @@ import {
   Box,
   useTheme,
   Checkbox,
+  Autocomplete,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -30,7 +31,12 @@ type Props = {
   values?: Values;
 
   nodeId: string;
-  links?: Array<{ bind: string; fromTypes: string[]; cardinality?: string; edgeData?: any }>;
+  links?: Array<{
+    bind: string;
+    fromTypes: string[];
+    cardinality?: string;
+    edgeData?: any;
+  }>;
   allNodes?: any[];
   allEdges?: any[];
   onLinkFieldChange?: (bind: string, newSourceId: string) => void;
@@ -60,7 +66,10 @@ const DynamicForm: React.FC<Props> = ({
   const validCondition = (field: Field, vals: Values = {}) => {
     if (field?.depends_on) {
       // NOTE: if these expressions are user-generated, consider replacing with a safe evaluator
-      const conditionMet = new Function("values", `return ${field.depends_on};`)(vals);
+      const conditionMet = new Function(
+        "values",
+        `return ${field.depends_on};`
+      )(vals);
       if (!conditionMet) return false;
     }
     return true;
@@ -71,32 +80,38 @@ const DynamicForm: React.FC<Props> = ({
     return typeof info === "string" ? parse(info) : info;
   };
 
-  // "from:nodes:resourceId=vpc" or "from:nodes:type=vpc"
+  // "from:nodes:resourceId=vpc" or "from:nodes:type=vpc" (generic)
   const resolveOptions = (
     options: any
   ): { value: string; label: string; disabled?: boolean }[] | undefined => {
     if (typeof options !== "string") return options;
     if (!options.startsWith("from:nodes:")) return undefined;
 
-    const [, , filter] = options.split(":");
+    const [, , filter] = options.split(":"); // e.g., "resourceId=vpc"
     const [k, v] = filter.split("=");
 
     const nodes = allNodes ?? [];
     const candidates = nodes.filter((n: any) => {
-      const t = n?.data?.__nodeType; // canonical domain type from resourceId
-      if (k === "resourceId" || k === "type") return t === v;
+      const typeCode = n?.data?.__nodeType; // canonical domain type from resourceId
+      if (k === "resourceId" || k === "type") return typeCode === v;
       return n?.data?.[k] === v;
     });
 
     return candidates.map((n: any, idx: number) => {
-      const seq = String(idx + 1).padStart(4, "0");
-      const base =
-        n?.data?.values?.vpc_name ??
+      const typeCode = n?.data?.__nodeType ?? "node"; // e.g., "vpc", "subnet", "bucket"
+      const seq = String(idx + 1).padStart(4, "0"); // 0001, 0002, ...
+      // Prefer a human name if present, otherwise header label, otherwise id
+      const name =
         n?.data?.values?.name ??
+        n?.data?.values?.[`${typeCode}_name`] ?? // supports vpc_name, subnet_name, etc.
         n?.data?.header?.label ??
-        `vpc-${seq}`;
-      const label = base.includes("vpc-") ? base : `${base} (vpc-${seq})`;
-      return { value: n.id, label };
+        String(n.id);
+
+      // Always append a short code for clarity & disambiguation
+      const code = `${typeCode}-${seq}`;
+      const label = `${name} (${code})`;
+
+      return { value: String(n.id), label };
     });
   };
 
@@ -164,7 +179,11 @@ const DynamicForm: React.FC<Props> = ({
               }}
             >
               {(resolvedOptions ?? options ?? []).map((option: any) => (
-                <MenuItem key={option.value} value={option.value} disabled={option.disabled}>
+                <MenuItem
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.disabled}
+                >
                   {option.label}
                 </MenuItem>
               ))}
@@ -172,8 +191,48 @@ const DynamicForm: React.FC<Props> = ({
           </FormControl>
         );
 
+      case "select+text":
+      case "selectOrText": {
+        const resolved = resolveOptions(options) ?? [];
+        const currentVal = formData[name] ?? value ?? "";
+
+        return (
+          <Autocomplete
+            freeSolo // 👈 allows typing custom text
+            options={resolved.map((opt) => String(opt.value))}
+            value={currentVal}
+            onChange={(e, newVal) => {
+              // triggered when user picks an option
+              const val = newVal ?? "";
+              handleChange(name, val);
+              if (
+                onLinkFieldChange &&
+                resolved.some((o) => String(o.value) === val)
+              ) {
+                onLinkFieldChange(name, val); // only fire link if it's a node
+              }
+            }}
+            onInputChange={(e, newInput) => {
+              // triggered when user types custom
+              handleChange(name, newInput);
+              // don’t fire onLinkFieldChange here (custom free text)
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder={placeholder ?? "Enter or select"}
+              />
+            )}
+          />
+        );
+      }
+
       case "checkbox": {
-        const handleCheckboxChange = (fieldName: string, optionValue: string, checked: boolean) => {
+        const handleCheckboxChange = (
+          fieldName: string,
+          optionValue: string,
+          checked: boolean
+        ) => {
           const currentValues: string[] = formData[fieldName] ?? value ?? [];
           let updatedValues = [...currentValues];
 
@@ -201,7 +260,13 @@ const DynamicForm: React.FC<Props> = ({
                     control={
                       <Checkbox
                         checked={currentValues.includes(option.value)}
-                        onChange={(e) => handleCheckboxChange(name, option.value, e.target.checked)}
+                        onChange={(e) =>
+                          handleCheckboxChange(
+                            name,
+                            option.value,
+                            e.target.checked
+                          )
+                        }
                       />
                     }
                     label={
@@ -210,7 +275,11 @@ const DynamicForm: React.FC<Props> = ({
                           {option.label}
                         </Typography>
                         {option.sub_label && (
-                          <Typography variant="caption" color="text.secondary" display="block">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                          >
                             {option.sub_label}
                           </Typography>
                         )}
@@ -240,49 +309,56 @@ const DynamicForm: React.FC<Props> = ({
           <>
             {fieldCfg && (
               <div>
-                {Object.entries(formData[name] ?? value ?? {}).map(([key, val], index) => (
-                  <Grid container spacing={2} alignItems="center" key={`${key}-${index}`}>
-                    <Grid item xs={fieldCfg.key.size}>
-                      <TextField
-                        label={fieldCfg.key.label}
-                        required={fieldCfg.key.required}
-                        value={key}
-                        onChange={(e) => {
-                          const updatedList = { ...(formData[name] ?? {}) };
-                          const oldKey = Object.keys(updatedList)[index];
-                          delete updatedList[oldKey];
-                          (updatedList as any)[e.target.value] = val;
-                          handleChange(name, updatedList);
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={fieldCfg.value.size}>
-                      <TextField
-                        label={fieldCfg.value.label}
-                        value={val as any}
-                        onChange={(e) => {
-                          const updatedList = { ...(formData[name] ?? {}) };
-                          (updatedList as any)[key] = e.target.value;
-                          handleChange(name, updatedList);
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={fieldCfg.remove_button.size}>
-                      <Tooltip title={fieldCfg.remove_button.label}>
-                        <IconButton
-                          onClick={() => {
+                {Object.entries(formData[name] ?? value ?? {}).map(
+                  ([key, val], index) => (
+                    <Grid
+                      container
+                      spacing={2}
+                      alignItems="center"
+                      key={`${key}-${index}`}
+                    >
+                      <Grid item xs={fieldCfg.key.size}>
+                        <TextField
+                          label={fieldCfg.key.label}
+                          required={fieldCfg.key.required}
+                          value={key}
+                          onChange={(e) => {
                             const updatedList = { ...(formData[name] ?? {}) };
                             const oldKey = Object.keys(updatedList)[index];
-                            delete (updatedList as any)[oldKey];
+                            delete updatedList[oldKey];
+                            (updatedList as any)[e.target.value] = val;
                             handleChange(name, updatedList);
                           }}
-                        >
-                          <DeleteIcon sx={fieldCfg.remove_button.style} />
-                        </IconButton>
-                      </Tooltip>
+                        />
+                      </Grid>
+                      <Grid item xs={fieldCfg.value.size}>
+                        <TextField
+                          label={fieldCfg.value.label}
+                          value={val as any}
+                          onChange={(e) => {
+                            const updatedList = { ...(formData[name] ?? {}) };
+                            (updatedList as any)[key] = e.target.value;
+                            handleChange(name, updatedList);
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={fieldCfg.remove_button.size}>
+                        <Tooltip title={fieldCfg.remove_button.label}>
+                          <IconButton
+                            onClick={() => {
+                              const updatedList = { ...(formData[name] ?? {}) };
+                              const oldKey = Object.keys(updatedList)[index];
+                              delete (updatedList as any)[oldKey];
+                              handleChange(name, updatedList);
+                            }}
+                          >
+                            <DeleteIcon sx={fieldCfg.remove_button.style} />
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                ))}
+                  )
+                )}
                 <Button
                   variant={fieldCfg.add_button.variant}
                   onClick={() => {
@@ -327,7 +403,11 @@ const DynamicForm: React.FC<Props> = ({
             {card.label}
             {card?.info && (
               <Tooltip
-                title={<Box sx={{ maxHeight: 200, overflowY: "auto", p: 1 }}>{renderInfo(card.info)}</Box>}
+                title={
+                  <Box sx={{ maxHeight: 200, overflowY: "auto", p: 1 }}>
+                    {renderInfo(card.info)}
+                  </Box>
+                }
                 arrow
                 placement="top"
                 componentsProps={{
@@ -335,7 +415,9 @@ const DynamicForm: React.FC<Props> = ({
                     sx: {
                       bgcolor: theme.palette.background.paper,
                       color: theme.palette.textVariants.text1,
-                      "& .MuiTooltip-arrow": { color: theme.palette.background.paper },
+                      "& .MuiTooltip-arrow": {
+                        color: theme.palette.background.paper,
+                      },
                     },
                   },
                 }}
@@ -362,14 +444,30 @@ const DynamicForm: React.FC<Props> = ({
               card?.fields?.length > 0 &&
               card.fields.map(
                 (field) =>
-                  validCondition(field, { ...(values ?? {}), ...(formData ?? {}) }) && (
+                  validCondition(field, {
+                    ...(values ?? {}),
+                    ...(formData ?? {}),
+                  }) && (
                     <Grid item xs={field.size ?? 12} key={field.name}>
                       {field.label && (
-                        <Typography component="label" sx={{ display: "block", mb: 1 }}>
+                        <Typography
+                          component="label"
+                          sx={{ display: "block", mb: 1 }}
+                        >
                           {field.label}
                           {field?.info && (
                             <Tooltip
-                              title={<Box sx={{ maxHeight: 200, overflowY: "auto", p: 1 }}>{renderInfo(field.info)}</Box>}
+                              title={
+                                <Box
+                                  sx={{
+                                    maxHeight: 200,
+                                    overflowY: "auto",
+                                    p: 1,
+                                  }}
+                                >
+                                  {renderInfo(field.info)}
+                                </Box>
+                              }
                               arrow
                               placement="top"
                               componentsProps={{
@@ -377,7 +475,9 @@ const DynamicForm: React.FC<Props> = ({
                                   sx: {
                                     bgcolor: theme.palette.background.paper,
                                     color: theme.palette.textVariants.text1,
-                                    "& .MuiTooltip-arrow": { color: theme.palette.background.paper },
+                                    "& .MuiTooltip-arrow": {
+                                      color: theme.palette.background.paper,
+                                    },
                                   },
                                 },
                               }}
