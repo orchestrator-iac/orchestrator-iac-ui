@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Stepper,
@@ -29,6 +29,7 @@ import TerraformTemplate, {
 } from "./terraform_template/TerraformTemplate";
 import apiService from "../../services/apiService";
 import { useAuth } from "../../context/AuthContext";
+import ModificationPopup from "./modification/ModificationPopup";
 
 const steps = [
   "Basic Info",
@@ -48,19 +49,16 @@ const Resources: React.FC = () => {
   const resourceData = useSelector((state: RootState) =>
     resource_id ? state.resource.resources[resource_id] : null
   );
-
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [resourceNode, setResourceNode] = React.useState<NodeInfoType | null>(
-    null
-  );
-  const [resourceNodeValid, setResourceNodeValid] = React.useState(true);
-  const [terraformFiles, setTerraformFiles] = React.useState<TerraformFileType>(
-    {
-      main: "",
-      variables: "",
-      outputs: "",
-    }
-  );
+  const [open, setOpen] = useState(false);
+  const [description, setDescription] = useState("");
+  const [activeStep, setActiveStep] = useState(0);
+  const [resourceNode, setResourceNode] = useState<NodeInfoType | null>(null);
+  const [resourceNodeValid, setResourceNodeValid] = useState(true);
+  const [terraformFiles, setTerraformFiles] = useState<TerraformFileType>({
+    main: "",
+    variables: "",
+    outputs: "",
+  });
   const [terraformErrors, setTerraformErrors] = React.useState<
     Partial<Record<TerraformFileKey, string>>
   >({});
@@ -204,7 +202,7 @@ const Resources: React.FC = () => {
       case 3: {
         const valid = validateTemplateFiles();
         if (valid) {
-          onSubmit(methods.getValues());
+          setOpen(true);
         } else {
           showSnackbar(
             "Please fill all template files before submitting.",
@@ -226,14 +224,23 @@ const Resources: React.FC = () => {
     setTerraformErrors((prev) => ({ ...prev, [fileType]: undefined }));
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async () => {
+    const prevHistory = resourceData?.modifiedHistory ?? [];
     const fullData = {
-      ...data,
+      ...methods.getValues(),
       resourceNode,
       terraformCore: terraformFiles,
       terraformTemplate: templateFiles,
-      publishedBy: user?._id,
-      publishedAt: new Date().toISOString(),
+      publishedBy: resource_id === "new" ? user?._id : null,
+      publishedAt: resource_id === "new" ? new Date().toISOString() : null,
+      modifiedHistory: [
+        ...prevHistory,
+        {
+          modifiedBy: user?._id,
+          modifiedAt: new Date().toISOString(),
+          changeDescription: description,
+        },
+      ],
     };
     console.log("Final payload", fullData);
 
@@ -348,6 +355,13 @@ const Resources: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+      <ModificationPopup
+        open={open}
+        setOpen={setOpen}
+        description={description}
+        setDescription={setDescription}
+        onSubmit={onSubmit}
+      />
     </FormProvider>
   );
 };

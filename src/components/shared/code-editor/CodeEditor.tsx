@@ -2,14 +2,15 @@ import React, { useEffect } from "react";
 import AceEditor from "react-ace";
 import * as ace from "ace-builds";
 import styles from "./CodeEditor.module.css";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery } from "@mui/material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import { ThemeMode } from "../theme/ThemeContext";
 
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   language?: string; // e.g. "json", "yaml", "javascript"
-  themeMode?: "light" | "dark"; // used to determine the theme
+  themeMode?: ThemeMode; // used to determine the theme
   height?: string;
   width?: string;
   readOnly?: boolean;
@@ -30,9 +31,17 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   completers = [],
   errorMessage = "",
 }) => {
-  const theme = themeMode === "dark" ? "monokai" : "github";
+
+  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
+  
+  let effectiveMode = themeMode;
+  if (themeMode === "system") {
+    effectiveMode = prefersDark ? "dark" : "light";
+  }
+
+  const theme = effectiveMode === "dark" ? "monokai" : "github";
   const containerClass =
-    themeMode === "dark" ? styles.darkTheme : styles.lightTheme;
+    effectiveMode === "dark" ? styles.darkTheme : styles.lightTheme;
 
   useEffect(() => {
     const langTools = ace.require("ace/ext/language_tools");
