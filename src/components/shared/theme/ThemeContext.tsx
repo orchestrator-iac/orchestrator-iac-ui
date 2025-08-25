@@ -1,28 +1,64 @@
-// ThemeContext.tsx
-import React, { createContext, useState, ReactNode } from 'react';
-import { ThemeProvider as MUIThemeProvider } from '@mui/material/styles';
-import { lightTheme, darkTheme } from './theme';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useMemo,
+  ReactNode,
+} from "react";
+import { ThemeProvider as MUIThemeProvider } from "@mui/material/styles";
+import { useMediaQuery } from "@mui/material";
+import { lightTheme, darkTheme } from "./theme";
+import { useAuth } from "../../../context/AuthContext";
 
-type ThemeMode = 'light' | 'dark';
+export type ThemeMode = "light" | "dark" | "system";
 
 interface ThemeContextType {
   mode: ThemeMode;
-  toggleTheme: () => void;
+  setMode: (mode: ThemeMode) => void;
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(
+  undefined
+);
 
-export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [mode, setMode] = useState<ThemeMode>('light');
+export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const { user } = useAuth();
+  const [mode, setMode] = useState<ThemeMode>("system");
+  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
 
-  const toggleTheme = () => {
-    setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+  let effectiveMode: "light" | "dark";
+  if (mode === "system") {
+    effectiveMode = prefersDark ? "dark" : "light";
+  } else {
+    effectiveMode = mode;
+  }
 
-  const theme = mode === 'light' ? lightTheme : darkTheme;
+  const theme = effectiveMode === "light" ? lightTheme : darkTheme;
+
+  useEffect(() => {
+    localStorage.setItem("themePreference", mode);
+  }, [mode]);
+
+  useEffect(() => {
+    if(user?.themePreference) {
+      setMode(user?.themePreference);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("themePreference") as ThemeMode | null;
+    if (stored) setMode(stored);
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({ mode, setMode }),
+    [mode]
+  );
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       <MUIThemeProvider theme={theme}>{children}</MUIThemeProvider>
     </ThemeContext.Provider>
   );

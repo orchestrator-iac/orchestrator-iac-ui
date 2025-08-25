@@ -12,11 +12,11 @@ import {
   Grid,
 } from "@mui/material";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
-import axios from "axios";
 
 import { useAuth } from "../../../context/AuthContext";
 import { uploadProfileImage } from "../../../services/auth";
 import { UserProfile } from "../../../types/auth";
+import apiService from "../../../services/apiService";
 
 const roles = [
   "Developer",
@@ -27,8 +27,13 @@ const roles = [
 ];
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const theme = useTheme();
+  const themeOptions = [
+    { label: "System Default", value: "system" },
+    { label: "Light", value: "light" },
+    { label: "Dark", value: "dark" },
+  ];
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [updated, setUpdated] = useState(false);
@@ -49,6 +54,7 @@ const Profile: React.FC = () => {
         role: user.role ?? "",
         company: user.company ?? "",
         imageUrl: user.imageUrl ?? "",
+        themePreference: user.themePreference ?? "system"
       });
     }
   }, [user]);
@@ -94,10 +100,10 @@ const Profile: React.FC = () => {
     }
 
     const token = localStorage.getItem("token");
-    await axios.put("/user/profile", profile, {
+    await apiService.put("/user/profile", profile, {
       headers: { Authorization: `Bearer ${token}` },
     });
-
+    await refreshProfile();
     setUpdated(false);
   };
 
@@ -122,19 +128,14 @@ const Profile: React.FC = () => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
+      reader.onerror = (error) => reject(new Error(`File reading failed: ${JSON.stringify(error)}`));
     });
   };
 
   if (!profile) return <div>Loading...</div>;
 
   return (
-    <Box
-      maxWidth="md"
-      mx="auto"
-      mt={4}
-      mb={4}
-    >
+    <Box maxWidth="md" mx="auto" mt={4} mb={4}>
       <Typography variant="h5" mb={2}>
         Edit Profile
       </Typography>
@@ -202,20 +203,6 @@ const Profile: React.FC = () => {
         </Box>
       </Box>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Email"
-            name="email"
-            value={profile.email}
-            onChange={handleChange}
-            margin="normal"
-            disabled
-            required
-            error={!!errors.email}
-            helperText={errors.email}
-          />
-        </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
@@ -241,6 +228,37 @@ const Profile: React.FC = () => {
             error={!!errors.lastName}
             helperText={errors.lastName}
           />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Email"
+            name="email"
+            value={profile.email}
+            onChange={handleChange}
+            margin="normal"
+            disabled
+            required
+            error={!!errors.email}
+            helperText={errors.email}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            select
+            label="Theme Preference"
+            name="themePreference"
+            value={profile.themePreference || "system"}
+            onChange={handleChange}
+            margin="normal"
+          >
+            {themeOptions.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </TextField>
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField

@@ -57,9 +57,18 @@ export interface FieldGroup {
   fields?: Array<Field>;
 }
 
+export type DepExpr =
+  | { eq: [string, any] }
+  | { ne: [string, any] }
+  | { in: [string, any[]] }
+  | { exists: string }
+  | { all: DepExpr[] }
+  | { any: DepExpr[] }
+  | { not: DepExpr };
+
 /** ============ Fields ============ */
 export interface Field {
-  depends_on?: string;
+  depends_on?: string | DepExpr;
   label: string;
   sub_label?: string;
   name: string;

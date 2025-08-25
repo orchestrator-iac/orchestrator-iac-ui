@@ -19,6 +19,16 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   );
   const [user, setUser] = useState<UserProfile | null>(null);
 
+  const refreshProfile = async () => {
+    try {
+      const u = await getProfile();
+      setUser(u);
+    } catch (e) {
+      console.warn("Failed to refresh profile:", e);
+      logout();
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
 
@@ -47,12 +57,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
         }
       }, refreshIn);
 
-      getProfile()
-        .then(setUser)
-        .catch(() => {
-          console.warn("Invalid token, logging out");
-          logout();
-        });
+      refreshProfile();
     } catch (err) {
       console.error("Failed to decode token:", err);
       logout();
@@ -75,7 +80,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   };
 
   const contextValue = useMemo(
-    () => ({ token, user, login, logout }),
+    () => ({ token, user, login, logout, refreshProfile }),
     [token, user]
   );
 

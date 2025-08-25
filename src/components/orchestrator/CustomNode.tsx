@@ -20,6 +20,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import parse from "html-react-parser";
 import DynamicForm from "./DynamicForm";
 import { NodeData } from "../../types/node-info";
+import { UserProfile } from "../../types/auth";
+import { CloudConfig } from "../../types/clouds-info";
 
 const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
@@ -44,6 +46,8 @@ type CustomNodeProps = NodeProps & {
     }>;
     __nodeType?: string;
     resourceId?: string;
+    userInfo?: UserProfile;
+    templateInfo?: CloudConfig;
   };
   isOrchestrator?: boolean;
 };
@@ -253,6 +257,8 @@ const CustomNode: React.FC<CustomNodeProps> = ({
           links={data?.links}
           allNodes={data?.__helpers?.allNodes}
           allEdges={data?.__helpers?.allEdges}
+          templateInfo={data?.templateInfo}
+          userInfo={data?.userInfo}
           onLinkFieldChange={(bind, newSourceId) =>
             data?.__helpers?.onLinkFieldChange?.({
               nodeId: id,

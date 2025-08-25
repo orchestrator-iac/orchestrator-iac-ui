@@ -17,13 +17,18 @@ import {
   useTheme,
   Checkbox,
   Autocomplete,
-  Chip,
+  Switch,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import parse from "html-react-parser";
 import { Field, FieldGroup } from "../../types/node-info";
 import { CodeEditorField } from "../shared/code-editor/CodeEditorField";
+import { UserProfile } from "../../types/auth";
+import { CloudConfig } from "../../types/clouds-info";
+import { validCondition } from "../../utils/deps";
 
 type Values = { [x: string]: any };
 
@@ -40,16 +45,16 @@ type Props = {
   }>;
   allNodes?: any[];
   allEdges?: any[];
+  userInfo?: UserProfile;
+  templateInfo?: CloudConfig;
   onLinkFieldChange?: (bind: string, newSourceId: string) => void;
 };
 
 const DynamicForm: React.FC<Props> = ({
   config,
   values,
-  nodeId,
   links,
   allNodes,
-  allEdges,
   onLinkFieldChange,
 }) => {
   const theme = useTheme();
@@ -64,17 +69,21 @@ const DynamicForm: React.FC<Props> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const validCondition = (field: Field, vals: Values = {}) => {
-    if (field?.depends_on) {
-      // NOTE: if these expressions are user-generated, consider replacing with a safe evaluator
-      const conditionMet = new Function(
-        "values",
-        `return ${field.depends_on};`
-      )(vals);
-      if (!conditionMet) return false;
-    }
-    return true;
-  };
+  // const validCondition = (field: Field, vals: Values = {}) => {
+  //   if (field?.depends_on) {
+  //     // NOTE: if these expressions are user-generated, consider replacing with a safe evaluator
+  //     try {
+  //       const conditionMet = new Function(
+  //         "values",
+  //         `return ${field.depends_on};`
+  //       )(vals);
+  //       if (!conditionMet) return false;
+  //     } catch (e) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // };
 
   const renderInfo = (info?: string | JSX.Element) => {
     if (!info) return null;
@@ -141,7 +150,6 @@ const DynamicForm: React.FC<Props> = ({
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
             helperText={error_text || hint}
-            onChange={(e) => handleChange(name, e.target.value)}
           />
         );
 
@@ -157,7 +165,9 @@ const DynamicForm: React.FC<Props> = ({
                   key={option.value}
                   value={option.value}
                   control={<Radio />}
-                  label={option.label}
+                  label={
+                    <Typography variant="body2">{option.label}</Typography>
+                  }
                   disabled={option.disabled}
                 />
               ))}
@@ -185,7 +195,7 @@ const DynamicForm: React.FC<Props> = ({
                   value={option.value}
                   disabled={option.disabled}
                 >
-                  {option.label}
+                  <Typography variant="body2">{option.label}</Typography>
                 </MenuItem>
               ))}
             </Select>
@@ -232,9 +242,6 @@ const DynamicForm: React.FC<Props> = ({
               if (typeof newVal === "string") {
                 // freeSolo commit via Enter/blur, treat as custom text (no edge)
                 handleChange(name, newVal);
-                // (optional) if it exactly equals some option's value, you could auto-wire:
-                // const hit = opts.find(o => o.value === newVal);
-                // if (hit && onLinkFieldChange) onLinkFieldChange(name, hit.value);
                 return;
               }
 
@@ -271,7 +278,7 @@ const DynamicForm: React.FC<Props> = ({
                 key={option.value}
                 disabled={option.disabled}
               >
-                {option.label}
+                <Typography variant="body2">{option.label}</Typography>
               </MenuItem>
             )}
           />
@@ -348,12 +355,87 @@ const DynamicForm: React.FC<Props> = ({
                     onChange={(e) => handleChange(name, e.target.checked)}
                   />
                 }
-                label={placeholder || name}
+                label={
+                  <Typography variant="body2">{placeholder || name}</Typography>
+                }
               />
             )}
           </FormControl>
         );
       }
+
+      case "switch": {
+        const raw = formData[name] ?? value ?? false;
+        const isEnabled = raw === true || raw === "true";
+        return (
+          <ToggleButtonGroup
+            value={isEnabled ? "enabled" : "disabled"}
+            exclusive
+            onChange={(_e, val) => {
+              if (val !== null) handleChange(name, val === "enabled");
+            }}
+            size="small"
+            sx={{
+              borderRadius: 2,
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              "& .MuiToggleButton-root": {
+                px: 2,
+                py: 0.5,
+                textTransform: "none",
+                fontSize: "0.75rem",
+                fontWeight: 500,
+                minWidth: "auto",
+              },
+            }}
+          >
+            <ToggleButton
+              value="enabled"
+              sx={{
+                "&.Mui-selected": {
+                  bgcolor: "primary.main",
+                  color: "white",
+                  "&:hover": { bgcolor: "primary.dark" },
+                },
+              }}
+            >
+              Enable
+            </ToggleButton>
+            <ToggleButton
+              value="disabled"
+              sx={{
+                "&.Mui-selected": {
+                  bgcolor: "grey.400",
+                  color: "white",
+                  "&:hover": { bgcolor: "grey.500" },
+                },
+              }}
+            >
+              Disable
+            </ToggleButton>
+          </ToggleButtonGroup>
+        );
+      }
+
+      case "number":
+        return (
+          <TextField
+            fullWidth
+            type="number"
+            required={!!required}
+            value={formData[name] ?? value ?? ""}
+            placeholder={placeholder ?? ""}
+            helperText={error_text || hint}
+            inputProps={{
+              min: fieldCfg?.min,
+              max: fieldCfg?.max,
+              step: fieldCfg?.step ?? 1,
+            }}
+            onChange={(e) => {
+              const val = e.target.value;
+              handleChange(name, val === "" ? "" : Number(val));
+            }}
+          />
+        );
 
       case "list<key-value>":
         return (
@@ -374,10 +456,12 @@ const DynamicForm: React.FC<Props> = ({
                           required={fieldCfg.key.required}
                           value={key}
                           onChange={(e) => {
-                            const updatedList = { ...(formData[name] ?? {}) };
+                            const updatedList = {
+                              ...(formData[name] ?? {}),
+                            } as Record<string, any>;
                             const oldKey = Object.keys(updatedList)[index];
                             delete updatedList[oldKey];
-                            (updatedList as any)[e.target.value] = val;
+                            updatedList[e.target.value] = val;
                             handleChange(name, updatedList);
                           }}
                         />
@@ -387,8 +471,10 @@ const DynamicForm: React.FC<Props> = ({
                           label={fieldCfg.value.label}
                           value={val as any}
                           onChange={(e) => {
-                            const updatedList = { ...(formData[name] ?? {}) };
-                            (updatedList as any)[key] = e.target.value;
+                            const updatedList = {
+                              ...(formData[name] ?? {}),
+                            } as Record<string, any>;
+                            updatedList[key] = e.target.value;
                             handleChange(name, updatedList);
                           }}
                         />
@@ -397,9 +483,11 @@ const DynamicForm: React.FC<Props> = ({
                         <Tooltip title={fieldCfg.remove_button.label}>
                           <IconButton
                             onClick={() => {
-                              const updatedList = { ...(formData[name] ?? {}) };
+                              const updatedList = {
+                                ...(formData[name] ?? {}),
+                              } as Record<string, any>;
                               const oldKey = Object.keys(updatedList)[index];
-                              delete (updatedList as any)[oldKey];
+                              delete updatedList[oldKey];
                               handleChange(name, updatedList);
                             }}
                           >
@@ -413,8 +501,11 @@ const DynamicForm: React.FC<Props> = ({
                 <Button
                   variant={fieldCfg.add_button.variant}
                   onClick={() => {
-                    const updatedList = { ...(formData[name] ?? {}) };
-                    (updatedList as any)[""] = "";
+                    const updatedList = { ...(formData[name] ?? {}) } as Record<
+                      string,
+                      any
+                    >;
+                    updatedList[""] = "";
                     handleChange(name, updatedList);
                   }}
                 >
@@ -445,10 +536,12 @@ const DynamicForm: React.FC<Props> = ({
       {config.map((card, index) => (
         <Card key={`${card.type}-${card.label}-${index}`} sx={{ mb: 2, p: 2 }}>
           <Typography
-            variant="h6"
+            variant="subtitle1"
             sx={{
               mb: 1,
               borderBottom: `1px solid ${theme.palette.background.paper}`,
+              color: "primary.main",
+              fontWeight: "bold",
             }}
           >
             {card.label}
@@ -465,7 +558,9 @@ const DynamicForm: React.FC<Props> = ({
                   tooltip: {
                     sx: {
                       bgcolor: theme.palette.background.paper,
-                      color: theme.palette.textVariants.text1,
+                      color:
+                        theme.palette.textVariants?.text1 ??
+                        theme.palette.text.primary,
                       "& .MuiTooltip-arrow": {
                         color: theme.palette.background.paper,
                       },
@@ -475,9 +570,9 @@ const DynamicForm: React.FC<Props> = ({
               >
                 <Typography
                   component="strong"
+                  variant="caption"
                   sx={{
-                    fontSize: "0.8rem",
-                    fontWeight: "bolder",
+                    fontWeight: "bold",
                     color: "primary.main",
                     mx: "0.8rem",
                     mb: "3px",
@@ -503,7 +598,8 @@ const DynamicForm: React.FC<Props> = ({
                       {field.label && (
                         <Typography
                           component="label"
-                          sx={{ display: "block", mb: 1 }}
+                          variant="body2"
+                          sx={{ display: "block", mb: 0.5 }}
                         >
                           {field.label}
                           {field?.info && (
@@ -525,7 +621,9 @@ const DynamicForm: React.FC<Props> = ({
                                 tooltip: {
                                   sx: {
                                     bgcolor: theme.palette.background.paper,
-                                    color: theme.palette.textVariants.text1,
+                                    color:
+                                      theme.palette.textVariants?.text1 ??
+                                      theme.palette.text.primary,
                                     "& .MuiTooltip-arrow": {
                                       color: theme.palette.background.paper,
                                     },
@@ -535,9 +633,9 @@ const DynamicForm: React.FC<Props> = ({
                             >
                               <Typography
                                 component="strong"
+                                variant="caption"
                                 sx={{
-                                  fontSize: "0.8rem",
-                                  fontWeight: "bolder",
+                                  fontWeight: "bold",
                                   color: "primary.main",
                                   mx: "0.8rem",
                                   mb: "3px",

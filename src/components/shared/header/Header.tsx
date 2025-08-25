@@ -19,7 +19,7 @@ import PillToggle from "./PillToggle";
 
 const Header: React.FC = () => {
   const theme = useTheme();
-  const { mode, toggleTheme } = useThemeContext();
+  const { mode, setMode } = useThemeContext();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const hasImage = user?.imageUrl && user?.imageUrl !== "";
@@ -83,7 +83,7 @@ const Header: React.FC = () => {
         </Typography>
 
         <div className={styles.controls}>
-          <PillToggle mode={mode} toggleTheme={toggleTheme} />
+          <PillToggle mode={mode} setMode={setMode} />
           {user && (
             <>
               <IconButton onClick={handleMenuOpen} size="small">

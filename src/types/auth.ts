@@ -1,3 +1,5 @@
+import { ThemeMode } from "../components/shared/theme/ThemeContext";
+
 export interface Register {
     firstName: string;
     lastName: string;
@@ -19,7 +21,8 @@ export interface UserProfile {
     email: string;
     role: string;
     company?: string;
-    imageUrl?: string
+    imageUrl?: string;
+    themePreference?: ThemeMode;
 }
 
 export interface AuthContextType {
@@ -27,6 +30,7 @@ export interface AuthContextType {
   user: UserProfile | null;
   login: (token: string) => void;
   logout: () => void;
+  refreshProfile: () => Promise<void>;
 }
 
 export interface ImageUpdate {

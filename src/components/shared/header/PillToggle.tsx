@@ -1,13 +1,32 @@
-import { Box } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import styles from "./PillToggle.module.css";
+import { ThemeMode } from "../theme/ThemeContext";
 
 type Props = {
-  mode: "light" | "dark";
-  toggleTheme: () => void;
+  mode: ThemeMode;
+  setMode: (mode: ThemeMode) => void;
 };
 
-export default function PillToggle({ mode, toggleTheme }: Readonly<Props>) {
-  const isDark = mode === "dark";
+export default function PillToggle({ mode, setMode }: Readonly<Props>) {
+  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
+
+  let effectiveMode: "light" | "dark";
+  if (mode === "system") {
+    effectiveMode = prefersDark ? "dark" : "light";
+  } else {
+    effectiveMode = mode;
+  }
+  const isDark = effectiveMode === "dark";
+
+  const toggleTheme = () => {
+    setMode((prev) => {
+      let current = prev;
+      if (prev === "system") {
+        current = prefersDark ? "dark" : "light";
+      }
+      return current === "light" ? "dark" : "light";
+    });
+  };
 
   return (
     <Box className={styles.toggleWrapper} onClick={toggleTheme}>

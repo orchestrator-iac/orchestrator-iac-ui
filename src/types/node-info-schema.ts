@@ -10,10 +10,22 @@ export const OptionSchema = z.object({
   name: z.string().nullable().optional(),
 });
 
+const depExpr: z.ZodType<any> = z.lazy(() =>
+  z.union([
+    z.object({ eq: z.tuple([z.string(), z.any()]) }),
+    z.object({ ne: z.tuple([z.string(), z.any()]) }),
+    z.object({ in: z.tuple([z.string(), z.array(z.any())]) }),
+    z.object({ exists: z.string() }),
+    z.object({ all: z.array(depExpr) }),
+    z.object({ any: z.array(depExpr) }),
+    z.object({ not: depExpr }),
+  ])
+);
+
 export const FieldConfigSchema = z.record(z.string(), z.any());
 
 export const FieldSchema = z.object({
-  depends_on: z.string().nullable().optional(),
+  depends_on: z.union([z.string(), depExpr]).optional().nullable(),
   label: z.string(),
   sub_label: z.string().nullable().optional(),
   name: z.string(),

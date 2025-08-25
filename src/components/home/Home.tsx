@@ -56,12 +56,7 @@ const Home: React.FC = () => {
     if (resourcesStatus === "idle") {
       dispatch(fetchResources());
     }
-  }, [
-    dispatch,
-    customWrappersStatus,
-    wrappersTemplateStatus,
-    resourcesStatus,
-  ]);
+  }, [dispatch, customWrappersStatus, wrappersTemplateStatus, resourcesStatus]);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
@@ -77,36 +72,43 @@ const Home: React.FC = () => {
 
   return (
     <Box m={4}>
-      <h3 className={styles.wrapperHeader}>Recently Worked</h3>
-      <div className={styles.cardList}>
-        {customWrappers.map((card) => (
-          <div key={card.template_id} className={styles.card}>
-            <CardLogo
-              cloudType={card.cloud_type}
-              className={styles.cloudTypeLogo}
-            />
-            <img
-              src={card.image}
-              alt={card.label}
-              className={styles.cardImage}
-            />
-            <h3 className={styles.cardTitle}>
-              <Link
-                to={`/orchestrator/${card.template_id}?&template_type=custom`}
-                style={{ textDecoration: "none", color: "inherit" }}
-                aria-label={`View details for ${card.label}`}
-              >
-                {card.label}
-              </Link>
-            </h3>
-            <p className={styles.cardDescription}>{card.description}</p>
+      {customWrappers?.length > 0 && (
+        <>
+          <h3 className={styles.wrapperHeader}>Recently Worked</h3>
+          <div className={styles.cardList}>
+            {customWrappers.map((card) => (
+              <div key={card.template_id} className={styles.card}>
+                <CardLogo
+                  cloudType={card.cloud_type}
+                  className={styles.cloudTypeLogo}
+                />
+                <img
+                  src={card.image}
+                  alt={card.label}
+                  className={styles.cardImage}
+                />
+                <h3 className={styles.cardTitle}>
+                  <Link
+                    to={`/orchestrator/${card.template_id}?&template_type=custom`}
+                    style={{ textDecoration: "none", color: "inherit" }}
+                    aria-label={`View details for ${card.label}`}
+                  >
+                    {card.label}
+                  </Link>
+                </h3>
+                <p className={styles.cardDescription}>{card.description}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       <h3 className={styles.wrapperHeader}>Templates</h3>
       <div className={styles.cardList}>
-        <Box className={styles.card} onClick={() => navigateTemplates(undefined)}>
+        <Box
+          className={styles.card}
+          onClick={() => navigateTemplates(undefined)}
+        >
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
             <p className={styles.cardDescription}>Blank Template</p>
@@ -135,7 +137,10 @@ const Home: React.FC = () => {
 
       <h3 className={styles.wrapperHeader}>Resource</h3>
       <div className={styles.cardList}>
-        <Box className={styles.card} onClick={() => navigateResource(undefined)}>
+        <Box
+          className={styles.card}
+          onClick={() => navigateResource(undefined)}
+        >
           <div className={styles.cardBlank}>
             <FontAwesomeIcon icon="plus" size="5x" />
             <p className={styles.cardDescription}>New Resource</p>
