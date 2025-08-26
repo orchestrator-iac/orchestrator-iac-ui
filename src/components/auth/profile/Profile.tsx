@@ -203,7 +203,7 @@ const Profile: React.FC = () => {
         </Box>
       </Box>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             label="First Name"
@@ -216,7 +216,7 @@ const Profile: React.FC = () => {
             helperText={errors.firstName}
           />
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             label="Last Name"
@@ -229,7 +229,7 @@ const Profile: React.FC = () => {
             helperText={errors.lastName}
           />
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             label="Email"
@@ -243,7 +243,7 @@ const Profile: React.FC = () => {
             helperText={errors.email}
           />
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             select
@@ -260,7 +260,7 @@ const Profile: React.FC = () => {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             select
@@ -280,7 +280,7 @@ const Profile: React.FC = () => {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             label="Company"

@@ -152,7 +152,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <CodeEditor
             value={resourceNodeTemp}
             onChange={setResourceNodeTemp}
@@ -164,7 +164,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
             height="calc(100vh - 180px)"
           />
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           {(() => {
             const isDarkMode = theme.palette.mode === "dark";
             const hasData = !!resourceNode?.data;

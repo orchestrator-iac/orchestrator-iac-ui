@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useThemeContext } from "../theme/useThemeContext";
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import CodeEditor from "./CodeEditor";
 
 const toEditorValue = (val: any) => {
@@ -43,7 +43,7 @@ export const CodeEditorField: React.FC<{
   }, [resourceNodeTemp]);
 
   return (
-    <Grid item xs={12}>
+    <Grid size={12}>
       <CodeEditor
         value={resourceNodeTemp}
         onChange={setResourceNodeTemp}

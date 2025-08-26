@@ -1,4 +1,3 @@
-// basic_info/BasicInfo.tsx
 import React, { useState, useCallback } from "react";
 import {
   Grid,
@@ -26,12 +25,16 @@ import CloseIcon from "@mui/icons-material/Close";
 import { Controller, useFormContext } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchIcons, resetIcons } from "../../../store/iconsSlice";
+import ModificationHistory from "../modification/ModificationHistoryTimeline";
 
 const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
 const BasicInfo: React.FC = () => {
-  const { control, formState, setValue } = useFormContext();
+  const { control, formState, setValue, watch } = useFormContext();
+  const modifiedHistory = watch("modifiedHistory");
   const { errors } = formState;
+
+  const [showHistory, setShowHistory] = useState(false);
 
   // Popup state
   const [open, setOpen] = useState(false);
@@ -80,282 +83,304 @@ const BasicInfo: React.FC = () => {
   };
 
   return (
-    <>
-      <Grid container spacing={2} sx={{ padding: "0 150px" }}>
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="resourceId"
-            control={control}
-            rules={{ required: "Id is required." }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Id"
-                required
-                fullWidth
-                error={!!errors.resourceId}
-                helperText={errors.resourceId?.message as string}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="resourceName"
-            control={control}
-            rules={{ required: "Name is required." }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Name"
-                fullWidth
-                required
-                error={!!errors.resourceName}
-                helperText={errors.resourceName?.message as string}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth error={!!errors.cloudProvider}>
-            <InputLabel id="cloud-provider-label">Cloud Provider *</InputLabel>
-            <Controller
-              name="cloudProvider"
-              control={control}
-              rules={{ required: "Cloud provider is required." }}
-              render={({ field }) => (
-                <Select {...field} labelId="cloud-provider-label">
-                  <MenuItem value={"aws"}>AWS</MenuItem>
-                  <MenuItem value={"azure"}>Azure</MenuItem>
-                  <MenuItem value={"gcp"}>GCP</MenuItem>
-                </Select>
-              )}
-            />
-            {typeof errors.cloudProvider?.message === "string" && (
-              <FormHelperText>{errors.cloudProvider.message}</FormHelperText>
-            )}
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="resourceVersion"
-            control={control}
-            rules={{ required: "Version is required." }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Version"
-                fullWidth
-                required
-                error={!!errors.resourceVersion}
-                helperText={errors.resourceVersion?.message as string}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={5}>
-          <Controller
-            name="terraformCorePath"
-            control={control}
-            rules={{ required: "Terraform core path is required." }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Terraform Core Path"
-                fullWidth
-                required
-                error={!!errors.terraformCorePath}
-                helperText={errors.terraformCorePath?.message as string}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={5}>
-          <Controller
-            name="terraformTemplatePath"
-            control={control}
-            rules={{ required: "Terraform template path is required." }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Terraform Template Path"
-                fullWidth
-                required
-                error={!!errors.terraformTemplatePath}
-                helperText={errors.terraformTemplatePath?.message as string}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={2}>
-          <Controller
-            name="resourceIcon"
-            control={control}
-            rules={{ required: "Icon is required." }}
-            render={({ field }) => (
-              <>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Button
-                    variant="outlined"
-                    onClick={handleOpen}
-                    color={errors.icon ? "error" : "primary"}
-                  >
-                    {field.value?.url ? "Change Icon" : "Upload Icon"}
-                  </Button>
-
-                  {field.value?.url && (
-                    <Box
-                      component="img"
-                      src={`${API_HOST_URL}${field.value.url}`}
-                      alt="Selected Icon"
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        objectFit: "contain",
-                        borderRadius: 1,
-                        border: "1px solid #ddd",
-                        backgroundColor: "#fff",
-                      }}
-                    />
-                  )}
-                </Box>
-
-                {errors.icon && (
-                  <Typography
-                    variant="caption"
-                    color="error"
-                    sx={{ display: "block", mt: 0.5 }}
-                  >
-                    {errors.icon.message as string}
-                  </Typography>
-                )}
-              </>
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Controller
-            name="resourceDescription"
-            control={control}
-            rules={{ required: "Description is required." }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Description"
-                fullWidth
-                required
-                error={!!errors.resourceDescription}
-                helperText={errors.resourceDescription?.message as string}
-                multiline
-                rows={4}
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-
-      {/* Popup for Icons */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Select Icon
-          <IconButton
-            aria-label="close"
-            onClick={handleClose}
-            sx={{ position: "absolute", right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent
-          dividers
-          sx={{ height: 400, overflowY: "auto" }}
-          onScroll={handleScroll}
-        >
-          <TextField
-            placeholder="Search icons..."
-            fullWidth
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            sx={{ mb: 2 }}
-          />
-
+    <Box>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: showHistory ? 8 : 12 }}>
           <Grid container spacing={2}>
-            {icons.map((icon: any) => (
-              <Grid item xs={12} sm={6} md={3} key={icon.url}>
-                <Card>
-                  <CardActionArea onClick={() => handleSelectIcon(icon)}>
-                    <CardMedia
-                      component="img"
-                      height="120"
-                      image={`${API_HOST_URL}${icon.url}`}
-                      alt={icon.name}
-                    />
-                    <CardContent>
-                      <Tooltip title={icon.name}>
-                        <Typography
-                          variant="body2"
-                          color="text.primary"
-                          sx={{
-                            textTransform: "capitalize",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {icon.name}
-                        </Typography>
-                      </Tooltip>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Controller
+                name="resourceId"
+                control={control}
+                rules={{ required: "Id is required." }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Id"
+                    required
+                    fullWidth
+                    error={!!errors.resourceId}
+                    helperText={errors.resourceId?.message as string}
+                  />
+                )}
+              />
+            </Grid>
 
-                      <Tooltip
-                        title={[
-                          icon.type?.toUpperCase(),
-                          icon.cloudType?.toUpperCase(),
-                        ]
-                          .filter(Boolean)
-                          .join(" | ")}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Controller
+                name="resourceName"
+                control={control}
+                rules={{ required: "Name is required." }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Name"
+                    fullWidth
+                    required
+                    error={!!errors.resourceName}
+                    helperText={errors.resourceName?.message as string}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth error={!!errors.cloudProvider}>
+                <InputLabel id="cloud-provider-label">
+                  Cloud Provider *
+                </InputLabel>
+                <Controller
+                  name="cloudProvider"
+                  control={control}
+                  rules={{ required: "Cloud provider is required." }}
+                  render={({ field }) => (
+                    <Select {...field} labelId="cloud-provider-label">
+                      <MenuItem value={"aws"}>AWS</MenuItem>
+                      <MenuItem value={"azure"}>Azure</MenuItem>
+                      <MenuItem value={"gcp"}>GCP</MenuItem>
+                    </Select>
+                  )}
+                />
+                {typeof errors.cloudProvider?.message === "string" && (
+                  <FormHelperText>
+                    {errors.cloudProvider.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name="resourceVersion"
+                control={control}
+                rules={{ required: "Version is required." }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Version"
+                    fullWidth
+                    required
+                    error={!!errors.resourceVersion}
+                    helperText={errors.resourceVersion?.message as string}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Controller
+                name="terraformCorePath"
+                control={control}
+                rules={{ required: "Terraform core path is required." }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Terraform Core Path"
+                    fullWidth
+                    required
+                    error={!!errors.terraformCorePath}
+                    helperText={errors.terraformCorePath?.message as string}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Controller
+                name="terraformTemplatePath"
+                control={control}
+                rules={{ required: "Terraform template path is required." }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Terraform Template Path"
+                    fullWidth
+                    required
+                    error={!!errors.terraformTemplatePath}
+                    helperText={errors.terraformTemplatePath?.message as string}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Controller
+                name="resourceIcon"
+                control={control}
+                rules={{ required: "Icon is required." }}
+                render={({ field }) => (
+                  <>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Button
+                        variant="outlined"
+                        onClick={handleOpen}
+                        color={errors.icon ? "error" : "primary"}
                       >
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
+                        {field.value?.url ? "Change Icon" : "Upload Icon"}
+                      </Button>
+
+                      {field.value?.url && (
+                        <Box
+                          component="img"
+                          src={`${API_HOST_URL}${field.value.url}`}
+                          alt="Selected Icon"
                           sx={{
-                            fontSize: 10,
-                            textTransform: "capitalize",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
+                            width: 32,
+                            height: 32,
+                            objectFit: "contain",
+                            borderRadius: 1,
+                            border: "1px solid #ddd",
+                            backgroundColor: "#fff",
                           }}
-                        >
-                          {[
+                        />
+                      )}
+                    </Box>
+
+                    {errors.icon && (
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        sx={{ display: "block", mt: 0.5 }}
+                      >
+                        {errors.icon.message as string}
+                      </Typography>
+                    )}
+                  </>
+                )}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Controller
+                name="resourceDescription"
+                control={control}
+                rules={{ required: "Description is required." }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Description"
+                    fullWidth
+                    required
+                    error={!!errors.resourceDescription}
+                    helperText={errors.resourceDescription?.message as string}
+                    multiline
+                    rows={4}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
+          <Box sx={{ mt: 2 }}>
+            <Button variant="text" onClick={() => setShowHistory((s) => !s)}>
+              {showHistory
+                ? "Hide modification history"
+                : "View modification history"}
+            </Button>
+          </Box>
+        </Grid>
+        {showHistory && (
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card variant="outlined">
+              <CardContent>
+                <ModificationHistory history={modifiedHistory} />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+          <DialogTitle>
+            Select Icon
+            <IconButton
+              aria-label="close"
+              onClick={handleClose}
+              sx={{ position: "absolute", right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent
+            dividers
+            sx={{ height: 400, overflowY: "auto" }}
+            onScroll={handleScroll}
+          >
+            <TextField
+              placeholder="Search icons..."
+              fullWidth
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              sx={{ mb: 2 }}
+            />
+
+            <Grid container spacing={2}>
+              {icons.map((icon: any) => (
+                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon.url}>
+                  <Card>
+                    <CardActionArea onClick={() => handleSelectIcon(icon)}>
+                      <CardMedia
+                        component="img"
+                        height="120"
+                        image={`${API_HOST_URL}${icon.url}`}
+                        alt={icon.name}
+                      />
+                      <CardContent>
+                        <Tooltip title={icon.name}>
+                          <Typography
+                            variant="body2"
+                            color="text.primary"
+                            sx={{
+                              textTransform: "capitalize",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {icon.name}
+                          </Typography>
+                        </Tooltip>
+
+                        <Tooltip
+                          title={[
                             icon.type?.toUpperCase(),
                             icon.cloudType?.toUpperCase(),
                           ]
                             .filter(Boolean)
                             .join(" | ")}
-                        </Typography>
-                      </Tooltip>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-
-          {loading && (
-            <Grid container justifyContent="center" sx={{ mt: 2 }}>
-              <CircularProgress size={24} />
+                        >
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              fontSize: 10,
+                              textTransform: "capitalize",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {[
+                              icon.type?.toUpperCase(),
+                              icon.cloudType?.toUpperCase(),
+                            ]
+                              .filter(Boolean)
+                              .join(" | ")}
+                          </Typography>
+                        </Tooltip>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+
+            {loading && (
+              <Grid container justifyContent="center" sx={{ mt: 2 }}>
+                <CircularProgress size={24} />
+              </Grid>
+            )}
+          </DialogContent>
+        </Dialog>
+      </Grid>
+    </Box>
   );
 };
 

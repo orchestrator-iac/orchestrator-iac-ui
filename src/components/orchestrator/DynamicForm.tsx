@@ -17,7 +17,6 @@ import {
   useTheme,
   Checkbox,
   Autocomplete,
-  Switch,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
@@ -68,22 +67,6 @@ const DynamicForm: React.FC<Props> = ({
   const handleChange = (name: string, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
-  // const validCondition = (field: Field, vals: Values = {}) => {
-  //   if (field?.depends_on) {
-  //     // NOTE: if these expressions are user-generated, consider replacing with a safe evaluator
-  //     try {
-  //       const conditionMet = new Function(
-  //         "values",
-  //         `return ${field.depends_on};`
-  //       )(vals);
-  //       if (!conditionMet) return false;
-  //     } catch (e) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // };
 
   const renderInfo = (info?: string | JSX.Element) => {
     if (!info) return null;
@@ -425,10 +408,12 @@ const DynamicForm: React.FC<Props> = ({
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
             helperText={error_text || hint}
-            inputProps={{
-              min: fieldCfg?.min,
-              max: fieldCfg?.max,
-              step: fieldCfg?.step ?? 1,
+            slotProps={{
+              htmlInput: {
+                min: fieldCfg?.min,
+                max: fieldCfg?.max,
+                step: fieldCfg?.step ?? 1,
+              },
             }}
             onChange={(e) => {
               const val = e.target.value;
@@ -450,7 +435,7 @@ const DynamicForm: React.FC<Props> = ({
                       alignItems="center"
                       key={`${key}-${index}`}
                     >
-                      <Grid item xs={fieldCfg.key.size}>
+                      <Grid size={fieldCfg.key.size}>
                         <TextField
                           label={fieldCfg.key.label}
                           required={fieldCfg.key.required}
@@ -466,7 +451,7 @@ const DynamicForm: React.FC<Props> = ({
                           }}
                         />
                       </Grid>
-                      <Grid item xs={fieldCfg.value.size}>
+                      <Grid size={fieldCfg.value.size}>
                         <TextField
                           label={fieldCfg.value.label}
                           value={val as any}
@@ -479,7 +464,7 @@ const DynamicForm: React.FC<Props> = ({
                           }}
                         />
                       </Grid>
-                      <Grid item xs={fieldCfg.remove_button.size}>
+                      <Grid size={fieldCfg.remove_button.size}>
                         <Tooltip title={fieldCfg.remove_button.label}>
                           <IconButton
                             onClick={() => {
@@ -554,7 +539,7 @@ const DynamicForm: React.FC<Props> = ({
                 }
                 arrow
                 placement="top"
-                componentsProps={{
+                slotProps={{
                   tooltip: {
                     sx: {
                       bgcolor: theme.palette.background.paper,
@@ -594,7 +579,7 @@ const DynamicForm: React.FC<Props> = ({
                     ...(values ?? {}),
                     ...(formData ?? {}),
                   }) && (
-                    <Grid item xs={field.size ?? 12} key={field.name}>
+                    <Grid size={field.size ?? 12} key={field.name}>
                       {field.label && (
                         <Typography
                           component="label"
@@ -617,7 +602,7 @@ const DynamicForm: React.FC<Props> = ({
                               }
                               arrow
                               placement="top"
-                              componentsProps={{
+                              slotProps={{
                                 tooltip: {
                                   sx: {
                                     bgcolor: theme.palette.background.paper,

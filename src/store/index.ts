@@ -4,6 +4,7 @@ import iconReducer from './iconsSlice';
 import customWrappersReducer from './customWrappersSlice';
 import wrappersTemplateReducer from './wrappersTemplateSlice';
 import resourcesReducer from './resourcesSlice';
+import usersReducer from './usersSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     customWrappers: customWrappersReducer,
     wrappersTemplate: wrappersTemplateReducer,
     resources: resourcesReducer,
+    users: usersReducer,
   },
 });
 

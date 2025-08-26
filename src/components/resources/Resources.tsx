@@ -93,6 +93,7 @@ const Resources: React.FC = () => {
         id: "",
         url: "",
       },
+      modifiedHistory: [],
     },
     mode: "onTouched",
   });
@@ -125,6 +126,7 @@ const Resources: React.FC = () => {
         },
         terraformCorePath: resourceData.terraformCorePath || "",
         terraformTemplatePath: resourceData.terraformTemplatePath || "",
+        modifiedHistory: resourceData.modifiedHistory || [],
       });
 
       setTerraformFiles(
