@@ -86,7 +86,7 @@ const InitPopup = ({ open, onClose, onSubmit }: InitPopupProps) => {
         sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
       >
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               label="Template Name"
               name="templateName"
@@ -106,7 +106,7 @@ const InitPopup = ({ open, onClose, onSubmit }: InitPopupProps) => {
             />
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid size={6}>
             <TextField
               select
               label="Cloud"
@@ -127,7 +127,7 @@ const InitPopup = ({ open, onClose, onSubmit }: InitPopupProps) => {
             </TextField>
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid size={6}>
             <Autocomplete
               options={form.cloud ? cloudRegions[form.cloud] : []}
               getOptionLabel={(option) =>
@@ -180,7 +180,7 @@ const InitPopup = ({ open, onClose, onSubmit }: InitPopupProps) => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <TextField
               label="Invite by Email"
               value={email}
@@ -205,7 +205,7 @@ const InitPopup = ({ open, onClose, onSubmit }: InitPopupProps) => {
             </List>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Button
               onClick={handleSubmit}
               variant="contained"

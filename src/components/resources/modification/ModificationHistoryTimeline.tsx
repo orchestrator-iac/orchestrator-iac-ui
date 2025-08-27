@@ -4,7 +4,6 @@ import type { RootState, AppDispatch } from "@/store";
 import {
   Avatar,
   Box,
-  Chip,
   CircularProgress,
   Divider,
   Stack,
@@ -18,7 +17,6 @@ import {
   TimelineContent,
   TimelineDot,
   TimelineItem,
-  TimelineOppositeContent,
   TimelineSeparator,
 } from "@mui/lab";
 import VerifiedIcon from "@mui/icons-material/Verified";
@@ -55,7 +53,7 @@ function formatDate(iso: string): string {
 
 export default function ModificationHistory({
   history,
-  title = "Modification History",
+  title = undefined,
 }: Readonly<ModificationHistoryProps>) {
   const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
@@ -88,11 +86,15 @@ export default function ModificationHistory({
   }, [dispatch, ids, usersMap]);
 
   return (
-    <Box sx={{ p: 1 }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        {title}
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
+    <Box>
+      {title && (
+        <>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {title}
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+        </>
+      )}
 
       {loading && (
         <Stack alignItems="center" sx={{ py: 3 }}>
@@ -111,48 +113,55 @@ export default function ModificationHistory({
             return (
               <TimelineItem
                 key={`${item.modifiedBy}-${item.modifiedAt}-${idx}`}
+                sx={{ "&:before": { display: "none" } }}
               >
-                <TimelineOppositeContent sx={{ flex: 0.35 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {formatDate(item.modifiedAt)}
-                  </Typography>
-                </TimelineOppositeContent>
-
                 <TimelineSeparator>
                   <TimelineDot color="primary">
-                    {u?.imageUrl && (
+                    {u?.imageUrl ? (
                       <Avatar
-                        src={u?.imageUrl}
+                        src={u.imageUrl}
                         alt={primary}
                         sx={{ width: 28, height: 28 }}
                       />
+                    ) : (
+                      <LaptopMacIcon />
                     )}
-                    {!u?.imageUrl && <LaptopMacIcon />}
                   </TimelineDot>
                   {idx < sorted.length - 1 && <TimelineConnector />}
                 </TimelineSeparator>
 
-                <TimelineContent>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography variant="subtitle2">{primary}</Typography>
-                    <Tooltip title="Verified user">
-                      <VerifiedIcon color="primary" fontSize="small" />
-                    </Tooltip>
+                <TimelineContent sx={{ pl: 2 }}>
+                  <Stack spacing={0.5}>
+                    <Typography variant="caption" color="text.secondary">
+                      {formatDate(item.modifiedAt)}
+                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography variant="subtitle2">{primary}</Typography>
+                      <Tooltip title="Verified user">
+                        <VerifiedIcon color="primary" fontSize="small" />
+                      </Tooltip>
+                    </Stack>
+                    {u?.email && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block" }}
+                      >
+                        {u.email}
+                      </Typography>
+                    )}
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mt: 0.25,
+                        color:
+                          (theme as any).palette?.textVariants?.text4 ??
+                          theme.palette.text.secondary,
+                      }}
+                    >
+                      {item.changeDescription}
+                    </Typography>
                   </Stack>
-                  {u?.email && (
-                    <Chip
-                      label={u.email}
-                      size="small"
-                      sx={{ mt: 0.5 }}
-                      variant="outlined"
-                    />
-                  )}
-                  <Typography
-                    variant="body2"
-                    sx={{ mt: 0.75, mb: 1, color: theme.palette.textVariants.text4 }}
-                  >
-                    {item.changeDescription}
-                  </Typography>
                 </TimelineContent>
               </TimelineItem>
             );

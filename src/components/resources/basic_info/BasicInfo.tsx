@@ -32,7 +32,7 @@ const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 const BasicInfo: React.FC = () => {
   const { control, formState, setValue, watch } = useFormContext();
   const modifiedHistory = watch("modifiedHistory");
-  const { errors } = formState;
+  const { errors } = formState as any;
 
   const [showHistory, setShowHistory] = useState(false);
 
@@ -52,9 +52,7 @@ const BasicInfo: React.FC = () => {
     dispatch(fetchIcons({ page: 1, pageSize: 20 }));
   };
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClose = () => setOpen(false);
 
   // Search icons
   const handleSearch = () => {
@@ -84,8 +82,15 @@ const BasicInfo: React.FC = () => {
 
   return (
     <Box>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: showHistory ? 8 : 12 }}>
+      <Grid container spacing={2} wrap="nowrap">
+        <Grid
+          sx={{
+            transition: "flex-basis .35s ease, max-width .35s ease",
+            flexBasis: { xs: "100%", md: showHistory ? "70%" : "100%" },
+            maxWidth: { xs: "100%", md: showHistory ? "70%" : "100%" },
+            minWidth: 0,
+          }}
+        >
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Controller
@@ -98,8 +103,8 @@ const BasicInfo: React.FC = () => {
                     label="Id"
                     required
                     fullWidth
-                    error={!!errors.resourceId}
-                    helperText={errors.resourceId?.message as string}
+                    error={!!errors?.resourceId}
+                    helperText={errors?.resourceId?.message as string}
                   />
                 )}
               />
@@ -116,15 +121,15 @@ const BasicInfo: React.FC = () => {
                     label="Name"
                     fullWidth
                     required
-                    error={!!errors.resourceName}
-                    helperText={errors.resourceName?.message as string}
+                    error={!!errors?.resourceName}
+                    helperText={errors?.resourceName?.message as string}
                   />
                 )}
               />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth error={!!errors.cloudProvider}>
+              <FormControl fullWidth error={!!errors?.cloudProvider}>
                 <InputLabel id="cloud-provider-label">
                   Cloud Provider *
                 </InputLabel>
@@ -140,7 +145,7 @@ const BasicInfo: React.FC = () => {
                     </Select>
                   )}
                 />
-                {typeof errors.cloudProvider?.message === "string" && (
+                {typeof errors?.cloudProvider?.message === "string" && (
                   <FormHelperText>
                     {errors.cloudProvider.message}
                   </FormHelperText>
@@ -159,8 +164,8 @@ const BasicInfo: React.FC = () => {
                     label="Version"
                     fullWidth
                     required
-                    error={!!errors.resourceVersion}
-                    helperText={errors.resourceVersion?.message as string}
+                    error={!!errors?.resourceVersion}
+                    helperText={errors?.resourceVersion?.message as string}
                   />
                 )}
               />
@@ -177,8 +182,8 @@ const BasicInfo: React.FC = () => {
                     label="Terraform Core Path"
                     fullWidth
                     required
-                    error={!!errors.terraformCorePath}
-                    helperText={errors.terraformCorePath?.message as string}
+                    error={!!errors?.terraformCorePath}
+                    helperText={errors?.terraformCorePath?.message as string}
                   />
                 )}
               />
@@ -195,8 +200,10 @@ const BasicInfo: React.FC = () => {
                     label="Terraform Template Path"
                     fullWidth
                     required
-                    error={!!errors.terraformTemplatePath}
-                    helperText={errors.terraformTemplatePath?.message as string}
+                    error={!!errors?.terraformTemplatePath}
+                    helperText={
+                      errors?.terraformTemplatePath?.message as string
+                    }
                   />
                 )}
               />
@@ -213,7 +220,7 @@ const BasicInfo: React.FC = () => {
                       <Button
                         variant="outlined"
                         onClick={handleOpen}
-                        color={errors.icon ? "error" : "primary"}
+                        color={errors?.resourceIcon ? "error" : "primary"} // ✅ fixed
                       >
                         {field.value?.url ? "Change Icon" : "Upload Icon"}
                       </Button>
@@ -235,13 +242,13 @@ const BasicInfo: React.FC = () => {
                       )}
                     </Box>
 
-                    {errors.icon && (
+                    {errors?.resourceIcon && (
                       <Typography
                         variant="caption"
                         color="error"
                         sx={{ display: "block", mt: 0.5 }}
                       >
-                        {errors.icon.message as string}
+                        {errors.resourceIcon.message as string}
                       </Typography>
                     )}
                   </>
@@ -260,8 +267,8 @@ const BasicInfo: React.FC = () => {
                     label="Description"
                     fullWidth
                     required
-                    error={!!errors.resourceDescription}
-                    helperText={errors.resourceDescription?.message as string}
+                    error={!!errors?.resourceDescription}
+                    helperText={errors?.resourceDescription?.message as string}
                     multiline
                     rows={4}
                   />
@@ -269,117 +276,133 @@ const BasicInfo: React.FC = () => {
               />
             </Grid>
           </Grid>
-          <Box sx={{ mt: 2 }}>
-            <Button variant="text" onClick={() => setShowHistory((s) => !s)}>
-              {showHistory
-                ? "Hide modification history"
-                : "View modification history"}
-            </Button>
-          </Box>
         </Grid>
-        {showHistory && (
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <ModificationHistory history={modifiedHistory} />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-          <DialogTitle>
-            Select Icon
-            <IconButton
-              aria-label="close"
-              onClick={handleClose}
-              sx={{ position: "absolute", right: 8, top: 8 }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent
-            dividers
-            sx={{ height: 400, overflowY: "auto" }}
-            onScroll={handleScroll}
+        <Grid
+          sx={{
+            transition:
+              "flex-basis .35s ease, max-width .35s ease, opacity .25s ease",
+            flexBasis: { xs: 0, md: showHistory ? "30%" : 0 },
+            maxWidth: { xs: 0, md: showHistory ? "30%" : 0 },
+            opacity: { xs: 0, md: showHistory ? 1 : 0 },
+            overflow: "hidden",
+            pointerEvents: showHistory ? "auto" : "none",
+            minWidth: 0,
+          }}
+        >
+          <Typography variant="h6" sx={{ ml: 1, mb: 1 }}>
+            Modification History
+          </Typography>
+          <Card
+            variant="outlined"
+            sx={{ height: "100%", maxHeight: 300, overflowY: "auto", bgcolor: "inherit", border: "none" }}
           >
-            <TextField
-              placeholder="Search icons..."
-              fullWidth
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              sx={{ mb: 2 }}
-            />
+            <CardContent>
+              <ModificationHistory history={modifiedHistory} />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+      <Grid size={12} sx={{ mt: 1, textAlign: "right" }}>
+        <Button variant="text" onClick={() => setShowHistory((s) => !s)}>
+          {showHistory
+            ? "Hide modification history"
+            : "View modification history"}
+        </Button>
+      </Grid>
 
-            <Grid container spacing={2}>
-              {icons.map((icon: any) => (
-                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon.url}>
-                  <Card>
-                    <CardActionArea onClick={() => handleSelectIcon(icon)}>
-                      <CardMedia
-                        component="img"
-                        height="120"
-                        image={`${API_HOST_URL}${icon.url}`}
-                        alt={icon.name}
-                      />
-                      <CardContent>
-                        <Tooltip title={icon.name}>
-                          <Typography
-                            variant="body2"
-                            color="text.primary"
-                            sx={{
-                              textTransform: "capitalize",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {icon.name}
-                          </Typography>
-                        </Tooltip>
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Select Icon
+          <IconButton
+            aria-label="close"
+            onClick={handleClose}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent
+          dividers
+          sx={{ height: 400, overflowY: "auto" }}
+          onScroll={handleScroll}
+        >
+          <TextField
+            placeholder="Search icons..."
+            fullWidth
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            sx={{ mb: 2 }}
+          />
 
-                        <Tooltip
-                          title={[
+          <Grid container spacing={2}>
+            {icons.map((icon: any) => (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon.url}>
+                <Card>
+                  <CardActionArea onClick={() => handleSelectIcon(icon)}>
+                    <CardMedia
+                      component="img"
+                      height="120"
+                      image={`${API_HOST_URL}${icon.url}`}
+                      alt={icon.name}
+                    />
+                    <CardContent>
+                      <Tooltip title={icon.name}>
+                        <Typography
+                          variant="body2"
+                          color="text.primary"
+                          sx={{
+                            textTransform: "capitalize",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {icon.name}
+                        </Typography>
+                      </Tooltip>
+
+                      <Tooltip
+                        title={[
+                          icon.type?.toUpperCase(),
+                          icon.cloudType?.toUpperCase(),
+                        ]
+                          .filter(Boolean)
+                          .join(" | ")}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            fontSize: 10,
+                            textTransform: "capitalize",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {[
                             icon.type?.toUpperCase(),
                             icon.cloudType?.toUpperCase(),
                           ]
                             .filter(Boolean)
                             .join(" | ")}
-                        >
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{
-                              fontSize: 10,
-                              textTransform: "capitalize",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {[
-                              icon.type?.toUpperCase(),
-                              icon.cloudType?.toUpperCase(),
-                            ]
-                              .filter(Boolean)
-                              .join(" | ")}
-                          </Typography>
-                        </Tooltip>
-                      </CardContent>
-                    </CardActionArea>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-
-            {loading && (
-              <Grid container justifyContent="center" sx={{ mt: 2 }}>
-                <CircularProgress size={24} />
+                        </Typography>
+                      </Tooltip>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
               </Grid>
-            )}
-          </DialogContent>
-        </Dialog>
-      </Grid>
+            ))}
+          </Grid>
+
+          {loading && (
+            <Grid container justifyContent="center" sx={{ mt: 2 }}>
+              <CircularProgress size={24} />
+            </Grid>
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

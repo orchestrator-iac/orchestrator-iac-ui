@@ -23,11 +23,13 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import parse from "html-react-parser";
+import { useViewport } from "@xyflow/react";
 import { Field, FieldGroup } from "../../types/node-info";
 import { CodeEditorField } from "../shared/code-editor/CodeEditorField";
 import { UserProfile } from "../../types/auth";
 import { CloudConfig } from "../../types/clouds-info";
 import { validCondition } from "../../utils/deps";
+import { renderTemplate } from "@/utils/renderTemplate";
 
 type Values = { [x: string]: any };
 
@@ -49,20 +51,41 @@ type Props = {
   onLinkFieldChange?: (bind: string, newSourceId: string) => void;
 };
 
+
 const DynamicForm: React.FC<Props> = ({
   config,
   values,
   links,
   allNodes,
+  userInfo,
+  templateInfo,
   onLinkFieldChange,
 }) => {
   const theme = useTheme();
+  let zoom = 1;
+  try {
+    zoom = useViewport().zoom;
+  } catch {
+    zoom = 1;
+  }
 
-  // values are authoritative: mirror them into local state so inputs reflect graph changes
   const [formData, setFormData] = useState<Record<string, any>>({});
   useEffect(() => {
-    setFormData(values ?? {});
-  }, [values]);
+    if (!values) {
+      setFormData({});
+      return;
+    }
+    try {
+      const rendered = renderTemplate(values, {
+        userInfo: userInfo ?? {},         // <- ensure key exists
+        templateInfo: templateInfo ?? {}, // <- ensure key exists
+      });
+      setFormData(rendered);
+    } catch (e) {
+      console.error("Template render failed", e);
+      setFormData(values);
+    }
+  }, [values, userInfo, templateInfo]);
 
   const handleChange = (name: string, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -143,7 +166,7 @@ const DynamicForm: React.FC<Props> = ({
               value={formData[name] ?? value ?? ""}
               onChange={(e) => handleChange(name, e.target.value)}
             >
-              {(resolvedOptions ?? options ?? []).map((option: any) => (
+              {(resolvedOptions ?? []).map((option: any) => (
                 <FormControlLabel
                   key={option.value}
                   value={option.value}
@@ -171,8 +194,17 @@ const DynamicForm: React.FC<Props> = ({
                   onLinkFieldChange(name, String(newVal || ""));
                 }
               }}
+              MenuProps={{
+                disablePortal: false,
+                PaperProps: {
+                  style: {
+                    transform: `scale(${zoom})`,
+                    transformOrigin: 'top left',
+                  },
+                },
+              }}
             >
-              {(resolvedOptions ?? options ?? []).map((option: any) => (
+              {(resolvedOptions ?? []).map((option: any) => (
                 <MenuItem
                   key={option.value}
                   value={option.value}
@@ -186,8 +218,7 @@ const DynamicForm: React.FC<Props> = ({
         );
 
       case "select+text": {
-        // Resolve options to { value, label, disabled }
-        const opts = (resolvedOptions ?? options ?? []).map((o: any) => ({
+        const opts = (resolvedOptions ?? []).map((o: any) => ({
           label: String(o.label),
           value: String(o.value),
           disabled: !!o.disabled,
@@ -201,7 +232,6 @@ const DynamicForm: React.FC<Props> = ({
             freeSolo
             fullWidth
             options={opts}
-            // value can be string (custom) or option object (selected)
             value={matched ?? currentVal}
             getOptionLabel={(opt) =>
               typeof opt === "string" ? opt : opt?.label ?? ""
@@ -211,37 +241,28 @@ const DynamicForm: React.FC<Props> = ({
                 ? opt.value === val
                 : opt.value === val?.value
             }
-            // allow clearing via "x" and Esc
             clearOnEscape
             onChange={(_e, newVal) => {
-              // Fires when user picks an option OR clears the input
               if (newVal == null) {
-                // cleared -> drop value & remove edge
                 handleChange(name, "");
                 if (onLinkFieldChange) onLinkFieldChange(name, "");
                 return;
               }
-
               if (typeof newVal === "string") {
-                // freeSolo commit via Enter/blur, treat as custom text (no edge)
                 handleChange(name, newVal);
                 return;
               }
-
-              // Picked a real option -> set value and wire edge
               const pickedVal = String(newVal.value ?? "");
               handleChange(name, pickedVal);
               if (onLinkFieldChange) onLinkFieldChange(name, pickedVal);
             }}
             onInputChange={(_e, newInput, reason) => {
-              // While typing (reason === "input"), if we WERE on a real option and now diverge,
-              // immediately drop the edge (switching to custom).
               if (reason === "input") {
                 const divergedFromOption =
                   !!matched &&
                   !opts.some((o) => o.value === String(newInput ?? ""));
                 if (divergedFromOption && onLinkFieldChange) {
-                  onLinkFieldChange(name, ""); // remove old edge right away
+                  onLinkFieldChange(name, "");
                 }
                 handleChange(name, String(newInput ?? ""));
               }
@@ -254,7 +275,6 @@ const DynamicForm: React.FC<Props> = ({
                 helperText={error_text || hint}
               />
             )}
-            // use MenuItem to respect disabled & correct ARIA
             renderOption={(props, option) => (
               <MenuItem
                 {...props}
@@ -264,6 +284,16 @@ const DynamicForm: React.FC<Props> = ({
                 <Typography variant="body2">{option.label}</Typography>
               </MenuItem>
             )}
+            disablePortal={false}
+            slotProps={{
+              popper: {
+                modifiers: [{ name: "computeStyles", options: { adaptive: false } }],
+                style: { zIndex: 1500 },
+              },
+              paper: {
+                sx: { transform: `scale(${zoom})`, transformOrigin: "top center", },
+              },
+            }}
           />
         );
       }
