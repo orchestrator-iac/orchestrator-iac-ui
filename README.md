@@ -1,54 +1,132 @@
-![](https://github.com/xyflow/web/blob/main/assets/codesandbox-header-ts.png?raw=true)
+# 🏗️ Orchestrator – Architecture & Roadmap
 
-# React Flow starter (Vite + TS)
+---
 
-We've put together this template to serve as a starting point for folks
-interested in React Flow. You can use this both as a base for your own React
-Flow applications, or for small experiments or bug reports.
+## 1. Purpose
 
-**TypeScript not your thing?** We also have a vanilla JavaScript starter template,
-just for you!
+The **Orchestrator** is a platform that simplifies cloud landing zone creation.
+Instead of writing Terraform manually, users fill out a **form/UI** → the system generates validated Terraform templates → pushes them to Git and/or runs deployments.
 
-## Getting up and running
+---
 
-You can get this template without forking/cloning the repo using `degit`:
+## 2. High-Level Flow
 
-```bash
-npx degit xyflow/vite-react-flow-template your-app-name
+**Step 1 – Input**
+
+* Users log in via the **UI** (React frontend).
+* Fill in forms (e.g. VPC, Subnets, IAM, Networking) or upload configuration.
+
+**Step 2 – Orchestration**
+
+* Input sent to **FastAPI backend**.
+* Backend stores request in **MongoDB** (config, user metadata).
+* Orchestrator generates Terraform code based on schema + templates.
+
+**Step 3 – Validation**
+
+* Code is validated (lint, policy checks, schema validation).
+* Feedback/errors are surfaced to the user in the UI.
+
+**Step 4 – Deployment (Future)**
+
+* Validated code is committed to Git.
+* CI/CD (e.g. GitHub Actions, Azure DevOps, GitLab CI) applies Terraform to provision resources.
+* Monitoring and status updates sent back to UI.
+
+---
+
+## 3. Architecture Diagram (simplified)
+
+```
++------------------+         +-----------------+         +------------------+
+|   React Frontend | <-----> | FastAPI Backend | <-----> |   MongoDB Atlas  |
++------------------+         +-----------------+         +------------------+
+        |                            |                            |
+        v                            v                            v
+   User Input                  Template Engine             Config Storage
+ (Forms / Editor)            (Terraform Generator)        (Users, Projects)
+        |
+        v
+   Validation & Feedback
+        |
+        v
+ Future: Git / CI/CD / Cloud
 ```
 
-The template contains mostly the minimum dependencies to get up and running, but
-also includes eslint and some additional rules to help you write React code that
-is less likely to run into issues:
+---
 
-```bash
-npm install # or `pnpm install` or `yarn install`
-```
+## 4. Components
 
-Vite is a great development server and build tool that we recommend our users to
-use. You can start a development server with:
+### **Frontend (React)**
 
-```bash
-npm run dev
-```
+* Multi-step forms for resources (VPC, Subnets, IAM, etc.).
+* Schema-based editor (JSON + visual).
+* Validation per step.
+* Auth screens (login, registration).
 
-While the development server is running, changes you make to the code will be
-automatically reflected in the browser!
+### **Backend (FastAPI)**
 
-## Things to try:
+* REST APIs for resources, wrappers, and templates.
+* Authentication (JWT).
+* Code generation module:
 
-- Create a new custom node inside `src/nodes/` (don't forget to export it from `src/nodes/index.ts`).
-- Change how things look by [overriding some of the built-in classes](https://reactflow.dev/learn/customization/theming#overriding-built-in-classes).
-- Add a layouting library to [position your nodes automatically](https://reactflow.dev/learn/layouting/layouting)
+  * Converts user schema → Terraform HCL.
+  * Manages versioning.
 
-## Resources
+### **Database (MongoDB Atlas)**
 
-Links:
+* Stores projects, templates, and user configs.
+* Provides history/audit trail.
 
-- [React Flow - Docs](https://reactflow.dev)
-- [React Flow - Discord](https://discord.com/invite/Bqt6xrs)
+### **Terraform Engine**
 
-Learn:
+* Current: Generate TF code for user to download.
+* Future: Auto-commit to Git, trigger pipelines.
 
-- [React Flow – Custom Nodes](https://reactflow.dev/learn/customization/custom-nodes)
-- [React Flow – Layouting](https://reactflow.dev/learn/layouting/layouting)
+---
+
+## 5. Current Features
+
+* User authentication & role-based access.
+* Schema-driven form builder.
+* Terraform template generation.
+* Error feedback in UI.
+* Project storage in MongoDB.
+
+---
+
+## 6. Roadmap 🚀
+
+**Near Term (3–6 months):**
+
+* ✅ Export Terraform as `.zip`.
+* ✅ Support multiple providers (AWS, Azure, GCP).
+* 🔄 Add reusable building blocks (modules library).
+* 🔄 Improve validation (policy as code, e.g. OPA/Conftest).
+
+**Mid Term (6–12 months):**
+
+* 🚀 GitOps integration: commit Terraform to Git automatically.
+* 🚀 CI/CD integration (GitHub Actions, GitLab, Azure DevOps).
+* 🚀 Automated apply/destroy workflows.
+* 📊 Add monitoring dashboards for deployments.
+
+**Long Term (12+ months):**
+
+* 🌐 Multi-cloud orchestration.
+* 🤖 Self-healing infra (auto-fix drift, auto-scale).
+* 🧩 Marketplace of templates/modules.
+* 🔐 Compliance & governance enforcement.
+
+---
+
+## 7. Step-by-Step Explanation (for presentations)
+
+1. **User logs in** → sees dashboard.
+2. **Fills form** (e.g., VPC with 2 public & 2 private subnets).
+3. **Frontend sends config** → Backend via API.
+4. **Backend generates Terraform code** → stores config in MongoDB.
+5. **User reviews/edits code** in UI editor.
+6. **Validation runs** → errors shown in UI.
+7. **Future:** User clicks “Deploy” → Code pushed to Git → CI/CD runs `terraform apply`.
+8. **Cloud infra is provisioned** → status sent back to UI.
