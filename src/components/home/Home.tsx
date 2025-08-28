@@ -104,7 +104,7 @@ const Home: React.FC = () => {
       )}
 
       <h3 className={styles.wrapperHeader}>Templates</h3>
-      <div className={styles.cardList}>
+      <Box className={styles.cardList}>
         <Box
           className={styles.card}
           onClick={() => navigateTemplates(undefined)}
@@ -133,10 +133,10 @@ const Home: React.FC = () => {
             <p className={styles.cardDescription}>{card.description}</p>
           </Box>
         ))}
-      </div>
+      </Box>
 
       <h3 className={styles.wrapperHeader}>Resource</h3>
-      <div className={styles.cardList}>
+      <Box className={styles.cardList} sx={{ pb: 4 }}>
         <Box
           className={styles.card}
           onClick={() => navigateResource(undefined)}
@@ -176,7 +176,7 @@ const Home: React.FC = () => {
             <code>Version - {resource.resourceVersion}</code>
           </Box>
         ))}
-      </div>
+      </Box>
     </Box>
   );
 };

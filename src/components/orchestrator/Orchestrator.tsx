@@ -48,6 +48,7 @@ const defaultOptions: Record<string, string> = {
   "elk.algorithm": "layered",
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
   "elk.spacing.nodeNode": "80",
+  "org.eclipse.elk.portConstraints" : "FIXED_ORDER",
 };
 
 const useLayoutElements = () => {
@@ -78,7 +79,7 @@ const useLayoutElements = () => {
       try {
         const { children } = await elk.layout(graph);
 
-        const layoutedNodes = nodes.map((node) => {
+        const layoutNodes = nodes.map((node) => {
           const elkNode = children?.find((n) => n.id === node.id);
           return {
             ...node,
@@ -89,7 +90,7 @@ const useLayoutElements = () => {
           };
         });
 
-        setNodes(layoutedNodes);
+        setNodes(layoutNodes);
         requestAnimationFrame(() => fitView({ padding: 0.2 }));
       } catch (err) {
         console.error("ELK layout error:", err);
