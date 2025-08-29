@@ -1,0 +1,29 @@
+.note {
+    border-radius: 8px;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+    cursor: pointer;
+    min-width: 200px;
+    color: #333;
+}
+
+.note:hover {
+    box-shadow: 3px 3px 9px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02);
+    transition: transform 0.9s;
+}
+
+.note .header {
+    height: 25px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 8px;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+    transition: height 0.3s ease;
+}
+
+.note:hover .header {
+    height: 25px;
+    transition: height 0.3s ease;
+}
