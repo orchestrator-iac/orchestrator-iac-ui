@@ -13,6 +13,7 @@ import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
 import azLogo from "./../../assets/az_logo.svg";
 import gcpLogo from "./../../assets/gcp_logo.svg";
+import NotesList from "../notes/NotesList";
 
 const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
@@ -72,6 +73,7 @@ const Home: React.FC = () => {
 
   return (
     <Box m={4}>
+      <NotesList />
       {customWrappers?.length > 0 && (
         <>
           <h3 className={styles.wrapperHeader}>Recently Worked</h3>
@@ -104,7 +106,7 @@ const Home: React.FC = () => {
       )}
 
       <h3 className={styles.wrapperHeader}>Templates</h3>
-      <div className={styles.cardList}>
+      <Box className={styles.cardList}>
         <Box
           className={styles.card}
           onClick={() => navigateTemplates(undefined)}
@@ -133,10 +135,10 @@ const Home: React.FC = () => {
             <p className={styles.cardDescription}>{card.description}</p>
           </Box>
         ))}
-      </div>
+      </Box>
 
       <h3 className={styles.wrapperHeader}>Resource</h3>
-      <div className={styles.cardList}>
+      <Box className={styles.cardList} sx={{ pb: 4 }}>
         <Box
           className={styles.card}
           onClick={() => navigateResource(undefined)}
@@ -176,7 +178,7 @@ const Home: React.FC = () => {
             <code>Version - {resource.resourceVersion}</code>
           </Box>
         ))}
-      </div>
+      </Box>
     </Box>
   );
 };

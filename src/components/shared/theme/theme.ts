@@ -12,7 +12,12 @@ declare module "@mui/material/styles" {
       text2: string;
       text3: string;
       text4: string;
+      inverted: string;
     };
+  }
+
+  interface TypeBackground {
+    inverted: string;
   }
 
   interface PaletteOptions {
@@ -26,6 +31,7 @@ declare module "@mui/material/styles" {
       text2?: string;
       text3?: string;
       text4?: string;
+      inverted?: string;
     };
   }
 }
@@ -43,6 +49,7 @@ export const lightTheme = createTheme({
     background: {
       default: "#fafafa",
       paper: "#fff",
+      inverted: "#121212",
     },
     miniMap: {
       node: "#057474",
@@ -54,6 +61,7 @@ export const lightTheme = createTheme({
       text2: "#333333",
       text3: "#666666",
       text4: "#999999", // lightest
+      inverted: "#ffffff", // for dark mode text on dark backgrounds
     },
   },
 });
@@ -70,6 +78,7 @@ export const darkTheme = createTheme({
     background: {
       default: "#121212",
       paper: "#1e1e1e",
+      inverted: "#fafafa",
     },
     miniMap: {
       node: "#4bb3b3",
@@ -81,6 +90,7 @@ export const darkTheme = createTheme({
       text2: "#dddddd",
       text3: "#bbbbbb",
       text4: "#999999", // darkest text
+      inverted: "#000000", // for light mode text on light backgrounds
     },
   },
 });
