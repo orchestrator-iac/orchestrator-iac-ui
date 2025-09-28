@@ -5,6 +5,10 @@ import {
   CardContent,
   Typography,
   Card,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from "@mui/material";
 import Masonry from "@mui/lab/Masonry";
 import AddIcon from "@mui/icons-material/Add";
@@ -17,8 +21,8 @@ const NotesList: React.FC = () => {
   const colors = ["#fff9c4", "#f0f4c3", "#e8f5e9", "#e3f2fd", "#f3e5f5"];
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
   const [editNote, setEditNote] = useState<Note | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const handleAddNote = () => {
     if (newNote.trim()) {
@@ -32,14 +36,14 @@ const NotesList: React.FC = () => {
       };
       setNotes([...notes, note]);
       setNewNote("");
-      setIsAdding(false);
+      setEditorOpen(false);
     }
   };
 
   const handleEditNote = (note: Note) => {
     setEditNote(note);
     setNewNote(note.content);
-    setIsAdding(true);
+    setEditorOpen(true);
   };
 
   const handleSaveEdit = () => {
@@ -53,7 +57,7 @@ const NotesList: React.FC = () => {
       );
       setEditNote(null);
       setNewNote("");
-      setIsAdding(false);
+      setEditorOpen(false);
     }
   };
 
@@ -77,47 +81,18 @@ const NotesList: React.FC = () => {
             justifyContent: 'center',
             alignItems: 'center',
             '&:hover': {
-              transform: isAdding ? 'none' : 'scale(1.02)',
+              transform: 'scale(1.02)',
               transition: 'transform 0.2s'
             }
           }}
         >
-          {isAdding ? (
-            <CardContent sx={{ width: 'calc(100% - 32px)', mt: 2, p: 0 }}>
-              <Box sx={{ mb: 2 }}>
-                <RichNoteEditor
-                  value={newNote}
-                  onChange={setNewNote}
-                  placeholder="Write your note here..."
-                />
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                <Button 
-                  onClick={() => {
-                    setIsAdding(false);
-                    setNewNote("");
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  variant="contained"
-                  onClick={editNote ? handleSaveEdit : handleAddNote}
-                  disabled={!newNote.trim()}
-                >
-                  {editNote ? 'Save' : 'Add'}
-                </Button>
-              </Box>
-            </CardContent>
-          ) : (
-            <CardContent 
-              sx={{ textAlign: 'center' }}
-              onClick={() => setIsAdding(true)}
-            >
-              <AddIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
-              <Typography color="text.secondary">Add New Note</Typography>
-            </CardContent>
-          )}
+          <CardContent 
+            sx={{ textAlign: 'center' }}
+            onClick={() => { setEditNote(null); setNewNote(''); setEditorOpen(true); }}
+          >
+            <AddIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+            <Typography color="text.secondary">Add New Note</Typography>
+          </CardContent>
         </Card>
 
         {notes.map((note) => (
@@ -130,6 +105,35 @@ const NotesList: React.FC = () => {
           />
         ))}
       </Masonry>
+
+      <Dialog open={editorOpen} onClose={() => { setEditorOpen(false); setEditNote(null); }} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pr: 2 }}>
+          <Typography variant="h6" fontSize={16}>{editNote ? 'Edit Note' : 'New Note'}</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button size="small" onClick={() => { setEditorOpen(false); setEditNote(null); }}>Cancel</Button>
+            <Button size="small" variant="contained" disabled={!newNote.trim()} onClick={editNote ? handleSaveEdit : handleAddNote}>{editNote ? 'Save' : 'Add'}</Button>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ p: 2, pt: 1 }}>
+          <RichNoteEditor
+            value={newNote}
+            onChange={setNewNote}
+            placeholder="Write your note here..."
+            minHeight={220}
+            advanced
+            compact
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 1.5, pt: 0 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
+            {editNote ? 'Last updated: ' + new Date(editNote.updatedAt).toLocaleString() : 'Creating new note'}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button size="small" onClick={() => { setEditorOpen(false); setEditNote(null); }}>Close</Button>
+            <Button size="small" variant="contained" disabled={!newNote.trim()} onClick={editNote ? handleSaveEdit : handleAddNote}>{editNote ? 'Save Changes' : 'Create Note'}</Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
