@@ -1,36 +1,37 @@
 import React, { useState } from 'react';
+import RichNoteEditor from './RichNoteEditor';
 
-const AddNoteForm: React.FC<{ onAddNote: (title: string, content: string) => void }> = ({ onAddNote }) => {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
+interface Props { onAddNote: (title: string, contentHtml: string) => void }
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (title && content) {
-            onAddNote(title, content);
-            setTitle('');
-            setContent('');
-        }
-    };
+const AddNoteForm: React.FC<Props> = ({ onAddNote }) => {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
 
-    return (
-        <form onSubmit={handleSubmit}>
-            <input
-                type="text"
-                placeholder="Note Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-            />
-            <textarea
-                placeholder="Note Content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                required
-            />
-            <button type="submit">Add Note</button>
-        </form>
-    );
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (title.trim() && content.trim()) {
+      onAddNote(title.trim(), content);
+      setTitle('');
+      setContent('');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <input
+        type="text"
+        placeholder="Note Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        required
+        style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: 6 }}
+      />
+      <RichNoteEditor value={content} onChange={setContent} placeholder="Write your note..." minHeight={160} />
+      <button type="submit" style={{ padding: '8px 14px', borderRadius: 6, background: '#1976d2', color: '#fff', border: 'none', cursor: 'pointer' }}>
+        Add Note
+      </button>
+    </form>
+  );
 };
 
 export default AddNoteForm;

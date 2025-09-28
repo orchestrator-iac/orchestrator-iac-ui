@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import DOMPurify from 'dompurify';
 import {
   Card,
   CardContent,
@@ -33,6 +34,8 @@ const NoteCard: React.FC<NoteCardProps> = ({
     onEdit({ ...note, color: color.hex });
     setShowColorPicker(false);
   };
+
+  const sanitized = useMemo(() => DOMPurify.sanitize(note.content || ''), [note.content]);
 
   return (
     <Card
@@ -146,15 +149,14 @@ const NoteCard: React.FC<NoteCardProps> = ({
       >
         <Typography
           variant="body1"
+          component="div"
           sx={{
-            whiteSpace: "pre-wrap",
             wordBreak: "break-word",
             flex: 1,
             color: 'text.primary'
           }}
-        >
-          {note.content}
-        </Typography>
+          dangerouslySetInnerHTML={{ __html: sanitized }}
+        />
       </CardContent>
     </Card>
   );

@@ -13,7 +13,6 @@ import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
 import azLogo from "./../../assets/az_logo.svg";
 import gcpLogo from "./../../assets/gcp_logo.svg";
-import NotesList from "../notes/NotesList";
 
 const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
@@ -73,7 +72,6 @@ const Home: React.FC = () => {
 
   return (
     <Box m={4}>
-      <NotesList />
       {customWrappers?.length > 0 && (
         <>
           <h3 className={styles.wrapperHeader}>Recently Worked</h3>

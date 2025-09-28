@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Box,
-  TextField,
   Button,
   CardContent,
   Typography,
@@ -12,6 +11,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { v4 as uuidv4 } from "uuid";
 import NoteCard from "./NoteCard";
 import { Note } from "@/types/Note";
+import RichNoteEditor from './RichNoteEditor';
 
 const NotesList: React.FC = () => {
   const colors = ["#fff9c4", "#f0f4c3", "#e8f5e9", "#e3f2fd", "#f3e5f5"];
@@ -25,31 +25,37 @@ const NotesList: React.FC = () => {
       const note: Note = {
         id: uuidv4(),
         content: newNote,
+        plainText: newNote.replace(/<[^>]+>/g, ''),
         color: getRandomColor(),
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       setNotes([...notes, note]);
       setNewNote("");
+      setIsAdding(false);
     }
   };
 
   const handleEditNote = (note: Note) => {
     setEditNote(note);
+    setNewNote(note.content);
+    setIsAdding(true);
   };
 
-  // const handleSaveEdit = () => {
-  //   if (editNote) {
-  //     setNotes(
-  //       notes.map((note) =>
-  //         note.id === editNote.id
-  //           ? { ...editNote, updatedAt: new Date() }
-  //           : note
-  //       )
-  //     );
-  //     setEditNote(null);
-  //   }
-  // };
+  const handleSaveEdit = () => {
+    if (editNote) {
+      setNotes(
+        notes.map((n) =>
+          n.id === editNote.id
+            ? { ...editNote, content: newNote, plainText: newNote.replace(/<[^>]+>/g, ''), updatedAt: new Date() }
+            : n
+        )
+      );
+      setEditNote(null);
+      setNewNote("");
+      setIsAdding(false);
+    }
+  };
 
   const handleDeleteNote = (id: string) => {
     setNotes(notes.filter((note) => note.id !== id));
@@ -78,16 +84,13 @@ const NotesList: React.FC = () => {
         >
           {isAdding ? (
             <CardContent sx={{ width: 'calc(100% - 32px)', mt: 2, p: 0 }}>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Write your note here..."
-                autoFocus
-                sx={{ mb: 2 }}
-              />
+              <Box sx={{ mb: 2 }}>
+                <RichNoteEditor
+                  value={newNote}
+                  onChange={setNewNote}
+                  placeholder="Write your note here..."
+                />
+              </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                 <Button 
                   onClick={() => {
@@ -99,10 +102,10 @@ const NotesList: React.FC = () => {
                 </Button>
                 <Button 
                   variant="contained"
-                  onClick={handleAddNote}
+                  onClick={editNote ? handleSaveEdit : handleAddNote}
                   disabled={!newNote.trim()}
                 >
-                  Add
+                  {editNote ? 'Save' : 'Add'}
                 </Button>
               </Box>
             </CardContent>

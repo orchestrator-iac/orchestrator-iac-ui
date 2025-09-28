@@ -29,7 +29,7 @@ import ResendEmailForm from "./components/auth/ResendEmailForm";
 import NightSky from "./components/shared/night-sky/NightSky";
 import BlackHoleDemo from "./components/shared/black-hole/BlackHoleDemo";
 import UpdatePassword from "./components/auth/login/UpdatePassword";
-
+import Chatbot from './components/chatbot/Chatbot';
 
 // Add FontAwesome icon packs
 library.add(fab, fas);
@@ -81,6 +81,7 @@ const App = () => {
               } />
             </Route>
           </Routes>
+          <Chatbot />
         </HashRouter>
       </ThemeProvider>
     </AuthProvider>
