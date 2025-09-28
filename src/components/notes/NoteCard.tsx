@@ -37,7 +37,6 @@ const NoteCard: React.FC<NoteCardProps> = ({
   return (
     <Card
       sx={{
-        minHeight: 200,
         backgroundColor: note.color || "#fff9c4",
         position: 'relative',
         transition: 'transform 0.2s, box-shadow 0.2s',

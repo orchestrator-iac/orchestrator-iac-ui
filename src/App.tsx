@@ -9,7 +9,7 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -34,101 +34,54 @@ import UpdatePassword from "./components/auth/login/UpdatePassword";
 // Add FontAwesome icon packs
 library.add(fab, fas);
 
-const router = createBrowserRouter([
-  {
-    element: <Layout />,
-    children: [
-      {
-        path: "/login",
-        element: <Login />,
-      },
-      {
-        path: "/register",
-        element: <Register />,
-      },
-      {
-        path: "/register-success",
-        element: <RegisterSuccessPage />,
-      },
-      {
-        path: "/confirm",
-        element: <ConfirmEmail />,
-      },
-      {
-        path: "/night-sky",
-        element: <NightSky />,
-      },
-      {
-        path: "/black-hole",
-        element: <BlackHoleDemo />,
-      },
-      {
-        path: "/update-password",
-        element: <UpdatePassword />,
-      },
-      {
-        path: "/email-verification/:type",
-        element: <ResendEmailForm />,
-      },
-      {
-        path: "/profile",
-        element: (
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/resources/:resource_id",
-        element: (
-          <ProtectedRoute>
-            <Resources />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/orchestrator/:template_id",
-        element: (
-          <ProtectedRoute>
-            <Orchestrator />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/home",
-        element: (
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "/",
-        element: (
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "*",
-        element: (
-          <ProtectedRoute>
-            <NotFound />
-          </ProtectedRoute>
-        ),
-        errorElement: <NotFound />,
-      },
-
-    ],
-  },
-]);
-
 const App = () => {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <RouterProvider router={router} />
+        <HashRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route path="login" element={<Login />} />
+              <Route path="register" element={<Register />} />
+              <Route path="register-success" element={<RegisterSuccessPage />} />
+              <Route path="confirm" element={<ConfirmEmail />} />
+              <Route path="night-sky" element={<NightSky />} />
+              <Route path="black-hole" element={<BlackHoleDemo />} />
+              <Route path="update-password" element={<UpdatePassword />} />
+              <Route path="email-verification/:type" element={<ResendEmailForm />} />
+              <Route path="profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="resources/:resource_id" element={
+                <ProtectedRoute>
+                  <Resources />
+                </ProtectedRoute>
+              } />
+              <Route path="orchestrator/:template_id" element={
+                <ProtectedRoute>
+                  <Orchestrator />
+                </ProtectedRoute>
+              } />
+              <Route path="home" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
+              <Route index element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={
+                <ProtectedRoute>
+                  <NotFound />
+                </ProtectedRoute>
+              } />
+            </Route>
+          </Routes>
+        </HashRouter>
       </ThemeProvider>
     </AuthProvider>
   );
