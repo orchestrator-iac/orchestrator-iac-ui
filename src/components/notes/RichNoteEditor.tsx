@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
+import type { Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
+import Placeholder from '@tiptap/extension-placeholder';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
@@ -13,7 +15,6 @@ import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
 import CodeIcon from '@mui/icons-material/Code';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
-import TitleIcon from '@mui/icons-material/Title';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
@@ -23,6 +24,8 @@ import LinkIcon from '@mui/icons-material/Link';
 import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import FormatAlignRightIcon from '@mui/icons-material/FormatAlignRight';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 
 interface RichNoteEditorProps {
   value: string;
@@ -31,33 +34,74 @@ interface RichNoteEditorProps {
   placeholder?: string;
   advanced?: boolean;
   compact?: boolean;
+  autoFocus?: boolean;
 }
 
-const RichNoteEditor: React.FC<RichNoteEditorProps> = ({ value, onChange, minHeight = 120, placeholder, advanced = false, compact = false }) => {
+const AdvancedToolbar: React.FC<{ editor: Editor; isFullscreen: boolean; toggleFullscreen: () => void; currentHeading: number; onHeadingChange: (lvl:number)=>void; }> = ({ editor, isFullscreen, toggleFullscreen, currentHeading, onHeadingChange }) => (
+  <>
+    <Tooltip title="Heading level">
+      <span>
+        <select
+          value={currentHeading}
+          onChange={(e)=>onHeadingChange(parseInt(e.target.value,10))}
+          aria-label="Heading level"
+          className="rich-note-heading-select"
+        >
+          <option value={0}>P</option>
+          <option value={1}>H1</option>
+          <option value={2}>H2</option>
+          <option value={3}>H3</option>
+        </select>
+      </span>
+    </Tooltip>
+    <Tooltip title="Undo"><span><IconButton size="small" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><UndoIcon fontSize="inherit" /></IconButton></span></Tooltip>
+    <Tooltip title="Redo"><span><IconButton size="small" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><RedoIcon fontSize="inherit" /></IconButton></span></Tooltip>
+    <Tooltip title="Clear formatting"><span><IconButton size="small" onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}><CleaningServicesIcon fontSize="inherit" /></IconButton></span></Tooltip>
+    <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}><span><IconButton size="small" onClick={toggleFullscreen} color={isFullscreen ? 'primary' : 'default'}>{isFullscreen ? <FullscreenExitIcon fontSize="inherit" /> : <FullscreenIcon fontSize="inherit" />}</IconButton></span></Tooltip>
+  </>
+);
+
+const RichNoteEditor: React.FC<RichNoteEditorProps> = ({ value, onChange, minHeight = 120, placeholder, advanced = false, compact = false, autoFocus = false }) => {
+  const [renderTick, setRenderTick] = useState(0); // force re-render counters
+  const [isFullscreen, setIsFullscreen] = useState(false); // fullscreen state
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
       Highlight,
       Link.configure({ openOnClick: false }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] })
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      Placeholder.configure({ placeholder: placeholder || 'Write something...' })
     ],
     content: value || '',
     editorProps: {
       attributes: {
         style: `min-height:${minHeight}px; padding:8px 12px; outline:none; font-size:${compact ? '0.85rem' : '0.95rem'};`,
-        class: 'note-rich-editor'
+        class: `note-rich-editor tick-${renderTick}`
       }
     },
-    onUpdate: ({ editor }) => onChange(editor.getHTML())
+    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    onSelectionUpdate: () => setRenderTick(t=>t+1),
+    onTransaction: () => setRenderTick(t=>t+1)
   });
 
   useEffect(() => { if (editor && value !== editor.getHTML()) editor.commands.setContent(value || '', false); }, [value, editor]);
+  useEffect(() => { if (editor && autoFocus) { setTimeout(() => editor.commands.focus('end'), 30); } }, [editor, autoFocus]);
   if (!editor) return null;
 
-  const headingBtn = (lvl: 1|2|3) => (
-    <Tooltip title={`H${lvl}`}><span><IconButton size="small" onClick={() => editor.chain().focus().toggleHeading({ level: lvl }).run()} color={editor.isActive('heading', { level: lvl }) ? 'primary' : 'default'}><TitleIcon fontSize="inherit" sx={{ fontSize: 16 }} /></IconButton></span></Tooltip>
-  );
+  // derive current heading level (replaces nested ternary)
+  const computeHeadingLevel = () => {
+    if (editor.isActive('heading', { level: 1 })) return 1;
+    if (editor.isActive('heading', { level: 2 })) return 2;
+    if (editor.isActive('heading', { level: 3 })) return 3;
+    return 0;
+  };
+  const currentHeading = computeHeadingLevel();
+  const handleHeadingChange = (lvl:number) => {
+    if (lvl === 0) editor.chain().focus().setParagraph().run();
+    else editor.chain().focus().toggleHeading({ level: lvl as 1|2|3 }).run();
+  };
+  const toggleFullscreen = () => setIsFullscreen(f=>!f);
 
   const toggleLink = () => {
     const prev = editor.getAttributes('link').href;
@@ -86,22 +130,24 @@ const RichNoteEditor: React.FC<RichNoteEditorProps> = ({ value, onChange, minHei
   );
 
   const advButtons = advanced ? (
-    <>
-      {headingBtn(1)}{headingBtn(2)}{headingBtn(3)}
-      <Tooltip title="Undo"><span><IconButton size="small" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><UndoIcon fontSize="inherit" /></IconButton></span></Tooltip>
-      <Tooltip title="Redo"><span><IconButton size="small" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><RedoIcon fontSize="inherit" /></IconButton></span></Tooltip>
-      <Tooltip title="Clear"><span><IconButton size="small" onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}><CleaningServicesIcon fontSize="inherit" /></IconButton></span></Tooltip>
-    </>
+    <AdvancedToolbar
+      editor={editor}
+      isFullscreen={isFullscreen}
+      toggleFullscreen={toggleFullscreen}
+      currentHeading={currentHeading}
+      onHeadingChange={handleHeadingChange}
+    />
   ) : null;
 
   return (
-    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden', background: 'background.paper' }}>
+    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden', background: 'background.paper', position: isFullscreen ? 'fixed' : 'relative', inset: isFullscreen ? 0 : 'auto', zIndex: isFullscreen ? 1300 : 'auto', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.25, p: 0.5, borderBottom: '1px solid', borderColor: 'divider', background: 'background.paper' }}>
         {baseButtons}
         {advButtons}
       </Box>
-      <EditorContent editor={editor} />
-      {placeholder && !value && <Box sx={{ position: 'absolute', pointerEvents: 'none', opacity: 0.4, top: 46, left: 16 }}>{placeholder}</Box>}
+      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        <EditorContent editor={editor} />
+      </Box>
     </Box>
   );
 };
