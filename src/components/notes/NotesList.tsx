@@ -99,16 +99,7 @@ const NotesList: React.FC = () => {
       )}
 
       {editorOpen && (
-        <Box sx={{ width: '100%', maxWidth: 900, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2, background: 'background.paper' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-            <Typography variant="h6" fontSize={18} sx={{ fontWeight: 600 }}>
-              {editNote ? 'Edit Note' : 'New Note'}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button size="small" onClick={() => { setEditorOpen(false); setEditNote(null); setNewNote(''); }}>Cancel (Esc)</Button>
-              <Button size="small" variant="contained" disabled={!newNote.trim()} onClick={editNote ? handleSaveEdit : handleAddNote}>{editNote ? 'Save' : 'Add'}</Button>
-            </Box>
-          </Box>
+        <Box sx={{ width: '100%', mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2, background: 'background.paper' }}>
           <RichNoteEditor
             value={newNote}
             onChange={setNewNote}

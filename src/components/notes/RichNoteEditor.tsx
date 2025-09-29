@@ -7,7 +7,7 @@ import Link from '@tiptap/extension-link';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip, FormControl, Select, MenuItem } from '@mui/material';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
@@ -24,8 +24,6 @@ import LinkIcon from '@mui/icons-material/Link';
 import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
 import FormatAlignRightIcon from '@mui/icons-material/FormatAlignRight';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 
 interface RichNoteEditorProps {
   value: string;
@@ -37,33 +35,33 @@ interface RichNoteEditorProps {
   autoFocus?: boolean;
 }
 
-const AdvancedToolbar: React.FC<{ editor: Editor; isFullscreen: boolean; toggleFullscreen: () => void; currentHeading: number; onHeadingChange: (lvl:number)=>void; }> = ({ editor, isFullscreen, toggleFullscreen, currentHeading, onHeadingChange }) => (
+const AdvancedToolbar: React.FC<{ editor: Editor; currentHeading: number; onHeadingChange: (lvl:number)=>void; }> = ({ editor, currentHeading, onHeadingChange }) => (
   <>
-    <Tooltip title="Heading level">
-      <span>
-        <select
+    <Tooltip title="Heading level" placement="top">
+      <FormControl size="small" sx={{ minWidth: 72 }}>
+        <Select
           value={currentHeading}
-          onChange={(e)=>onHeadingChange(parseInt(e.target.value,10))}
-          aria-label="Heading level"
-          className="rich-note-heading-select"
+          onChange={(e)=> onHeadingChange(Number(e.target.value))}
+          displayEmpty
+          inputProps={{ 'aria-label': 'Heading level' }}
+          renderValue={(val)=> val === 0 ? 'P' : `H${val}`}
+          sx={{ fontSize: 12, height: 30, '& .MuiSelect-select': { py: 0.5, px: 1 } }}
         >
-          <option value={0}>P</option>
-          <option value={1}>H1</option>
-          <option value={2}>H2</option>
-          <option value={3}>H3</option>
-        </select>
-      </span>
+          <MenuItem value={0}>Paragraph</MenuItem>
+          <MenuItem value={1}>Heading 1</MenuItem>
+          <MenuItem value={2}>Heading 2</MenuItem>
+          <MenuItem value={3}>Heading 3</MenuItem>
+        </Select>
+      </FormControl>
     </Tooltip>
     <Tooltip title="Undo"><span><IconButton size="small" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><UndoIcon fontSize="inherit" /></IconButton></span></Tooltip>
     <Tooltip title="Redo"><span><IconButton size="small" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><RedoIcon fontSize="inherit" /></IconButton></span></Tooltip>
     <Tooltip title="Clear formatting"><span><IconButton size="small" onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}><CleaningServicesIcon fontSize="inherit" /></IconButton></span></Tooltip>
-    <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}><span><IconButton size="small" onClick={toggleFullscreen} color={isFullscreen ? 'primary' : 'default'}>{isFullscreen ? <FullscreenExitIcon fontSize="inherit" /> : <FullscreenIcon fontSize="inherit" />}</IconButton></span></Tooltip>
   </>
 );
 
 const RichNoteEditor: React.FC<RichNoteEditorProps> = ({ value, onChange, minHeight = 120, placeholder, advanced = false, compact = false, autoFocus = false }) => {
   const [renderTick, setRenderTick] = useState(0); // force re-render counters
-  const [isFullscreen, setIsFullscreen] = useState(false); // fullscreen state
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -101,7 +99,6 @@ const RichNoteEditor: React.FC<RichNoteEditorProps> = ({ value, onChange, minHei
     if (lvl === 0) editor.chain().focus().setParagraph().run();
     else editor.chain().focus().toggleHeading({ level: lvl as 1|2|3 }).run();
   };
-  const toggleFullscreen = () => setIsFullscreen(f=>!f);
 
   const toggleLink = () => {
     const prev = editor.getAttributes('link').href;
@@ -120,7 +117,10 @@ const RichNoteEditor: React.FC<RichNoteEditorProps> = ({ value, onChange, minHei
       <Tooltip title="Bullet List"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleBulletList().run()} color={editor.isActive('bulletList') ? 'primary' : 'default'}><FormatListBulletedIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Numbered List"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleOrderedList().run()} color={editor.isActive('orderedList') ? 'primary' : 'default'}><FormatListNumberedIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Quote"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleBlockquote().run()} color={editor.isActive('blockquote') ? 'primary' : 'default'}><FormatQuoteIcon fontSize="inherit" /></IconButton></span></Tooltip>
-      <Tooltip title="Code Block"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleCodeBlock().run()} color={editor.isActive('codeBlock') ? 'primary' : 'default'}><CodeIcon fontSize="inherit" /></IconButton></span></Tooltip>
+      <Tooltip title="Code Block"><span><IconButton size="small" onClick={() => {
+        if (editor.isActive('codeBlock')) editor.chain().focus().toggleCodeBlock().run();
+        else editor.chain().focus().toggleCodeBlock().run();
+      }} color={editor.isActive('codeBlock') ? 'primary' : 'default'}><CodeIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Highlight"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleHighlight().run()} color={editor.isActive('highlight') ? 'primary' : 'default'}><HighlightIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Link"><span><IconButton size="small" onClick={toggleLink} color={editor.isActive('link') ? 'primary' : 'default'}><LinkIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Align Left"><span><IconButton size="small" onClick={() => editor.chain().focus().setTextAlign('left').run()} color={editor.isActive({ textAlign: 'left' }) ? 'primary' : 'default'}><FormatAlignLeftIcon fontSize="inherit" /></IconButton></span></Tooltip>
@@ -130,17 +130,11 @@ const RichNoteEditor: React.FC<RichNoteEditorProps> = ({ value, onChange, minHei
   );
 
   const advButtons = advanced ? (
-    <AdvancedToolbar
-      editor={editor}
-      isFullscreen={isFullscreen}
-      toggleFullscreen={toggleFullscreen}
-      currentHeading={currentHeading}
-      onHeadingChange={handleHeadingChange}
-    />
+    <AdvancedToolbar editor={editor} currentHeading={currentHeading} onHeadingChange={handleHeadingChange} />
   ) : null;
 
   return (
-    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden', background: 'background.paper', position: isFullscreen ? 'fixed' : 'relative', inset: isFullscreen ? 0 : 'auto', zIndex: isFullscreen ? 1300 : 'auto', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden', background: 'background.paper', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.25, p: 0.5, borderBottom: '1px solid', borderColor: 'divider', background: 'background.paper' }}>
         {baseButtons}
         {advButtons}
