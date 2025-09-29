@@ -131,11 +131,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) => {
           )}
         </Box>
         {/* Footer date (muted) */}
-        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+        {/* <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
           <Typography variant="caption" sx={{ color: 'text.primary', fontSize: '0.65rem' }}>
             {new Date(note.updatedAt).toLocaleDateString()}
           </Typography>
-        </Box>
+        </Box> */}
       </CardContent>
     </Card>
   );
