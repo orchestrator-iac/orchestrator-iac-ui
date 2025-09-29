@@ -117,10 +117,7 @@ const RichNoteEditor: React.FC<RichNoteEditorProps> = ({ value, onChange, minHei
       <Tooltip title="Bullet List"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleBulletList().run()} color={editor.isActive('bulletList') ? 'primary' : 'default'}><FormatListBulletedIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Numbered List"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleOrderedList().run()} color={editor.isActive('orderedList') ? 'primary' : 'default'}><FormatListNumberedIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Quote"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleBlockquote().run()} color={editor.isActive('blockquote') ? 'primary' : 'default'}><FormatQuoteIcon fontSize="inherit" /></IconButton></span></Tooltip>
-      <Tooltip title="Code Block"><span><IconButton size="small" onClick={() => {
-        if (editor.isActive('codeBlock')) editor.chain().focus().toggleCodeBlock().run();
-        else editor.chain().focus().toggleCodeBlock().run();
-      }} color={editor.isActive('codeBlock') ? 'primary' : 'default'}><CodeIcon fontSize="inherit" /></IconButton></span></Tooltip>
+      <Tooltip title="Code Block"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleCodeBlock().run()} color={editor.isActive('codeBlock') ? 'primary' : 'default'}><CodeIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Highlight"><span><IconButton size="small" onClick={() => editor.chain().focus().toggleHighlight().run()} color={editor.isActive('highlight') ? 'primary' : 'default'}><HighlightIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Link"><span><IconButton size="small" onClick={toggleLink} color={editor.isActive('link') ? 'primary' : 'default'}><LinkIcon fontSize="inherit" /></IconButton></span></Tooltip>
       <Tooltip title="Align Left"><span><IconButton size="small" onClick={() => editor.chain().focus().setTextAlign('left').run()} color={editor.isActive({ textAlign: 'left' }) ? 'primary' : 'default'}><FormatAlignLeftIcon fontSize="inherit" /></IconButton></span></Tooltip>

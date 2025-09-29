@@ -46,11 +46,11 @@ const NotesList: React.FC = () => {
   }, [editorOpen]);
 
   const handleAddNote = () => {
-    if (newNote.trim()) {
+    if (!isContentEmpty(newNote)) {
       const note: Note = {
         id: uuidv4(),
         content: newNote,
-        plainText: newNote.replace(/<[^>]+>/g, ''),
+        plainText: getPlainText(newNote),
         color: getRandomColor(),
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -68,8 +68,8 @@ const NotesList: React.FC = () => {
   };
 
   const handleSaveEdit = () => {
-    if (editNote) {
-      setNotes(notes.map(n => n.id === editNote.id ? { ...editNote, content: newNote, plainText: newNote.replace(/<[^>]+>/g, ''), updatedAt: new Date() } : n));
+    if (editNote && !isContentEmpty(newNote)) {
+      setNotes(notes.map(n => n.id === editNote.id ? { ...editNote, content: newNote, plainText: getPlainText(newNote), updatedAt: new Date() } : n));
       setEditNote(null);
       setNewNote("");
       setEditorOpen(false);
@@ -79,6 +79,8 @@ const NotesList: React.FC = () => {
   const handleDeleteNote = (id: string) => setNotes(notes.filter(note => note.id !== id));
 
   const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
+  const getPlainText = (html: string) => html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  const isContentEmpty = (html: string) => getPlainText(html).length === 0;
 
   return (
     <Box ref={containerRef} sx={{ width: "100%", minHeight: 400, position: 'relative' }}>
@@ -114,7 +116,7 @@ const NotesList: React.FC = () => {
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button size="small" onClick={() => { setEditorOpen(false); setEditNote(null); setNewNote(''); }}>Discard (Esc)</Button>
-              <Button size="small" variant="contained" disabled={!newNote.trim()} onClick={editNote ? handleSaveEdit : handleAddNote}>{editNote ? 'Save Changes' : 'Create Note'}</Button>
+              <Button size="small" variant="contained" disabled={isContentEmpty(newNote)} onClick={editNote ? handleSaveEdit : handleAddNote}>{editNote ? 'Save Changes' : 'Create Note'}</Button>
             </Box>
           </Box>
         </Box>
