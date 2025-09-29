@@ -14,7 +14,6 @@ import { Note } from "@/types/Note";
 import RichNoteEditor from './RichNoteEditor';
 
 const NotesList: React.FC = () => {
-  const colors = ["#fff9c4", "#f0f4c3", "#e8f5e9", "#e3f2fd", "#f3e5f5"];
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
   const [editNote, setEditNote] = useState<Note | null>(null);
@@ -46,19 +45,17 @@ const NotesList: React.FC = () => {
   }, [editorOpen]);
 
   const handleAddNote = () => {
-    if (!isContentEmpty(newNote)) {
-      const note: Note = {
-        id: uuidv4(),
-        content: newNote,
-        plainText: getPlainText(newNote),
-        color: getRandomColor(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      setNotes([...notes, note]);
-      setNewNote("");
-      setEditorOpen(false);
-    }
+    if (isContentEmpty(newNote)) return;
+    const note: Note = {
+      id: uuidv4(),
+      content: newNote,
+      plainText: getPlainText(newNote),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    setNotes(prev => [...prev, note]);
+    setNewNote("");
+    setEditorOpen(false);
   };
 
   const handleEditNote = (note: Note) => {
@@ -68,17 +65,15 @@ const NotesList: React.FC = () => {
   };
 
   const handleSaveEdit = () => {
-    if (editNote && !isContentEmpty(newNote)) {
-      setNotes(notes.map(n => n.id === editNote.id ? { ...editNote, content: newNote, plainText: getPlainText(newNote), updatedAt: new Date() } : n));
-      setEditNote(null);
-      setNewNote("");
-      setEditorOpen(false);
-    }
+    if (!editNote || isContentEmpty(newNote)) return;
+    setNotes(prev => prev.map(n => n.id === editNote.id ? { ...editNote, content: newNote, plainText: getPlainText(newNote), updatedAt: new Date() } : n));
+    setEditNote(null);
+    setNewNote("");
+    setEditorOpen(false);
   };
 
   const handleDeleteNote = (id: string) => setNotes(notes.filter(note => note.id !== id));
 
-  const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
   const getPlainText = (html: string) => html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
   const isContentEmpty = (html: string) => getPlainText(html).length === 0;
 
@@ -94,7 +89,7 @@ const NotesList: React.FC = () => {
               </CardContent>
             </Card>
             {notes.map(note => (
-              <NoteCard key={note.id} note={note} colors={colors} onDelete={handleDeleteNote} onEdit={handleEditNote} />
+              <NoteCard key={note.id} note={note} onDelete={handleDeleteNote} onEdit={handleEditNote} />
             ))}
           </Masonry>
         </Box>
