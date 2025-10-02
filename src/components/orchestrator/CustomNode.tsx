@@ -141,6 +141,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
+                maxWidth: "120px",
               }}
             >
               {data?.header?.label}
@@ -154,7 +155,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
                 }
                 arrow
                 placement="top"
-                componentsProps={{
+                slotProps={{
                   tooltip: {
                     sx: {
                       bgcolor: theme.palette.background.paper,
@@ -194,12 +195,23 @@ const CustomNode: React.FC<CustomNodeProps> = ({
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Chip
-            size="small"
-            label={friendlyId}
-            sx={{ ml: "auto", color: theme.palette.textVariants.text4 }}
-            variant="filled"
-          />
+          <Tooltip title={friendlyId} arrow placement="top">
+            <Chip
+              size="small"
+              label={friendlyId}
+              sx={{
+                ml: "auto",
+                color: theme.palette.textVariants.text4,
+                maxWidth: "80px",
+                "& .MuiChip-label": {
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                },
+              }}
+              variant="filled"
+            />
+          </Tooltip>
           <IconButton
             aria-label="node actions"
             onClick={(e) => {
