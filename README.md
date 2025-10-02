@@ -1,8 +1,58 @@
-# 🏗️ Orchestrator – Architecture & Roadmap
+# 🏗️ Landing Zone Orchestrator UI
 
----
+A React TypeScript application for managing cloud infrastructure with an integrated notes system for documentation and collaboration.
 
-## 1. Purpose
+## Features
+
+- **Cloud Infrastructure Management**: Interactive UI for creating and managing landing zones
+- **Notes System**: Full-featured notes with rich text editing, search, and user-specific storage
+- **Authentication**: JWT-based authentication with token refresh
+- **Modern UI**: Material-UI components with dark/light theme support
+
+## Notes System
+
+### Frontend Features
+- Rich text editor using TipTap with formatting options
+- Fuzzy search using Fuse.js for intelligent text matching
+- Real-time search as you type
+- Responsive Masonry layout for note cards
+- Loading states and error handling
+- User-specific note management
+
+### API Integration
+The notes system expects these backend endpoints:
+
+```typescript
+// GET /api/notes - Get all user notes (paginated)
+Response: {
+  notes: Note[],
+  total: number,
+  page: number,
+  size: number,
+  totalPages: number
+}
+
+// POST /api/notes - Create new note
+Body: { content: string, plainText?: string }
+
+// PUT /api/notes/:id - Update note
+Body: { content: string, plainText?: string }
+
+// DELETE /api/notes/:id - Delete note
+```
+
+### Note Interface
+```typescript
+interface Note {
+  id: string;
+  content: string; // HTML from TipTap editor
+  plainText?: string; // For search functionality
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+## Purpose
 
 The **Orchestrator** is a platform that simplifies cloud landing zone creation.
 Instead of writing Terraform manually, users fill out a **form/UI** → the system generates validated Terraform templates → pushes them to Git and/or runs deployments.

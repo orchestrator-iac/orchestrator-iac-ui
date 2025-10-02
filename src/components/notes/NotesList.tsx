@@ -4,22 +4,51 @@ import {
   Button,
   CardContent,
   Typography,
-  Card
-} from "@mui/material"; // removed Slide
+  Card,
+  TextField,
+  InputAdornment,
+  CircularProgress,
+  Alert,
+  Snackbar
+} from "@mui/material";
 import Masonry from "@mui/lab/Masonry";
 import AddIcon from "@mui/icons-material/Add";
-import { v4 as uuidv4 } from "uuid";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+
 import NoteCard from "./NoteCard";
 import { Note } from "@/types/Note";
 import RichNoteEditor from './RichNoteEditor';
+import { useNotes } from '@/hooks/useNotes';
 
 const NotesList: React.FC = () => {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const {
+    notes,
+    filteredNotes,
+    searchQuery,
+    loading,
+    error,
+    createNote,
+    updateNote,
+    deleteNote,
+    handleSearch,
+    clearSearch,
+    isContentEmpty,
+  } = useNotes();
+
   const [newNote, setNewNote] = useState("");
   const [editNote, setEditNote] = useState<Note | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false); // reuse flag to mean "show editor instead of list"
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [showError, setShowError] = useState(false);
   const scrollPosRef = useRef(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Show error when error state changes
+  useEffect(() => {
+    if (error) {
+      setShowError(true);
+    }
+  }, [error]);
 
   useEffect(() => {
     if (editorOpen) {
@@ -44,18 +73,16 @@ const NotesList: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, [editorOpen]);
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (isContentEmpty(newNote)) return;
-    const note: Note = {
-      id: uuidv4(),
-      content: newNote,
-      plainText: getPlainText(newNote),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setNotes(prev => [...prev, note]);
-    setNewNote("");
-    setEditorOpen(false);
+    
+    try {
+      await createNote(newNote);
+      setNewNote("");
+      setEditorOpen(false);
+    } catch {
+      // Error is handled by the hook
+    }
   };
 
   const handleEditNote = (note: Note) => {
@@ -64,34 +91,112 @@ const NotesList: React.FC = () => {
     setEditorOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editNote || isContentEmpty(newNote)) return;
-    setNotes(prev => prev.map(n => n.id === editNote.id ? { ...editNote, content: newNote, plainText: getPlainText(newNote), updatedAt: new Date() } : n));
-    setEditNote(null);
-    setNewNote("");
-    setEditorOpen(false);
+    
+    try {
+      await updateNote(editNote.id, newNote);
+      setEditNote(null);
+      setNewNote("");
+      setEditorOpen(false);
+    } catch {
+      // Error is handled by the hook
+    }
   };
 
-  const handleDeleteNote = (id: string) => setNotes(notes.filter(note => note.id !== id));
-
-  const getPlainText = (html: string) => html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-  const isContentEmpty = (html: string) => getPlainText(html).length === 0;
+  const handleDeleteNote = async (id: string) => {
+    try {
+      await deleteNote(id);
+    } catch {
+      // Error is handled by the hook
+    }
+  };
 
   return (
     <Box ref={containerRef} sx={{ width: "100%", minHeight: 400, position: 'relative' }}>
       {!editorOpen && (
         <Box>
-          <Masonry columns={{ xs: 1, sm: 2, md: 4 }} spacing={2}>
-            <Card sx={{ minHeight: 200, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', '&:hover': { transform: 'scale(1.02)', transition: 'transform 0.2s' } }}>
-              <CardContent sx={{ textAlign: 'center' }} onClick={() => { setEditNote(null); setNewNote(''); setEditorOpen(true); }}>
-                <AddIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
-                <Typography color="text.secondary">Add New Note</Typography>
-              </CardContent>
-            </Card>
-            {notes.map(note => (
-              <NoteCard key={note.id} note={note} onDelete={handleDeleteNote} onEdit={handleEditNote} />
-            ))}
-          </Masonry>
+          {/* Search Bar */}
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery && (
+                  <InputAdornment position="end">
+                    <Button
+                      size="small"
+                      onClick={clearSearch}
+                      sx={{ minWidth: 'auto', p: 0.5 }}
+                    >
+                      <ClearIcon fontSize="small" />
+                    </Button>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                }
+              }}
+            />
+          </Box>
+
+          {/* Loading Indicator */}
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          )}
+
+          {/* Notes Grid */}
+          {!loading && (
+            <Masonry columns={{ xs: 1, sm: 2, md: 4 }} spacing={2}>
+              <Card sx={{ minHeight: 200, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', '&:hover': { transform: 'scale(1.02)', transition: 'transform 0.2s' } }}>
+                <CardContent sx={{ textAlign: 'center' }} onClick={() => { setEditNote(null); setNewNote(''); setEditorOpen(true); }}>
+                  <AddIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+                  <Typography color="text.secondary">Add New Note</Typography>
+                </CardContent>
+              </Card>
+              {filteredNotes.map(note => (
+                <NoteCard key={note.id} note={note} onDelete={handleDeleteNote} onEdit={handleEditNote} />
+              ))}
+            </Masonry>
+          )}
+
+          {/* No Notes Message */}
+          {!loading && filteredNotes.length === 0 && notes.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No notes yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Click the "Add New Note" button to create your first note.
+              </Typography>
+            </Box>
+          )}
+
+          {/* No Search Results Message */}
+          {!loading && searchQuery && filteredNotes.length === 0 && notes.length > 0 && (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No notes found
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Try adjusting your search terms or{' '}
+                <Button variant="text" size="small" onClick={clearSearch}>
+                  clear search
+                </Button>
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
 
@@ -109,13 +214,47 @@ const NotesList: React.FC = () => {
             <Typography variant="caption" color="text.secondary">
               {editNote ? 'Last updated: ' + new Date(editNote.updatedAt).toLocaleString() : 'Creating new note'}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button size="small" onClick={() => { setEditorOpen(false); setEditNote(null); setNewNote(''); }}>Discard (Esc)</Button>
-              <Button size="small" variant="contained" disabled={isContentEmpty(newNote)} onClick={editNote ? handleSaveEdit : handleAddNote}>{editNote ? 'Save Changes' : 'Create Note'}</Button>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              {loading && <CircularProgress size={20} />}
+              <Button 
+                size="small" 
+                onClick={() => { setEditorOpen(false); setEditNote(null); setNewNote(''); }}
+                disabled={loading}
+              >
+                Discard (Esc)
+              </Button>
+              <Button 
+                size="small" 
+                variant="contained" 
+                disabled={isContentEmpty(newNote) || loading} 
+                onClick={editNote ? handleSaveEdit : handleAddNote}
+              >
+{(() => {
+                  if (loading) return 'Saving...';
+                  if (editNote) return 'Save Changes';
+                  return 'Create Note';
+                })()}
+              </Button>
             </Box>
           </Box>
         </Box>
       )}
+
+      {/* Error Snackbar */}
+      <Snackbar
+        open={showError}
+        autoHideDuration={6000}
+        onClose={() => setShowError(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setShowError(false)} 
+          severity="error" 
+          sx={{ width: '100%' }}
+        >
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

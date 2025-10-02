@@ -115,8 +115,6 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) => {
           </Tooltip>
         </Box>
       </Popover>
-
-      {/* Note Content */}
       <CardContent
         sx={{
           pt: 2,
@@ -131,11 +129,13 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onDelete, onEdit }) => {
           )}
         </Box>
         {/* Footer date (muted) */}
-        {/* <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <Typography variant="caption" sx={{ color: 'text.primary', fontSize: '0.65rem' }}>
-            {new Date(note.updatedAt).toLocaleDateString()}
+        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+            {note?.updatedAt
+              ? new Date(note.updatedAt).toLocaleDateString()
+              : '—'}
           </Typography>
-        </Box> */}
+        </Box>
       </CardContent>
     </Card>
   );

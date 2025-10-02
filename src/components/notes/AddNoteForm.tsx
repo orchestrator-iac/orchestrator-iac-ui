@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import RichNoteEditor from './RichNoteEditor';
+import './AddNoteForm.css';
 
 interface Props { onAddNote: (title: string, contentHtml: string) => void }
 
@@ -15,19 +16,18 @@ const AddNoteForm: React.FC<Props> = ({ onAddNote }) => {
       setContent('');
     }
   };
-
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <form onSubmit={handleSubmit} className="add-note-form">
       <input
         type="text"
         placeholder="Note Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         required
-        style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: 6 }}
+        className="add-note-input"
       />
       <RichNoteEditor value={content} onChange={setContent} placeholder="Write your note..." minHeight={160} />
-      <button type="submit" style={{ padding: '8px 14px', borderRadius: 6, background: '#1976d2', color: '#fff', border: 'none', cursor: 'pointer' }}>
+      <button type="submit" className="add-note-button">
         Add Note
       </button>
     </form>
