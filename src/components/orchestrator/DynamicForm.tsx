@@ -30,6 +30,7 @@ import { UserProfile } from "../../types/auth";
 import { CloudConfig } from "../../types/clouds-info";
 import { validCondition } from "../../utils/deps";
 import { renderTemplate } from "@/utils/renderTemplate";
+import ListObjectField from "./ListObjectField";
 
 type Values = { [x: string]: any };
 
@@ -50,7 +51,6 @@ type Props = {
   templateInfo?: CloudConfig;
   onLinkFieldChange?: (bind: string, newSourceId: string) => void;
 };
-
 
 const DynamicForm: React.FC<Props> = ({
   config,
@@ -77,7 +77,7 @@ const DynamicForm: React.FC<Props> = ({
     }
     try {
       const rendered = renderTemplate(values, {
-        userInfo: userInfo ?? {},         // <- ensure key exists
+        userInfo: userInfo ?? {}, // <- ensure key exists
         templateInfo: templateInfo ?? {}, // <- ensure key exists
       });
       setFormData(rendered);
@@ -199,7 +199,7 @@ const DynamicForm: React.FC<Props> = ({
                 PaperProps: {
                   style: {
                     transform: `scale(${zoom})`,
-                    transformOrigin: 'top left',
+                    transformOrigin: "top left",
                   },
                 },
               }}
@@ -287,11 +287,16 @@ const DynamicForm: React.FC<Props> = ({
             disablePortal={false}
             slotProps={{
               popper: {
-                modifiers: [{ name: "computeStyles", options: { adaptive: false } }],
+                modifiers: [
+                  { name: "computeStyles", options: { adaptive: false } },
+                ],
                 style: { zIndex: 1500 },
               },
               paper: {
-                sx: { transform: `scale(${zoom})`, transformOrigin: "top center", },
+                sx: {
+                  transform: `scale(${zoom})`,
+                  transformOrigin: "top center",
+                },
               },
             }}
           />
@@ -428,6 +433,18 @@ const DynamicForm: React.FC<Props> = ({
           </ToggleButtonGroup>
         );
       }
+
+      case "list<object>":
+        return (
+          <ListObjectField
+            name={name}
+            value={value}
+            fieldCfg={fieldCfg}
+            formData={formData}
+            onChange={handleChange}
+            resolveOptions={resolveOptions}
+          />
+        );
 
       case "number":
         return (
