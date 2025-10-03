@@ -31,6 +31,7 @@ import { CloudConfig } from "../../types/clouds-info";
 import { validCondition } from "../../utils/deps";
 import { renderTemplate } from "@/utils/renderTemplate";
 import ListObjectField from "./ListObjectField";
+import ListSelectTextField from "./ListSelectTextField";
 
 type Values = { [x: string]: any };
 
@@ -443,6 +444,21 @@ const DynamicForm: React.FC<Props> = ({
             formData={formData}
             onChange={handleChange}
             resolveOptions={resolveOptions}
+          />
+        );
+
+      case "list<select+text>":
+        return (
+          <ListSelectTextField
+            name={name}
+            value={value}
+            fieldCfg={fieldCfg}
+            formData={formData}
+            onChange={handleChange}
+            resolveOptions={resolveOptions}
+            placeholder={placeholder}
+            hint={hint}
+            error_text={error_text}
           />
         );
 

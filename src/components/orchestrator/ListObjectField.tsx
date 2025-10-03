@@ -98,11 +98,6 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
   ) => {
     const fieldValue = itemData?.[schemaField.name] ?? schemaField.value ?? "";
 
-    // Check field dependencies
-    if (!validCondition(schemaField, itemData)) {
-      return null;
-    }
-
     switch (schemaField.type) {
       case "text":
         return (
@@ -468,45 +463,54 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
           </Box>
 
           <Grid container spacing={2}>
-            {fieldCfg?.schema?.map((schemaField: any) => (
-              <Grid size={schemaField.size ?? 12} key={schemaField.name}>
-                {schemaField.label && (
-                  <Typography
-                    component="label"
-                    variant="body2"
-                    sx={{ display: "block", mb: 0.5 }}
-                  >
-                    {schemaField.label}
-                    {schemaField?.info && (
-                      <Tooltip
-                        title={
-                          <Box sx={{ maxHeight: 200, overflowY: "auto", p: 1 }}>
-                            {renderInfo(schemaField.info)}
-                          </Box>
-                        }
-                        arrow
-                        placement="top"
-                      >
-                        <Typography
-                          component="strong"
-                          variant="caption"
-                          sx={{
-                            fontWeight: "bold",
-                            color: "primary.main",
-                            mx: "0.8rem",
-                            mb: "3px",
-                            cursor: "pointer",
-                          }}
+            {fieldCfg?.schema?.map((schemaField: any) => {
+              // Check field dependencies first
+              if (!validCondition(schemaField, item)) {
+                return null;
+              }
+
+              return (
+                <Grid size={schemaField.size ?? 12} key={schemaField.name}>
+                  {schemaField.label && (
+                    <Typography
+                      component="label"
+                      variant="body2"
+                      sx={{ display: "block", mb: 0.5 }}
+                    >
+                      {schemaField.label}
+                      {schemaField?.info && (
+                        <Tooltip
+                          title={
+                            <Box
+                              sx={{ maxHeight: 200, overflowY: "auto", p: 1 }}
+                            >
+                              {renderInfo(schemaField.info)}
+                            </Box>
+                          }
+                          arrow
+                          placement="top"
                         >
-                          info
-                        </Typography>
-                      </Tooltip>
-                    )}
-                  </Typography>
-                )}
-                {renderObjectField(schemaField, item, index)}
-              </Grid>
-            ))}
+                          <Typography
+                            component="strong"
+                            variant="caption"
+                            sx={{
+                              fontWeight: "bold",
+                              color: "primary.main",
+                              mx: "0.8rem",
+                              mb: "3px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            info
+                          </Typography>
+                        </Tooltip>
+                      )}
+                    </Typography>
+                  )}
+                  {renderObjectField(schemaField, item, index)}
+                </Grid>
+              );
+            })}
           </Grid>
         </Card>
       ))}
