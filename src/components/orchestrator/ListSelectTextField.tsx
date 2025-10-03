@@ -19,27 +19,30 @@ import { useViewport } from "@xyflow/react";
 type ListSelectTextFieldProps = {
   name: string;
   value: string[];
-  fieldCfg: any;
   formData: Record<string, any>;
   onChange: (name: string, value: any) => void;
   resolveOptions: (
-    options: any
+    options: any,
+    contextData?: Record<string, any>
   ) => { value: string; label: string; disabled?: boolean }[] | undefined;
+  options?: any;
   placeholder?: string;
   hint?: string;
   error_text?: string;
+  onLinkFieldChange?: (bind: string, newSourceId: string) => void;
 };
 
 const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   name,
   value,
-  fieldCfg,
   formData,
   onChange,
   resolveOptions,
+  options,
   placeholder,
   hint,
   error_text,
+  onLinkFieldChange,
 }) => {
   const theme = useTheme();
   let zoom = 1;
@@ -55,6 +58,11 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
     const updatedList = [...currentList];
     updatedList[index] = newValue;
     onChange(name, updatedList);
+    
+    // Trigger link field change for edge creation
+    if (onLinkFieldChange && newValue) {
+      onLinkFieldChange(name, newValue);
+    }
   };
 
   const handleAddItem = () => {
@@ -67,7 +75,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   };
 
   const renderSelectTextField = (itemValue: string, itemIndex: number) => {
-    const resolvedOptions = resolveOptions(fieldCfg?.options);
+    const resolvedOptions = resolveOptions(options, formData);
     const opts = (resolvedOptions ?? []).map((o: any) => ({
       label: String(o.label),
       value: String(o.value),
@@ -106,7 +114,23 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
         }}
         onInputChange={(_e, newInput, reason) => {
           if (reason === "input") {
-            handleListItemChange(itemIndex, String(newInput ?? ""));
+            const newValue = String(newInput ?? "");
+            const updatedList = [...currentList];
+            updatedList[itemIndex] = newValue;
+            onChange(name, updatedList);
+            
+            // Check if user diverged from dropdown option
+            const opts = (resolvedOptions ?? []).map((o: any) => ({
+              label: String(o.label),
+              value: String(o.value),
+              disabled: !!o.disabled,
+            }));
+            const matched = opts.find((o) => o.value === currentVal) || null;
+            const divergedFromOption = !!matched && !opts.some((o) => o.value === newValue);
+            
+            if (divergedFromOption && onLinkFieldChange) {
+              onLinkFieldChange(name, "");
+            }
           }
         }}
         renderInput={(params) => (

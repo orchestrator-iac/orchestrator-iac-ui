@@ -33,8 +33,10 @@ type ListObjectFieldProps = {
   formData: Record<string, any>;
   onChange: (name: string, value: any) => void;
   resolveOptions: (
-    options: any
+    options: any,
+    contextData?: Record<string, any>
   ) => { value: string; label: string; disabled?: boolean }[] | undefined;
+  onLinkFieldChange?: (bind: string, newSourceId: string) => void;
 };
 
 const ListObjectField: React.FC<ListObjectFieldProps> = ({
@@ -44,6 +46,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
   formData,
   onChange,
   resolveOptions,
+  onLinkFieldChange,
 }) => {
   const theme = useTheme();
   let zoom = 1;
@@ -141,7 +144,10 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
         );
 
       case "select": {
-        const resolvedSchemaOptions = resolveOptions(schemaField.options);
+        const resolvedSchemaOptions = resolveOptions(
+          schemaField.options,
+          itemData
+        );
         return (
           <FormControl fullWidth required={!!schemaField.required}>
             <Select
@@ -176,7 +182,10 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
       }
 
       case "select+text": {
-        const resolvedSchemaOptions = resolveOptions(schemaField.options);
+        const resolvedSchemaOptions = resolveOptions(
+          schemaField.options,
+          itemData
+        );
         const opts = (resolvedSchemaOptions ?? []).map((o: any) => ({
           label: String(o.label),
           value: String(o.value),
@@ -204,6 +213,9 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             onChange={(_e, newVal) => {
               if (newVal == null) {
                 handleListItemChange(itemIndex, schemaField.name, "");
+                if (onLinkFieldChange) {
+                  onLinkFieldChange(`${name}[${itemIndex}].${schemaField.name}`, "");
+                }
                 return;
               }
               if (typeof newVal === "string") {
@@ -212,9 +224,18 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
               }
               const pickedVal = String(newVal.value ?? "");
               handleListItemChange(itemIndex, schemaField.name, pickedVal);
+              if (onLinkFieldChange) {
+                onLinkFieldChange(`${name}[${itemIndex}].${schemaField.name}`, pickedVal);
+              }
             }}
             onInputChange={(_e, newInput, reason) => {
               if (reason === "input") {
+                const divergedFromOption =
+                  !!matched &&
+                  !opts.some((o) => o.value === String(newInput ?? ""));
+                if (divergedFromOption && onLinkFieldChange) {
+                  onLinkFieldChange(`${name}[${itemIndex}].${schemaField.name}`, "");
+                }
                 handleListItemChange(
                   itemIndex,
                   schemaField.name,
@@ -259,7 +280,10 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
       }
 
       case "radio": {
-        const resolvedSchemaOptions = resolveOptions(schemaField.options);
+        const resolvedSchemaOptions = resolveOptions(
+          schemaField.options,
+          itemData
+        );
         return (
           <FormControl fullWidth required={!!schemaField.required}>
             <RadioGroup
@@ -289,7 +313,10 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
       }
 
       case "checkbox": {
-        const resolvedSchemaOptions = resolveOptions(schemaField.options);
+        const resolvedSchemaOptions = resolveOptions(
+          schemaField.options,
+          itemData
+        );
         const opts = (resolvedSchemaOptions ?? schemaField.options) as
           | any[]
           | undefined;
@@ -427,7 +454,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
     <Box>
       {currentList.map((item, index) => (
         <Card
-          key={index}
+          key={`${name}-item-${index}`}
           variant="outlined"
           sx={{
             mb: 2,
