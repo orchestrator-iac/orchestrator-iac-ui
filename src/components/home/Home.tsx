@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Box, useTheme } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../store";
@@ -40,22 +41,17 @@ const Home: React.FC = () => {
   const { data: customWrappers, status: customWrappersStatus } = useSelector(
     (state: RootState) => state.customWrappers
   );
-  const { data: wrappersTemplate, status: wrappersTemplateStatus } =
-    useSelector((state: RootState) => state.wrappersTemplate);
+  const { data: wrappersTemplate, status: wrappersTemplateStatus } = useSelector(
+    (state: RootState) => state.wrappersTemplate
+  );
   const { data: resources, status: resourcesStatus } = useSelector(
     (state: RootState) => state.resources
   );
 
   useEffect(() => {
-    if (customWrappersStatus === "idle") {
-      dispatch(fetchCustomWrappers());
-    }
-    if (wrappersTemplateStatus === "idle") {
-      dispatch(fetchWrappersTemplate());
-    }
-    if (resourcesStatus === "idle") {
-      dispatch(fetchResources());
-    }
+    if (customWrappersStatus === "idle") dispatch(fetchCustomWrappers());
+    if (wrappersTemplateStatus === "idle") dispatch(fetchWrappersTemplate());
+    if (resourcesStatus === "idle") dispatch(fetchResources());
   }, [dispatch, customWrappersStatus, wrappersTemplateStatus, resourcesStatus]);
 
   useEffect(() => {
@@ -72,111 +68,143 @@ const Home: React.FC = () => {
 
   return (
     <Box m={4}>
+      {/* ===== RECENTLY WORKED ===== */}
       {customWrappers?.length > 0 && (
         <>
           <h3 className={styles.wrapperHeader}>Recently Worked</h3>
-          <div className={styles.cardList}>
+          <Grid
+            container
+            columns={{ xs: 4, sm: 8, md: 12 }}
+            spacing={3}
+            alignItems="stretch"
+          >
             {customWrappers.map((card) => (
-              <div key={card.template_id} className={styles.card}>
-                <CardLogo
-                  cloudType={card.cloud_type}
-                  className={styles.cloudTypeLogo}
-                />
-                <img
-                  src={card.image}
-                  alt={card.label}
-                  className={styles.cardImage}
-                />
-                <h3 className={styles.cardTitle}>
-                  <Link
-                    to={`/orchestrator/${card.template_id}?&template_type=custom`}
-                    style={{ textDecoration: "none", color: "inherit" }}
-                    aria-label={`View details for ${card.label}`}
-                  >
-                    {card.label}
-                  </Link>
-                </h3>
-                <p className={styles.cardDescription}>{card.description}</p>
-              </div>
+              <Grid
+                key={card.template_id}
+                size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
+                display="flex"
+              >
+                <Box className={styles.card}>
+                  <CardLogo
+                    cloudType={card.cloud_type}
+                    className={styles.cloudTypeLogo}
+                  />
+                  <img
+                    src={card.image}
+                    alt={card.label}
+                    className={styles.cardImage}
+                  />
+                  <h3 className={styles.cardTitle}>
+                    <Link
+                      to={`/orchestrator/${card.template_id}?&template_type=custom`}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                      aria-label={`View details for ${card.label}`}
+                    >
+                      {card.label}
+                    </Link>
+                  </h3>
+                  <p className={styles.cardDescription}>{card.description}</p>
+                </Box>
+              </Grid>
             ))}
-          </div>
+          </Grid>
         </>
       )}
 
+      {/* ===== TEMPLATES ===== */}
       <h3 className={styles.wrapperHeader}>Templates</h3>
-      <Box className={styles.cardList}>
-        <Box
-          className={styles.card}
-          onClick={() => navigateTemplates(undefined)}
-        >
-          <div className={styles.cardBlank}>
-            <FontAwesomeIcon icon="plus" size="5x" />
-            <p className={styles.cardDescription}>Blank Template</p>
-          </div>
-        </Box>
-        {wrappersTemplate.map((card) => (
-          <Box
-            key={card._id}
-            className={styles.card}
-            onClick={() => navigateTemplates(card._id)}
-          >
-            <CardLogo
-              cloudType={card.cloud_type}
-              className={styles.cloudTypeLogo}
-            />
-            <img
-              src={card?.resourceIcon?.url}
-              alt={card.label}
-              className={styles.cardImage}
-            />
-            <h3 className={styles.cardTitle}>{card.label}</h3>
-            <p className={styles.cardDescription}>{card.description}</p>
+      <Grid
+        container
+        columns={{ xs: 4, sm: 8, md: 12 }}
+        spacing={3}
+        alignItems="stretch"
+      >
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} display="flex">
+          <Box className={styles.card} onClick={() => navigateTemplates(undefined)}>
+            <div className={styles.cardBlank}>
+              <FontAwesomeIcon icon="plus" size="5x" />
+              <p className={styles.cardDescription}>Blank Template</p>
+            </div>
           </Box>
-        ))}
-      </Box>
+        </Grid>
 
-      <h3 className={styles.wrapperHeader}>Resource</h3>
-      <Box className={styles.cardList} sx={{ pb: 4 }}>
-        <Box
-          className={styles.card}
-          onClick={() => navigateResource(undefined)}
-        >
-          <div className={styles.cardBlank}>
-            <FontAwesomeIcon icon="plus" size="5x" />
-            <p className={styles.cardDescription}>New Resource</p>
-          </div>
-        </Box>
-        {resources.map((resource) => (
-          <Box
-            key={resource._id}
-            className={styles.card}
-            onClick={() => navigateResource(resource._id)}
+        {wrappersTemplate.map((card) => (
+          <Grid
+            key={card._id}
+            size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
+            display="flex"
           >
-            <CardLogo
-              cloudType={resource.cloudProvider}
-              className={styles.cloudTypeLogo}
-            />
-            <img
-              src={`${API_HOST_URL}${resource?.resourceIcon?.url}`}
-              alt={resource.resourceName}
-              className={styles.cardImage}
-            />
-            <h2 className={styles.cardTitle}>
-              <Link
-                to={`/resources/${resource._id}`}
-                style={{ textDecoration: "none", color: "inherit" }}
-                aria-label={`View details for ${resource.resourceName}`}
-              >
-                {resource.resourceName}
-              </Link>
-            </h2>
-            <p className={styles.cardDescription}>
-              {resource.resourceDescription}
-            </p>
-            <code>Version - {resource.resourceVersion}</code>
-          </Box>
+            <Box className={styles.card} onClick={() => navigateTemplates(card._id)}>
+              <CardLogo
+                cloudType={card.cloud_type}
+                className={styles.cloudTypeLogo}
+              />
+              <img
+                src={card?.resourceIcon?.url}
+                alt={card.label}
+                className={styles.cardImage}
+              />
+              <h3 className={styles.cardTitle}>{card.label}</h3>
+              <p className={styles.cardDescription}>{card.description}</p>
+            </Box>
+          </Grid>
         ))}
-      </Box>
+      </Grid>
+
+      {/* ===== RESOURCES ===== */}
+      <h3 className={styles.wrapperHeader}>Resources</h3>
+      <Grid
+        container
+        columns={{ xs: 4, sm: 8, md: 12 }}
+        spacing={3}
+        alignItems="stretch"
+        sx={{ pb: 4 }}
+      >
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} display="flex">
+          <Box className={styles.card} onClick={() => navigateResource(undefined)}>
+            <div className={styles.cardBlank}>
+              <FontAwesomeIcon icon="plus" size="5x" />
+              <p className={styles.cardDescription}>New Resource</p>
+            </div>
+          </Box>
+        </Grid>
+
+        {resources.map((resource) => (
+          <Grid
+            key={resource._id}
+            size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
+            display="flex"
+          >
+            <Box
+              className={styles.card}
+              onClick={() => navigateResource(resource._id)}
+            >
+              <CardLogo
+                cloudType={resource.cloudProvider}
+                className={styles.cloudTypeLogo}
+              />
+              <img
+                src={`${API_HOST_URL}${resource?.resourceIcon?.url}`}
+                alt={resource.resourceName}
+                className={styles.cardImage}
+              />
+              <h2 className={styles.cardTitle}>
+                <Link
+                  to={`/resources/${resource._id}`}
+                  style={{ textDecoration: "none", color: "inherit" }}
+                  aria-label={`View details for ${resource.resourceName}`}
+                >
+                  {resource.resourceName}
+                </Link>
+              </h2>
+              <p className={styles.cardDescription}>
+                {resource.resourceDescription}
+              </p>
+              <code>Version - {resource.resourceVersion}</code>
+            </Box>
+          </Grid>
+        ))}
+      </Grid>
     </Box>
   );
 };

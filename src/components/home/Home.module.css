@@ -4,16 +4,9 @@
   color: var(--primary);
 }
 
-.cardList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  padding: 10px 20px;
-}
-
 .card {
   position: relative;
-  width: 220px;
+  width: 100%;
   border-radius: 8px;
   padding: 16px;
   cursor: pointer;
