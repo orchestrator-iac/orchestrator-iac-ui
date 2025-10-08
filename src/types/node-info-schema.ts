@@ -46,6 +46,7 @@ export const FieldSchema = z.object({
     .optional(),
 
   disabled: z.boolean().nullable().optional(),
+  allowDuplicates: z.boolean().nullable().optional(),
   config: FieldConfigSchema.nullable().optional(),
 });
 

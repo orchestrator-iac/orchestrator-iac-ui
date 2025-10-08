@@ -75,7 +75,7 @@ const Home: React.FC = () => {
           <Grid
             container
             columns={{ xs: 4, sm: 8, md: 12 }}
-            spacing={3}
+            spacing={1}
             alignItems="stretch"
           >
             {customWrappers.map((card) => (
@@ -116,7 +116,7 @@ const Home: React.FC = () => {
       <Grid
         container
         columns={{ xs: 4, sm: 8, md: 12 }}
-        spacing={3}
+        spacing={1}
         alignItems="stretch"
       >
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} display="flex">
@@ -156,7 +156,7 @@ const Home: React.FC = () => {
       <Grid
         container
         columns={{ xs: 4, sm: 8, md: 12 }}
-        spacing={3}
+        spacing={1}
         alignItems="stretch"
         sx={{ pb: 4 }}
       >

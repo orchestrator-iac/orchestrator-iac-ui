@@ -222,9 +222,15 @@ const OrchestratorReactFlow: React.FC = () => {
           );
 
           if ((rule.cardinality ?? "1") === "many") {
-            const srcs = incoming.map((e) => e.source).sort(); // deterministic
+            const srcs = incoming
+              .map((e) => e.source)
+              .sort((a: string, b: string) =>
+                a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+              );
             const prev = Array.isArray(nextValues[rule.bind])
-              ? [...nextValues[rule.bind]].sort()
+              ? [...nextValues[rule.bind]].sort((a: string, b: string) =>
+                  a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+                )
               : [];
             const same =
               prev.length === srcs.length &&
@@ -384,6 +390,10 @@ const OrchestratorReactFlow: React.FC = () => {
 
       const rules = (target.data as any)?.links ?? [];
       const rule = rules.find((r: any) => r.bind === bind);
+      if (!rule) {
+        console.warn(`No rule found for bind: ${bind} on node: ${nodeId}`);
+        return;
+      }
       const edgeKind = rule?.edgeData?.kind ?? bind;
       const cardinality: "1" | "many" = rule?.cardinality ?? "1";
 
@@ -436,11 +446,11 @@ const OrchestratorReactFlow: React.FC = () => {
           target: nodeId,
           data: rule?.edgeData ?? { kind: bind },
           markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
-          style: rule.edgeData?.style ?? {
+          style: rule?.edgeData?.style ?? {
             strokeWidth: 4,
             strokeDasharray: "8 2",
           },
-          animated: rule.edgeData?.animated ?? false,
+          animated: rule?.edgeData?.animated ?? false,
         };
         setEdges((eds) => addEdge(newEdge, eds));
       }

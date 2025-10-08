@@ -89,6 +89,7 @@ export interface Field {
   options?: Array<Option> | string;
 
   disabled?: boolean;
+  allowDuplicates?: boolean;
   config?: FieldConfig;
 }
 

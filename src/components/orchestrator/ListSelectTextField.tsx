@@ -30,6 +30,7 @@ type ListSelectTextFieldProps = {
   hint?: string;
   error_text?: string;
   onLinkFieldChange?: (bind: string, newSourceId: string) => void;
+  allowDuplicates?: boolean;
 };
 
 const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
@@ -43,6 +44,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   hint,
   error_text,
   onLinkFieldChange,
+  allowDuplicates = false,
 }) => {
   const theme = useTheme();
   let zoom = 1;
@@ -55,13 +57,25 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   const currentList = (formData[name] ?? value ?? []) as string[];
 
   const handleListItemChange = (index: number, newValue: string) => {
+    let actualValue = newValue;
+    
+    // Check for duplicates if allowDuplicates is false
+    if (!allowDuplicates && newValue && currentList.includes(newValue)) {
+      const existingIndex = currentList.indexOf(newValue);
+      if (existingIndex !== index) {
+        // Don't allow duplicate values - clear the value
+        actualValue = "";
+      }
+    }
+    
     const updatedList = [...currentList];
-    updatedList[index] = newValue;
+    updatedList[index] = actualValue;
     onChange(name, updatedList);
     
-    // Trigger link field change for edge creation
-    if (onLinkFieldChange && newValue) {
-      onLinkFieldChange(name, newValue);
+    // For list fields, use indexed field names to create separate edges for each item
+    // This allows each list item to have its own independent edge
+    if (onLinkFieldChange) {
+      onLinkFieldChange(`${name}[${index}]`, actualValue);
     }
   };
 
@@ -72,15 +86,25 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   const handleRemoveItem = (index: number) => {
     const updatedList = currentList.filter((_, i) => i !== index);
     onChange(name, updatedList);
+    
+    // When removing an item, clear the field to remove all edges
+    if (onLinkFieldChange) {
+      onLinkFieldChange(name, "");
+    }
   };
 
   const renderSelectTextField = (itemValue: string, itemIndex: number) => {
     const resolvedOptions = resolveOptions(options, formData);
-    const opts = (resolvedOptions ?? []).map((o: any) => ({
-      label: String(o.label),
-      value: String(o.value),
-      disabled: !!o.disabled,
-    })) as Array<{ label: string; value: string; disabled?: boolean }>;
+    const opts = (resolvedOptions ?? []).map((o: any) => {
+      const isAlreadySelected = !allowDuplicates && 
+        currentList.some((item, idx) => idx !== itemIndex && item === String(o.value));
+      
+      return {
+        label: String(o.label),
+        value: String(o.value),
+        disabled: !!o.disabled || isAlreadySelected,
+      };
+    }) as Array<{ label: string; value: string; disabled?: boolean }>;
 
     const currentVal = String(itemValue);
     const matched = opts.find((o) => o.value === currentVal) || null;
@@ -115,9 +139,6 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
         onInputChange={(_e, newInput, reason) => {
           if (reason === "input") {
             const newValue = String(newInput ?? "");
-            const updatedList = [...currentList];
-            updatedList[itemIndex] = newValue;
-            onChange(name, updatedList);
             
             // Check if user diverged from dropdown option
             const opts = (resolvedOptions ?? []).map((o: any) => ({
@@ -125,11 +146,12 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
               value: String(o.value),
               disabled: !!o.disabled,
             }));
-            const matched = opts.find((o) => o.value === currentVal) || null;
+            const previousVal = String(itemValue); // Use the current item value, not currentVal
+            const matched = opts.find((o) => o.value === previousVal) || null;
             const divergedFromOption = !!matched && !opts.some((o) => o.value === newValue);
             
             if (divergedFromOption && onLinkFieldChange) {
-              onLinkFieldChange(name, "");
+              onLinkFieldChange(`${name}[${itemIndex}]`, "");
             }
           }
         }}
@@ -140,15 +162,29 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
             helperText={error_text || hint}
           />
         )}
-        renderOption={(props, option) => (
-          <MenuItem
-            {...props}
-            key={option.value}
-            disabled={option.disabled}
-          >
-            <Typography variant="body2">{option.label}</Typography>
-          </MenuItem>
-        )}
+        renderOption={(props, option) => {
+          const isAlreadySelected = !allowDuplicates && 
+            currentList.some((item, idx) => idx !== itemIndex && item === option.value);
+          
+          return (
+            <MenuItem
+              {...props}
+              key={option.value}
+              disabled={option.disabled}
+            >
+              <Typography 
+                variant="body2"
+                sx={{ 
+                  opacity: option.disabled ? 0.5 : 1,
+                  fontStyle: isAlreadySelected ? 'italic' : 'normal'
+                }}
+              >
+                {option.label}
+                {isAlreadySelected && ' (Already selected)'}
+              </Typography>
+            </MenuItem>
+          );
+        }}
         disablePortal={false}
         slotProps={{
           popper: {
@@ -172,7 +208,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
     <Box>
       {currentList.map((item, index) => (
         <Card
-          key={index}
+          key={`${name}-${index}-${item}`}
           variant="outlined"
           sx={{
             mb: 2,

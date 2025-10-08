@@ -170,6 +170,7 @@ const DynamicForm: React.FC<Props> = ({
       placeholder,
       hint,
       error_text,
+      allowDuplicates,
       config: fieldCfg,
     } = field;
 
@@ -489,6 +490,7 @@ const DynamicForm: React.FC<Props> = ({
             hint={hint}
             error_text={error_text}
             onLinkFieldChange={onLinkFieldChange}
+            allowDuplicates={allowDuplicates ?? false}
           />
         );
 
