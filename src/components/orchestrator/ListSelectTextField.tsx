@@ -56,6 +56,32 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
 
   const currentList = (formData[name] ?? value ?? []) as string[];
 
+  // Track previous values to detect changes and (re)create edges
+  const prevValuesRef = React.useRef<string[]>(currentList);
+  React.useEffect(() => {
+    if (!onLinkFieldChange) return;
+    currentList.forEach((val, idx) => {
+      // Create/update edge only if value is non-empty and changed
+      if (val && prevValuesRef.current[idx] !== val) {
+        onLinkFieldChange(`${name}[${idx}]`, val);
+      }
+      // If a value was cleared
+      if (!val && prevValuesRef.current[idx]) {
+        onLinkFieldChange(`${name}[${idx}]`, "");
+      }
+    });
+    // If list shrank, clear edges for removed indices
+    if (prevValuesRef.current.length > currentList.length) {
+      for (let i = currentList.length; i < prevValuesRef.current.length; i++) {
+        const oldVal = prevValuesRef.current[i];
+        if (oldVal && onLinkFieldChange) {
+          onLinkFieldChange(`${name}[${i}]`, "");
+        }
+      }
+    }
+    prevValuesRef.current = currentList;
+  }, [currentList, onLinkFieldChange, name]);
+
   const handleListItemChange = (index: number, newValue: string) => {
     let actualValue = newValue;
     
@@ -80,16 +106,22 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   };
 
   const handleAddItem = () => {
-    onChange(name, [...currentList, ""]);
+    const baseList = Array.isArray(formData[name]) ? (formData[name] as string[]) : currentList;
+    const newIndex = baseList.length;
+    const newList = [...baseList, ""];
+    onChange(name, newList);
+    // Pre-register edge placeholder for new index
+    if (onLinkFieldChange) {
+      onLinkFieldChange(`${name}[${newIndex}]`, "");
+    }
   };
 
   const handleRemoveItem = (index: number) => {
     const updatedList = currentList.filter((_, i) => i !== index);
     onChange(name, updatedList);
-    
-    // When removing an item, clear the field to remove all edges
+    // Clear only the removed index edge
     if (onLinkFieldChange) {
-      onLinkFieldChange(name, "");
+      onLinkFieldChange(`${name}[${index}]`, "");
     }
   };
 
@@ -139,20 +171,8 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
         onInputChange={(_e, newInput, reason) => {
           if (reason === "input") {
             const newValue = String(newInput ?? "");
-            
-            // Check if user diverged from dropdown option
-            const opts = (resolvedOptions ?? []).map((o: any) => ({
-              label: String(o.label),
-              value: String(o.value),
-              disabled: !!o.disabled,
-            }));
-            const previousVal = String(itemValue); // Use the current item value, not currentVal
-            const matched = opts.find((o) => o.value === previousVal) || null;
-            const divergedFromOption = !!matched && !opts.some((o) => o.value === newValue);
-            
-            if (divergedFromOption && onLinkFieldChange) {
-              onLinkFieldChange(`${name}[${itemIndex}]`, "");
-            }
+            // Immediate update so edge is created/updated in real-time
+            handleListItemChange(itemIndex, newValue);
           }
         }}
         renderInput={(params) => (
@@ -165,7 +185,6 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
         renderOption={(props, option) => {
           const isAlreadySelected = !allowDuplicates && 
             currentList.some((item, idx) => idx !== itemIndex && item === option.value);
-          
           return (
             <MenuItem
               {...props}
@@ -208,7 +227,8 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
     <Box>
       {currentList.map((item, index) => (
         <Card
-          key={`${name}-${index}-${item}`}
+          // Use stable key based only on index to avoid remounting existing rows when value changes
+          key={`${name}-${index}`}
           variant="outlined"
           sx={{
             mb: 2,

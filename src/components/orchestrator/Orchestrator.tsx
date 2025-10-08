@@ -222,21 +222,22 @@ const OrchestratorReactFlow: React.FC = () => {
           );
 
           if ((rule.cardinality ?? "1") === "many") {
-            const srcs = incoming
-              .map((e) => e.source)
-              .sort((a: string, b: string) =>
-                a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
-              );
-            const prev = Array.isArray(nextValues[rule.bind])
-              ? [...nextValues[rule.bind]].sort((a: string, b: string) =>
-                  a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
-                )
+            const srcs = incoming.map((e) => e.source); // keep order of addition
+            const existingList: string[] = Array.isArray(nextValues[rule.bind])
+              ? nextValues[rule.bind]
               : [];
+            // Merge: keep all current edge sources first, then retain any blanks or manual placeholders not yet connected
+            const merged = [
+              ...srcs,
+              ...existingList.filter(
+                (v) => (v === "" || !srcs.includes(v))
+              ),
+            ];
             const same =
-              prev.length === srcs.length &&
-              prev.every((v, i) => v === srcs[i]);
+              existingList.length === merged.length &&
+              existingList.every((v, i) => v === merged[i]);
             if (!same) {
-              nextValues[rule.bind] = srcs;
+              nextValues[rule.bind] = merged;
               changed = true;
             }
           } else {
@@ -376,84 +377,112 @@ const OrchestratorReactFlow: React.FC = () => {
 
   // Dropdown change → rewire edges & values
   const onLinkFieldChange = useCallback(
-    ({
-      nodeId,
-      bind,
-      newSourceId,
-    }: {
-      nodeId: string;
-      bind: string;
-      newSourceId: string;
-    }) => {
+    ({ nodeId, bind, newSourceId }: { nodeId: string; bind: string; newSourceId: string }) => {
+      if (bind == null) return;
+      const bindStr: string = typeof bind === 'string' ? bind : String(bind);
       const target = nodes.find((n) => n.id === nodeId);
       if (!target) return;
-
+      const baseBind = bindStr.includes("[") ? bindStr.split("[")[0] : bindStr;
       const rules = (target.data as any)?.links ?? [];
-      const rule = rules.find((r: any) => r.bind === bind);
+      const rule = rules.find((r: any) => r.bind === baseBind);
       if (!rule) {
-        console.warn(`No rule found for bind: ${bind} on node: ${nodeId}`);
+        console.warn(`No rule found for bind: ${bindStr} (base: ${baseBind}) on node: ${nodeId}`);
         return;
       }
-      const edgeKind = rule?.edgeData?.kind ?? bind;
-      const cardinality: "1" | "many" = rule?.cardinality ?? "1";
+      const edgeKind = rule?.edgeData?.kind ?? baseBind;
+      const cardinality: "1" | "many" = rule?.cardinality === "many" ? "many" : "1";
 
-      // remove existing edges for this relation into this target
-      setEdges((eds) =>
-        eds.filter(
-          (e) => !(e.target === nodeId && (e.data?.kind ?? bind) === edgeKind)
-        )
-      );
+      // Parse synthetic index if present: fieldName[3]
+      const indexMatch = /^(.*)\[(\d+)\]$/.exec(bindStr);
+      const syntheticIndex = indexMatch ? parseInt(indexMatch[2], 10) : null;
 
-      // update values on the node
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== nodeId) return n;
           const current = (n.data as any)?.values ?? {};
-          if (!newSourceId) {
+
+          if (cardinality === '1') {
+            // Single relation: set or clear directly
             return {
               ...n,
               data: {
                 ...n.data,
                 values: {
                   ...current,
-                  [bind]: cardinality === "many" ? [] : "",
+                  [baseBind]: newSourceId ? newSourceId : "",
                 },
               },
             };
           }
-          if (cardinality === "many") {
-            const arr = Array.isArray(current[bind]) ? current[bind] : [];
-            const next = arr.includes(newSourceId)
-              ? arr
-              : [...arr, newSourceId];
+
+          // MANY cardinality with indexed semantics
+          const prevArr: string[] = Array.isArray(current[baseBind]) ? [...current[baseBind]] : [];
+
+          if (syntheticIndex != null) {
+            // Ensure array large enough
+            while (prevArr.length <= syntheticIndex) prevArr.push("");
+            if (newSourceId) {
+              // Replace value at index (respect ordering)
+              prevArr[syntheticIndex] = newSourceId;
+              // Remove duplicate occurrences of same id beyond this index
+              for (let i = prevArr.length - 1; i >= 0; i--) {
+                if (i !== syntheticIndex && prevArr[i] === newSourceId) prevArr.splice(i, 1);
+              }
+            } else {
+              // Clearing this slot keeps placeholder so UI row persists
+              prevArr[syntheticIndex] = "";
+            }
+          } else {
+            // Fallback (no index provided): behave like set/append unique
+            if (newSourceId) {
+              if (!prevArr.includes(newSourceId)) prevArr.push(newSourceId);
+            }
+          }
+
             return {
               ...n,
-              data: { ...n.data, values: { ...current, [bind]: next } },
+              data: { ...n.data, values: { ...current, [baseBind]: prevArr } },
             };
-          }
-          return {
-            ...n,
-            data: { ...n.data, values: { ...current, [bind]: newSourceId } },
-          };
         })
       );
 
-      // add edge if a source is chosen
-      if (newSourceId) {
-        const newEdge: Edge = {
-          id: `${newSourceId}->${nodeId}:${bind}`,
-          source: newSourceId,
-          target: nodeId,
-          data: rule?.edgeData ?? { kind: bind },
-          markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
-          style: rule?.edgeData?.style ?? {
-            strokeWidth: 4,
-            strokeDasharray: "8 2",
-          },
-          animated: rule?.edgeData?.animated ?? false,
-        };
-        setEdges((eds) => addEdge(newEdge, eds));
-      }
+      setEdges((eds) => {
+        let working = eds;
+        if (cardinality === '1') {
+          working = working.filter((e) => !(e.target === nodeId && (e.data?.kind ?? baseBind) === edgeKind));
+        } else {
+          // Remove existing edge for this specific synthetic bind (if any)
+          working = working.filter((e) => {
+            if (e.target !== nodeId) return true;
+            const sameKind = (e.data?.kind ?? baseBind) === edgeKind;
+            if (!sameKind) return true;
+            if (e.data?.bindKey && e.data.bindKey === bindStr) return false;
+            return true;
+          });
+        }
+        if (newSourceId) {
+          const duplicate = working.some(
+            (e) =>
+              e.source === newSourceId &&
+              e.target === nodeId &&
+              (e.data?.kind ?? baseBind) === edgeKind &&
+              (cardinality === '1' || e.data?.bindKey === bindStr)
+          );
+          if (!duplicate) {
+            const newEdge: Edge = {
+              id: `${newSourceId}->${nodeId}:${bindStr}`,
+              source: newSourceId,
+              target: nodeId,
+              data: { ...(rule?.edgeData ?? { kind: baseBind }), kind: edgeKind, bindKey: bindStr },
+              markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+              style: rule?.edgeData?.style ?? { strokeWidth: 4, strokeDasharray: '8 2' },
+              animated: rule?.edgeData?.animated ?? false,
+            };
+            working = addEdge(newEdge, working);
+          }
+        }
+        return working;
+      });
     },
     [nodes, setNodes, setEdges]
   );
@@ -550,7 +579,9 @@ const OrchestratorReactFlow: React.FC = () => {
             ...(n.data as any).__helpers,
             allNodes: nodes,
             allEdges: edges,
-            onLinkFieldChange,
+            // Adapter so child components can call (bind, newSourceId)
+            onLinkFieldChange: (bind: string, newSourceId: string) =>
+              onLinkFieldChange({ nodeId: n.id, bind, newSourceId }),
             onCloneNode,
             onDeleteNode,
           },

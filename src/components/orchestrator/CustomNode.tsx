@@ -272,11 +272,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
           templateInfo={data?.templateInfo}
           userInfo={data?.userInfo}
           onLinkFieldChange={(bind, newSourceId) =>
-            data?.__helpers?.onLinkFieldChange?.({
-              nodeId: id,
-              bind,
-              newSourceId,
-            })
+            data?.__helpers?.onLinkFieldChange?.(bind, newSourceId)
           }
         />
       </AccordionDetails>
