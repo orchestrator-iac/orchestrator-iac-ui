@@ -463,6 +463,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             border: `1px solid ${theme.palette.divider}`,
           }}
         >
+          {JSON.stringify(item)}
           <Box
             sx={{
               display: "flex",
