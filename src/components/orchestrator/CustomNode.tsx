@@ -30,11 +30,12 @@ type CustomNodeProps = NodeProps & {
     __helpers?: {
       allNodes?: any[];
       allEdges?: any[];
-      onLinkFieldChange?: (args: {
-        nodeId: string;
-        bind: string;
-        newSourceId: string;
-      }) => void;
+      onLinkFieldChange?: (
+        bind: string,
+        newSourceId: string,
+        context?: { objectSnapshot?: Record<string, any> }
+      ) => void;
+      onValuesChange?: (name: string, value: any) => void;
       onCloneNode?: (nodeId: string) => void;
       onDeleteNode?: (nodeId: string) => void;
     };
@@ -271,8 +272,11 @@ const CustomNode: React.FC<CustomNodeProps> = ({
           allEdges={data?.__helpers?.allEdges}
           templateInfo={data?.templateInfo}
           userInfo={data?.userInfo}
-          onLinkFieldChange={(bind, newSourceId) =>
-            data?.__helpers?.onLinkFieldChange?.(bind, newSourceId)
+          onLinkFieldChange={(bind, newSourceId, context) =>
+            data?.__helpers?.onLinkFieldChange?.(bind, newSourceId, context)
+          }
+          onValuesChange={(name, value) =>
+            data?.__helpers?.onValuesChange?.(name, value)
           }
         />
       </AccordionDetails>

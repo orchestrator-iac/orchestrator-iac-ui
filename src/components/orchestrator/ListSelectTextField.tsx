@@ -29,7 +29,11 @@ type ListSelectTextFieldProps = {
   placeholder?: string;
   hint?: string;
   error_text?: string;
-  onLinkFieldChange?: (bind: string, newSourceId: string) => void;
+  onLinkFieldChange?: (
+    bind: string,
+    newSourceId: string,
+    context?: { objectSnapshot?: Record<string, any> }
+  ) => void;
   allowDuplicates?: boolean;
 };
 

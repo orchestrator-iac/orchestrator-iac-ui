@@ -202,7 +202,7 @@ const OrchestratorReactFlow: React.FC = () => {
   }, [sidebarOpen, fitView]);
 
   useEffect(() => {
-    document.body.setAttribute("data-theme", theme.palette.mode);
+    document.body.dataset.theme = theme.palette.mode;
   }, [theme.palette.mode]);
 
   useEffect(() => {
@@ -215,6 +215,22 @@ const OrchestratorReactFlow: React.FC = () => {
         const nextValues: Record<string, any> = { ...current };
         let changed = false;
 
+        const isEqualObjectArray = (
+          left: Array<Record<string, any>>,
+          right: Array<Record<string, any>>
+        ) => {
+          if (left.length !== right.length) return false;
+          for (let i = 0; i < left.length; i += 1) {
+            const a = left[i] ?? {};
+            const b = right[i] ?? {};
+            const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+            for (const key of keys) {
+              if ((a as any)[key] !== (b as any)[key]) return false;
+            }
+          }
+          return true;
+        };
+
         rules.forEach((rule: any) => {
           const edgeKind = rule?.edgeData?.kind ?? rule.bind;
           const incoming = edges.filter(
@@ -222,23 +238,77 @@ const OrchestratorReactFlow: React.FC = () => {
           );
 
           if ((rule.cardinality ?? "1") === "many") {
-            const srcs = incoming.map((e) => e.source); // keep order of addition
-            const existingList: string[] = Array.isArray(nextValues[rule.bind])
-              ? nextValues[rule.bind]
-              : [];
-            // Merge: keep all current edge sources first, then retain any blanks or manual placeholders not yet connected
-            const merged = [
-              ...srcs,
-              ...existingList.filter(
-                (v) => (v === "" || !srcs.includes(v))
-              ),
-            ];
-            const same =
-              existingList.length === merged.length &&
-              existingList.every((v, i) => v === merged[i]);
-            if (!same) {
-              nextValues[rule.bind] = merged;
-              changed = true;
+            const incomingWithBindKey = incoming.filter(
+              (edge) => typeof edge.data?.bindKey === "string"
+            );
+            const hasObjectSyntax = incomingWithBindKey.some((edge) =>
+              /\[\d+\]\.[^.]+$/.test(edge.data?.bindKey as string)
+            );
+            const existingValue = nextValues[rule.bind];
+            const existingHasObjects = Array.isArray(existingValue)
+              ? existingValue.some(
+                  (item) =>
+                    item != null &&
+                    typeof item === "object" &&
+                    !Array.isArray(item)
+                )
+              : false;
+
+            if (hasObjectSyntax || existingHasObjects) {
+              const baseArray: Array<Record<string, any>> = Array.isArray(existingValue)
+                ? existingValue.map((item) =>
+                    item != null && typeof item === "object" && !Array.isArray(item)
+                      ? { ...item }
+                      : {}
+                  )
+                : [];
+
+              for (const edge of incomingWithBindKey) {
+                const bindKey = edge.data?.bindKey as string | undefined;
+                if (!bindKey) return;
+                const match = /^(.+)\[(\d+)\]\.([^.]+)$/.exec(bindKey);
+                if (!match) return;
+                const idx = Number.parseInt(match[2], 10);
+                const key = match[3];
+                while (baseArray.length <= idx) baseArray.push({});
+                const currentObj = { ...baseArray[idx] };
+                if (currentObj[key] !== edge.source) {
+                  currentObj[key] = edge.source;
+                  baseArray[idx] = currentObj;
+                }
+              }
+
+              const snapshotArray = Array.isArray(existingValue)
+                ? existingValue.map((item) =>
+                    item != null && typeof item === "object" && !Array.isArray(item)
+                      ? { ...item }
+                      : {}
+                  )
+                : [];
+
+              if (!isEqualObjectArray(snapshotArray, baseArray)) {
+                nextValues[rule.bind] = baseArray;
+                changed = true;
+              }
+            } else {
+              const srcs = incoming.map((e) => e.source); // keep order of addition
+              const existingList: string[] = Array.isArray(existingValue)
+                ? existingValue
+                : [];
+              // Merge: keep all current edge sources first, then retain any blanks or manual placeholders not yet connected
+              const merged = [
+                ...srcs,
+                ...existingList.filter(
+                  (v) => v === "" || !srcs.includes(v)
+                ),
+              ];
+              const same =
+                existingList.length === merged.length &&
+                existingList.every((v, i) => v === merged[i]);
+              if (!same) {
+                nextValues[rule.bind] = merged;
+                changed = true;
+              }
             }
           } else {
             const src = incoming[0]?.source ?? "";
@@ -267,7 +337,7 @@ const OrchestratorReactFlow: React.FC = () => {
               node?.data?.resourceId ?? node.type ?? "unknown";
             return {
               ...node,
-              ...(component ?? {}),
+              ...component,
               type: component ? component.type : "customNode",
               data: {
                 ...node.data,
@@ -377,7 +447,19 @@ const OrchestratorReactFlow: React.FC = () => {
 
   // Dropdown change → rewire edges & values
   const onLinkFieldChange = useCallback(
-    ({ nodeId, bind, newSourceId }: { nodeId: string; bind: string; newSourceId: string }) => {
+    ({
+      nodeId,
+      bind,
+      newSourceId,
+      context,
+    }: {
+      nodeId: string;
+      bind: string;
+      newSourceId: string;
+      context?: {
+        objectSnapshot?: Record<string, any>;
+      };
+    }) => {
       if (bind == null) return;
       const bindStr: string = typeof bind === 'string' ? bind : String(bind);
       const target = nodes.find((n) => n.id === nodeId);
@@ -392,9 +474,14 @@ const OrchestratorReactFlow: React.FC = () => {
       const edgeKind = rule?.edgeData?.kind ?? baseBind;
       const cardinality: "1" | "many" = rule?.cardinality === "many" ? "many" : "1";
 
+      // Support array-of-objects syntax: fieldName[index].key
+      const arrayObjMatch = /^(.+)\[(\d+)\]\.([^.]+)$/.exec(bindStr);
+      const objIndex: number | null = arrayObjMatch ? Number.parseInt(arrayObjMatch[2], 10) : null;
+      const objKey: string | null = arrayObjMatch ? arrayObjMatch[3] : null;
+
       // Parse synthetic index if present: fieldName[3]
       const indexMatch = /^(.*)\[(\d+)\]$/.exec(bindStr);
-      const syntheticIndex = indexMatch ? parseInt(indexMatch[2], 10) : null;
+      const syntheticIndex = indexMatch ? Number.parseInt(indexMatch[2], 10) : null;
 
       setNodes((nds) =>
         nds.map((n) => {
@@ -409,16 +496,62 @@ const OrchestratorReactFlow: React.FC = () => {
                 ...n.data,
                 values: {
                   ...current,
-                  [baseBind]: newSourceId ? newSourceId : "",
+                  [baseBind]: newSourceId ?? "",
                 },
               },
             };
           }
 
-          // MANY cardinality with indexed semantics
+          // MANY cardinality
+          // Case 1: array of objects with key path: fieldName[index].key
+          if (objIndex !== null && objKey) {
+            const prevArrObjs: Array<Record<string, any>> = Array.isArray(current[baseBind])
+              ? [...current[baseBind]]
+              : [];
+
+            // Ensure array and object at index exist
+            while (prevArrObjs.length <= objIndex) prevArrObjs.push({});
+            const objAtIndexBase = context?.objectSnapshot
+              ? { ...context.objectSnapshot }
+              : { ...prevArrObjs[objIndex] };
+            const objAtIndex = { ...objAtIndexBase };
+
+            if (newSourceId) {
+              objAtIndex[objKey] = newSourceId;
+              prevArrObjs[objIndex] = objAtIndex;
+
+              // Remove duplicate occurrences of the same id for this key across other indices
+              for (let i = prevArrObjs.length - 1; i >= 0; i--) {
+                if (i !== objIndex) {
+                  const item = prevArrObjs[i] ?? {};
+                  if (item && item[objKey] === newSourceId) {
+                    const rest = { ...item };
+                    delete rest[objKey];
+                    prevArrObjs[i] = rest;
+                  }
+                }
+              }
+            } else {
+              // Clearing this field keeps placeholder so UI row persists
+              objAtIndex[objKey] = "";
+              prevArrObjs[objIndex] = objAtIndex;
+            }
+
+            return {
+              ...n,
+              data: { ...n.data, values: { ...current, [baseBind]: prevArrObjs } },
+            };
+          }
+
+          // Case 2: array of scalar values with indexed semantics
           const prevArr: string[] = Array.isArray(current[baseBind]) ? [...current[baseBind]] : [];
 
-          if (syntheticIndex != null) {
+          if (syntheticIndex === null) {
+            // Fallback (no index provided): behave like set/append unique
+            if (newSourceId) {
+              if (!prevArr.includes(newSourceId)) prevArr.push(newSourceId);
+            }
+          } else {
             // Ensure array large enough
             while (prevArr.length <= syntheticIndex) prevArr.push("");
             if (newSourceId) {
@@ -432,17 +565,12 @@ const OrchestratorReactFlow: React.FC = () => {
               // Clearing this slot keeps placeholder so UI row persists
               prevArr[syntheticIndex] = "";
             }
-          } else {
-            // Fallback (no index provided): behave like set/append unique
-            if (newSourceId) {
-              if (!prevArr.includes(newSourceId)) prevArr.push(newSourceId);
-            }
           }
 
-            return {
-              ...n,
-              data: { ...n.data, values: { ...current, [baseBind]: prevArr } },
-            };
+          return {
+            ...n,
+            data: { ...n.data, values: { ...current, [baseBind]: prevArr } },
+          };
         })
       );
 
@@ -459,6 +587,22 @@ const OrchestratorReactFlow: React.FC = () => {
             if (e.data?.bindKey && e.data.bindKey === bindStr) return false;
             return true;
           });
+
+          if (newSourceId && objKey != null && objIndex != null) {
+            working = working.filter((e) => {
+              if (e.target !== nodeId) return true;
+              if (e.source !== newSourceId) return true;
+              if ((e.data?.kind ?? baseBind) !== edgeKind) return true;
+              const otherBindKey = e.data?.bindKey;
+              if (typeof otherBindKey !== 'string') return true;
+              const match = /^(.+)\[(\d+)\]\.([^.]+)$/.exec(otherBindKey);
+              if (!match) return true;
+              const otherIdx = Number.parseInt(match[2], 10);
+              const otherKey = match[3];
+              if (otherKey !== objKey) return true;
+              return otherIdx === objIndex;
+            });
+          }
         }
         if (newSourceId) {
           const duplicate = working.some(
@@ -568,6 +712,26 @@ const OrchestratorReactFlow: React.FC = () => {
     setSnackOpen(false);
   };
 
+  // Update node values
+  const onValuesChange = useCallback(
+    (nodeId: string, name: string, value: any) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  values: { ...(n.data as any)?.values, [name]: value },
+                },
+              }
+            : n
+        )
+      );
+    },
+    [setNodes]
+  );
+
   // Inject helpers for DynamicForm (dynamic options + dropdown→edge sync)
   const nodesWithHelpers = useMemo(
     () =>
@@ -580,14 +744,20 @@ const OrchestratorReactFlow: React.FC = () => {
             allNodes: nodes,
             allEdges: edges,
             // Adapter so child components can call (bind, newSourceId)
-            onLinkFieldChange: (bind: string, newSourceId: string) =>
-              onLinkFieldChange({ nodeId: n.id, bind, newSourceId }),
+            onLinkFieldChange: (
+              bind: string,
+              newSourceId: string,
+              context?: { objectSnapshot?: Record<string, any> }
+            ) =>
+              onLinkFieldChange({ nodeId: n.id, bind, newSourceId, context }),
+            onValuesChange: (name: string, value: any) =>
+              onValuesChange(n.id, name, value),
             onCloneNode,
             onDeleteNode,
           },
         },
       })),
-    [nodes, edges, onLinkFieldChange, onCloneNode, onDeleteNode]
+    [nodes, edges, onLinkFieldChange, onValuesChange, onCloneNode, onDeleteNode]
   );
 
   return (

@@ -50,7 +50,12 @@ type Props = {
   allEdges?: any[];
   userInfo?: UserProfile;
   templateInfo?: CloudConfig;
-  onLinkFieldChange?: (bind: string, newSourceId: string) => void;
+  onLinkFieldChange?: (
+    bind: string,
+    newSourceId: string,
+    context?: { objectSnapshot?: Record<string, any> }
+  ) => void;
+  onValuesChange?: (name: string, value: any) => void;
 };
 
 const DynamicForm: React.FC<Props> = ({
@@ -61,6 +66,7 @@ const DynamicForm: React.FC<Props> = ({
   userInfo,
   templateInfo,
   onLinkFieldChange,
+  onValuesChange,
 }) => {
   const theme = useTheme();
   let zoom = 1;
@@ -90,6 +96,8 @@ const DynamicForm: React.FC<Props> = ({
 
   const handleChange = (name: string, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Sync changes back to node values
+    onValuesChange?.(name, value);
   };
 
   const renderInfo = (info?: string | JSX.Element) => {
@@ -581,7 +589,7 @@ const DynamicForm: React.FC<Props> = ({
                 <Button
                   variant={fieldCfg.add_button.variant}
                   onClick={() => {
-                    const updatedList = { ...(formData[name] ?? {}) } as Record<
+                    const updatedList = { ...formData[name] } as Record<
                       string,
                       any
                     >;

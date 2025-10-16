@@ -36,7 +36,11 @@ type ListObjectFieldProps = {
     options: any,
     contextData?: Record<string, any>
   ) => { value: string; label: string; disabled?: boolean }[] | undefined;
-  onLinkFieldChange?: (bind: string, newSourceId: string) => void;
+  onLinkFieldChange?: (
+    bind: string,
+    newSourceId: string,
+    context?: { objectSnapshot?: Record<string, any> }
+  ) => void;
 };
 
 const ListObjectField: React.FC<ListObjectFieldProps> = ({
@@ -80,11 +84,11 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
     const newItem: Record<string, any> = {};
     // Initialize with default values from schema
     if (fieldCfg?.schema) {
-      fieldCfg.schema.forEach((schemaField: any) => {
+      for (const schemaField of fieldCfg.schema) {
         if (schemaField.value !== undefined) {
           newItem[schemaField.name] = schemaField.value;
         }
-      });
+      }
     }
     onChange(name, [...currentList, newItem]);
   };
@@ -212,10 +216,16 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             clearOnEscape
             onChange={(_e, newVal) => {
               if (newVal == null) {
+                const snapshot = {
+                  ...currentList[itemIndex],
+                  [schemaField.name]: "",
+                };
                 handleListItemChange(itemIndex, schemaField.name, "");
-                if (onLinkFieldChange) {
-                  onLinkFieldChange(`${name}[${itemIndex}].${schemaField.name}`, "");
-                }
+                onLinkFieldChange?.(
+                  `${name}[${itemIndex}].${schemaField.name}`,
+                  "",
+                  { objectSnapshot: snapshot }
+                );
                 return;
               }
               if (typeof newVal === "string") {
@@ -223,10 +233,16 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                 return;
               }
               const pickedVal = String(newVal.value ?? "");
+              const snapshot = {
+                ...currentList[itemIndex],
+                [schemaField.name]: pickedVal,
+              };
               handleListItemChange(itemIndex, schemaField.name, pickedVal);
-              if (onLinkFieldChange) {
-                onLinkFieldChange(`${name}[${itemIndex}].${schemaField.name}`, pickedVal);
-              }
+              onLinkFieldChange?.(
+                `${name}[${itemIndex}].${schemaField.name}`,
+                pickedVal,
+                { objectSnapshot: snapshot }
+              );
             }}
             onInputChange={(_e, newInput, reason) => {
               if (reason === "input") {
@@ -234,7 +250,15 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                   !!matched &&
                   !opts.some((o) => o.value === String(newInput ?? ""));
                 if (divergedFromOption && onLinkFieldChange) {
-                  onLinkFieldChange(`${name}[${itemIndex}].${schemaField.name}`, "");
+                  const snapshot = {
+                    ...currentList[itemIndex],
+                    [schemaField.name]: "",
+                  };
+                  onLinkFieldChange(
+                    `${name}[${itemIndex}].${schemaField.name}`,
+                    "",
+                    { objectSnapshot: snapshot }
+                  );
                 }
                 handleListItemChange(
                   itemIndex,
@@ -463,7 +487,6 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             border: `1px solid ${theme.palette.divider}`,
           }}
         >
-          {JSON.stringify(item)}
           <Box
             sx={{
               display: "flex",
