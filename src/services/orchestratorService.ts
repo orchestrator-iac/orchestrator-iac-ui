@@ -1,0 +1,182 @@
+import apiService from "./apiService";
+import {
+  SaveOrchestratorRequest,
+  SaveOrchestratorResponse,
+  OrchestratorListItem,
+  ListOrchestrationsResponse,
+} from "../types/orchestrator";
+
+/**
+ * Service for managing orchestrator configurations (nodes, edges, metadata)
+ * Handles CRUD operations for infrastructure templates
+ */
+export const orchestratorService = {
+  /**
+   * Save a new orchestrator configuration
+   * @param data - Complete orchestrator state including nodes, edges, and metadata
+   * @returns Saved configuration with generated ID
+   */
+  saveOrchestrator: async (
+    data: SaveOrchestratorRequest
+  ): Promise<SaveOrchestratorResponse> => {
+    try {
+      const response = await apiService.post("/orchestrators", data);
+      return {
+        ...response,
+        createdAt: new Date(response.createdAt),
+        updatedAt: new Date(response.updatedAt),
+      };
+    } catch (error) {
+      console.error("Failed to save orchestrator:", error);
+      throw new Error("Failed to save orchestrator configuration");
+    }
+  },
+
+  /**
+   * Update an existing orchestrator configuration
+   * @param id - Orchestrator ID
+   * @param data - Updated orchestrator state
+   * @returns Updated configuration
+   */
+  updateOrchestrator: async (
+    id: string,
+    data: Partial<SaveOrchestratorRequest>
+  ): Promise<SaveOrchestratorResponse> => {
+    try {
+      const response = await apiService.put(`/orchestrators/${id}`, data);
+      return {
+        ...response,
+        createdAt: new Date(response.createdAt),
+        updatedAt: new Date(response.updatedAt),
+      };
+    } catch (error) {
+      console.error("Failed to update orchestrator:", error);
+      throw new Error("Failed to update orchestrator configuration");
+    }
+  },
+
+  /**
+   * Get a specific orchestrator configuration by ID
+   * @param id - Orchestrator ID
+   * @returns Complete orchestrator configuration
+   */
+  getOrchestrator: async (id: string): Promise<SaveOrchestratorResponse> => {
+    try {
+      const response = await apiService.get(`/orchestrators/${id}`);
+      return {
+        ...response,
+        createdAt: new Date(response.createdAt),
+        updatedAt: new Date(response.updatedAt),
+      };
+    } catch (error) {
+      console.error("Failed to fetch orchestrator:", error);
+      throw new Error("Failed to fetch orchestrator configuration");
+    }
+  },
+
+  /**
+   * List all orchestrator configurations for the authenticated user
+   * @param page - Page number (default: 1)
+   * @param size - Items per page (default: 10)
+   * @returns Paginated list of orchestrations
+   */
+  listOrchestrators: async (
+    page: number = 1,
+    size: number = 10
+  ): Promise<ListOrchestrationsResponse> => {
+    try {
+      const response = await apiService.get(
+        `/orchestrators?page=${page}&size=${size}`
+      );
+      
+      // Handle different response formats
+      const orchestrations = response.orchestrators || response.data || response || [];
+      const orchestrationsList = Array.isArray(orchestrations) ? orchestrations : [];
+      
+      const mappedOrchestrations = orchestrationsList.map((item: any) => ({
+        _id: item.id || item._id,
+        name: item.name,
+        description: item.description,
+        templateInfo: item.templateInfo,
+        // Calculate counts from arrays if not provided
+        nodeCount: item.nodeCount ?? item.nodes?.length ?? 0,
+        edgeCount: item.edgeCount ?? item.edges?.length ?? 0,
+        createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+        updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+      }));
+      
+      return {
+        orchestrations: mappedOrchestrations,
+        total: response.total || orchestrationsList.length,
+        page: response.page || page,
+        size: response.size || size,
+        totalPages: response.totalPages || Math.ceil((response.total || orchestrationsList.length) / size),
+      };
+    } catch (error) {
+      console.error("Failed to list orchestrators:", error);
+      throw new Error("Failed to fetch orchestrator list");
+    }
+  },
+
+  /**
+   * Delete an orchestrator configuration
+   * @param id - Orchestrator ID to delete
+   */
+  deleteOrchestrator: async (id: string): Promise<void> => {
+    try {
+      await apiService.delete(`/orchestrators/${id}`);
+    } catch (error) {
+      console.error("Failed to delete orchestrator:", error);
+      throw new Error("Failed to delete orchestrator configuration");
+    }
+  },
+
+  /**
+   * Duplicate an existing orchestrator configuration
+   * @param id - Orchestrator ID to duplicate
+   * @param newName - Name for the duplicated configuration
+   * @returns New orchestrator configuration
+   */
+  duplicateOrchestrator: async (
+    id: string,
+    newName: string
+  ): Promise<SaveOrchestratorResponse> => {
+    try {
+      const response = await apiService.post(`/orchestrators/${id}/duplicate`, {
+        name: newName,
+      });
+      return {
+        ...response,
+        createdAt: new Date(response.createdAt),
+        updatedAt: new Date(response.updatedAt),
+      };
+    } catch (error) {
+      console.error("Failed to duplicate orchestrator:", error);
+      throw new Error("Failed to duplicate orchestrator configuration");
+    }
+  },
+
+  /**
+   * Search orchestrators by name or tags
+   * @param query - Search query string
+   * @returns List of matching orchestrations
+   */
+  searchOrchestrators: async (
+    query: string
+  ): Promise<OrchestratorListItem[]> => {
+    try {
+      const response = await apiService.get(
+        `/orchestrators/search?q=${encodeURIComponent(query)}`
+      );
+      const orchestrations = response.orchestrations || response;
+      return orchestrations.map((item: any) => ({
+        ...item,
+        createdAt: new Date(item.createdAt),
+        updatedAt: new Date(item.updatedAt),
+      }));
+    } catch (error) {
+      console.error("Failed to search orchestrators:", error);
+      throw new Error("Failed to search orchestrator configurations");
+    }
+  },
+};

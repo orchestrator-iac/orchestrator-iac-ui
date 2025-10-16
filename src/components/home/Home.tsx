@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Box, useTheme } from "@mui/material";
+import { Box, useTheme, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSelector, useDispatch } from "react-redux";
@@ -9,6 +9,7 @@ import { RootState, AppDispatch } from "../../store";
 import { fetchCustomWrappers } from "../../store/customWrappersSlice";
 import { fetchWrappersTemplate } from "../../store/wrappersTemplateSlice";
 import { fetchResources } from "../../store/resourcesSlice";
+import { fetchOrchestrators } from "../../store/orchestratorsSlice";
 
 import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
@@ -47,12 +48,16 @@ const Home: React.FC = () => {
   const { data: resources, status: resourcesStatus } = useSelector(
     (state: RootState) => state.resources
   );
+  const { data: orchestrators, status: orchestratorsStatus } = useSelector(
+    (state: RootState) => state.orchestrators
+  );
 
   useEffect(() => {
     if (customWrappersStatus === "idle") dispatch(fetchCustomWrappers());
     if (wrappersTemplateStatus === "idle") dispatch(fetchWrappersTemplate());
     if (resourcesStatus === "idle") dispatch(fetchResources());
-  }, [dispatch, customWrappersStatus, wrappersTemplateStatus, resourcesStatus]);
+    if (orchestratorsStatus === "idle") dispatch(fetchOrchestrators({}));
+  }, [dispatch, customWrappersStatus, wrappersTemplateStatus, resourcesStatus, orchestratorsStatus]);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme.palette.mode);
@@ -64,6 +69,10 @@ const Home: React.FC = () => {
 
   const navigateTemplates = (templateID: string | undefined) => {
     navigate(`/orchestrator/${templateID ?? "new"}`);
+  };
+
+  const navigateOrchestrator = (orchestratorId: string | undefined) => {
+    navigate(`/orchestrator/${orchestratorId ?? "new"}`);
   };
 
   return (
@@ -149,6 +158,78 @@ const Home: React.FC = () => {
             </Box>
           </Grid>
         ))}
+      </Grid>
+
+      {/* ===== ORCHESTRATORS ===== */}
+      <h3 className={styles.wrapperHeader}>Orchestrators</h3>
+      <Grid
+        container
+        columns={{ xs: 4, sm: 8, md: 12 }}
+        spacing={1}
+        alignItems="stretch"
+      >
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} display="flex">
+          <Box className={styles.card} onClick={() => navigateOrchestrator(undefined)}>
+            <div className={styles.cardBlank}>
+              <FontAwesomeIcon icon="plus" size="5x" />
+              <p className={styles.cardDescription}>New Orchestrator</p>
+            </div>
+          </Box>
+        </Grid>
+
+        {orchestrators && orchestrators.length > 0 ? (
+          orchestrators.map((orchestrator) => (
+            <Grid
+              key={orchestrator._id}
+              size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
+              display="flex"
+            >
+              <Box
+                className={styles.card}
+                onClick={() => navigateOrchestrator(orchestrator._id)}
+              >
+                <CardLogo
+                  cloudType={orchestrator.templateInfo?.cloud || "aws"}
+                  className={styles.cloudTypeLogo}
+                />
+                <Box className={styles.cardImage} sx={{
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: '3rem',
+                  color: 'primary.main'
+                }}>
+                  <FontAwesomeIcon icon="sitemap" />
+                </Box>
+                <h3 className={styles.cardTitle}>
+                  <Link
+                    to={`/orchestrator?load=${orchestrator._id}`}
+                    style={{ textDecoration: "none", color: "inherit" }}
+                    aria-label={`View orchestrator ${orchestrator.name}`}
+                  >
+                    {orchestrator.name}
+                  </Link>
+                </h3>
+                <p className={styles.cardDescription}>
+                  {orchestrator.description || "No description"}
+                </p>
+                <code>
+                  {orchestrator.nodeCount} nodes • {orchestrator.edgeCount} connections
+                </code>
+              </Box>
+            </Grid>
+          ))
+        ) : (
+          orchestratorsStatus === 'succeeded' && (
+            <Grid size={12}>
+              <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>
+                <Typography variant="body1">
+                  No orchestrators yet. Click "New Orchestrator" to create your first one!
+                </Typography>
+              </Box>
+            </Grid>
+          )
+        )}
       </Grid>
 
       {/* ===== RESOURCES ===== */}

@@ -31,6 +31,7 @@ import { Box, Chip } from "@mui/material";
 import apiService from "./../../services/apiService";
 import CustomNode from "./CustomNode";
 import { components } from "./../../initial-elements";
+import { SaveButton } from "./save";
 
 import Sidebar from "./sidebar/Sidebar";
 import { useDnD } from "./sidebar/DnDContext";
@@ -126,6 +127,7 @@ const OrchestratorReactFlow: React.FC = () => {
     cloud: undefined,
     region: "",
   });
+  const [currentOrchestratorId, setCurrentOrchestratorId] = useState<string | null>(null);
 
   const drawerWidth = 240;
 
@@ -732,6 +734,11 @@ const OrchestratorReactFlow: React.FC = () => {
     [setNodes]
   );
 
+  // Handle save success callback
+  const handleSaveSuccess = useCallback((orchestratorId: string) => {
+    setCurrentOrchestratorId(orchestratorId);
+  }, []);
+
   // Inject helpers for DynamicForm (dynamic options + dropdown→edge sync)
   const nodesWithHelpers = useMemo(
     () =>
@@ -802,7 +809,7 @@ const OrchestratorReactFlow: React.FC = () => {
           fitView
         >
           <Panel>
-            <Box sx={{ display: "flex", gap: 2, margin: "10px 20px" }}>
+            <Box sx={{ display: "flex", gap: 2, margin: "10px 20px", alignItems: "center" }}>
               {templateInfo?.templateName && (
                 <Chip
                   icon={<DeblurIcon />}
@@ -824,6 +831,13 @@ const OrchestratorReactFlow: React.FC = () => {
                   onClick={() => setInitOpen(true)}
                 />
               )}
+              <SaveButton
+                nodes={nodes}
+                edges={edges}
+                templateInfo={templateInfo}
+                currentOrchestratorId={currentOrchestratorId}
+                onSaveSuccess={handleSaveSuccess}
+              />
             </Box>
           </Panel>
           <Background />
@@ -843,6 +857,8 @@ const OrchestratorReactFlow: React.FC = () => {
         onClose={() => setInitOpen(false)}
         onSubmit={handleInitSubmit}
       />
+      
+      {/* Undo Snackbar */}
       <Snackbar
         open={snackOpen}
         autoHideDuration={5000}

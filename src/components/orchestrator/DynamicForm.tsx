@@ -194,6 +194,7 @@ const DynamicForm: React.FC<Props> = ({
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
             helperText={error_text || hint}
+            onChange={(e) => handleChange(name, e.target.value)}
           />
         );
 
@@ -611,6 +612,7 @@ const DynamicForm: React.FC<Props> = ({
             placeholder={placeholder}
             errorMessage={error_text}
             required={required}
+            onChange={(newValue) => handleChange(name, newValue)}
           />
         );
 
