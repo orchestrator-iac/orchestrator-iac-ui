@@ -21,9 +21,9 @@ export interface OrchestratorEdge {
   target: string; // Target node ID
   sourceHandle?: string | null;
   targetHandle?: string | null;
-  data?: {
-    kind?: string; // Field name being linked (e.g., "vpc_id", "routes[0].target_id")
-    bindKey?: string; // Full bind path for array fields
+  data: {
+    kind: string; // Field name being linked (e.g., "vpc_id", "routes[0].target_id")
+    bindKey: string; // Full bind path for array fields (required by backend)
   };
 }
 
@@ -72,6 +72,8 @@ export interface OrchestratorListItem {
   name: string;
   description?: string;
   templateInfo: TemplateInfo;
+  nodes: OrchestratorNode[];
+  edges: OrchestratorEdge[];
   nodeCount: number;
   edgeCount: number;
   createdAt: Date;

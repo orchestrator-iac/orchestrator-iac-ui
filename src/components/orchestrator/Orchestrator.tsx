@@ -15,7 +15,7 @@ import {
   MarkerType,
   Panel,
 } from "@xyflow/react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
 import { useParams, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -36,11 +36,12 @@ import { SaveButton } from "./save";
 import Sidebar from "./sidebar/Sidebar";
 import { useDnD } from "./sidebar/DnDContext";
 
-import { AppDispatch } from "../../store";
+import { AppDispatch, RootState } from "../../store";
 import { fetchResourceById } from "../../store/resourceSlice";
 import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig } from "../../types/clouds-info";
+import { fetchOrchestrators } from "@/store/orchestratorsSlice";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -49,7 +50,7 @@ const defaultOptions: Record<string, string> = {
   "elk.algorithm": "layered",
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
   "elk.spacing.nodeNode": "80",
-  "org.eclipse.elk.portConstraints" : "FIXED_ORDER",
+  "org.eclipse.elk.portConstraints": "FIXED_ORDER",
 };
 
 const useLayoutElements = () => {
@@ -116,7 +117,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [initOpen, setInitOpen] = useState(true);
+  const [initOpen, setInitOpen] = useState(false);
   const [undoStack, setUndoStack] = useState<{
     nodes: Node[];
     edges: Edge[];
@@ -127,9 +128,19 @@ const OrchestratorReactFlow: React.FC = () => {
     cloud: undefined,
     region: "",
   });
-  const [currentOrchestratorId, setCurrentOrchestratorId] = useState<string | null>(null);
+  const [currentOrchestratorId, setCurrentOrchestratorId] = useState<
+    string | null
+  >(null);
+
+  const { data: orchestrators, status: orchestratorsStatus } = useSelector(
+    (state: RootState) => state.orchestrators
+  );
 
   const drawerWidth = 240;
+
+  useEffect(() => {
+    if (orchestratorsStatus === "idle") dispatch(fetchOrchestrators({}));
+  }, [dispatch, orchestratorsStatus]);
 
   const handleInitSubmit = (data: any) => {
     setTemplateInfo(data);
@@ -160,6 +171,7 @@ const OrchestratorReactFlow: React.FC = () => {
         if (newNode?.data?.header) {
           newNode = {
             ...newNode,
+            type: "customNode",
             data: {
               ...newNode.data,
               __nodeType: resourceType, // keep the real resource type for rules/labels
@@ -172,9 +184,6 @@ const OrchestratorReactFlow: React.FC = () => {
             },
           };
         }
-
-        // renderer type
-        newNode = { ...newNode, type: "customNode" };
 
         setNodes((nds) => nds.concat(newNode));
 
@@ -257,9 +266,13 @@ const OrchestratorReactFlow: React.FC = () => {
               : false;
 
             if (hasObjectSyntax || existingHasObjects) {
-              const baseArray: Array<Record<string, any>> = Array.isArray(existingValue)
+              const baseArray: Array<Record<string, any>> = Array.isArray(
+                existingValue
+              )
                 ? existingValue.map((item) =>
-                    item != null && typeof item === "object" && !Array.isArray(item)
+                    item != null &&
+                    typeof item === "object" &&
+                    !Array.isArray(item)
                       ? { ...item }
                       : {}
                   )
@@ -282,7 +295,9 @@ const OrchestratorReactFlow: React.FC = () => {
 
               const snapshotArray = Array.isArray(existingValue)
                 ? existingValue.map((item) =>
-                    item != null && typeof item === "object" && !Array.isArray(item)
+                    item != null &&
+                    typeof item === "object" &&
+                    !Array.isArray(item)
                       ? { ...item }
                       : {}
                   )
@@ -300,9 +315,7 @@ const OrchestratorReactFlow: React.FC = () => {
               // Merge: keep all current edge sources first, then retain any blanks or manual placeholders not yet connected
               const merged = [
                 ...srcs,
-                ...existingList.filter(
-                  (v) => v === "" || !srcs.includes(v)
-                ),
+                ...existingList.filter((v) => v === "" || !srcs.includes(v)),
               ];
               const same =
                 existingList.length === merged.length &&
@@ -327,40 +340,101 @@ const OrchestratorReactFlow: React.FC = () => {
   }, [edges, setNodes]);
 
   useEffect(() => {
-    apiService
-      .get(`/wrapper/${template_type}?template_id=${template_id}`)
-      .then((wrapper) => {
-        const wrapperData = wrapper?.data?.[0];
+    if (!template_id || !template_type) return;
+    else if (template_id === "new") {
+      setInitOpen(true);
+    } else {
+      setInitOpen(false);
+      // Find orchestrator data from Redux store
+      setCurrentOrchestratorId(template_id);
+      const orchestratorData = orchestrators.find((o) => o._id === template_id);
 
-        if (wrapperData?.nodes) {
-          const updatedNodes = wrapperData.nodes.map((node: any) => {
-            const component = components?.[node.component_name];
-            const resourceType =
-              node?.data?.resourceId ?? node.type ?? "unknown";
-            return {
-              ...node,
-              ...component,
-              type: component ? component.type : "customNode",
-              data: {
-                ...node.data,
-                __nodeType: resourceType,
-              },
-            };
-          });
-
-          setNodes(updatedNodes);
+      if (orchestratorData) {
+        // Pre-fill template info from orchestrator data
+        const templateInfo = {
+          templateName: orchestratorData.templateInfo?.templateName,
+          cloud: orchestratorData.templateInfo?.cloud as any,
+          region: orchestratorData.templateInfo?.region || "",
+        };
+        setTemplateInfo(templateInfo);
+        const customNodes = [];
+        const resourceNodes: Node[] = [];
+        for (const node of orchestratorData?.nodes || []) {
+          const id = node.id.split("-")[0];
+          customNodes.push(dispatch(fetchResourceById(id)));
         }
+        Promise.all(customNodes).then((results) => {
+          for (let i = 0; i < results.length; i += 1) {
+            const resultAction = results[i];
+            const dbNode = orchestratorData.nodes[i];
+            if (fetchResourceById.fulfilled.match(resultAction)) {
+              const resourceData = resultAction.payload;
+              const reconstructedNode: Node = {
+                id: dbNode.id,
+                type: "customNode",
+                position: dbNode.position,
+                data: {
+                  ...resourceData?.data?.resourceNode?.data,
+                  values: dbNode.values,
+                  __nodeType: dbNode.__nodeType || dbNode.resourceId,
+                  __resourceId: dbNode.resourceId,
+                  header: {
+                    ...resourceData?.data?.resourceNode?.data?.header,
+                    icon: resourceData?.data?.resourceIcon?.url,
+                  },
+                  templateInfo,
+                  userInfo: user,
+                },
+              };
+              resourceNodes.push(reconstructedNode);
+              // Only add node if it doesn't already exist
+              setNodes((nds) => {
+                const exists = nds.some((n) => n.id === reconstructedNode.id);
+                return exists ? nds : nds.concat(reconstructedNode);
+              });
+            }
+          }
 
-        setEdges(wrapperData?.edges ?? []);
+          for (const dbEdge of orchestratorData?.edges || []) {
+            const source = resourceNodes.find((n) => n.id === dbEdge.source);
+            const target = resourceNodes.find((n) => n.id === dbEdge.target);
+            if (!source || !target) continue;
 
-        setTimeout(() => {
-          getLayoutElements({
-            "elk.algorithm": "layered",
-            "elk.direction": "RIGHT",
-          });
-        }, 100);
-      });
-  }, [template_id, template_type, setNodes, setEdges, getLayoutElements]);
+            const sourceType = (source.data as any)?.__nodeType ?? source.type;
+            const rules = (target.data as any)?.links ?? [];
+
+            const rule = rules.find(
+              (r: any) =>
+                Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType)
+            );
+            if (!rule) continue;
+
+            const newEdge: Edge = {
+              id: `${source.id}->${target.id}:${rule.bind}`,
+              source: source.id,
+              target: target.id,
+              data: rule.edgeData ?? { kind: rule.bind },
+              markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+              style: rule.edgeData?.style ?? {
+                strokeWidth: 4,
+                strokeDasharray: "8 2",
+              },
+              animated: rule.edgeData?.animated ?? false,
+            };
+
+            setEdges((eds) => addEdge(newEdge, eds));
+          }
+        });
+      }
+    }
+  }, [
+    template_id,
+    template_type,
+    orchestrators,
+    setNodes,
+    setEdges,
+    getLayoutElements,
+  ]);
 
   // Drag edge → update target form (values[bind]) + enforce rules
   const onConnect = useCallback(
@@ -463,34 +537,41 @@ const OrchestratorReactFlow: React.FC = () => {
       };
     }) => {
       if (bind == null) return;
-      const bindStr: string = typeof bind === 'string' ? bind : String(bind);
+      const bindStr: string = typeof bind === "string" ? bind : String(bind);
       const target = nodes.find((n) => n.id === nodeId);
       if (!target) return;
       const baseBind = bindStr.includes("[") ? bindStr.split("[")[0] : bindStr;
       const rules = (target.data as any)?.links ?? [];
       const rule = rules.find((r: any) => r.bind === baseBind);
       if (!rule) {
-        console.warn(`No rule found for bind: ${bindStr} (base: ${baseBind}) on node: ${nodeId}`);
+        console.warn(
+          `No rule found for bind: ${bindStr} (base: ${baseBind}) on node: ${nodeId}`
+        );
         return;
       }
       const edgeKind = rule?.edgeData?.kind ?? baseBind;
-      const cardinality: "1" | "many" = rule?.cardinality === "many" ? "many" : "1";
+      const cardinality: "1" | "many" =
+        rule?.cardinality === "many" ? "many" : "1";
 
       // Support array-of-objects syntax: fieldName[index].key
       const arrayObjMatch = /^(.+)\[(\d+)\]\.([^.]+)$/.exec(bindStr);
-      const objIndex: number | null = arrayObjMatch ? Number.parseInt(arrayObjMatch[2], 10) : null;
+      const objIndex: number | null = arrayObjMatch
+        ? Number.parseInt(arrayObjMatch[2], 10)
+        : null;
       const objKey: string | null = arrayObjMatch ? arrayObjMatch[3] : null;
 
       // Parse synthetic index if present: fieldName[3]
       const indexMatch = /^(.*)\[(\d+)\]$/.exec(bindStr);
-      const syntheticIndex = indexMatch ? Number.parseInt(indexMatch[2], 10) : null;
+      const syntheticIndex = indexMatch
+        ? Number.parseInt(indexMatch[2], 10)
+        : null;
 
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== nodeId) return n;
           const current = (n.data as any)?.values ?? {};
 
-          if (cardinality === '1') {
+          if (cardinality === "1") {
             // Single relation: set or clear directly
             return {
               ...n,
@@ -507,7 +588,9 @@ const OrchestratorReactFlow: React.FC = () => {
           // MANY cardinality
           // Case 1: array of objects with key path: fieldName[index].key
           if (objIndex !== null && objKey) {
-            const prevArrObjs: Array<Record<string, any>> = Array.isArray(current[baseBind])
+            const prevArrObjs: Array<Record<string, any>> = Array.isArray(
+              current[baseBind]
+            )
               ? [...current[baseBind]]
               : [];
 
@@ -541,12 +624,17 @@ const OrchestratorReactFlow: React.FC = () => {
 
             return {
               ...n,
-              data: { ...n.data, values: { ...current, [baseBind]: prevArrObjs } },
+              data: {
+                ...n.data,
+                values: { ...current, [baseBind]: prevArrObjs },
+              },
             };
           }
 
           // Case 2: array of scalar values with indexed semantics
-          const prevArr: string[] = Array.isArray(current[baseBind]) ? [...current[baseBind]] : [];
+          const prevArr: string[] = Array.isArray(current[baseBind])
+            ? [...current[baseBind]]
+            : [];
 
           if (syntheticIndex === null) {
             // Fallback (no index provided): behave like set/append unique
@@ -561,7 +649,8 @@ const OrchestratorReactFlow: React.FC = () => {
               prevArr[syntheticIndex] = newSourceId;
               // Remove duplicate occurrences of same id beyond this index
               for (let i = prevArr.length - 1; i >= 0; i--) {
-                if (i !== syntheticIndex && prevArr[i] === newSourceId) prevArr.splice(i, 1);
+                if (i !== syntheticIndex && prevArr[i] === newSourceId)
+                  prevArr.splice(i, 1);
               }
             } else {
               // Clearing this slot keeps placeholder so UI row persists
@@ -578,8 +667,11 @@ const OrchestratorReactFlow: React.FC = () => {
 
       setEdges((eds) => {
         let working = eds;
-        if (cardinality === '1') {
-          working = working.filter((e) => !(e.target === nodeId && (e.data?.kind ?? baseBind) === edgeKind));
+        if (cardinality === "1") {
+          working = working.filter(
+            (e) =>
+              !(e.target === nodeId && (e.data?.kind ?? baseBind) === edgeKind)
+          );
         } else {
           // Remove existing edge for this specific synthetic bind (if any)
           working = working.filter((e) => {
@@ -596,7 +688,7 @@ const OrchestratorReactFlow: React.FC = () => {
               if (e.source !== newSourceId) return true;
               if ((e.data?.kind ?? baseBind) !== edgeKind) return true;
               const otherBindKey = e.data?.bindKey;
-              if (typeof otherBindKey !== 'string') return true;
+              if (typeof otherBindKey !== "string") return true;
               const match = /^(.+)\[(\d+)\]\.([^.]+)$/.exec(otherBindKey);
               if (!match) return true;
               const otherIdx = Number.parseInt(match[2], 10);
@@ -612,16 +704,27 @@ const OrchestratorReactFlow: React.FC = () => {
               e.source === newSourceId &&
               e.target === nodeId &&
               (e.data?.kind ?? baseBind) === edgeKind &&
-              (cardinality === '1' || e.data?.bindKey === bindStr)
+              (cardinality === "1" || e.data?.bindKey === bindStr)
           );
           if (!duplicate) {
             const newEdge: Edge = {
               id: `${newSourceId}->${nodeId}:${bindStr}`,
               source: newSourceId,
               target: nodeId,
-              data: { ...(rule?.edgeData ?? { kind: baseBind }), kind: edgeKind, bindKey: bindStr },
-              markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
-              style: rule?.edgeData?.style ?? { strokeWidth: 4, strokeDasharray: '8 2' },
+              data: {
+                ...(rule?.edgeData ?? { kind: baseBind }),
+                kind: edgeKind,
+                bindKey: bindStr,
+              },
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                width: 12,
+                height: 12,
+              },
+              style: rule?.edgeData?.style ?? {
+                strokeWidth: 4,
+                strokeDasharray: "8 2",
+              },
               animated: rule?.edgeData?.animated ?? false,
             };
             working = addEdge(newEdge, working);
@@ -809,7 +912,14 @@ const OrchestratorReactFlow: React.FC = () => {
           fitView
         >
           <Panel>
-            <Box sx={{ display: "flex", gap: 2, margin: "10px 20px", alignItems: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                margin: "10px 20px",
+                alignItems: "center",
+              }}
+            >
               {templateInfo?.templateName && (
                 <Chip
                   icon={<DeblurIcon />}
@@ -857,7 +967,7 @@ const OrchestratorReactFlow: React.FC = () => {
         onClose={() => setInitOpen(false)}
         onSubmit={handleInitSubmit}
       />
-      
+
       {/* Undo Snackbar */}
       <Snackbar
         open={snackOpen}

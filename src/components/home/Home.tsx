@@ -60,7 +60,7 @@ const Home: React.FC = () => {
   }, [dispatch, customWrappersStatus, wrappersTemplateStatus, resourcesStatus, orchestratorsStatus]);
 
   useEffect(() => {
-    document.body.setAttribute("data-theme", theme.palette.mode);
+    document.body.dataset.theme = theme.palette.mode;
   }, [theme.palette.mode]);
 
   const navigateResource = (resourceId: string | undefined) => {
@@ -68,11 +68,11 @@ const Home: React.FC = () => {
   };
 
   const navigateTemplates = (templateID: string | undefined) => {
-    navigate(`/orchestrator/${templateID ?? "new"}`);
+    navigate(`/orchestrator/${templateID ?? "new"}?template_type=custom`);
   };
 
   const navigateOrchestrator = (orchestratorId: string | undefined) => {
-    navigate(`/orchestrator/${orchestratorId ?? "new"}`);
+    navigate(`/orchestrator/${orchestratorId ?? "new"}?template_type=custom`);
   };
 
   return (
@@ -169,7 +169,7 @@ const Home: React.FC = () => {
         alignItems="stretch"
       >
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} display="flex">
-          <Box className={styles.card} onClick={() => navigateOrchestrator(undefined)}>
+          <Box className={styles.card} onClick={() => navigateOrchestrator('new')}>
             <div className={styles.cardBlank}>
               <FontAwesomeIcon icon="plus" size="5x" />
               <p className={styles.cardDescription}>New Orchestrator</p>
@@ -203,7 +203,7 @@ const Home: React.FC = () => {
                 </Box>
                 <h3 className={styles.cardTitle}>
                   <Link
-                    to={`/orchestrator?load=${orchestrator._id}`}
+                    to={`/orchestrator/${orchestrator._id}`}
                     style={{ textDecoration: "none", color: "inherit" }}
                     aria-label={`View orchestrator ${orchestrator.name}`}
                   >

@@ -98,6 +98,8 @@ export const orchestratorService = {
         name: item.name,
         description: item.description,
         templateInfo: item.templateInfo,
+        nodes: item.nodes || [],
+        edges: item.edges || [],
         // Calculate counts from arrays if not provided
         nodeCount: item.nodeCount ?? item.nodes?.length ?? 0,
         edgeCount: item.edgeCount ?? item.edges?.length ?? 0,

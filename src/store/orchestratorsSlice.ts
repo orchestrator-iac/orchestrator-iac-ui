@@ -77,6 +77,8 @@ const orchestratorsSlice = createSlice({
           name: action.payload.name,
           description: action.payload.description,
           templateInfo: action.payload.templateInfo,
+          nodes: action.payload.nodes || [],
+          edges: action.payload.edges || [],
           nodeCount: action.payload.nodes?.length || 0,
           edgeCount: action.payload.edges?.length || 0,
           createdAt: action.payload.metadata?.createdAt || new Date(),

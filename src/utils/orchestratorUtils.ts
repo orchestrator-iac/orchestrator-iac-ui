@@ -17,7 +17,7 @@ export const transformNodeForDB = (node: Node): OrchestratorNode => {
   
   return {
     id: node.id,
-    resourceId: resourceId,
+    resourceId: resourceId, 
     position: {
       x: node.position.x,
       y: node.position.y,
@@ -34,6 +34,14 @@ export const transformNodeForDB = (node: Node): OrchestratorNode => {
  * @returns Minimal edge data for DB storage
  */
 export const transformEdgeForDB = (edge: Edge): OrchestratorEdge => {
+  // Extract kind from edge data or parse from edge ID
+  const kind = (edge.data?.kind as string) || edge.id.split(':')[1] || 'unknown';
+  
+  // bindKey is required by backend - if not present, use kind as fallback
+  // For simple 1:1 relationships, bindKey equals kind
+  // For array relationships, bindKey includes index like "routes[0]"
+  const bindKey = (edge.data?.bindKey as string) || kind;
+  
   return {
     id: edge.id,
     source: edge.source,
@@ -41,8 +49,8 @@ export const transformEdgeForDB = (edge: Edge): OrchestratorEdge => {
     sourceHandle: edge.sourceHandle,
     targetHandle: edge.targetHandle,
     data: {
-      kind: edge.data?.kind as string | undefined,
-      bindKey: edge.data?.bindKey as string | undefined,
+      kind: kind,
+      bindKey: bindKey,
     },
   };
 };
