@@ -61,6 +61,28 @@ const CustomNode: React.FC<CustomNodeProps> = ({
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  
+  // Controlled accordion state - defaults to expanded, but can be saved/restored
+  const [expanded, setExpanded] = React.useState<boolean>(
+    data?.isExpanded ?? true
+  );
+
+  // Update expanded state when data changes (e.g., when loading saved orchestrator)
+  React.useEffect(() => {
+    if (data?.isExpanded !== undefined) {
+      setExpanded(data.isExpanded);
+    }
+  }, [data?.isExpanded]);
+
+  const handleAccordionChange = (_event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpanded(isExpanded);
+    // Save the expanded state back to node data via a special handler
+    // We need to update node.data.isExpanded, not node.data.values.__isExpanded
+    if (data?.__helpers?.onValuesChange) {
+      // Store in values temporarily so it gets included in transforms
+      data.__helpers.onValuesChange('__isExpanded', isExpanded);
+    }
+  };
 
   const renderInfo = (info?: string | JSX.Element) => {
     if (!info) return null;
@@ -101,7 +123,8 @@ const CustomNode: React.FC<CustomNodeProps> = ({
         boxShadow: `0 0 3px ${theme.palette.background.paper}`,
         width: "400px",
       }}
-      defaultExpanded
+      expanded={expanded}
+      onChange={handleAccordionChange}
     >
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}

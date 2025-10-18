@@ -15,19 +15,22 @@ import {
 export const transformNodeForDB = (node: Node): OrchestratorNode => {
   const resourceId = (node.data?.__resourceId || node.data?.__nodeType || node.type) as string;
   
+  // Extract isExpanded from values if it was stored there, otherwise check node.data
+  const values = node.data?.values as Record<string, any> | undefined;
+  const isExpanded = values?.__isExpanded ?? node.data?.isExpanded ?? true;
+  
   return {
     id: node.id,
-    resourceId: resourceId, 
+    resourceId: resourceId,
     position: {
       x: node.position.x,
       y: node.position.y,
     },
-    values: node.data?.values || {},
+    values: values || {},
     __nodeType: node.data?.__nodeType as string | undefined,
+    isExpanded: isExpanded,
   };
-};
-
-/**
+};/**
  * Transform React Flow edge to minimal database format
  * Preserves relationship metadata (bindKey for array fields)
  * @param edge - React Flow edge instance
@@ -106,6 +109,7 @@ export const reconstructNodeFromDB = (
       values: dbNode.values,
       __nodeType: dbNode.__nodeType || dbNode.resourceId,
       __resourceId: dbNode.resourceId,
+      isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
     },
   };
 };

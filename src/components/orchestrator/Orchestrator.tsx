@@ -378,6 +378,7 @@ const OrchestratorReactFlow: React.FC = () => {
                   values: dbNode.values,
                   __nodeType: dbNode.__nodeType || dbNode.resourceId,
                   __resourceId: dbNode.resourceId,
+                  isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
                   header: {
                     ...resourceData?.data?.resourceNode?.data?.header,
                     icon: resourceData?.data?.resourceIcon?.url,
@@ -821,17 +822,30 @@ const OrchestratorReactFlow: React.FC = () => {
   const onValuesChange = useCallback(
     (nodeId: string, name: string, value: any) => {
       setNodes((nds) =>
-        nds.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  values: { ...(n.data as any)?.values, [name]: value },
-                },
-              }
-            : n
-        )
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          
+          // Special handling for accordion state
+          if (name === '__isExpanded') {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                isExpanded: value,
+                values: { ...(n.data as any)?.values, [name]: value },
+              },
+            };
+          }
+          
+          // Regular field update
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              values: { ...(n.data as any)?.values, [name]: value },
+            },
+          };
+        })
       );
     },
     [setNodes]
@@ -911,15 +925,8 @@ const OrchestratorReactFlow: React.FC = () => {
           deleteKeyCode={["Delete", "Backspace"]}
           fitView
         >
-          <Panel>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 2,
-                margin: "10px 20px",
-                alignItems: "center",
-              }}
-            >
+          <Panel position="top-left">
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               {templateInfo?.templateName && (
                 <Chip
                   icon={<DeblurIcon />}
@@ -941,14 +948,16 @@ const OrchestratorReactFlow: React.FC = () => {
                   onClick={() => setInitOpen(true)}
                 />
               )}
-              <SaveButton
-                nodes={nodes}
-                edges={edges}
-                templateInfo={templateInfo}
-                currentOrchestratorId={currentOrchestratorId}
-                onSaveSuccess={handleSaveSuccess}
-              />
             </Box>
+          </Panel>
+          <Panel position="top-right">
+            <SaveButton
+              nodes={nodes}
+              edges={edges}
+              templateInfo={templateInfo}
+              currentOrchestratorId={currentOrchestratorId}
+              onSaveSuccess={handleSaveSuccess}
+            />
           </Panel>
           <Background />
           <Controls

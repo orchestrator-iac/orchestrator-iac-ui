@@ -12,6 +12,7 @@ export interface OrchestratorNode {
   };
   values: Record<string, any>; // User-provided or default values
   __nodeType?: string; // Resource type for rules/labels
+  isExpanded?: boolean; // Accordion expanded/collapsed state
 }
 
 // Edge information representing relationships between nodes
