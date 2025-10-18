@@ -28,10 +28,9 @@ import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
 import { Box, Chip } from "@mui/material";
 
-import apiService from "./../../services/apiService";
 import CustomNode from "./CustomNode";
-import { components } from "./../../initial-elements";
 import { SaveButton } from "./save";
+import { DeleteButton } from "./delete";
 
 import Sidebar from "./sidebar/Sidebar";
 import { useDnD } from "./sidebar/DnDContext";
@@ -957,6 +956,10 @@ const OrchestratorReactFlow: React.FC = () => {
               templateInfo={templateInfo}
               currentOrchestratorId={currentOrchestratorId}
               onSaveSuccess={handleSaveSuccess}
+            />
+            <DeleteButton
+              currentOrchestratorId={currentOrchestratorId}
+              orchestratorName={templateInfo?.templateName}
             />
           </Panel>
           <Background />
