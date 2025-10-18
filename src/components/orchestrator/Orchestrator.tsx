@@ -29,8 +29,7 @@ import Alert from "@mui/material/Alert";
 import { Box, Chip } from "@mui/material";
 
 import CustomNode from "./CustomNode";
-import { SaveButton } from "./save";
-import { DeleteButton } from "./delete";
+import { OrchestratorMenu } from "./menu";
 
 import Sidebar from "./sidebar/Sidebar";
 import { useDnD } from "./sidebar/DnDContext";
@@ -850,8 +849,8 @@ const OrchestratorReactFlow: React.FC = () => {
     [setNodes]
   );
 
-  // Handle save success callback
-  const handleSaveSuccess = useCallback((orchestratorId: string) => {
+  // Handler for when orchestrator is successfully saved
+  const handleOrchestrationSaved = useCallback((orchestratorId: string) => {
     setCurrentOrchestratorId(orchestratorId);
   }, []);
 
@@ -950,18 +949,16 @@ const OrchestratorReactFlow: React.FC = () => {
             </Box>
           </Panel>
           <Panel position="top-right">
-            <SaveButton
+            <OrchestratorMenu
               nodes={nodes}
               edges={edges}
               templateInfo={templateInfo}
               currentOrchestratorId={currentOrchestratorId}
-              onSaveSuccess={handleSaveSuccess}
-            />
-            <DeleteButton
-              currentOrchestratorId={currentOrchestratorId}
+              onSaveSuccess={handleOrchestrationSaved}
               orchestratorName={templateInfo?.templateName}
             />
           </Panel>
+
           <Background />
           <Controls
             onFitView={() =>

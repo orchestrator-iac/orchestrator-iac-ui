@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Button } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import { Node, Edge } from "@xyflow/react";
@@ -14,6 +14,8 @@ interface SaveButtonProps {
   currentOrchestratorId: string | null;
   onSaveSuccess: (orchestratorId: string) => void;
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -27,9 +29,18 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   currentOrchestratorId,
   onSaveSuccess,
   disabled = false,
+  open: externalOpen,
+  onOpenChange,
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Sync external open state with internal state
+  useEffect(() => {
+    if (externalOpen !== undefined && externalOpen !== dialogOpen) {
+      handleClick();
+    }
+  }, [externalOpen]);
 
   const handleClick = useCallback(() => {
     // Validate before opening dialog
@@ -37,15 +48,18 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
     if (!validation.valid) {
       setValidationError(validation.errors.join(", "));
       console.error("Validation errors:", validation.errors);
+      onOpenChange?.(false);
       return;
     }
     setValidationError(null);
     setDialogOpen(true);
-  }, [nodes, edges]);
+    onOpenChange?.(true);
+  }, [nodes, edges, onOpenChange]);
 
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
-  }, []);
+    onOpenChange?.(false);
+  }, [onOpenChange]);
 
   const handleSaveSuccess = useCallback(
     (orchestratorId: string) => {
@@ -86,3 +100,5 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
     </>
   );
 };
+
+SaveButton.displayName = 'SaveButton';

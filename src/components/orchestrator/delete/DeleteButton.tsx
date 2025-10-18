@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,8 @@ interface DeleteButtonProps {
   currentOrchestratorId: string | null;
   orchestratorName?: string;
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -20,19 +22,31 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
   currentOrchestratorId,
   orchestratorName,
   disabled = false,
+  open: externalOpen,
+  onOpenChange,
 }) => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  // Sync external open state with internal state
+  useEffect(() => {
+    if (externalOpen !== undefined && externalOpen !== confirmDialogOpen) {
+      setConfirmDialogOpen(externalOpen);
+      onOpenChange?.(externalOpen);
+    }
+  }, [externalOpen]);
+
   const handleClick = useCallback(() => {
     setConfirmDialogOpen(true);
-  }, []);
+    onOpenChange?.(true);
+  }, [onOpenChange]);
 
   const handleConfirmClose = useCallback(() => {
     setConfirmDialogOpen(false);
-  }, []);
+    onOpenChange?.(false);
+  }, [onOpenChange]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!currentOrchestratorId) return;
@@ -100,3 +114,5 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
     </>
   );
 };
+
+DeleteButton.displayName = 'DeleteButton';
