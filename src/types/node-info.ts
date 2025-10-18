@@ -19,6 +19,9 @@ export interface NodeData {
 
   /** NEW: schema-driven link rules for validating edges & binding form fields */
   links?: Array<LinkRule>;
+  
+  /** Accordion expanded state - saved to preserve UI state across sessions */
+  isExpanded?: boolean;
 }
 
 /** How a field binds to a graph relationship (generic) */
@@ -89,6 +92,7 @@ export interface Field {
   options?: Array<Option> | string;
 
   disabled?: boolean;
+  allowDuplicates?: boolean;
   config?: FieldConfig;
 }
 

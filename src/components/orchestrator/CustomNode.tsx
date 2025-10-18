@@ -30,11 +30,12 @@ type CustomNodeProps = NodeProps & {
     __helpers?: {
       allNodes?: any[];
       allEdges?: any[];
-      onLinkFieldChange?: (args: {
-        nodeId: string;
-        bind: string;
-        newSourceId: string;
-      }) => void;
+      onLinkFieldChange?: (
+        bind: string,
+        newSourceId: string,
+        context?: { objectSnapshot?: Record<string, any> }
+      ) => void;
+      onValuesChange?: (name: string, value: any) => void;
       onCloneNode?: (nodeId: string) => void;
       onDeleteNode?: (nodeId: string) => void;
     };
@@ -60,6 +61,28 @@ const CustomNode: React.FC<CustomNodeProps> = ({
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  
+  // Controlled accordion state - defaults to expanded, but can be saved/restored
+  const [expanded, setExpanded] = React.useState<boolean>(
+    data?.isExpanded ?? true
+  );
+
+  // Update expanded state when data changes (e.g., when loading saved orchestrator)
+  React.useEffect(() => {
+    if (data?.isExpanded !== undefined) {
+      setExpanded(data.isExpanded);
+    }
+  }, [data?.isExpanded]);
+
+  const handleAccordionChange = (_event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpanded(isExpanded);
+    // Save the expanded state back to node data via a special handler
+    // We need to update node.data.isExpanded, not node.data.values.__isExpanded
+    if (data?.__helpers?.onValuesChange) {
+      // Store in values temporarily so it gets included in transforms
+      data.__helpers.onValuesChange('__isExpanded', isExpanded);
+    }
+  };
 
   const renderInfo = (info?: string | JSX.Element) => {
     if (!info) return null;
@@ -100,7 +123,8 @@ const CustomNode: React.FC<CustomNodeProps> = ({
         boxShadow: `0 0 3px ${theme.palette.background.paper}`,
         width: "400px",
       }}
-      defaultExpanded
+      expanded={expanded}
+      onChange={handleAccordionChange}
     >
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
@@ -141,6 +165,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
+                maxWidth: "120px",
               }}
             >
               {data?.header?.label}
@@ -154,7 +179,7 @@ const CustomNode: React.FC<CustomNodeProps> = ({
                 }
                 arrow
                 placement="top"
-                componentsProps={{
+                slotProps={{
                   tooltip: {
                     sx: {
                       bgcolor: theme.palette.background.paper,
@@ -194,12 +219,23 @@ const CustomNode: React.FC<CustomNodeProps> = ({
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Chip
-            size="small"
-            label={friendlyId}
-            sx={{ ml: "auto", color: theme.palette.textVariants.text4 }}
-            variant="filled"
-          />
+          <Tooltip title={friendlyId} arrow placement="top">
+            <Chip
+              size="small"
+              label={friendlyId}
+              sx={{
+                ml: "auto",
+                color: theme.palette.textVariants.text4,
+                maxWidth: "80px",
+                "& .MuiChip-label": {
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                },
+              }}
+              variant="filled"
+            />
+          </Tooltip>
           <IconButton
             aria-label="node actions"
             onClick={(e) => {
@@ -259,12 +295,11 @@ const CustomNode: React.FC<CustomNodeProps> = ({
           allEdges={data?.__helpers?.allEdges}
           templateInfo={data?.templateInfo}
           userInfo={data?.userInfo}
-          onLinkFieldChange={(bind, newSourceId) =>
-            data?.__helpers?.onLinkFieldChange?.({
-              nodeId: id,
-              bind,
-              newSourceId,
-            })
+          onLinkFieldChange={(bind, newSourceId, context) =>
+            data?.__helpers?.onLinkFieldChange?.(bind, newSourceId, context)
+          }
+          onValuesChange={(name, value) =>
+            data?.__helpers?.onValuesChange?.(name, value)
           }
         />
       </AccordionDetails>

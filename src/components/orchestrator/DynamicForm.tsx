@@ -30,6 +30,8 @@ import { UserProfile } from "../../types/auth";
 import { CloudConfig } from "../../types/clouds-info";
 import { validCondition } from "../../utils/deps";
 import { renderTemplate } from "@/utils/renderTemplate";
+import ListObjectField from "./ListObjectField";
+import ListSelectTextField from "./ListSelectTextField";
 
 type Values = { [x: string]: any };
 
@@ -48,9 +50,13 @@ type Props = {
   allEdges?: any[];
   userInfo?: UserProfile;
   templateInfo?: CloudConfig;
-  onLinkFieldChange?: (bind: string, newSourceId: string) => void;
+  onLinkFieldChange?: (
+    bind: string,
+    newSourceId: string,
+    context?: { objectSnapshot?: Record<string, any> }
+  ) => void;
+  onValuesChange?: (name: string, value: any) => void;
 };
-
 
 const DynamicForm: React.FC<Props> = ({
   config,
@@ -60,6 +66,7 @@ const DynamicForm: React.FC<Props> = ({
   userInfo,
   templateInfo,
   onLinkFieldChange,
+  onValuesChange,
 }) => {
   const theme = useTheme();
   let zoom = 1;
@@ -77,7 +84,7 @@ const DynamicForm: React.FC<Props> = ({
     }
     try {
       const rendered = renderTemplate(values, {
-        userInfo: userInfo ?? {},         // <- ensure key exists
+        userInfo: userInfo ?? {}, // <- ensure key exists
         templateInfo: templateInfo ?? {}, // <- ensure key exists
       });
       setFormData(rendered);
@@ -89,6 +96,8 @@ const DynamicForm: React.FC<Props> = ({
 
   const handleChange = (name: string, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Sync changes back to node values
+    onValuesChange?.(name, value);
   };
 
   const renderInfo = (info?: string | JSX.Element) => {
@@ -97,19 +106,47 @@ const DynamicForm: React.FC<Props> = ({
   };
 
   // "from:nodes:resourceId=vpc" or "from:nodes:type=vpc" (generic)
+  // Enhanced to support conditional filtering based on context data
   const resolveOptions = (
-    options: any
+    options: any,
+    contextData?: Record<string, any>
   ): { value: string; label: string; disabled?: boolean }[] | undefined => {
     if (typeof options !== "string") return options;
     if (!options.startsWith("from:nodes:")) return undefined;
 
-    const [, , filter] = options.split(":"); // e.g., "resourceId=vpc"
+    const [, , filter] = options.split(":"); // e.g., "resourceId=vpc" or "type=internet_gateway|nat_gateway"
     const [k, v] = filter.split("=");
 
     const nodes = allNodes ?? [];
+    let allowedTypes: string[] = [];
+
+    if (k === "resourceId" || k === "type") {
+      // Handle conditional logic based on context data
+      if (v.includes("${") && contextData) {
+        // Dynamic filtering: e.g., "type=${target_type}" where target_type field contains the actual type value
+        const processedValue = v.replace(/\$\{([^}]+)\}/g, (_, fieldName) => {
+          const contextValue = contextData[fieldName];
+          if (!contextValue) return "";
+          
+          // Direct mapping: use the field value as the type filter
+          // This supports both single values and pipe-separated values from the field
+          return String(contextValue);
+        });
+        
+        if (processedValue) {
+          allowedTypes = processedValue.split("|").filter(Boolean);
+        }
+      } else {
+        // Static filtering: handle pipe-separated values like "internet_gateway|nat_gateway|..."
+        allowedTypes = v.split("|");
+      }
+    }
+
     const candidates = nodes.filter((n: any) => {
       const typeCode = n?.data?.__nodeType; // canonical domain type from resourceId
-      if (k === "resourceId" || k === "type") return typeCode === v;
+      if (k === "resourceId" || k === "type") {
+        return allowedTypes.includes(typeCode);
+      }
       return n?.data?.[k] === v;
     });
 
@@ -141,11 +178,12 @@ const DynamicForm: React.FC<Props> = ({
       placeholder,
       hint,
       error_text,
+      allowDuplicates,
       config: fieldCfg,
     } = field;
 
     const linkRule = links?.find((r) => r.bind === name);
-    const resolvedOptions = resolveOptions(options);
+    const resolvedOptions = resolveOptions(options, formData);
 
     switch (type) {
       case "text":
@@ -156,6 +194,7 @@ const DynamicForm: React.FC<Props> = ({
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
             helperText={error_text || hint}
+            onChange={(e) => handleChange(name, e.target.value)}
           />
         );
 
@@ -199,7 +238,7 @@ const DynamicForm: React.FC<Props> = ({
                 PaperProps: {
                   style: {
                     transform: `scale(${zoom})`,
-                    transformOrigin: 'top left',
+                    transformOrigin: "top left",
                   },
                 },
               }}
@@ -287,11 +326,16 @@ const DynamicForm: React.FC<Props> = ({
             disablePortal={false}
             slotProps={{
               popper: {
-                modifiers: [{ name: "computeStyles", options: { adaptive: false } }],
+                modifiers: [
+                  { name: "computeStyles", options: { adaptive: false } },
+                ],
                 style: { zIndex: 1500 },
               },
               paper: {
-                sx: { transform: `scale(${zoom})`, transformOrigin: "top center", },
+                sx: {
+                  transform: `scale(${zoom})`,
+                  transformOrigin: "top center",
+                },
               },
             }}
           />
@@ -429,6 +473,36 @@ const DynamicForm: React.FC<Props> = ({
         );
       }
 
+      case "list<object>":
+        return (
+          <ListObjectField
+            name={name}
+            value={value}
+            fieldCfg={fieldCfg}
+            formData={formData}
+            onChange={handleChange}
+            resolveOptions={resolveOptions}
+            onLinkFieldChange={onLinkFieldChange}
+          />
+        );
+
+      case "list<select+text>":
+        return (
+          <ListSelectTextField
+            name={name}
+            value={value}
+            formData={formData}
+            onChange={handleChange}
+            resolveOptions={resolveOptions}
+            options={options}
+            placeholder={placeholder}
+            hint={hint}
+            error_text={error_text}
+            onLinkFieldChange={onLinkFieldChange}
+            allowDuplicates={allowDuplicates ?? false}
+          />
+        );
+
       case "number":
         return (
           <TextField
@@ -516,7 +590,7 @@ const DynamicForm: React.FC<Props> = ({
                 <Button
                   variant={fieldCfg.add_button.variant}
                   onClick={() => {
-                    const updatedList = { ...(formData[name] ?? {}) } as Record<
+                    const updatedList = { ...formData[name] } as Record<
                       string,
                       any
                     >;
@@ -538,6 +612,7 @@ const DynamicForm: React.FC<Props> = ({
             placeholder={placeholder}
             errorMessage={error_text}
             required={required}
+            onChange={(newValue) => handleChange(name, newValue)}
           />
         );
 

@@ -233,22 +233,24 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
                   </Box>
                 }
                 secondary={resource.resourceDescription}
-                primaryTypographyProps={{
-                  sx: {
-                    fontWeight: 500,
-                    display: "flex",
-                    alignItems: "center",
+                slotProps={{
+                  primary: {
+                    sx: {
+                      fontWeight: 500,
+                      display: "flex",
+                      alignItems: "center",
+                    },
                   },
-                }}
-                secondaryTypographyProps={{
-                  noWrap: true,
-                  sx: {
-                    fontSize: "0.85rem",
-                    color: theme.palette.text.secondary,
-                    textOverflow: "ellipsis",
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                    maxWidth: "100%",
+                  secondary: {
+                    noWrap: true,
+                    sx: {
+                      fontSize: "0.85rem",
+                      color: theme.palette.text.secondary,
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      maxWidth: "100%",
+                    },
                   },
                 }}
               />

@@ -19,7 +19,8 @@ export const CodeEditorField: React.FC<{
   errorMessage?: string;
   height?: string;
   required?: boolean;
-}> = ({ value, placeholder, errorMessage, height, required }) => {
+  onChange: (value: any) => void;
+}> = ({ value, placeholder, errorMessage, height, required, onChange }) => {
   const { mode } = useThemeContext();
   const [tempErrorMessage, setTempErrorMessage] = useState<string>("");
   const [resourceNodeTemp, setResourceNodeTemp] = useState<string>(
@@ -28,19 +29,22 @@ export const CodeEditorField: React.FC<{
 
   useEffect(() => {
     console.log(resourceNodeTemp);
-  }, [resourceNodeTemp]);
-
-  useEffect(() => {
-    if (required && resourceNodeTemp) {
-      try {
-        JSON.parse(resourceNodeTemp);
-        setTempErrorMessage("");
-      } catch (e: any) {
+    
+    // Validate and notify parent component of changes
+    try {
+      // Try to parse as JSON first
+      const parsed = JSON.parse(resourceNodeTemp);
+      setTempErrorMessage("");
+      onChange(parsed);
+    } catch (e: any) {
+      if (required && resourceNodeTemp) {
         console.error("Validation failed:", e);
         setTempErrorMessage(errorMessage ?? "Invalid JSON provided");
+      } else {
+        setTempErrorMessage("");
       }
     }
-  }, [resourceNodeTemp]);
+  }, [resourceNodeTemp, onChange, required, errorMessage]);
 
   return (
     <Grid size={12}>
