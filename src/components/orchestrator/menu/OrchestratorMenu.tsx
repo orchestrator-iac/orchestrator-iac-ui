@@ -7,11 +7,13 @@ import {
   ListItemIcon,
   ListItemText,
   Tooltip,
+  Switch,
 } from '@mui/material';
 import { Node, Edge } from '@xyflow/react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ArchitectureIcon from '@mui/icons-material/Architecture';
 import { SaveButton } from '../save';
 import { DeleteButton } from '../delete';
 import { TemplateInfo } from '../../../types/orchestrator';
@@ -23,6 +25,8 @@ interface OrchestratorMenuProps {
   currentOrchestratorId: string | null;
   onSaveSuccess: (orchestratorId: string) => void;
   orchestratorName?: string;
+  isArchitectureMode: boolean;
+  onArchitectureModeChange: (value: boolean) => void;
 }
 
 export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
@@ -32,6 +36,8 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   currentOrchestratorId,
   onSaveSuccess,
   orchestratorName,
+  isArchitectureMode,
+  onArchitectureModeChange,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -98,6 +104,41 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           },
         }}
       >
+        <MenuItem
+          disableRipple
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+          sx={{ alignItems: 'center', gap: 1 }}
+        >
+          <ListItemIcon>
+            <ArchitectureIcon
+              fontSize="small"
+              color={isArchitectureMode ? 'primary' : 'inherit'}
+            />
+          </ListItemIcon>
+          <ListItemText
+            primary="Architecture mode"
+            secondary={isArchitectureMode ? 'Compact cards' : 'Detailed forms'}
+            primaryTypographyProps={{ fontWeight: 500 }}
+            sx={{ cursor: 'pointer', mr: 1 }}
+            onClick={(event) => {
+              event.stopPropagation();
+              onArchitectureModeChange(!isArchitectureMode);
+            }}
+          />
+          <Switch
+            edge="end"
+            size="small"
+            checked={isArchitectureMode}
+            onChange={(_, checked) => onArchitectureModeChange(checked)}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+            inputProps={{ 'aria-label': 'Toggle architecture mode' }}
+          />
+        </MenuItem>
+
         <MenuItem onClick={handleSaveClick} disabled={!canSave}>
           <ListItemIcon>
             <SaveIcon fontSize="small" color={canSave ? 'primary' : 'disabled'} />

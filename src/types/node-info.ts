@@ -19,6 +19,8 @@ export interface NodeData {
 
   /** NEW: schema-driven link rules for validating edges & binding form fields */
   links?: Array<LinkRule>;
+  /** Optional compact architecture view configuration */
+  architectureView?: ArchitectureViewConfig;
   
   /** Accordion expanded state - saved to preserve UI state across sessions */
   isExpanded?: boolean;
@@ -37,6 +39,43 @@ export interface LinkRule {
 
   /** Arbitrary metadata to stamp onto the edge (e.g., { kind: "vpc-link" }) */
   edgeData?: Record<string, any>;
+}
+
+/** ============ Architecture View ============ */
+export interface ArchitectureViewConfig {
+  /** Text displayed as the primary title in architecture mode */
+  primaryText?: string;
+  /** Dot-notation key resolved from values to use as the primary title */
+  primaryKey?: string;
+  /** Secondary text displayed beneath the primary title */
+  secondaryText?: string;
+  /** Dot-notation key resolved from values for the secondary text */
+  secondaryKey?: string;
+  /** Optional descriptive paragraph */
+  description?: string;
+  /** Collection of tag chips rendered beside the header */
+  tags?: ArchitectureTag[];
+  /** Key/value facts displayed in compact list form */
+  fields?: ArchitectureField[];
+}
+
+export interface ArchitectureTag {
+  /** Label displayed before the value, e.g., "Issues" */
+  label?: string;
+  /** Explicit value to render inside the chip */
+  value?: string | number;
+  /** Dot-notation key resolved from values when value is not provided */
+  valueKey?: string;
+  /** Optional color token recognised by MUI chip (e.g., "primary") */
+  color?: string;
+}
+
+export interface ArchitectureField {
+  label: string;
+  /** Explicit value to display */
+  value?: string | number | boolean;
+  /** Dot-notation key resolved from values when value is not provided */
+  valueKey?: string;
 }
 
 /** ============ Header / Footer ============ */
