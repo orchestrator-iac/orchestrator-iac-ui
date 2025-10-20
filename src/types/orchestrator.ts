@@ -12,6 +12,7 @@ export interface OrchestratorNode {
   };
   values: Record<string, any>; // User-provided or default values
   __nodeType?: string; // Resource type for rules/labels
+  friendlyId?: string; // Generated readable identifier like vpc-0001
   isExpanded?: boolean; // Accordion expanded/collapsed state
 }
 
@@ -59,12 +60,14 @@ export interface SaveOrchestratorResponse {
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];
   metadata?: {
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: string;
+    updatedAt?: string;
     version: string;
     tags?: string[];
   };
   userId: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // List view for saved orchestrations
@@ -77,8 +80,14 @@ export interface OrchestratorListItem {
   edges: OrchestratorEdge[];
   nodeCount: number;
   edgeCount: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
+  metadata?: {
+    createdAt?: string;
+    updatedAt?: string;
+    version?: string;
+    tags?: string[];
+  };
 }
 
 // Response for listing orchestrations

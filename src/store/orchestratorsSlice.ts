@@ -81,8 +81,14 @@ const orchestratorsSlice = createSlice({
           edges: action.payload.edges || [],
           nodeCount: action.payload.nodes?.length || 0,
           edgeCount: action.payload.edges?.length || 0,
-          createdAt: action.payload.metadata?.createdAt || new Date(),
-          updatedAt: action.payload.metadata?.updatedAt || new Date(),
+          createdAt:
+            action.payload.metadata?.createdAt ??
+            action.payload.createdAt ??
+            new Date().toISOString(),
+          updatedAt:
+            action.payload.metadata?.updatedAt ??
+            action.payload.updatedAt ??
+            new Date().toISOString(),
         });
       });
   },

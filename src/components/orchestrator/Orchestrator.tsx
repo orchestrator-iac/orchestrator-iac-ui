@@ -397,6 +397,7 @@ const OrchestratorReactFlow: React.FC = () => {
                   __nodeType: dbNode.__nodeType || dbNode.resourceId,
                   __resourceId: dbNode.resourceId,
                   isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
+                  friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
                   header: {
                     ...resourceData?.data?.resourceNode?.data?.header,
                     icon: resourceData?.data?.resourceIcon?.url,
@@ -765,6 +766,10 @@ const OrchestratorReactFlow: React.FC = () => {
         if (!original) return nds;
         const cloneId = `${nodeId}-copy-${(Math.random() * 1e5).toFixed(0)}`;
         const offset = { x: 40, y: 40 };
+        const restData: Record<string, any> = {
+          ...(original.data as Record<string, any>),
+        };
+        delete restData.friendlyId;
         const clone: Node = {
           ...original,
           id: cloneId,
@@ -773,7 +778,7 @@ const OrchestratorReactFlow: React.FC = () => {
             y: original.position.y + offset.y,
           },
           data: {
-            ...original.data,
+            ...restData,
             // reset values if you want a clean clone:
             // values: {},
           },

@@ -1,21 +1,38 @@
 export const getFriendlyId = (
   nodeId: string,
   nodeType?: string | null,
-  allNodes?: Array<{ id: string; data?: any }>
+  allNodes?: Array<{ id: string; data?: any; type?: string }>
 ): string => {
-  if (!nodeType || !Array.isArray(allNodes) || allNodes.length === 0) {
+  if (!Array.isArray(allNodes) || allNodes.length === 0) {
     return "";
   }
 
-  const sameTypeNodes = allNodes.filter((node) => node?.data?.__nodeType === nodeType);
-  const index = sameTypeNodes.findIndex((node) => node?.id === nodeId);
+  const targetNode = allNodes.find((node) => node?.id === nodeId);
+  const persistedFriendlyId =
+    (targetNode?.data?.friendlyId as string | undefined) ??
+    (targetNode?.data?.friendly_id as string | undefined);
+  if (persistedFriendlyId) {
+    return persistedFriendlyId;
+  }
 
+  const effectiveType =
+    targetNode?.data?.__nodeType ?? nodeType ?? targetNode?.type;
+  if (!effectiveType) {
+    return "";
+  }
+
+  const sameTypeNodes = allNodes.filter((node) => {
+  const candidateType = node?.data?.__nodeType ?? node?.type;
+    return candidateType === effectiveType;
+  });
+
+  const index = sameTypeNodes.findIndex((node) => node?.id === nodeId);
   if (index < 0) {
     return "";
   }
 
   const ordinal = index + 1;
-  return `${nodeType}-${String(ordinal).padStart(4, "0")}`;
+  return `${effectiveType}-${String(ordinal).padStart(4, "0")}`;
 };
 
 export const resolveValueByPath = (

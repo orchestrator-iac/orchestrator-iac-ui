@@ -1,5 +1,12 @@
 import { useCallback, useState, useEffect } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -56,7 +63,7 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
       await dispatch(deleteOrchestrator(currentOrchestratorId)).unwrap();
       setConfirmDialogOpen(false);
       // Navigate to home or orchestrator list after successful deletion
-      navigate("/orchestrator");
+      navigate("/home");
     } catch (error) {
       console.error("Failed to delete orchestrator:", error);
       // Optionally show error toast/snackbar here
@@ -92,7 +99,8 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
         <DialogTitle id="delete-dialog-title">Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete {orchestratorName ? `"${orchestratorName}"` : "this orchestrator"}?
+            Are you sure you want to delete{" "}
+            {orchestratorName ? `"${orchestratorName}"` : "this orchestrator"}?
             This action cannot be undone.
           </DialogContentText>
         </DialogContent>
@@ -100,9 +108,9 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
           <Button onClick={handleConfirmClose} disabled={isDeleting}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleConfirmDelete} 
-            color="error" 
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
             variant="contained"
             disabled={isDeleting}
             autoFocus
@@ -115,4 +123,4 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
   );
 };
 
-DeleteButton.displayName = 'DeleteButton';
+DeleteButton.displayName = "DeleteButton";

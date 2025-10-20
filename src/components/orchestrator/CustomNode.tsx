@@ -88,14 +88,16 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
       expanded={expanded}
       onChange={handleAccordionChange}
     >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        sx={{
-          borderBottom: `1px solid ${theme.palette.background.paper}`,
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
+      <Box sx={{ position: "relative" }}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          sx={{
+            borderBottom: `1px solid ${theme.palette.background.paper}`,
+            alignItems: "center",
+            gap: 1,
+            pr: 7,
+          }}
+        >
         {data?.header?.icon && (
           <Box
             component="img"
@@ -179,17 +181,40 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
             </Box>
           )}
         </Box>
+        {isOrchestrator &&
+          (data?.handles ?? []).map((handle, idx) => (
+            <Handle
+              key={`${handle?.type}-${handle?.position}-${idx}`}
+              type={handle?.type}
+              position={handle?.position}
+              style={{ width: 10, height: 15, borderRadius: "15%" }}
+              isConnectable={Boolean(isConnectable)}
+            />
+          ))}
+        </AccordionSummary>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            right: 12,
+            transform: "translateY(-50%)",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
           {friendlyId && (
             <Tooltip title={friendlyId} arrow placement="top">
               <Chip
                 size="small"
                 label={friendlyId}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
                 sx={{
-                  ml: "auto",
                   color: theme.palette.textVariants.text4,
-                  maxWidth: "80px",
+                  maxWidth: "96px",
+                  marginRight: 4,
                   "& .MuiChip-label": {
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -200,17 +225,20 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
               />
             </Tooltip>
           )}
-          <IconButton
-            aria-label="node actions"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMenuOpen(e);
-            }}
-            size="small"
-            sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
-          >
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
+
+          <Box onMouseDown={(event) => event.stopPropagation()}>
+            <IconButton
+              aria-label="node actions"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMenuOpen(e);
+              }}
+              size="small"
+              sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+          </Box>
           <Menu
             anchorEl={anchorEl}
             open={open}
@@ -231,18 +259,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
             </MenuItem>
           </Menu>
         </Box>
-
-        {isOrchestrator &&
-          (data?.handles ?? []).map((handle, idx) => (
-            <Handle
-              key={`${handle?.type}-${handle?.position}-${idx}`}
-              type={handle?.type}
-              position={handle?.position}
-              style={{ width: 10, height: 15, borderRadius: "15%" }}
-              isConnectable={Boolean(isConnectable)}
-            />
-          ))}
-      </AccordionSummary>
+      </Box>
 
       <AccordionDetails
         className="nowheel"
