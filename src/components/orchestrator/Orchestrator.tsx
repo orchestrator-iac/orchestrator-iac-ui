@@ -29,8 +29,8 @@ import Alert from "@mui/material/Alert";
 import { Box, Chip } from "@mui/material";
 
 import CustomNode from "./CustomNode";
-import { SaveButton } from "./save";
-import { DeleteButton } from "./delete";
+import ArchitectureNode from "./ArchitectureNode";
+import { OrchestratorMenu } from "./menu";
 
 import Sidebar from "./sidebar/Sidebar";
 import { useDnD } from "./sidebar/DnDContext";
@@ -117,6 +117,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [initOpen, setInitOpen] = useState(false);
+  const [isArchitectureMode, setIsArchitectureMode] = useState(false);
   const [undoStack, setUndoStack] = useState<{
     nodes: Node[];
     edges: Edge[];
@@ -141,6 +142,16 @@ const OrchestratorReactFlow: React.FC = () => {
     if (orchestratorsStatus === "idle") dispatch(fetchOrchestrators({}));
   }, [dispatch, orchestratorsStatus]);
 
+  useEffect(() => {
+    if (!isArchitectureMode) return;
+    setNodes((nds) =>
+      nds.map((node) => (node.selected ? { ...node, selected: false } : node))
+    );
+    setEdges((eds) =>
+      eds.map((edge) => (edge.selected ? { ...edge, selected: false } : edge))
+    );
+  }, [isArchitectureMode, setNodes, setEdges]);
+
   const handleInitSubmit = (data: any) => {
     setTemplateInfo(data);
     setInitOpen(false);
@@ -149,7 +160,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const onDrop = useCallback(
     async (event: React.DragEvent) => {
       event.preventDefault();
-      if (!id) return;
+      if (!id || isArchitectureMode) return;
 
       const resultAction = await dispatch(fetchResourceById(id));
 
@@ -196,7 +207,15 @@ const OrchestratorReactFlow: React.FC = () => {
         console.error("Failed to fetch resource", resultAction.error);
       }
     },
-    [id, setNodes, dispatch, getLayoutElements, templateInfo, user]
+    [
+      id,
+      isArchitectureMode,
+      setNodes,
+      dispatch,
+      getLayoutElements,
+      templateInfo,
+      user,
+    ]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -378,6 +397,7 @@ const OrchestratorReactFlow: React.FC = () => {
                   __nodeType: dbNode.__nodeType || dbNode.resourceId,
                   __resourceId: dbNode.resourceId,
                   isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
+                  friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
                   header: {
                     ...resourceData?.data?.resourceNode?.data?.header,
                     icon: resourceData?.data?.resourceIcon?.url,
@@ -439,6 +459,7 @@ const OrchestratorReactFlow: React.FC = () => {
   // Drag edge → update target form (values[bind]) + enforce rules
   const onConnect = useCallback(
     (conn: any) => {
+      if (isArchitectureMode) return;
       const source = nodes.find((n) => n.id === conn.source);
       const target = nodes.find((n) => n.id === conn.target);
       if (!source || !target) return;
@@ -518,7 +539,7 @@ const OrchestratorReactFlow: React.FC = () => {
         })
       );
     },
-    [nodes, edges, setNodes, setEdges]
+    [nodes, edges, setNodes, setEdges, isArchitectureMode]
   );
 
   // Dropdown change → rewire edges & values
@@ -536,6 +557,7 @@ const OrchestratorReactFlow: React.FC = () => {
         objectSnapshot?: Record<string, any>;
       };
     }) => {
+      if (isArchitectureMode) return;
       if (bind == null) return;
       const bindStr: string = typeof bind === "string" ? bind : String(bind);
       const target = nodes.find((n) => n.id === nodeId);
@@ -733,16 +755,21 @@ const OrchestratorReactFlow: React.FC = () => {
         return working;
       });
     },
-    [nodes, setNodes, setEdges]
+    [nodes, setNodes, setEdges, isArchitectureMode]
   );
 
   const onCloneNode = useCallback(
     (nodeId: string) => {
+      if (isArchitectureMode) return;
       setNodes((nds) => {
         const original = nds.find((n) => n.id === nodeId);
         if (!original) return nds;
         const cloneId = `${nodeId}-copy-${(Math.random() * 1e5).toFixed(0)}`;
         const offset = { x: 40, y: 40 };
+        const restData: Record<string, any> = {
+          ...(original.data as Record<string, any>),
+        };
+        delete restData.friendlyId;
         const clone: Node = {
           ...original,
           id: cloneId,
@@ -751,7 +778,7 @@ const OrchestratorReactFlow: React.FC = () => {
             y: original.position.y + offset.y,
           },
           data: {
-            ...original.data,
+            ...restData,
             // reset values if you want a clean clone:
             // values: {},
           },
@@ -759,7 +786,7 @@ const OrchestratorReactFlow: React.FC = () => {
         return nds.concat(clone);
       });
     },
-    [setNodes]
+    [setNodes, isArchitectureMode]
   );
 
   const actuallyDeleteNode = useCallback(
@@ -774,29 +801,32 @@ const OrchestratorReactFlow: React.FC = () => {
 
   const onDeleteNode = useCallback(
     (nodeId: string) => {
+      if (isArchitectureMode) return;
       // snapshot for undo
       setUndoStack({ nodes: [...nodes], edges: [...edges] });
       setSnackOpen(true);
       // perform delete
       actuallyDeleteNode(nodeId);
     },
-    [nodes, edges, actuallyDeleteNode]
+    [nodes, edges, actuallyDeleteNode, isArchitectureMode]
   );
 
   // Delete selected edges via keyboard/backspace is automatic if you enable deleteKeyCode,
   // but add this as well so we can snapshot for undo when edges are deleted via UI:
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
+      if (isArchitectureMode) return;
       setUndoStack({ nodes: [...nodes], edges: [...edges] });
       setSnackOpen(true);
       setEdges((eds) => eds.filter((e) => !deleted.some((d) => d.id === e.id)));
     },
-    [nodes, edges, setEdges]
+    [nodes, edges, setEdges, isArchitectureMode]
   );
 
   // Optional: onNodesDelete for consistency (if you allow multi-select deletions)
   const onNodesDelete = useCallback(
     (deleted: Node[]) => {
+      if (isArchitectureMode) return;
       setUndoStack({ nodes: [...nodes], edges: [...edges] });
       setSnackOpen(true);
       const ids = new Set(deleted.map((n) => n.id));
@@ -805,7 +835,7 @@ const OrchestratorReactFlow: React.FC = () => {
         eds.filter((e) => !ids.has(e.source) && !ids.has(e.target))
       );
     },
-    [nodes, edges, setNodes, setEdges]
+    [nodes, edges, setNodes, setEdges, isArchitectureMode]
   );
 
   // Undo handler
@@ -820,6 +850,7 @@ const OrchestratorReactFlow: React.FC = () => {
   // Update node values
   const onValuesChange = useCallback(
     (nodeId: string, name: string, value: any) => {
+      if (isArchitectureMode) return;
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== nodeId) return n;
@@ -847,40 +878,69 @@ const OrchestratorReactFlow: React.FC = () => {
         })
       );
     },
-    [setNodes]
+    [setNodes, isArchitectureMode]
   );
 
-  // Handle save success callback
-  const handleSaveSuccess = useCallback((orchestratorId: string) => {
+  // Handler for when orchestrator is successfully saved
+  const handleOrchestrationSaved = useCallback((orchestratorId: string) => {
     setCurrentOrchestratorId(orchestratorId);
   }, []);
+
+  const handleNodesChange = useCallback(
+    (changes: Parameters<typeof onNodesChange>[0]) => {
+      if (isArchitectureMode) return;
+      onNodesChange(changes);
+    },
+    [isArchitectureMode, onNodesChange]
+  );
+
+  const handleEdgesChange = useCallback(
+    (changes: Parameters<typeof onEdgesChange>[0]) => {
+      if (isArchitectureMode) return;
+      onEdgesChange(changes);
+    },
+    [isArchitectureMode, onEdgesChange]
+  );
 
   // Inject helpers for DynamicForm (dynamic options + dropdown→edge sync)
   const nodesWithHelpers = useMemo(
     () =>
-      nodes.map((n) => ({
-        ...n,
-        data: {
-          ...n.data,
-          __helpers: {
-            ...(n.data as any).__helpers,
-            allNodes: nodes,
-            allEdges: edges,
-            // Adapter so child components can call (bind, newSourceId)
-            onLinkFieldChange: (
-              bind: string,
-              newSourceId: string,
-              context?: { objectSnapshot?: Record<string, any> }
-            ) =>
-              onLinkFieldChange({ nodeId: n.id, bind, newSourceId, context }),
-            onValuesChange: (name: string, value: any) =>
-              onValuesChange(n.id, name, value),
-            onCloneNode,
-            onDeleteNode,
+      nodes.map((n) => {
+        const baseType = n.type ?? "customNode";
+        return {
+          ...n,
+          type: isArchitectureMode ? "architectureNode" : baseType,
+          data: {
+            ...n.data,
+            __helpers: {
+              ...(n.data as any).__helpers,
+              allNodes: nodes,
+              allEdges: edges,
+              // Adapter so child components can call (bind, newSourceId)
+              onLinkFieldChange: (
+                bind: string,
+                newSourceId: string,
+                context?: { objectSnapshot?: Record<string, any> }
+              ) =>
+                onLinkFieldChange({ nodeId: n.id, bind, newSourceId, context }),
+              onValuesChange: (name: string, value: any) =>
+                onValuesChange(n.id, name, value),
+              onCloneNode,
+              onDeleteNode,
+            },
+            __viewMode: isArchitectureMode ? "architecture" : "detailed",
           },
-        },
-      })),
-    [nodes, edges, onLinkFieldChange, onValuesChange, onCloneNode, onDeleteNode]
+        };
+      }),
+    [
+      nodes,
+      edges,
+      isArchitectureMode,
+      onLinkFieldChange,
+      onValuesChange,
+      onCloneNode,
+      onDeleteNode,
+    ]
   );
 
   return (
@@ -910,16 +970,20 @@ const OrchestratorReactFlow: React.FC = () => {
         <ReactFlow
           nodes={nodesWithHelpers}
           edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
           colorMode={theme.palette.mode}
-          nodeTypes={{ customNode: CustomNode }}
+          nodeTypes={{ customNode: CustomNode, architectureNode: ArchitectureNode }}
           proOptions={{ hideAttribution: true }}
           onDrop={onDrop}
           onDragOver={onDragOver}
           onEdgesDelete={onEdgesDelete}
           onNodesDelete={onNodesDelete}
+          nodesDraggable={!isArchitectureMode}
+          nodesConnectable={!isArchitectureMode}
+          elementsSelectable={!isArchitectureMode}
+          selectionOnDrag={!isArchitectureMode}
           connectionMode={ConnectionMode.Loose}
           deleteKeyCode={["Delete", "Backspace"]}
           fitView
@@ -950,18 +1014,27 @@ const OrchestratorReactFlow: React.FC = () => {
             </Box>
           </Panel>
           <Panel position="top-right">
-            <SaveButton
-              nodes={nodes}
-              edges={edges}
-              templateInfo={templateInfo}
-              currentOrchestratorId={currentOrchestratorId}
-              onSaveSuccess={handleSaveSuccess}
-            />
-            <DeleteButton
-              currentOrchestratorId={currentOrchestratorId}
-              orchestratorName={templateInfo?.templateName}
-            />
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: 1,
+              }}
+            >
+              <OrchestratorMenu
+                nodes={nodes}
+                edges={edges}
+                templateInfo={templateInfo}
+                currentOrchestratorId={currentOrchestratorId}
+                onSaveSuccess={handleOrchestrationSaved}
+                orchestratorName={templateInfo?.templateName}
+                isArchitectureMode={isArchitectureMode}
+                onArchitectureModeChange={(value) => setIsArchitectureMode(value)}
+              />
+            </Box>
           </Panel>
+
           <Background />
           <Controls
             onFitView={() =>

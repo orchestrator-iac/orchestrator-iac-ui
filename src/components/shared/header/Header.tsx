@@ -73,7 +73,7 @@ const Header: React.FC = () => {
               height: 30,
               width: 60,
               marginRight: 1,
-              backgroundImage: "url('/logo.png')",
+              backgroundImage: "url('/landing-zone-orchestrator-ui/logo.png')",
               backgroundRepeat: "no-repeat",
               backgroundSize: "contain",
               backgroundPosition: "center",

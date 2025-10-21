@@ -1,5 +1,12 @@
-import React, { useCallback, useState } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import { useCallback, useState, useEffect } from "react";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -10,6 +17,8 @@ interface DeleteButtonProps {
   currentOrchestratorId: string | null;
   orchestratorName?: string;
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -20,19 +29,31 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
   currentOrchestratorId,
   orchestratorName,
   disabled = false,
+  open: externalOpen,
+  onOpenChange,
 }) => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  // Sync external open state with internal state
+  useEffect(() => {
+    if (externalOpen !== undefined && externalOpen !== confirmDialogOpen) {
+      setConfirmDialogOpen(externalOpen);
+      onOpenChange?.(externalOpen);
+    }
+  }, [externalOpen]);
+
   const handleClick = useCallback(() => {
     setConfirmDialogOpen(true);
-  }, []);
+    onOpenChange?.(true);
+  }, [onOpenChange]);
 
   const handleConfirmClose = useCallback(() => {
     setConfirmDialogOpen(false);
-  }, []);
+    onOpenChange?.(false);
+  }, [onOpenChange]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!currentOrchestratorId) return;
@@ -42,7 +63,7 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
       await dispatch(deleteOrchestrator(currentOrchestratorId)).unwrap();
       setConfirmDialogOpen(false);
       // Navigate to home or orchestrator list after successful deletion
-      navigate("/orchestrator");
+      navigate("/home");
     } catch (error) {
       console.error("Failed to delete orchestrator:", error);
       // Optionally show error toast/snackbar here
@@ -78,7 +99,8 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
         <DialogTitle id="delete-dialog-title">Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete {orchestratorName ? `"${orchestratorName}"` : "this orchestrator"}?
+            Are you sure you want to delete{" "}
+            {orchestratorName ? `"${orchestratorName}"` : "this orchestrator"}?
             This action cannot be undone.
           </DialogContentText>
         </DialogContent>
@@ -86,9 +108,9 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
           <Button onClick={handleConfirmClose} disabled={isDeleting}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleConfirmDelete} 
-            color="error" 
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
             variant="contained"
             disabled={isDeleting}
             autoFocus
@@ -100,3 +122,5 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
     </>
   );
 };
+
+DeleteButton.displayName = "DeleteButton";

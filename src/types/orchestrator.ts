@@ -12,6 +12,7 @@ export interface OrchestratorNode {
   };
   values: Record<string, any>; // User-provided or default values
   __nodeType?: string; // Resource type for rules/labels
+  friendlyId?: string; // Generated readable identifier like vpc-0001
   isExpanded?: boolean; // Accordion expanded/collapsed state
 }
 
@@ -42,6 +43,7 @@ export interface SaveOrchestratorRequest {
   templateInfo: TemplateInfo;
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];
+  previewImage?: string; // Base64 data URL of the orchestrator canvas
   metadata?: {
     createdAt?: Date;
     updatedAt?: Date;
@@ -58,13 +60,16 @@ export interface SaveOrchestratorResponse {
   templateInfo: TemplateInfo;
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];
+  previewImageUrl?: string; // URL or data URL of the preview image
   metadata?: {
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: string;
+    updatedAt?: string;
     version: string;
     tags?: string[];
   };
   userId: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // List view for saved orchestrations
@@ -77,8 +82,15 @@ export interface OrchestratorListItem {
   edges: OrchestratorEdge[];
   nodeCount: number;
   edgeCount: number;
-  createdAt: Date;
-  updatedAt: Date;
+  previewImageUrl?: string; // URL or data URL of the preview image
+  createdAt: string;
+  updatedAt: string;
+  metadata?: {
+    createdAt?: string;
+    updatedAt?: string;
+    version?: string;
+    tags?: string[];
+  };
 }
 
 // Response for listing orchestrations

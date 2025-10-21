@@ -6,6 +6,45 @@ import {
   ListOrchestrationsResponse,
 } from "../types/orchestrator";
 
+type MetadataLike = {
+  createdAt?: unknown;
+  updatedAt?: unknown;
+} & Record<string, unknown>;
+
+const toIsoString = (value: unknown): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  const date = new Date(value as any);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
+const normalizeMetadataDates = (metadata?: MetadataLike) => {
+  if (!metadata) {
+    return metadata;
+  }
+
+  const { createdAt, updatedAt, ...rest } = metadata;
+  const normalizedCreatedAt = toIsoString(createdAt);
+  const normalizedUpdatedAt = toIsoString(updatedAt);
+
+  return {
+    ...rest,
+    ...(normalizedCreatedAt ? { createdAt: normalizedCreatedAt } : {}),
+    ...(normalizedUpdatedAt ? { updatedAt: normalizedUpdatedAt } : {}),
+  };
+};
+
+const withNormalizedDates = <T extends Record<string, any>>(response: T) => ({
+  ...response,
+  createdAt: toIsoString(response.createdAt),
+  updatedAt: toIsoString(response.updatedAt),
+  metadata: normalizeMetadataDates(response.metadata),
+});
+
 /**
  * Service for managing orchestrator configurations (nodes, edges, metadata)
  * Handles CRUD operations for infrastructure templates
@@ -21,11 +60,7 @@ export const orchestratorService = {
   ): Promise<SaveOrchestratorResponse> => {
     try {
       const response = await apiService.post("/orchestrators", data);
-      return {
-        ...response,
-        createdAt: new Date(response.createdAt),
-        updatedAt: new Date(response.updatedAt),
-      };
+      return withNormalizedDates(response);
     } catch (error) {
       console.error("Failed to save orchestrator:", error);
       throw new Error("Failed to save orchestrator configuration");
@@ -44,11 +79,7 @@ export const orchestratorService = {
   ): Promise<SaveOrchestratorResponse> => {
     try {
       const response = await apiService.put(`/orchestrators/${id}`, data);
-      return {
-        ...response,
-        createdAt: new Date(response.createdAt),
-        updatedAt: new Date(response.updatedAt),
-      };
+      return withNormalizedDates(response);
     } catch (error) {
       console.error("Failed to update orchestrator:", error);
       throw new Error("Failed to update orchestrator configuration");
@@ -63,11 +94,7 @@ export const orchestratorService = {
   getOrchestrator: async (id: string): Promise<SaveOrchestratorResponse> => {
     try {
       const response = await apiService.get(`/orchestrators/${id}`);
-      return {
-        ...response,
-        createdAt: new Date(response.createdAt),
-        updatedAt: new Date(response.updatedAt),
-      };
+      return withNormalizedDates(response);
     } catch (error) {
       console.error("Failed to fetch orchestrator:", error);
       throw new Error("Failed to fetch orchestrator configuration");
@@ -103,8 +130,10 @@ export const orchestratorService = {
         // Calculate counts from arrays if not provided
         nodeCount: item.nodeCount ?? item.nodes?.length ?? 0,
         edgeCount: item.edgeCount ?? item.edges?.length ?? 0,
-        createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
-        updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+        previewImageUrl: item?.previewImageUrl,
+        createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
+        updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
+        metadata: normalizeMetadataDates(item.metadata),
       }));
       
       return {
@@ -147,11 +176,7 @@ export const orchestratorService = {
       const response = await apiService.post(`/orchestrators/${id}/duplicate`, {
         name: newName,
       });
-      return {
-        ...response,
-        createdAt: new Date(response.createdAt),
-        updatedAt: new Date(response.updatedAt),
-      };
+      return withNormalizedDates(response);
     } catch (error) {
       console.error("Failed to duplicate orchestrator:", error);
       throw new Error("Failed to duplicate orchestrator configuration");
@@ -173,8 +198,9 @@ export const orchestratorService = {
       const orchestrations = response.orchestrations || response;
       return orchestrations.map((item: any) => ({
         ...item,
-        createdAt: new Date(item.createdAt),
-        updatedAt: new Date(item.updatedAt),
+        createdAt: toIsoString(item.createdAt),
+        updatedAt: toIsoString(item.updatedAt),
+        metadata: normalizeMetadataDates(item.metadata),
       }));
     } catch (error) {
       console.error("Failed to search orchestrators:", error);

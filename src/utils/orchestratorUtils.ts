@@ -6,18 +6,92 @@ import {
   TemplateInfo,
 } from "../types/orchestrator";
 
+const FRIENDLY_ID_SUFFIX = /(\d+)$/;
+
+const formatFriendlySequence = (type: string, index: number): string =>
+  `${type}-${String(index).padStart(4, "0")}`;
+
+const extractFriendlyIndex = (
+  _type: string,
+  friendlyId?: string
+): number | null => {
+  if (!friendlyId) {
+    return null;
+  }
+
+  const match = FRIENDLY_ID_SUFFIX.exec(friendlyId);
+  if (!match) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(match[1], 10);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+const resolveNodeFriendlyId = (node: Node): string | undefined => {
+  const friendly = (node.data as any)?.friendlyId as string | undefined;
+  if (friendly) {
+    return friendly;
+  }
+  const snake = (node.data as any)?.friendly_id as string | undefined;
+  return snake;
+};
+
+const buildFriendlyIdLookup = (nodes: Node[]): Record<string, string> => {
+  const counts: Record<string, number> = {};
+  const lookup: Record<string, string> = {};
+
+  for (const node of nodes) {
+    const nodeType =
+      ((node.data as any)?.__nodeType || node.type || "node") as string;
+    if (!nodeType) {
+      continue;
+    }
+
+    const existingFriendly = resolveNodeFriendlyId(node);
+    const friendlyIndex = extractFriendlyIndex(nodeType, existingFriendly);
+    if (friendlyIndex != null) {
+      counts[nodeType] = Math.max(counts[nodeType] ?? 0, friendlyIndex);
+      lookup[node.id] = existingFriendly as string;
+    }
+  }
+
+  for (const node of nodes) {
+    const nodeType =
+      ((node.data as any)?.__nodeType || node.type || "node") as string;
+    if (!nodeType) {
+      continue;
+    }
+
+    if (lookup[node.id]) {
+      continue;
+    }
+
+    const nextIndex = (counts[nodeType] ?? 0) + 1;
+    counts[nodeType] = nextIndex;
+    lookup[node.id] = formatFriendlySequence(nodeType, nextIndex);
+  }
+
+  return lookup;
+};
+
 /**
  * Transform React Flow node to minimal database format
  * Extracts only the essential data needed to reconstruct the node
  * @param node - React Flow node instance
  * @returns Minimal node data for DB storage
  */
-export const transformNodeForDB = (node: Node): OrchestratorNode => {
+export const transformNodeForDB = (
+  node: Node,
+  friendlyId?: string
+): OrchestratorNode => {
   const resourceId = (node.data?.__resourceId || node.data?.__nodeType || node.type) as string;
   
   // Extract isExpanded from values if it was stored there, otherwise check node.data
   const values = node.data?.values as Record<string, any> | undefined;
   const isExpanded = values?.__isExpanded ?? node.data?.isExpanded ?? true;
+  const persistedFriendlyId = resolveNodeFriendlyId(node);
+  const outgoingFriendlyId = persistedFriendlyId ?? friendlyId;
   
   return {
     id: node.id,
@@ -28,6 +102,7 @@ export const transformNodeForDB = (node: Node): OrchestratorNode => {
     },
     values: values || {},
     __nodeType: node.data?.__nodeType as string | undefined,
+  friendlyId: outgoingFriendlyId,
     isExpanded: isExpanded,
   };
 };/**
@@ -75,11 +150,15 @@ export const prepareOrchestratorForSave = (
   name: string,
   description?: string
 ): SaveOrchestratorRequest => {
+  const friendlyIdLookup = buildFriendlyIdLookup(nodes);
+
   return {
     name,
     description,
     templateInfo,
-    nodes: nodes.map(transformNodeForDB),
+    nodes: nodes.map((node) =>
+      transformNodeForDB(node, friendlyIdLookup[node.id])
+    ),
     edges: edges.map(transformEdgeForDB),
     metadata: {
       createdAt: new Date(),
@@ -110,6 +189,7 @@ export const reconstructNodeFromDB = (
       __nodeType: dbNode.__nodeType || dbNode.resourceId,
       __resourceId: dbNode.resourceId,
       isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
+  friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
     },
   };
 };

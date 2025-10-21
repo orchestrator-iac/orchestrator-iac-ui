@@ -17,6 +17,7 @@ import { Node, Edge } from "@xyflow/react";
 import { orchestratorService } from "../../../services/orchestratorService";
 import { prepareOrchestratorForSave } from "../../../utils/orchestratorUtils";
 import { TemplateInfo } from "../../../types/orchestrator";
+import { generateFlowImage } from "../utils/downloadImage";
 
 interface SaveOrchestratorDialogProps {
   open: boolean;
@@ -64,6 +65,22 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
     setSaveError(null);
 
     try {
+      // Step 1: Generate the orchestrator image
+      let imageDataUrl: string | undefined;
+      try {
+        console.log("Generating orchestrator preview image...");
+        imageDataUrl = await generateFlowImage({
+          backgroundColor: '#ffffff',
+          quality: 0.85,
+          pixelRatio: 1.5,
+        });
+        console.log("Image generated successfully");
+      } catch (imageError) {
+        console.warn("Failed to generate preview image:", imageError);
+        // Continue with save even if image generation fails
+      }
+
+      // Step 2: Prepare orchestrator data
       const orchestratorData = prepareOrchestratorForSave(
         nodes,
         edges,
@@ -72,16 +89,32 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
         orchestratorDescription.trim() || undefined
       );
 
+      // Step 3: Add the image to the request if generated successfully
+      let dataWithImage = orchestratorData;
+      if (imageDataUrl) {
+        // Extract base64 data without the data URL prefix
+        // Format: "data:image/png;base64,iVBORw0KGgo..." -> "iVBORw0KGgo..."
+        const base64Data = imageDataUrl.includes(',') 
+          ? imageDataUrl.split(',')[1] 
+          : imageDataUrl;
+        
+        dataWithImage = { 
+          ...orchestratorData, 
+          previewImage: base64Data 
+        };
+      }
+
+      // Step 4: Save to backend
       let response;
       if (currentOrchestratorId) {
         // Update existing
         response = await orchestratorService.updateOrchestrator(
           currentOrchestratorId,
-          orchestratorData
+          dataWithImage
         );
       } else {
         // Create new
-        response = await orchestratorService.saveOrchestrator(orchestratorData);
+        response = await orchestratorService.saveOrchestrator(dataWithImage);
       }
 
       // Notify parent of successful save
