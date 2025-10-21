@@ -130,6 +130,7 @@ export const orchestratorService = {
         // Calculate counts from arrays if not provided
         nodeCount: item.nodeCount ?? item.nodes?.length ?? 0,
         edgeCount: item.edgeCount ?? item.edges?.length ?? 0,
+        previewImageUrl: item?.previewImageUrl,
         createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
         updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
         metadata: normalizeMetadataDates(item.metadata),

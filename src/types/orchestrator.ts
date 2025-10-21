@@ -43,6 +43,7 @@ export interface SaveOrchestratorRequest {
   templateInfo: TemplateInfo;
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];
+  previewImage?: string; // Base64 data URL of the orchestrator canvas
   metadata?: {
     createdAt?: Date;
     updatedAt?: Date;
@@ -59,6 +60,7 @@ export interface SaveOrchestratorResponse {
   templateInfo: TemplateInfo;
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];
+  previewImageUrl?: string; // URL or data URL of the preview image
   metadata?: {
     createdAt?: string;
     updatedAt?: string;
@@ -80,6 +82,7 @@ export interface OrchestratorListItem {
   edges: OrchestratorEdge[];
   nodeCount: number;
   edgeCount: number;
+  previewImageUrl?: string; // URL or data URL of the preview image
   createdAt: string;
   updatedAt: string;
   metadata?: {

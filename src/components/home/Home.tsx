@@ -69,7 +69,7 @@ const Home: React.FC = () => {
         spacing={1}
         alignItems="stretch"
       >
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} display="flex">
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} display="flex">
           <Box className={styles.card} onClick={() => navigateOrchestrator('new')}>
             <div className={styles.cardBlank}>
               <FontAwesomeIcon icon="plus" size="5x" />
@@ -82,7 +82,7 @@ const Home: React.FC = () => {
           orchestrators.map((orchestrator) => (
             <Grid
               key={orchestrator._id}
-              size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
+              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
               display="flex"
             >
               <Box
@@ -93,15 +93,23 @@ const Home: React.FC = () => {
                   cloudType={orchestrator.templateInfo?.cloud || "aws"}
                   className={styles.cloudTypeLogo}
                 />
-                <Box className={styles.cardImage} sx={{
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  fontSize: '3rem',
-                  color: 'primary.main'
-                }}>
-                  <FontAwesomeIcon icon="sitemap" />
-                </Box>
+                {orchestrator.previewImageUrl ? (
+                  <img
+                    src={orchestrator.previewImageUrl}
+                    alt={orchestrator.name}
+                    className={styles.cardImage}
+                  />
+                ) : (
+                  <Box className={styles.cardImage} sx={{
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontSize: '3rem',
+                    color: 'primary.main'
+                  }}>
+                    <FontAwesomeIcon icon="sitemap" />
+                  </Box>
+                )}
                 <h3 className={styles.cardTitle}>
                   <Link
                     to={`/orchestrator/${orchestrator._id}`}
