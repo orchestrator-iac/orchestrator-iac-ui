@@ -14,9 +14,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
+import DownloadIcon from '@mui/icons-material/Download';
 import { SaveButton } from '../save';
 import { DeleteButton } from '../delete';
 import { TemplateInfo } from '../../../types/orchestrator';
+import { downloadFlowAsImage } from '../utils/downloadImage.ts';
 
 interface OrchestratorMenuProps {
   nodes: Node[];
@@ -63,6 +65,18 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
     handleMenuClose();
+  };
+
+  const handleDownloadImage = async () => {
+    handleMenuClose();
+    try {
+      await downloadFlowAsImage({
+        fileName: orchestratorName ? `${orchestratorName}.png` : 'orchestrator.png',
+        backgroundColor: '#ffffff',
+      });
+    } catch (error) {
+      console.error('Failed to download orchestrator image', error);
+    }
   };
 
   return (
@@ -120,7 +134,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           <ListItemText
             primary="Architecture mode"
             secondary={isArchitectureMode ? 'Compact cards' : 'Detailed forms'}
-            primaryTypographyProps={{ fontWeight: 500 }}
+            slotProps={{ primary: { sx: { fontWeight: 500 } } }}
             sx={{ cursor: 'pointer', mr: 1 }}
             onClick={(event) => {
               event.stopPropagation();
@@ -135,8 +149,15 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
             onClick={(event) => {
               event.stopPropagation();
             }}
-            inputProps={{ 'aria-label': 'Toggle architecture mode' }}
+            slotProps={{ input: { 'aria-label': 'Toggle architecture mode' } }}
           />
+        </MenuItem>
+
+        <MenuItem onClick={handleDownloadImage}>
+          <ListItemIcon>
+            <DownloadIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText>Download as Image</ListItemText>
         </MenuItem>
 
         <MenuItem onClick={handleSaveClick} disabled={!canSave}>
