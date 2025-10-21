@@ -27,8 +27,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchIcons, resetIcons } from "../../../store/iconsSlice";
 import ModificationHistory from "../modification/ModificationHistoryTimeline";
 
-const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
-
 const BasicInfo: React.FC = () => {
   const { control, formState, setValue, watch } = useFormContext();
   const modifiedHistory = watch("modifiedHistory");
@@ -228,7 +226,7 @@ const BasicInfo: React.FC = () => {
                       {field.value?.url && (
                         <Box
                           component="img"
-                          src={`${API_HOST_URL}${field.value.url}`}
+                          src={field.value.url}
                           alt="Selected Icon"
                           sx={{
                             width: 32,
@@ -343,7 +341,7 @@ const BasicInfo: React.FC = () => {
                     <CardMedia
                       component="img"
                       height="120"
-                      image={`${API_HOST_URL}${icon.url}`}
+                      image={icon.url}
                       alt={icon.name}
                     />
                     <CardContent>

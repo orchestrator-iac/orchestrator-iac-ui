@@ -17,14 +17,13 @@ import {
   KeyboardArrowRight as KeyboardArrowRightIcon,
   KeyboardArrowLeft as KeyboardArrowLeftIcon,
 } from "@mui/icons-material";
-import Fuse from "fuse.js"; // NEW ✅
+import Fuse from "fuse.js";
 
 import { useDnD } from "./DnDContext";
 import { RootState, AppDispatch } from "../../../store";
 import { fetchResources } from "../../../store/resourcesSlice";
 import { CloudProvider } from "../../../types/clouds-info";
 
-const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 const drawerWidth = 240;
 
 interface SidebarProps {
@@ -202,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
             >
               <Box
                 component="img"
-                src={`${API_HOST_URL}${resource?.resourceIcon?.url}`}
+                src={resource?.resourceIcon?.url}
                 alt={resource.resourceName}
                 sx={{
                   width: 40,

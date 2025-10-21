@@ -14,8 +14,6 @@ import awsLogo from "./../../assets/aws_logo.svg";
 import azLogo from "./../../assets/az_logo.svg";
 import gcpLogo from "./../../assets/gcp_logo.svg";
 
-const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
-
 const logoMap: Record<string, string> = {
   aws: awsLogo,
   azure: azLogo,
@@ -168,7 +166,7 @@ const Home: React.FC = () => {
                 className={styles.cloudTypeLogo}
               />
               <img
-                src={`${API_HOST_URL}${resource?.resourceIcon?.url}`}
+                src={resource?.resourceIcon?.url}
                 alt={resource.resourceName}
                 className={styles.cardImage}
               />

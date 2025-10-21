@@ -22,7 +22,6 @@ import DynamicForm from "./DynamicForm";
 import { getFriendlyId } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
 
-const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
 const CustomNode: React.FC<OrchestratorNodeProps> = ({
   id,
@@ -101,7 +100,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
         {data?.header?.icon && (
           <Box
             component="img"
-            src={`${API_HOST_URL}${data?.header?.icon}`}
+            src={data?.header?.icon}
             alt={data?.header?.label || "Resource Icon"}
             sx={{
               width: 42,
