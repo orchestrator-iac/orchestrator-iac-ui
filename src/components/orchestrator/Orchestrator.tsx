@@ -125,6 +125,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const [snackOpen, setSnackOpen] = useState(false);
   const [templateInfo, setTemplateInfo] = useState<CloudConfig>({
     templateName: "",
+    description: "",
     cloud: undefined,
     region: "",
   });
@@ -371,6 +372,7 @@ const OrchestratorReactFlow: React.FC = () => {
         // Pre-fill template info from orchestrator data
         const templateInfo = {
           templateName: orchestratorData.templateInfo?.templateName,
+          description: orchestratorData.templateInfo?.description || "",
           cloud: orchestratorData.templateInfo?.cloud as any,
           region: orchestratorData.templateInfo?.region || "",
         };
@@ -1049,6 +1051,8 @@ const OrchestratorReactFlow: React.FC = () => {
       </Box>
       <InitPopup
         open={initOpen}
+        templateInfo={templateInfo}
+        setTemplateInfo={setTemplateInfo}
         onClose={() => setInitOpen(false)}
         onSubmit={handleInitSubmit}
       />

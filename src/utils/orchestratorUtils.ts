@@ -138,23 +138,17 @@ export const transformEdgeForDB = (edge: Edge): OrchestratorEdge => {
  * Transforms all nodes and edges to minimal format
  * @param nodes - Array of React Flow nodes
  * @param edges - Array of React Flow edges
- * @param templateInfo - Template configuration metadata
- * @param name - User-defined name for this configuration
- * @param description - Optional description
+ * @param templateInfo - Template configuration metadata (includes templateName and description)
  * @returns Complete orchestrator save request
  */
 export const prepareOrchestratorForSave = (
   nodes: Node[],
   edges: Edge[],
-  templateInfo: TemplateInfo,
-  name: string,
-  description?: string
+  templateInfo: TemplateInfo
 ): SaveOrchestratorRequest => {
   const friendlyIdLookup = buildFriendlyIdLookup(nodes);
 
   return {
-    name,
-    description,
     templateInfo,
     nodes: nodes.map((node) =>
       transformNodeForDB(node, friendlyIdLookup[node.id])

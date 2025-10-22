@@ -32,14 +32,13 @@ export interface OrchestratorEdge {
 // Template configuration metadata
 export interface TemplateInfo {
   templateName: string;
+  description?: string; // Description of the orchestrator configuration
   cloud?: string; // e.g., "aws", "azure", "gcp"
   region?: string;
 }
 
 // Complete orchestrator state for saving
 export interface SaveOrchestratorRequest {
-  name: string; // User-defined name for this configuration
-  description?: string;
   templateInfo: TemplateInfo;
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];
@@ -55,8 +54,6 @@ export interface SaveOrchestratorRequest {
 // Response from save operation
 export interface SaveOrchestratorResponse {
   _id: string;
-  name: string;
-  description?: string;
   templateInfo: TemplateInfo;
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];
@@ -75,8 +72,6 @@ export interface SaveOrchestratorResponse {
 // List view for saved orchestrations
 export interface OrchestratorListItem {
   _id: string;
-  name: string;
-  description?: string;
   templateInfo: TemplateInfo;
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];

@@ -122,8 +122,6 @@ export const orchestratorService = {
       
       const mappedOrchestrations = orchestrationsList.map((item: any) => ({
         _id: item.id || item._id,
-        name: item.name,
-        description: item.description,
         templateInfo: item.templateInfo,
         nodes: item.nodes || [],
         edges: item.edges || [],

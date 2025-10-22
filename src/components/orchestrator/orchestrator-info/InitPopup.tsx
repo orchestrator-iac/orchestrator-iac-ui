@@ -13,9 +13,9 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import apiService from "../../../services/apiService";
-import { cloudRegions } from "../../../types/clouds-info";
+import { CloudConfig, CloudProvider, cloudRegions } from "../../../types/clouds-info";
 
 type TeamMember = {
   id?: string;
@@ -25,6 +25,8 @@ type TeamMember = {
 
 type InitPopupProps = {
   open: boolean;
+  templateInfo?: CloudConfig;
+  setTemplateInfo: (info: CloudConfig) => void;
   onClose: () => void;
   onSubmit: (data: {
     templateName: string;
@@ -34,11 +36,38 @@ type InitPopupProps = {
   }) => void;
 };
 
-const InitPopup = ({ open, onClose, onSubmit }: InitPopupProps) => {
-  const [form, setForm] = useState({ templateName: "", cloud: "", region: "" });
+
+const InitPopup = ({
+  open,
+  templateInfo,
+  setTemplateInfo,
+  onClose,
+  onSubmit,
+}: InitPopupProps) => {
+  const [form, setForm] = useState({
+    templateName: templateInfo?.templateName || "",
+    description: templateInfo?.description || "",
+    cloud: templateInfo?.cloud || "",
+    region: templateInfo?.region || "",
+  });
   const [email, setEmail] = useState("");
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+
+  useEffect(() => {
+    setTouched({
+      templateName: false,
+      description: false,
+      cloud: false,
+      region: false,
+    });
+    setForm({
+      templateName: templateInfo?.templateName || "",
+      description: templateInfo?.description || "",
+      cloud: templateInfo?.cloud || "",
+      region: templateInfo?.region || "",
+    });
+  }, [templateInfo]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -63,6 +92,12 @@ const InitPopup = ({ open, onClose, onSubmit }: InitPopupProps) => {
 
   const handleSubmit = () => {
     if (!form.templateName || !form.cloud || !form.region) return;
+    setTemplateInfo({
+      templateName: form.templateName,
+      description: form.description,
+      cloud: form.cloud as CloudProvider,
+      region: form.region,
+    });
     onSubmit({ ...form, team });
     setTimeout(() => onClose(), 0);
   };
@@ -103,6 +138,18 @@ const InitPopup = ({ open, onClose, onSubmit }: InitPopupProps) => {
               }
               fullWidth
               required
+            />
+          </Grid>
+
+          <Grid size={12}>
+            <TextField
+              label="Description"
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              fullWidth
+              multiline
+              minRows={2}
             />
           </Grid>
 

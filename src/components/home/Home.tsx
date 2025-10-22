@@ -96,7 +96,7 @@ const Home: React.FC = () => {
                 {orchestrator.previewImageUrl ? (
                   <img
                     src={orchestrator.previewImageUrl}
-                    alt={orchestrator.name}
+                    alt={orchestrator.templateInfo?.templateName || "Orchestrator"}
                     className={styles.cardImage}
                   />
                 ) : (
@@ -114,13 +114,13 @@ const Home: React.FC = () => {
                   <Link
                     to={`/orchestrator/${orchestrator._id}`}
                     style={{ textDecoration: "none", color: "inherit" }}
-                    aria-label={`View orchestrator ${orchestrator.name}`}
+                    aria-label={`View orchestrator ${orchestrator.templateInfo?.templateName || "Orchestrator"}`}
                   >
-                    {orchestrator.name}
+                    {orchestrator.templateInfo?.templateName || "Unnamed Orchestrator"}
                   </Link>
                 </h3>
                 <p className={styles.cardDescription}>
-                  {orchestrator.description || "No description"}
+                  {orchestrator.templateInfo?.description || "No description"}
                 </p>
                 <code>
                   {orchestrator.nodeCount} nodes • {orchestrator.edgeCount} connections
