@@ -36,6 +36,7 @@ type InitPopupProps = {
   }) => void;
 };
 
+
 const InitPopup = ({
   open,
   templateInfo,
