@@ -2,6 +2,7 @@ export type CloudProvider = 'aws' | 'azure' | 'gcp';
 
 export interface CloudConfig {
   templateName: string;
+  description: string;
   cloud: CloudProvider | undefined;
   region: string;
 }

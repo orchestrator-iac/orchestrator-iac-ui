@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -42,11 +42,20 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
   currentOrchestratorId,
   onSaveSuccess,
 }) => {
-  const [orchestratorName, setOrchestratorName] = useState("");
-  const [orchestratorDescription, setOrchestratorDescription] = useState("");
+  const [templateName, setTemplateName] = useState(templateInfo?.templateName || "");
+  const [templateDescription, setTemplateDescription] = useState(templateInfo?.description || "");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Update state when dialog opens or templateInfo changes
+  useEffect(() => {
+    if (open) {
+      setTemplateName(templateInfo?.templateName || "");
+      setTemplateDescription(templateInfo?.description || "");
+      setSaveError(null);
+    }
+  }, [open, templateInfo?.templateName, templateInfo?.description]);
 
   const handleClose = useCallback(() => {
     if (!isSaving) {
@@ -56,7 +65,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
   }, [isSaving, onClose]);
 
   const handleSave = useCallback(async () => {
-    if (!orchestratorName.trim()) {
+    if (!templateName.trim()) {
       setSaveError("Please provide a name for this orchestrator");
       return;
     }
@@ -80,13 +89,17 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
         // Continue with save even if image generation fails
       }
 
-      // Step 2: Prepare orchestrator data
+      // Step 2: Prepare orchestrator data with updated templateInfo
+      const updatedTemplateInfo: TemplateInfo = {
+        ...templateInfo,
+        templateName: templateName.trim(),
+        description: templateDescription.trim() || undefined,
+      };
+
       const orchestratorData = prepareOrchestratorForSave(
         nodes,
         edges,
-        templateInfo,
-        orchestratorName.trim(),
-        orchestratorDescription.trim() || undefined
+        updatedTemplateInfo
       );
 
       // Step 3: Add the image to the request if generated successfully
@@ -125,8 +138,8 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
 
       // Close dialog after short delay
       setTimeout(() => {
-        setOrchestratorName("");
-        setOrchestratorDescription("");
+        setTemplateName("");
+        setTemplateDescription("");
         handleClose();
       }, 1500);
     } catch (error: any) {
@@ -139,8 +152,8 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
     nodes,
     edges,
     templateInfo,
-    orchestratorName,
-    orchestratorDescription,
+    templateName,
+    templateDescription,
     currentOrchestratorId,
     onSaveSuccess,
     handleClose,
@@ -153,11 +166,11 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
             <TextField
-              label="Name"
+              label="Template Name"
               required
               fullWidth
-              value={orchestratorName}
-              onChange={(e) => setOrchestratorName(e.target.value)}
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
               placeholder="e.g., Production VPC Setup"
               autoFocus
               disabled={isSaving}
@@ -167,8 +180,8 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
               fullWidth
               multiline
               rows={3}
-              value={orchestratorDescription}
-              onChange={(e) => setOrchestratorDescription(e.target.value)}
+              value={templateDescription}
+              onChange={(e) => setTemplateDescription(e.target.value)}
               placeholder="Optional description of this configuration"
               disabled={isSaving}
             />
@@ -187,7 +200,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
             onClick={handleSave}
             variant="contained"
             color="primary"
-            disabled={isSaving || !orchestratorName.trim()}
+            disabled={isSaving || !templateName.trim()}
             startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
           >
             {isSaving ? "Saving..." : currentOrchestratorId ? "Update" : "Save"}
