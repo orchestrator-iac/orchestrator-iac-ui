@@ -205,4 +205,22 @@ export const orchestratorService = {
       throw new Error("Failed to search orchestrator configurations");
     }
   },
+
+  /**
+   * Trigger IaC (e.g., Terraform) generation for a saved orchestrator
+   * @param id - Orchestrator ID to generate IaC for
+   * @returns Backend response (message, status, optional links)
+   */
+  generateIac: async (
+    id: string
+  ): Promise<{ status?: string; message?: string; downloadIaCUrl?: string; downloadUrl?: string; url?: string; link?: string }> => {
+    try {
+      // Adjust endpoint as needed to match backend
+      const response = await apiService.post(`/orchestrators/${id}/generate`);
+      return response;
+    } catch (error) {
+      console.error("Failed to generate IaC:", error);
+      throw new Error("Failed to generate infrastructure as code");
+    }
+  },
 };

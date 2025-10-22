@@ -6,7 +6,6 @@ import { useTheme } from "@mui/material/styles";
 import { getFriendlyId, resolveValueByPath } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
 
-const API_HOST_URL = import.meta.env.VITE_API_HOST_URL;
 
 const asDisplayString = (value: any): string => {
   if (value == null) {
@@ -37,10 +36,7 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
   );
 
   const iconSrc = React.useMemo(() => {
-    if (!data?.header?.icon) {
-      return "";
-    }
-    return `${API_HOST_URL}${data.header.icon}`;
+    return data?.header?.icon || "";
   }, [data?.header?.icon]);
 
   const architectureView = data?.architectureView;
