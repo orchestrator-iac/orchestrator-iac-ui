@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   IconButton,
@@ -8,17 +8,23 @@ import {
   ListItemText,
   Tooltip,
   Switch,
-} from '@mui/material';
-import { Node, Edge } from '@xyflow/react';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import SaveIcon from '@mui/icons-material/Save';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import ArchitectureIcon from '@mui/icons-material/Architecture';
-import DownloadIcon from '@mui/icons-material/Download';
-import { SaveButton } from '../save';
-import { DeleteButton } from '../delete';
-import { TemplateInfo } from '../../../types/orchestrator';
-import { downloadFlowAsImage } from '../utils/downloadImage.ts';
+  Alert,
+  Snackbar,
+  CircularProgress,
+} from "@mui/material";
+import { Node, Edge } from "@xyflow/react";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SaveIcon from "@mui/icons-material/Save";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ArchitectureIcon from "@mui/icons-material/Architecture";
+import DownloadIcon from "@mui/icons-material/Download";
+import CodeIcon from "@mui/icons-material/Code";
+import ArchiveIcon from "@mui/icons-material/Archive";
+import { SaveButton } from "../save";
+import { DeleteButton } from "../delete";
+import { TemplateInfo } from "../../../types/orchestrator";
+import { downloadFlowAsImage } from "../utils/downloadImage.ts";
+import { orchestratorService } from "../../../services/orchestratorService";
 
 interface OrchestratorMenuProps {
   nodes: Node[];
@@ -44,6 +50,16 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "none" | "generate" | "downloadZip"
+  >("none");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info";
+  }>({ open: false, message: "", severity: "success" });
   const open = Boolean(anchorEl);
 
   const canSave = nodes.length > 0;
@@ -67,17 +83,131 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
     handleMenuClose();
   };
 
+  const handleGenerateClick = () => {
+    // Always save before generating IaC
+    setPendingAction("generate");
+    setSaveDialogOpen(true);
+    handleMenuClose();
+  };
+
+  const handleDownloadZipClick = () => {
+    // Save first, then request generation and download from returned URL
+    setPendingAction("downloadZip");
+    setSaveDialogOpen(true);
+    handleMenuClose();
+  };
+
   const handleDownloadImage = async () => {
     handleMenuClose();
     try {
       await downloadFlowAsImage({
-        fileName: orchestratorName ? `${orchestratorName}.png` : 'orchestrator.png',
-        backgroundColor: '#ffffff',
+        fileName: orchestratorName
+          ? `${orchestratorName}.png`
+          : "orchestrator.png",
+        backgroundColor: "#ffffff",
       });
     } catch (error) {
-      console.error('Failed to download orchestrator image', error);
+      console.error("Failed to download orchestrator image", error);
     }
   };
+
+  const triggerGenerate = useCallback(async (id: string) => {
+    setIsGenerating(true);
+    try {
+      await orchestratorService.generateIac(id);
+      setSnackbar({
+        open: true,
+        message: "IaC generation request submitted successfully.",
+        severity: "success",
+      });
+    } catch (error: any) {
+      console.error("Failed to generate IaC:", error);
+      setSnackbar({
+        open: true,
+        message: error?.message || "Failed to generate IaC",
+        severity: "error",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  }, []);
+
+  const triggerDownload = useCallback(async (id: string) => {
+    setIsDownloading(true);
+    try {
+      const resp = await orchestratorService.generateIac(id);
+      const url =
+        resp?.downloadIaCUrl || resp?.downloadUrl || resp?.url || resp?.link;
+      if (url) {
+        try {
+          const a = document.createElement("a");
+          a.href = url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } catch {
+          if (!window.open(url, "_blank")) {
+            globalThis.location.href = url;
+          }
+        }
+        setSnackbar({
+          open: true,
+          message: "Your IaC zip is downloading.",
+          severity: "success",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: "No download URL returned from server.",
+          severity: "error",
+        });
+      }
+    } catch (error: any) {
+      console.error("Failed to download IaC:", error);
+      setSnackbar({
+        open: true,
+        message: error?.message || "Failed to download IaC",
+        severity: "error",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  }, []);
+
+  const handleSaveSuccessInternal = useCallback(
+    async (savedId: string) => {
+      if (!savedId) {
+        console.error("handleSaveSuccessInternal received empty id", { savedId, pendingAction });
+        setSnackbar({ open: true, message: "Save returned no ID", severity: "error" });
+        return;
+      }
+
+      onSaveSuccess(savedId);
+
+      const action = pendingAction;
+      setPendingAction("none");
+      if (action === "generate") {
+        await triggerGenerate(savedId);
+      } else if (action === "downloadZip") {
+        await triggerDownload(savedId);
+      }
+    },
+    [onSaveSuccess, pendingAction, triggerDownload, triggerGenerate]
+  );
+
+  // If the save dialog is closed without saving (cancel), clear pending action
+  useEffect(() => {
+    if (
+      !saveDialogOpen &&
+      pendingAction !== "none" &&
+      !isGenerating &&
+      !isDownloading
+    ) {
+      setPendingAction("none");
+    }
+  }, [saveDialogOpen, pendingAction, isGenerating, isDownloading]);
 
   return (
     <>
@@ -85,10 +215,10 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         <IconButton
           onClick={handleMenuClick}
           sx={{
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             boxShadow: 2,
-            '&:hover': {
-              bgcolor: 'background.paper',
+            "&:hover": {
+              bgcolor: "background.paper",
               boxShadow: 4,
             },
           }}
@@ -102,12 +232,12 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         open={open}
         onClose={handleMenuClose}
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
+          vertical: "bottom",
+          horizontal: "right",
         }}
         transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
+          vertical: "top",
+          horizontal: "right",
         }}
         slotProps={{
           paper: {
@@ -123,19 +253,19 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           onClick={(event) => {
             event.stopPropagation();
           }}
-          sx={{ alignItems: 'center', gap: 1 }}
+          sx={{ alignItems: "center", gap: 1 }}
         >
           <ListItemIcon>
             <ArchitectureIcon
               fontSize="small"
-              color={isArchitectureMode ? 'primary' : 'inherit'}
+              color={isArchitectureMode ? "primary" : "inherit"}
             />
           </ListItemIcon>
           <ListItemText
             primary="Architecture mode"
-            secondary={isArchitectureMode ? 'Compact cards' : 'Detailed forms'}
+            secondary={isArchitectureMode ? "Compact cards" : "Detailed forms"}
             slotProps={{ primary: { sx: { fontWeight: 500 } } }}
-            sx={{ cursor: 'pointer', mr: 1 }}
+            sx={{ cursor: "pointer", mr: 1 }}
             onClick={(event) => {
               event.stopPropagation();
               onArchitectureModeChange(!isArchitectureMode);
@@ -149,7 +279,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
             onClick={(event) => {
               event.stopPropagation();
             }}
-            slotProps={{ input: { 'aria-label': 'Toggle architecture mode' } }}
+            slotProps={{ input: { "aria-label": "Toggle architecture mode" } }}
           />
         </MenuItem>
 
@@ -160,9 +290,50 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           <ListItemText>Download as Image</ListItemText>
         </MenuItem>
 
+        <MenuItem
+          onClick={handleGenerateClick}
+          disabled={!canSave || isGenerating}
+        >
+          <ListItemIcon>
+            {isGenerating ? (
+              <CircularProgress size={18} />
+            ) : (
+              <CodeIcon
+                fontSize="small"
+                color={canSave ? "primary" : "disabled"}
+              />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {isGenerating ? "Generating IaC…" : "Generate IaC"}
+          </ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={handleDownloadZipClick}
+          disabled={!canSave || isDownloading}
+        >
+          <ListItemIcon>
+            {isDownloading ? (
+              <CircularProgress size={18} />
+            ) : (
+              <ArchiveIcon
+                fontSize="small"
+                color={canSave ? "primary" : "disabled"}
+              />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {isDownloading ? "Preparing Zip…" : "Download IaC (zip)"}
+          </ListItemText>
+        </MenuItem>
+
         <MenuItem onClick={handleSaveClick} disabled={!canSave}>
           <ListItemIcon>
-            <SaveIcon fontSize="small" color={canSave ? 'primary' : 'disabled'} />
+            <SaveIcon
+              fontSize="small"
+              color={canSave ? "primary" : "disabled"}
+            />
           </ListItemIcon>
           <ListItemText>Save Orchestrator</ListItemText>
         </MenuItem>
@@ -170,23 +341,26 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         <MenuItem
           onClick={handleDeleteClick}
           disabled={!canDelete}
-          sx={{ color: canDelete ? 'error.main' : 'text.disabled' }}
+          sx={{ color: canDelete ? "error.main" : "text.disabled" }}
         >
           <ListItemIcon>
-            <DeleteOutlineIcon fontSize="small" color={canDelete ? 'error' : 'disabled'} />
+            <DeleteOutlineIcon
+              fontSize="small"
+              color={canDelete ? "error" : "disabled"}
+            />
           </ListItemIcon>
           <ListItemText>Delete Orchestrator</ListItemText>
         </MenuItem>
       </Menu>
 
       {/* Hidden SaveButton - controlled by menu */}
-      <Box sx={{ display: 'none' }}>
+      <Box sx={{ display: "none" }}>
         <SaveButton
           nodes={nodes}
           edges={edges}
           templateInfo={templateInfo}
           currentOrchestratorId={currentOrchestratorId}
-          onSaveSuccess={onSaveSuccess}
+          onSaveSuccess={handleSaveSuccessInternal}
           disabled={!canSave}
           open={saveDialogOpen}
           onOpenChange={setSaveDialogOpen}
@@ -194,7 +368,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
       </Box>
 
       {/* Hidden DeleteButton - controlled by menu */}
-      <Box sx={{ display: 'none' }}>
+      <Box sx={{ display: "none" }}>
         <DeleteButton
           currentOrchestratorId={currentOrchestratorId}
           orchestratorName={orchestratorName}
@@ -203,6 +377,21 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           onOpenChange={setDeleteDialogOpen}
         />
       </Box>
+
+      {/* Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };

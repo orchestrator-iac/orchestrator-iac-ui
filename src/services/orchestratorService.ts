@@ -38,11 +38,13 @@ const normalizeMetadataDates = (metadata?: MetadataLike) => {
   };
 };
 
+// Ensure we always expose a canonical `_id` even if backend returns `id`
 const withNormalizedDates = <T extends Record<string, any>>(response: T) => ({
   ...response,
-  createdAt: toIsoString(response.createdAt),
-  updatedAt: toIsoString(response.updatedAt),
-  metadata: normalizeMetadataDates(response.metadata),
+  _id: (response as any)._id || (response as any).id, // normalize id field
+  createdAt: toIsoString((response as any).createdAt),
+  updatedAt: toIsoString((response as any).updatedAt),
+  metadata: normalizeMetadataDates((response as any).metadata),
 });
 
 /**
@@ -203,6 +205,24 @@ export const orchestratorService = {
     } catch (error) {
       console.error("Failed to search orchestrators:", error);
       throw new Error("Failed to search orchestrator configurations");
+    }
+  },
+
+  /**
+   * Trigger IaC (e.g., Terraform) generation for a saved orchestrator
+   * @param id - Orchestrator ID to generate IaC for
+   * @returns Backend response (message, status, optional links)
+   */
+  generateIac: async (
+    id: string
+  ): Promise<{ status?: string; message?: string; downloadIaCUrl?: string; downloadUrl?: string; url?: string; link?: string }> => {
+    try {
+      // Adjust endpoint as needed to match backend
+      const response = await apiService.post(`/orchestrators/${id}/generate`);
+      return response;
+    } catch (error) {
+      console.error("Failed to generate IaC:", error);
+      throw new Error("Failed to generate infrastructure as code");
     }
   },
 };
