@@ -42,8 +42,12 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
   currentOrchestratorId,
   onSaveSuccess,
 }) => {
-  const [templateName, setTemplateName] = useState(templateInfo?.templateName || "");
-  const [templateDescription, setTemplateDescription] = useState(templateInfo?.description || "");
+  const [templateName, setTemplateName] = useState(
+    templateInfo?.templateName || ""
+  );
+  const [templateDescription, setTemplateDescription] = useState(
+    templateInfo?.description || ""
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -79,7 +83,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
       try {
         console.log("Generating orchestrator preview image...");
         imageDataUrl = await generateFlowImage({
-          backgroundColor: '#ffffff',
+          backgroundColor: "#ffffff",
           quality: 0.85,
           pixelRatio: 1.5,
         });
@@ -107,13 +111,13 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
       if (imageDataUrl) {
         // Extract base64 data without the data URL prefix
         // Format: "data:image/png;base64,iVBORw0KGgo..." -> "iVBORw0KGgo..."
-        const base64Data = imageDataUrl.includes(',') 
-          ? imageDataUrl.split(',')[1] 
+        const base64Data = imageDataUrl.includes(",")
+          ? imageDataUrl.split(",")[1]
           : imageDataUrl;
-        
-        dataWithImage = { 
-          ...orchestratorData, 
-          previewImage: base64Data 
+
+        dataWithImage = {
+          ...orchestratorData,
+          previewImage: base64Data,
         };
       }
 
@@ -130,8 +134,19 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
         response = await orchestratorService.saveOrchestrator(dataWithImage);
       }
 
+      // Determine saved id (support either _id or id from backend)
+      const savedId: string | undefined =
+        (response as any)?._id || (response as any)?.id;
+      if (!savedId) {
+        console.error(
+          "Save succeeded but no id was returned in response",
+          response
+        );
+        throw new Error("Backend did not return an orchestrator id");
+      }
+
       // Notify parent of successful save
-      onSaveSuccess(response._id);
+      onSaveSuccess(savedId);
 
       // Show success message
       setShowSuccess(true);
@@ -202,6 +217,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
             color="primary"
             disabled={isSaving || !templateName.trim()}
             startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+            sx={{ marginRight: 2 }}
           >
             {isSaving ? "Saving..." : currentOrchestratorId ? "Update" : "Save"}
           </Button>

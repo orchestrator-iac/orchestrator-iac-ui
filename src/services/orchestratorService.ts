@@ -38,11 +38,13 @@ const normalizeMetadataDates = (metadata?: MetadataLike) => {
   };
 };
 
+// Ensure we always expose a canonical `_id` even if backend returns `id`
 const withNormalizedDates = <T extends Record<string, any>>(response: T) => ({
   ...response,
-  createdAt: toIsoString(response.createdAt),
-  updatedAt: toIsoString(response.updatedAt),
-  metadata: normalizeMetadataDates(response.metadata),
+  _id: (response as any)._id || (response as any).id, // normalize id field
+  createdAt: toIsoString((response as any).createdAt),
+  updatedAt: toIsoString((response as any).updatedAt),
+  metadata: normalizeMetadataDates((response as any).metadata),
 });
 
 /**
