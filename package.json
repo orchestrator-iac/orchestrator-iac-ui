@@ -2,7 +2,7 @@
   "name": "landing-zone-orchestrator-ui",
   "version": "0.0.1",
   "type": "module",
-  "homepage": "https://satya00089.github.io/landing-zone-orchestrator-ui",
+  "homepage": "https://orchestrator.next-zen.dev",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
