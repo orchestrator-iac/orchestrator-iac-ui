@@ -9,7 +9,7 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -38,7 +38,7 @@ const App = () => {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <HashRouter>
+        <BrowserRouter>
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route path="login" element={<Login />} />
@@ -82,7 +82,7 @@ const App = () => {
             </Route>
           </Routes>
           <Chatbot />
-        </HashRouter>
+        </BrowserRouter>
       </ThemeProvider>
     </AuthProvider>
   );

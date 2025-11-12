@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages (orchestrator.next-zen.dev / landing-zone-orchestrator-ui)
+name: Deploy to GitHub Pages (orchestrator.next-zen.dev)
 
 on:
   push:
@@ -60,18 +60,16 @@ jobs:
         run: |
           git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
 
-      - name: Prepare deployment folder (subpath + CNAME)
+      - name: Prepare deployment folder (root + CNAME)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # TARGET_SUBDIR is the path on the site: /landing-zone-orchestrator-ui/
-          TARGET_SUBDIR="landing-zone-orchestrator-ui"
           CNAME_HOST="orchestrator.next-zen.dev"
 
-          # Clean old temp dir, create structure and copy build
+          # Clean old temp dir and copy build to root
           rm -rf temp_deploy
-          mkdir -p "temp_deploy/${TARGET_SUBDIR}"
-          cp -r dist/* "temp_deploy/${TARGET_SUBDIR}/"
+          mkdir -p temp_deploy
+          cp -r dist/* temp_deploy/
 
           # Add CNAME at root of temp_deploy so gh-pages branch root contains it
           echo "${CNAME_HOST}" > temp_deploy/CNAME
@@ -91,4 +89,4 @@ jobs:
         run: rm -rf temp_deploy
 
       - name: Deployment complete
-        run: echo "✅ Deployment done — visit https://orchestrator.next-zen.dev/landing-zone-orchestrator-ui/#/"
+        run: echo "✅ Deployment done — visit https://orchestrator.next-zen.dev/"
