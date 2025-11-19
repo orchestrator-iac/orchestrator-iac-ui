@@ -87,7 +87,7 @@ const Header: React.FC = () => {
               height: 32,
               width: 64,
               marginRight: 1.5,
-              backgroundImage: "url('logo.png')",
+              backgroundImage: "url('/logo.png')",
               backgroundRepeat: "no-repeat",
               backgroundSize: "contain",
               backgroundPosition: "center",
