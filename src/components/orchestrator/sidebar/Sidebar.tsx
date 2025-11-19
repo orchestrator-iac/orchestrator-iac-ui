@@ -155,8 +155,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: {
             width: drawerWidth,
-            top: "64px",
-            height: "calc(100vh - 64px)",
+            top: "72px",
+            height: "calc(100vh - 72px)",
             backgroundColor: theme.palette.background.paper,
             borderRight: `1px solid ${theme.palette.divider}`,
             boxSizing: "border-box",

@@ -151,7 +151,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 8 }}>
           <CodeEditor
             value={resourceNodeTemp}
@@ -188,6 +188,10 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
                   alignItems: "center",
                   justifyContent: "center",
                   bgcolor: previewBgColor,
+                  border: hasData ? 'none' : '2px dashed',
+                  borderColor: 'divider',
+                  p: 2,
+                  transition: 'all 0.3s ease',
                 }}
               >
                 {hasData ? (

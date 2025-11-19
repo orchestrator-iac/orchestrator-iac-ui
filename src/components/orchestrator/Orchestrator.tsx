@@ -233,6 +233,11 @@ const OrchestratorReactFlow: React.FC = () => {
 
   useEffect(() => {
     document.body.dataset.theme = theme.palette.mode;
+    // Disable body scroll on Orchestrator page
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
   }, [theme.palette.mode]);
 
   useEffect(() => {
@@ -948,7 +953,7 @@ const OrchestratorReactFlow: React.FC = () => {
   return (
     <Box
       sx={{
-        height: "calc(100vh - 65px)",
+        height: "calc(100vh - 72px)",
         display: "flex",
         flexDirection: "row",
         backgroundColor: theme.palette.background.default,

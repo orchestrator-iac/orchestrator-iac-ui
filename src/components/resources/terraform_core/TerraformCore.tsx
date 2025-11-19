@@ -55,7 +55,19 @@ function TerraformTabPanel({
             height="calc(100vh - 350px)"
           />
           {error && (
-            <Box sx={{ mt: 2, color: "error.main", display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                color: "error.main",
+                display: "flex",
+                alignItems: "center",
+                bgcolor: 'error.lighter',
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'error.light',
+              }}
+            >
               <ErrorOutlineIcon sx={{ mr: 1 }} />
               <span>Please provide Terraform code.</span>
             </Box>
@@ -92,14 +104,47 @@ const TerraformCore: React.FC<TerraformCoreProps> = ({
 
   return (
     <>
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs value={activeTabIndex} onChange={handleTabChange}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+        <Tabs
+          value={activeTabIndex}
+          onChange={handleTabChange}
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 500,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                color: 'primary.main',
+                opacity: 1,
+              },
+            },
+            '& .Mui-selected': {
+              fontWeight: 600,
+            },
+            '& .MuiTabs-indicator': {
+              height: 3,
+              borderRadius: '3px 3px 0 0',
+            },
+          }}
+        >
           {tabData.map(({ label, key }, index) => (
             <Tab
               key={key}
               label={label}
               {...a11yProps(index)}
-              sx={{ color: errors[key] ? "error.main" : "inherit" }}
+              sx={{
+                color: errors[key] ? "error.main" : "inherit",
+                position: 'relative',
+                '&::after': errors[key] ? {
+                  content: '"*"',
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  color: 'error.main',
+                  fontSize: '1.2rem',
+                  fontWeight: 'bold',
+                } : {},
+              }}
             />
           ))}
         </Tabs>
