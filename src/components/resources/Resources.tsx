@@ -311,36 +311,125 @@ const Resources: React.FC = () => {
   return (
     <FormProvider {...methods}>
       <form>
-        <Paper
-          elevation={3}
+        <Box
           sx={{
-            m: 4,
-            p: 4,
-            borderRadius: 2,
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
+            maxWidth: '1400px',
+            margin: '0 auto',
+            px: { xs: 2, sm: 3, md: 4 },
+            py: 4,
           }}
         >
-          <Stepper activeStep={activeStep} alternativeLabel>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, sm: 4, md: 5 },
+              borderRadius: 3,
+              backgroundColor: theme.palette.background.paper,
+              color: theme.palette.text.primary,
+              border: '1px solid',
+              borderColor: theme.palette.mode === 'dark' 
+                ? 'rgba(255, 255, 255, 0.08)' 
+                : 'rgba(0, 0, 0, 0.06)',
+              boxShadow: theme.palette.mode === 'dark'
+                ? '0 4px 20px rgba(0, 0, 0, 0.3)'
+                : '0 4px 20px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <Stepper 
+              activeStep={activeStep} 
+              alternativeLabel
+              sx={{
+                mb: 4,
+                '& .MuiStepLabel-label': {
+                  fontWeight: 500,
+                  fontSize: '0.95rem',
+                },
+                '& .MuiStepLabel-label.Mui-active': {
+                  fontWeight: 600,
+                  color: theme.palette.mode === 'dark' ? '#7dd3d3' : '#1a5757',
+                },
+                '& .MuiStepLabel-label.Mui-completed': {
+                  fontWeight: 500,
+                },
+                '& .MuiStepIcon-root': {
+                  fontSize: '2rem',
+                },
+                '& .MuiStepIcon-root.Mui-active': {
+                  color: theme.palette.mode === 'dark' ? '#4bbebe' : '#1a5757',
+                },
+                '& .MuiStepIcon-root.Mui-completed': {
+                  color: theme.palette.mode === 'dark' ? '#4bbebe' : '#3da9a9',
+                },
+              }}
+            >
+              {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
 
-          <Box mt={4}>{renderStepContent(activeStep)}</Box>
+            <Box mt={4}>{renderStepContent(activeStep)}</Box>
 
-          <Box mt={1} display="flex" justifyContent="space-between">
-            <Button disabled={activeStep === 0} onClick={onBack}>
-              Back
-            </Button>
+            <Box 
+              mt={4} 
+              pt={3}
+              display="flex" 
+              justifyContent="space-between"
+              borderTop="1px solid"
+              borderColor={theme.palette.mode === 'dark' 
+                ? 'rgba(255, 255, 255, 0.08)' 
+                : 'rgba(0, 0, 0, 0.06)'}
+            >
+              <Button 
+                disabled={activeStep === 0} 
+                onClick={onBack}
+                sx={{
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  fontSize: '0.95rem',
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'dark' 
+                      ? 'rgba(255, 255, 255, 0.05)' 
+                      : 'rgba(0, 0, 0, 0.04)',
+                  },
+                }}
+              >
+                Back
+              </Button>
 
-            <Button variant="contained" onClick={onNext}>
-              {activeStep === steps.length - 1 ? "Finish" : "Next"}
-            </Button>
-          </Box>
-        </Paper>
+              <Button 
+                variant="contained" 
+                onClick={onNext}
+                sx={{
+                  px: 4,
+                  py: 1,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  backgroundColor: theme.palette.mode === 'dark' ? '#4bbebe' : '#1a5757',
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 4px 12px rgba(75, 190, 190, 0.3)'
+                    : '0 4px 12px rgba(26, 87, 87, 0.2)',
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'dark' ? '#7dd3d3' : '#205a5a',
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 6px 16px rgba(75, 190, 190, 0.4)'
+                      : '0 6px 16px rgba(26, 87, 87, 0.3)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                {activeStep === steps.length - 1 ? "Finish" : "Next"}
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
       </form>
       <Snackbar
         open={snackbar.open}

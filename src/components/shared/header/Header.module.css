@@ -1,42 +1,40 @@
 /* Header.module.css */
 .appBar {
-    background-color: #057474;
-    /* Material UI primary blue */
-    box-shadow: none;
+  box-shadow: none !important;
 }
 
 .toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px !important;
 }
 
 .logo {
-    display: flex;
-    align-items: center;
-    color: var(--main);
-    text-decoration: none;
-    font-weight: bold;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-weight: 600;
 }
 
 .controls {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .controlItem {
-    min-width: 120px;
+  min-width: 120px;
 }
 
 .switchContainer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: bolder;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
 }
 
 .switchLabel {
-    color: var(--text1);
+  color: var(--text1);
+  font-size: 0.9rem;
 }

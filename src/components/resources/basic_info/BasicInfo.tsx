@@ -80,7 +80,7 @@ const BasicInfo: React.FC = () => {
 
   return (
     <Box>
-      <Grid container spacing={2} wrap="nowrap">
+      <Grid container spacing={3} wrap="nowrap">
         <Grid
           sx={{
             transition: "flex-basis .35s ease, max-width .35s ease",
@@ -89,7 +89,7 @@ const BasicInfo: React.FC = () => {
             minWidth: 0,
           }}
         >
-          <Grid container spacing={2}>
+          <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Controller
                 name="resourceId"
@@ -103,6 +103,11 @@ const BasicInfo: React.FC = () => {
                     fullWidth
                     error={!!errors?.resourceId}
                     helperText={errors?.resourceId?.message as string}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
                   />
                 )}
               />
@@ -116,11 +121,16 @@ const BasicInfo: React.FC = () => {
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Name"
+                    label="Resource Name"
                     fullWidth
                     required
                     error={!!errors?.resourceName}
                     helperText={errors?.resourceName?.message as string}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
                   />
                 )}
               />
@@ -164,6 +174,11 @@ const BasicInfo: React.FC = () => {
                     required
                     error={!!errors?.resourceVersion}
                     helperText={errors?.resourceVersion?.message as string}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
                   />
                 )}
               />
@@ -182,6 +197,11 @@ const BasicInfo: React.FC = () => {
                     required
                     error={!!errors?.terraformCorePath}
                     helperText={errors?.terraformCorePath?.message as string}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
                   />
                 )}
               />
@@ -202,6 +222,11 @@ const BasicInfo: React.FC = () => {
                     helperText={
                       errors?.terraformTemplatePath?.message as string
                     }
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
                   />
                 )}
               />
@@ -219,6 +244,15 @@ const BasicInfo: React.FC = () => {
                         variant="outlined"
                         onClick={handleOpen}
                         color={errors?.resourceIcon ? "error" : "primary"} // ✅ fixed
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          px: 2,
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                          },
+                        }}
                       >
                         {field.value?.url ? "Change Icon" : "Upload Icon"}
                       </Button>
@@ -269,6 +303,11 @@ const BasicInfo: React.FC = () => {
                     helperText={errors?.resourceDescription?.message as string}
                     multiline
                     rows={4}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
                   />
                 )}
               />
@@ -330,13 +369,27 @@ const BasicInfo: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            sx={{ mb: 2 }}
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+            }}
           />
 
           <Grid container spacing={2}>
             {icons.map((icon: any) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon.url}>
-                <Card>
+                <Card
+                  sx={{
+                    borderRadius: 2,
+                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 3,
+                    },
+                  }}
+                >
                   <CardActionArea onClick={() => handleSelectIcon(icon)}>
                     <CardMedia
                       component="img"
