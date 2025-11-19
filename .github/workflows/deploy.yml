@@ -1,0 +1,92 @@
+name: Deploy to GitHub Pages (orchestrator.next-zen.dev)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-deploy:
+    name: Build and deploy to gh-pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          CI: true
+
+      - name: Verify build output
+        run: |
+          if [ ! -d dist ]; then
+            echo "ERROR: build output directory 'dist' not found!"
+            ls -la
+            exit 1
+          fi
+          if [ ! -f dist/index.html ]; then
+            echo "ERROR: dist/index.html not found!"
+            ls -la dist || true
+            exit 1
+          fi
+          echo "Build output verified."
+
+      - name: Configure Git author
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Configure remote with token
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
+
+      - name: Prepare deployment folder (root + CNAME)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CNAME_HOST="orchestrator.next-zen.dev"
+
+          # Clean old temp dir and copy build to root
+          rm -rf temp_deploy
+          mkdir -p temp_deploy
+          cp -r dist/* temp_deploy/
+
+          # Add CNAME at root of temp_deploy so gh-pages branch root contains it
+          echo "${CNAME_HOST}" > temp_deploy/CNAME
+
+          echo "=== temp_deploy structure ==="
+          find temp_deploy -maxdepth 3 -type f -print || true
+
+      - name: Deploy temp_deploy/ to gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Publish the contents of temp_deploy/ to gh-pages branch root using gh-pages
+          npx --yes gh-pages -d temp_deploy -r "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+
+      - name: Cleanup temp deploy folder
+        if: always()
+        run: rm -rf temp_deploy
+
+      - name: Deployment complete
+        run: echo "✅ Deployment done — visit https://orchestrator.next-zen.dev/"
