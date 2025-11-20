@@ -1,8 +1,8 @@
-name: Deploy to GitHub Pages (orchestrator.next-zen.dev)
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -12,8 +12,9 @@ permissions:
 
 jobs:
   build-deploy:
-    name: Build and deploy to gh-pages
+    name: Build and deploy
     runs-on: ubuntu-latest
+    environment: github-pages
 
     steps:
       - name: Checkout repository
@@ -24,16 +25,38 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify environment variables
+        run: |
+          if [ -z "$VITE_GOOGLE_CLIENT_ID" ]; then
+            echo "ERROR: VITE_GOOGLE_CLIENT_ID is not set!"
+            exit 1
+          fi
+          if [ -z "$VITE_API_BASE_URL" ]; then
+            echo "ERROR: VITE_API_BASE_URL is not set!"
+            exit 1
+          fi
+          if [ -z "$VITE_API_HOST_URL" ]; then
+            echo "ERROR: VITE_API_HOST_URL is not set!"
+            exit 1
+          fi
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_API_HOST_URL: ${{ secrets.VITE_API_HOST_URL }}
 
       - name: Build
         run: npm run build
         env:
           CI: true
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_API_HOST_URL: ${{ secrets.VITE_API_HOST_URL }}
 
       - name: Verify build output
         run: |
@@ -58,35 +81,28 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Ensure pushing through token-authenticated remote
           git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git
 
-      - name: Prepare deployment folder (root + CNAME)
+      - name: Prepare root deployment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CNAME_HOST="orchestrator.next-zen.dev"
+          # Create CNAME for custom domain
+          echo "orchestrator.next-zen.dev" > dist/CNAME
+          # Create 404.html for client-side routing fallback
+          cp dist/index.html dist/404.html
+          # (Optional) show structure for debugging in logs
+          echo "=== dist structure ==="
+          find dist -maxdepth 2 -type f -print || true
 
-          # Clean old temp dir and copy build to root
-          rm -rf temp_deploy
-          mkdir -p temp_deploy
-          cp -r dist/* temp_deploy/
-
-          # Add CNAME at root of temp_deploy so gh-pages branch root contains it
-          echo "${CNAME_HOST}" > temp_deploy/CNAME
-
-          echo "=== temp_deploy structure ==="
-          find temp_deploy -maxdepth 3 -type f -print || true
-
-      - name: Deploy temp_deploy/ to gh-pages
+      - name: Deploy to gh-pages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Publish the contents of temp_deploy/ to gh-pages branch root using gh-pages
-          npx --yes gh-pages -d temp_deploy -r "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
-
-      - name: Cleanup temp deploy folder
-        if: always()
-        run: rm -rf temp_deploy
+          # Publish dist/ to gh-pages using gh-pages package
+          # -r forces the authenticated remote (uses GH_TOKEN)
+          npx --yes gh-pages -d dist -r "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
 
       - name: Deployment complete
-        run: echo "✅ Deployment done — visit https://orchestrator.next-zen.dev/"
+        run: echo "🚀 Deployment complete! Visit https://orchestrator.next-zen.dev"
