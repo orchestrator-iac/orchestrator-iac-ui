@@ -102,7 +102,9 @@ const Resources: React.FC = () => {
 
   // theme switch sync
   useEffect(() => {
-    document.body.setAttribute("data-theme", theme.palette.mode);
+    document.body.dataset.theme = theme.palette.mode;
+    // Restore body scroll for Resources page
+    document.body.style.overflow = 'auto';
   }, [theme.palette.mode]);
 
   useEffect(() => {
