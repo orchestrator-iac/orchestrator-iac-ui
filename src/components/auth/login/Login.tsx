@@ -4,10 +4,11 @@ import { TextField, Button, Typography, Box, useTheme, Divider } from "@mui/mate
 import { GoogleLogin } from "@react-oauth/google";
 import { loginUser } from "../../../services/auth";
 import { useAuth } from "../../../context/AuthContext";
+import { useGoogleAuth } from "../../../hooks/useGoogleAuth";
 import NightSky from "../../shared/night-sky/NightSky";
 
 const Login: React.FC = () => {
-  const { login, googleLogin } = useAuth();
+  const { login } = useAuth();
   const theme = useTheme();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -15,19 +16,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [resendEmailVerification, setResendEmailVerification] = useState(false);
-
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-      await googleLogin(credentialResponse.credential);
-      navigate("/home");
-    } catch (err: any) {
-      setError(err?.message || "Google login failed");
-    }
-  };
-
-  const handleGoogleError = () => {
-    setError("Google login failed. Please try again.");
-  };
+  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
 
   const handleLogin = async () => {
     setError("");

@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { GoogleLogin } from "@react-oauth/google";
 import { registerUser } from "../../../services/auth";
-import { useAuth } from "../../../context/AuthContext";
+import { useGoogleAuth } from "../../../hooks/useGoogleAuth";
 import NightSky from "../../shared/night-sky/NightSky";
 
 import { useNavigate } from "react-router-dom";
@@ -28,7 +28,6 @@ const roles = [
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { googleLogin } = useAuth();
   const theme = useTheme();
   const [form, setForm] = useState({
     firstName: "",
@@ -40,19 +39,7 @@ const Register: React.FC = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
-
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-      await googleLogin(credentialResponse.credential);
-      navigate("/home");
-    } catch (err: any) {
-      setError(err?.message || "Google sign-up failed");
-    }
-  };
-
-  const handleGoogleError = () => {
-    setError("Google sign-up failed. Please try again.");
-  };
+  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
 
   const handleChange = (e: any) => {
     setForm((prev) => ({
