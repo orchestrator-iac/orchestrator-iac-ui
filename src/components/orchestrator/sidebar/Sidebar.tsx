@@ -174,7 +174,12 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
               alignItems: "center",
               px: 1,
               py: 0.5,
-              borderRadius: 1,
+              borderRadius: 2,
+              transition: 'all 0.3s ease',
+              '&:focus-within': {
+                borderColor: 'primary.main',
+                boxShadow: 1,
+              },
             }}
           >
             <SearchIcon fontSize="small" />
@@ -194,7 +199,18 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
           {visibleResources.map((resource: any) => (
             <ListItemButton
               key={resource._id}
-              sx={{ alignItems: "center", py: 1.5 }}
+              sx={{
+                alignItems: "center",
+                py: 1.5,
+                borderRadius: 2,
+                mx: 1,
+                mb: 0.5,
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                  transform: 'translateX(4px)',
+                },
+              }}
               className="dndnode"
               onDragStart={(event) => onDragStart(event, resource._id)}
               draggable

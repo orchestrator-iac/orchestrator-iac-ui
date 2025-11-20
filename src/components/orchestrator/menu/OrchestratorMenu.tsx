@@ -216,10 +216,13 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           onClick={handleMenuClick}
           sx={{
             bgcolor: "background.paper",
-            boxShadow: 2,
+            borderRadius: 2,
+            boxShadow: 1,
+            transition: 'all 0.3s ease',
             "&:hover": {
               bgcolor: "background.paper",
-              boxShadow: 4,
+              transform: 'translateY(-2px)',
+              boxShadow: 2,
             },
           }}
         >
@@ -243,7 +246,9 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           paper: {
             sx: {
               minWidth: 200,
-              boxShadow: 3,
+              borderRadius: 2,
+              boxShadow: 2,
+              mt: 0.5,
             },
           },
         }}
@@ -253,7 +258,15 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           onClick={(event) => {
             event.stopPropagation();
           }}
-          sx={{ alignItems: "center", gap: 1 }}
+          sx={{
+            alignItems: "center",
+            gap: 1,
+            borderRadius: 1.5,
+            mx: 0.5,
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
         >
           <ListItemIcon>
             <ArchitectureIcon
@@ -283,7 +296,14 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           />
         </MenuItem>
 
-        <MenuItem onClick={handleDownloadImage}>
+        <MenuItem
+          onClick={handleDownloadImage}
+          sx={{
+            borderRadius: 1.5,
+            mx: 0.5,
+            '&:hover': { bgcolor: 'action.hover' },
+          }}
+        >
           <ListItemIcon>
             <DownloadIcon fontSize="small" color="primary" />
           </ListItemIcon>
@@ -293,6 +313,11 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         <MenuItem
           onClick={handleGenerateClick}
           disabled={!canSave || isGenerating}
+          sx={{
+            borderRadius: 1.5,
+            mx: 0.5,
+            '&:hover': { bgcolor: 'action.hover' },
+          }}
         >
           <ListItemIcon>
             {isGenerating ? (
@@ -312,6 +337,11 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         <MenuItem
           onClick={handleDownloadZipClick}
           disabled={!canSave || isDownloading}
+          sx={{
+            borderRadius: 1.5,
+            mx: 0.5,
+            '&:hover': { bgcolor: 'action.hover' },
+          }}
         >
           <ListItemIcon>
             {isDownloading ? (
@@ -328,7 +358,15 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           </ListItemText>
         </MenuItem>
 
-        <MenuItem onClick={handleSaveClick} disabled={!canSave}>
+        <MenuItem
+          onClick={handleSaveClick}
+          disabled={!canSave}
+          sx={{
+            borderRadius: 1.5,
+            mx: 0.5,
+            '&:hover': { bgcolor: 'action.hover' },
+          }}
+        >
           <ListItemIcon>
             <SaveIcon
               fontSize="small"
@@ -341,7 +379,12 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         <MenuItem
           onClick={handleDeleteClick}
           disabled={!canDelete}
-          sx={{ color: canDelete ? "error.main" : "text.disabled" }}
+          sx={{
+            borderRadius: 1.5,
+            mx: 0.5,
+            color: canDelete ? "error.main" : "text.disabled",
+            '&:hover': { bgcolor: canDelete ? 'error.lighter' : 'action.hover' },
+          }}
         >
           <ListItemIcon>
             <DeleteOutlineIcon

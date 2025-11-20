@@ -138,6 +138,11 @@ const InitPopup = ({
               }
               fullWidth
               required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
             />
           </Grid>
 
@@ -150,6 +155,11 @@ const InitPopup = ({
               fullWidth
               multiline
               minRows={2}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
             />
           </Grid>
 
@@ -167,6 +177,11 @@ const InitPopup = ({
               }
               fullWidth
               required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
             >
               <MenuItem value="aws">AWS</MenuItem>
               <MenuItem value="azure">Azure</MenuItem>
@@ -235,8 +250,25 @@ const InitPopup = ({
                 setEmail(e.target.value)
               }
               fullWidth
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
             />
-            <Button onClick={handleInvite} variant="contained" sx={{ mt: 1 }}>
+            <Button
+              onClick={handleInvite}
+              variant="contained"
+              sx={{
+                mt: 1,
+                borderRadius: 2,
+                textTransform: 'none',
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
               Invite
             </Button>
 
@@ -256,7 +288,15 @@ const InitPopup = ({
             <Button
               onClick={handleSubmit}
               variant="contained"
-              sx={{ mt: 2 }}
+              sx={{
+                mt: 2,
+                borderRadius: 2,
+                textTransform: 'none',
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                },
+              }}
               disabled={!isFormValid}
             >
               Save

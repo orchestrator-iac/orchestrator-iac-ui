@@ -61,6 +61,8 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     document.body.dataset.theme = theme.palette.mode;
+    // Restore body scroll for Home page
+    document.body.style.overflow = 'auto';
   }, [theme.palette.mode]);
 
   useEffect(() => {
