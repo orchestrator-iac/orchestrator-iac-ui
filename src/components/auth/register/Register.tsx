@@ -9,8 +9,11 @@ import {
   Grid,
   Alert,
   useTheme,
+  Divider,
 } from "@mui/material";
+import { GoogleLogin } from "@react-oauth/google";
 import { registerUser } from "../../../services/auth";
+import { useAuth } from "../../../context/AuthContext";
 import NightSky from "../../shared/night-sky/NightSky";
 
 import { useNavigate } from "react-router-dom";
@@ -25,6 +28,7 @@ const roles = [
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const { googleLogin } = useAuth();
   const theme = useTheme();
   const [form, setForm] = useState({
     firstName: "",
@@ -36,6 +40,19 @@ const Register: React.FC = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      await googleLogin(credentialResponse.credential);
+      navigate("/home");
+    } catch (err: any) {
+      setError(err?.message || "Google sign-up failed");
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign-up failed. Please try again.");
+  };
 
   const handleChange = (e: any) => {
     setForm((prev) => ({
@@ -197,6 +214,22 @@ const Register: React.FC = () => {
             >
               Register
             </Button>
+          </Box>
+          <Box mt={2}>
+            <Divider sx={{ my: 2 }}>
+              <Typography variant="body2" color="textSecondary">
+                OR
+              </Typography>
+            </Divider>
+            <Box display="flex" justifyContent="center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                width="100%"
+              />
+            </Box>
           </Box>
         </Box>
       </Box>

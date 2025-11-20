@@ -89,3 +89,8 @@ export const refreshAccessToken = async (): Promise<string> => {
   );
   return res.data.access_token as string;
 };
+
+export const loginWithGoogle = async (credential: string): Promise<string> => {
+  const res = await apiService.post("/user/google-login", { credential });
+  return res.access_token;
+};

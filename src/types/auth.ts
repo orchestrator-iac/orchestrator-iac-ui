@@ -31,6 +31,7 @@ export interface AuthContextType {
   login: (token: string) => void;
   logout: () => void;
   refreshProfile: () => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
 }
 
 export interface ImageUpdate {

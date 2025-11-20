@@ -10,6 +10,7 @@ import { fab } from "@fortawesome/free-brands-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -35,12 +36,15 @@ import Chatbot from './components/chatbot/Chatbot';
 library.add(fab, fas);
 
 const App = () => {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+  
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <AuthProvider>
+        <ThemeProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="register-success" element={<RegisterSuccessPage />} />
@@ -85,6 +89,7 @@ const App = () => {
         </BrowserRouter>
       </ThemeProvider>
     </AuthProvider>
+    </GoogleOAuthProvider>
   );
 };
 
