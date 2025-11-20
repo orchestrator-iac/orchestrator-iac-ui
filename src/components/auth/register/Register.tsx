@@ -9,8 +9,11 @@ import {
   Grid,
   Alert,
   useTheme,
+  Divider,
 } from "@mui/material";
+import { GoogleLogin } from "@react-oauth/google";
 import { registerUser } from "../../../services/auth";
+import { useGoogleAuth } from "../../../hooks/useGoogleAuth";
 import NightSky from "../../shared/night-sky/NightSky";
 
 import { useNavigate } from "react-router-dom";
@@ -36,6 +39,7 @@ const Register: React.FC = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
 
   const handleChange = (e: any) => {
     setForm((prev) => ({
@@ -197,6 +201,22 @@ const Register: React.FC = () => {
             >
               Register
             </Button>
+          </Box>
+          <Box mt={2}>
+            <Divider sx={{ my: 2 }}>
+              <Typography variant="body2" color="textSecondary">
+                OR
+              </Typography>
+            </Divider>
+            <Box display="flex" justifyContent="center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                width="100%"
+              />
+            </Box>
           </Box>
         </Box>
       </Box>

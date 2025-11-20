@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TextField, Button, Typography, Box, useTheme } from "@mui/material";
+import { TextField, Button, Typography, Box, useTheme, Divider } from "@mui/material";
+import { GoogleLogin } from "@react-oauth/google";
 import { loginUser } from "../../../services/auth";
 import { useAuth } from "../../../context/AuthContext";
+import { useGoogleAuth } from "../../../hooks/useGoogleAuth";
 import NightSky from "../../shared/night-sky/NightSky";
 
 const Login: React.FC = () => {
@@ -14,6 +16,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [resendEmailVerification, setResendEmailVerification] = useState(false);
+  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
 
   const handleLogin = async () => {
     setError("");
@@ -122,6 +125,22 @@ const Login: React.FC = () => {
             >
               Login
             </Button>
+          </Box>
+          <Box mt={2}>
+            <Divider sx={{ my: 2 }}>
+              <Typography variant="body2" color="textSecondary">
+                OR
+              </Typography>
+            </Divider>
+            <Box display="flex" justifyContent="center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                width="100%"
+              />
+            </Box>
           </Box>
         </Box>
       </Box>

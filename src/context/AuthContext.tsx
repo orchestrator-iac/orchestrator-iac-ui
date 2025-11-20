@@ -79,8 +79,19 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
     setUser(null);
   };
 
+  const googleLogin = async (credential: string) => {
+    try {
+      const { loginWithGoogle } = await import("../services/auth");
+      const token = await loginWithGoogle(credential);
+      login(token);
+    } catch (error) {
+      console.error("Google login failed:", error);
+      throw error;
+    }
+  };
+
   const contextValue = useMemo(
-    () => ({ token, user, login, logout, refreshProfile }),
+    () => ({ token, user, login, logout, refreshProfile, googleLogin }),
     [token, user]
   );
 
