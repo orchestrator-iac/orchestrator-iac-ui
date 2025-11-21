@@ -18,9 +18,7 @@ export const generateFlowImage = async ({
   quality = 0.95,
   pixelRatio = 2,
 }: Omit<DownloadOptions, "fileName"> = {}): Promise<string> => {
-  const flowWrapper = document.querySelector(
-    DEFAULT_SELECTOR
-  ) as HTMLElement | null;
+  const flowWrapper = document.querySelector(DEFAULT_SELECTOR) as HTMLElement;
 
   if (!flowWrapper) {
     throw new Error("Unable to locate orchestrator canvas for export");
@@ -31,6 +29,7 @@ export const generateFlowImage = async ({
     cacheBust: true,
     quality,
     pixelRatio,
+    skipFonts: true,
     filter: (node: HTMLElement) => {
       // Filter out UI controls from the image
       const exclusionClasses = [
