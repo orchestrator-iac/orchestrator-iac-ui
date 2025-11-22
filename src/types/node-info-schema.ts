@@ -84,8 +84,15 @@ export const LinkRuleSchema = z.object({
   /** which source node types are allowed to connect to this node for this relation */
   fromTypes: z.array(z.string()).min(1),
 
-  /** max number of incoming links for this relation; default "1" */
-  cardinality: z.enum(["1", "many"]).optional(),
+  /**
+   * max number of incoming links for this relation; supports:
+   *  - integer (e.g., 1, 10)
+   *  - string: "many", "*", or range "min..max" (e.g., "1..10")
+   */
+  cardinality: z.union([z.number(), z.string()]).optional(),
+
+  /** output name from source module (e.g., 'vpc_id' becomes 'module.vpc_instance.vpc_id') */
+  outputRef: z.string().optional().nullable(),
 
   /** anything you want stamped onto the edge data */
   edgeData: z.record(z.string(), z.any()).optional(),
