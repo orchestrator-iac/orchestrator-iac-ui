@@ -31,6 +31,7 @@ import NightSky from "./components/shared/night-sky/NightSky";
 import BlackHoleDemo from "./components/shared/black-hole/BlackHoleDemo";
 import UpdatePassword from "./components/auth/login/UpdatePassword";
 import Chatbot from './components/chatbot/Chatbot';
+import LandingPage from "./components/landing/LandingPage";
 
 // Add FontAwesome icon packs
 library.add(fab, fas);
@@ -45,6 +46,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Layout />}>
+              <Route index element={<LandingPage />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="register-success" element={<RegisterSuccessPage />} />
@@ -73,7 +75,7 @@ const App = () => {
                   <Home />
                 </ProtectedRoute>
               } />
-              <Route index element={
+              <Route path="dashboard" element={
                 <ProtectedRoute>
                   <Home />
                 </ProtectedRoute>
