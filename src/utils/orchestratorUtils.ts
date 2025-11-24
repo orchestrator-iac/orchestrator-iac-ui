@@ -86,13 +86,51 @@ export const transformNodeForDB = (
   friendlyId?: string
 ): OrchestratorNode => {
   const resourceId = (node.data?.__resourceId || node.data?.__nodeType || node.type) as string;
-  
+
   // Extract isExpanded from values if it was stored there, otherwise check node.data
-  const values = node.data?.values as Record<string, any> | undefined;
+  // Add index signature for values to allow dynamic property access
+  const values: { [key: string]: any } = { ...(node.data?.values || {}) };
   const isExpanded = values?.__isExpanded ?? node.data?.isExpanded ?? true;
   const persistedFriendlyId = resolveNodeFriendlyId(node);
   const outgoingFriendlyId = persistedFriendlyId ?? friendlyId;
-  
+
+  // For each link, if the value is a linked node id, store rich info
+  if (node.data?.links && Array.isArray(node.data.links)) {
+    for (const linkRule of node.data.links) {
+      const bind: string = linkRule.bind;
+      const val = values[bind];
+      if (val && typeof val === "string") {
+        // Find the source node
+        const allNodes: Node[] | undefined = (node.data?.__helpers as { allNodes?: Node[] })?.allNodes;
+        const sourceNode = allNodes?.find((n) => n.id === val);
+        if (sourceNode) {
+          values[bind] = {
+            id: sourceNode.id,
+            __nodeType: (sourceNode.data as any)?.__nodeType,
+            friendlyId: resolveNodeFriendlyId(sourceNode),
+            outputRef: linkRule.outputRef ?? bind,
+          };
+        }
+      } else if (Array.isArray(val)) {
+        const allNodes: Node[] | undefined = (node.data?.__helpers as { allNodes?: Node[] })?.allNodes;
+        values[bind] = val.map((v: any) => {
+          if (typeof v === "string") {
+            const sourceNode = allNodes?.find((n) => n.id === v);
+            if (sourceNode) {
+              return {
+                id: sourceNode.id,
+                __nodeType: (sourceNode.data as any)?.__nodeType,
+                friendlyId: resolveNodeFriendlyId(sourceNode),
+                outputRef: linkRule.outputRef ?? bind,
+              };
+            }
+          }
+          return v;
+        });
+      }
+    }
+  }
+
   return {
     id: node.id,
     resourceId: resourceId,
@@ -100,9 +138,9 @@ export const transformNodeForDB = (
       x: node.position.x,
       y: node.position.y,
     },
-    values: values || {},
+    values: values,
     __nodeType: node.data?.__nodeType as string | undefined,
-  friendlyId: outgoingFriendlyId,
+    friendlyId: outgoingFriendlyId,
     isExpanded: isExpanded,
   };
 };/**
@@ -148,9 +186,20 @@ export const prepareOrchestratorForSave = (
 ): SaveOrchestratorRequest => {
   const friendlyIdLookup = buildFriendlyIdLookup(nodes);
 
+  // Inject __helpers.allNodes into each node's data so transformNodeForDB can access all nodes
+  const nodesWithHelpers = nodes.map((node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      __helpers: {
+        allNodes: nodes,
+      },
+    },
+  }));
+
   return {
     templateInfo,
-    nodes: nodes.map((node) =>
+    nodes: nodesWithHelpers.map((node) =>
       transformNodeForDB(node, friendlyIdLookup[node.id])
     ),
     edges: edges.map(transformEdgeForDB),
@@ -173,17 +222,30 @@ export const reconstructNodeFromDB = (
   dbNode: OrchestratorNode,
   resourceTemplate: any // Will be fetched from API using dbNode.resourceId
 ): Node => {
+  // When reconstructing, flatten linked value objects back to just id for UI fields
+  const values = { ...(dbNode.values || {}) };
+  if (resourceTemplate?.resourceNode?.data?.links && Array.isArray(resourceTemplate.resourceNode.data.links)) {
+    for (const linkRule of resourceTemplate.resourceNode.data.links) {
+      const bind: string = linkRule.bind;
+      const val = values[bind];
+      if (val && typeof val === "object" && !Array.isArray(val) && "id" in val) {
+        values[bind] = (val as { id: string }).id;
+      } else if (Array.isArray(val)) {
+        values[bind] = val.map((v: any) => (typeof v === "object" && v !== null && "id" in v ? (v as { id: string }).id : v));
+      }
+    }
+  }
   return {
     id: dbNode.id,
     type: "customNode",
     position: dbNode.position,
     data: {
       ...resourceTemplate?.resourceNode?.data,
-      values: dbNode.values,
+      values: values,
       __nodeType: dbNode.__nodeType || dbNode.resourceId,
       __resourceId: dbNode.resourceId,
       isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
-  friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
+      friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
     },
   };
 };
