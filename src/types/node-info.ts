@@ -34,8 +34,15 @@ export interface LinkRule {
   /** Allowed source node types for incoming edges to this node (e.g., ["vpc"]) */
   fromTypes: string[];
 
-  /** Max incoming edges for this relation; default behaves like "1" */
-  cardinality?: "1" | "many";
+  /**
+   * Max incoming edges for this relation. Supports:
+   *  - integer (e.g., 1, 10)
+   *  - string: "many", "*", or range "min..max" (e.g., "1..10")
+   */
+  cardinality?: number | string;
+
+  /** Output name from source module (e.g., 'vpc_id' becomes 'module.vpc_instance.vpc_id') */
+  outputRef?: string;
 
   /** Arbitrary metadata to stamp onto the edge (e.g., { kind: "vpc-link" }) */
   edgeData?: Record<string, any>;
