@@ -25,7 +25,6 @@ import {
   Settings as SettingsIcon,
   PlayArrow as PlayIcon,
   Security as SecurityIcon,
-  Autorenew as AutorenewIcon,
   Bolt as BoltIcon,
   TrendingUp as TrendingUpIcon,
   Storage as StorageIcon,
