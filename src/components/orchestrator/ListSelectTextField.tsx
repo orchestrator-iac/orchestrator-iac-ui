@@ -64,7 +64,8 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   const prevValuesRef = React.useRef<string[]>(currentList);
   React.useEffect(() => {
     if (!onLinkFieldChange) return;
-    currentList.forEach((val, idx) => {
+    for (let idx = 0; idx < currentList.length; idx++) {
+      const val = currentList[idx];
       // Create/update edge only if value is non-empty and changed
       if (val && prevValuesRef.current[idx] !== val) {
         onLinkFieldChange(`${name}[${idx}]`, val);
@@ -73,7 +74,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
       if (!val && prevValuesRef.current[idx]) {
         onLinkFieldChange(`${name}[${idx}]`, "");
       }
-    });
+    }
     // If list shrank, clear edges for removed indices
     if (prevValuesRef.current.length > currentList.length) {
       for (let i = currentList.length; i < prevValuesRef.current.length; i++) {
