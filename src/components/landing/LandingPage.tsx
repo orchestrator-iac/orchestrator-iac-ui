@@ -28,9 +28,33 @@ import {
   Bolt as BoltIcon,
   TrendingUp as TrendingUpIcon,
   Storage as StorageIcon,
+  Dns as DnsIcon,
+  NetworkCheck as NetworkIcon,
+  Memory as MemoryIcon,
+  DeveloperBoard as ServerIcon,
+  DataObject as DataIcon,
+  Shield as ShieldIcon,
 } from "@mui/icons-material";
-import { FaAws, FaMicrosoft } from "react-icons/fa";
-import { SiGooglecloud, SiAmazonec2 } from "react-icons/si";
+import { FaAws, FaDocker, FaJenkins } from "react-icons/fa";
+import { 
+  SiGooglecloud, 
+  SiAmazonec2, 
+  SiKubernetes,
+  SiTerraform,
+  SiAnsible,
+  SiPrometheus,
+  SiGrafana,
+  SiElasticsearch,
+  SiRedis,
+  SiPostgresql,
+  SiMongodb,
+  SiApachekafka,
+  SiNginx,
+  SiAwslambda,
+  SiAwsamplify,
+  SiAwselasticloadbalancing,
+} from "react-icons/si";
+import { VscAzure, VscAzureDevops } from "react-icons/vsc";
 
 interface FloatingIconProps {
   icon: React.ReactNode;
@@ -61,7 +85,7 @@ const FloatingIcon: React.FC<FloatingIconProps> = ({ icon, delay, duration, x, y
             transform: "translateY(0px) rotate(0deg)",
           },
           "50%": {
-            transform: "translateY(-20px) rotate(5deg)",
+            transform: "translateY(-10px) rotate(5deg)",
           },
         },
       }}
@@ -425,35 +449,154 @@ const LandingPage: React.FC = () => {
         minHeight: "100vh",
         position: "relative",
         overflow: "hidden",
-        backgroundImage: theme.palette.mode === "dark"
-          ? `linear-gradient(${alpha(theme.palette.divider, 0.08)} 1px, transparent 1px),
-             linear-gradient(90deg, ${alpha(theme.palette.divider, 0.08)} 1px, transparent 1px),
-             linear-gradient(to bottom, ${theme.palette.background.default}, ${alpha(theme.palette.background.paper, 0.8)}),
-             radial-gradient(ellipse at top, ${alpha(theme.palette.primary.main, 0.1)}, transparent),
-             radial-gradient(ellipse at bottom, ${alpha(theme.palette.secondary.main, 0.08)}, transparent)`
-          : `linear-gradient(${alpha(theme.palette.divider, 0.1)} 1px, transparent 1px),
-             linear-gradient(90deg, ${alpha(theme.palette.divider, 0.1)} 1px, transparent 1px),
-             linear-gradient(to bottom, ${theme.palette.background.default}, ${alpha(theme.palette.background.paper, 0.5)}),
-             radial-gradient(ellipse at top, ${alpha(theme.palette.primary.main, 0.05)}, transparent),
-             radial-gradient(ellipse at bottom, ${alpha(theme.palette.secondary.main, 0.03)}, transparent)`,
-        backgroundSize: "60px 60px, 60px 60px, 100% 100%, 100% 100%, 100% 100%",
+        background: theme.palette.background.default,
       }}
     >
-      {/* Floating background icons - Cloud Providers & Services */}
-      <FloatingIcon icon={<FaAws size={64} />} delay={0} duration={8} x="5%" y="10%" />
-      <FloatingIcon icon={<FaMicrosoft size={64} />} delay={1} duration={9} x="15%" y="25%" />
-      <FloatingIcon icon={<SiGooglecloud size={64} />} delay={2} duration={10} x="85%" y="15%" />
-      <FloatingIcon icon={<SiAmazonec2 size={64} />} delay={3} duration={11} x="90%" y="30%" />
-      <FloatingIcon icon={<DiagramIcon />} delay={1.5} duration={9} x="10%" y="70%" />
-      <FloatingIcon icon={<StorageIcon />} delay={2.5} duration={10} x="80%" y="75%" />
-      <FloatingIcon icon={<SecurityIcon />} delay={3} duration={11} x="90%" y="85%" />
-      <FloatingIcon icon={<CodeIcon />} delay={0.5} duration={8} x="5%" y="85%" />
+      {/* Enhanced Hero Background Section with Gradient Mesh */}
+      <Box 
+        sx={{ 
+          position: "relative", 
+          overflow: "hidden",
+          background: theme.palette.mode === "dark"
+            ? `
+              radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 50%),
+              radial-gradient(circle at 80% 40%, ${alpha(theme.palette.secondary.main, 0.12)} 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 50%),
+              linear-gradient(135deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.primary.main, 0.03)} 50%, ${theme.palette.background.default} 100%)
+            `
+            : `
+              radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.08)} 0%, transparent 50%),
+              radial-gradient(circle at 80% 40%, ${alpha(theme.palette.secondary.main, 0.06)} 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+              linear-gradient(135deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.primary.main, 0.02)} 50%, ${theme.palette.background.default} 100%)
+            `,
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: theme.palette.mode === "dark"
+              ? `linear-gradient(${alpha(theme.palette.divider, 0.06)} 1px, transparent 1px),
+                 linear-gradient(90deg, ${alpha(theme.palette.divider, 0.06)} 1px, transparent 1px)`
+              : `linear-gradient(${alpha(theme.palette.divider, 0.08)} 1px, transparent 1px),
+                 linear-gradient(90deg, ${alpha(theme.palette.divider, 0.08)} 1px, transparent 1px)`,
+            backgroundSize: "50px 50px",
+            opacity: 0.5,
+            pointerEvents: "none",
+          },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: theme.palette.mode === "dark"
+              ? `linear-gradient(180deg, transparent 0%, ${alpha(theme.palette.background.default, 0.4)} 70%, ${theme.palette.background.default} 100%)`
+              : `linear-gradient(180deg, transparent 0%, ${alpha(theme.palette.background.default, 0.6)} 70%, ${theme.palette.background.default} 100%)`,
+            pointerEvents: "none",
+          },
+        }}
+      >
+        {/* Animated Gradient Orbs */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: "10%",
+            left: "10%",
+            width: "600px",
+            height: "600px",
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 70%)`,
+            filter: "blur(60px)",
+            opacity: theme.palette.mode === "dark" ? 0.6 : 0.4,
+            animation: "float-slow 20s ease-in-out infinite",
+            "@keyframes float-slow": {
+              "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+              "33%": { transform: "translate(30px, -30px) scale(1.1)" },
+              "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+            },
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            top: "20%",
+            right: "10%",
+            width: "500px",
+            height: "500px",
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.12)} 0%, transparent 70%)`,
+            filter: "blur(60px)",
+            opacity: theme.palette.mode === "dark" ? 0.5 : 0.3,
+            animation: "float-slow 25s ease-in-out infinite reverse",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: "10%",
+            left: "40%",
+            width: "400px",
+            height: "400px",
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 70%)`,
+            filter: "blur(50px)",
+            opacity: theme.palette.mode === "dark" ? 0.4 : 0.25,
+            animation: "float-slow 18s ease-in-out infinite",
+          }}
+        />
 
-      <Box sx={{ position: "relative", overflow: "hidden" }}>
-        {/* Hero Section - Centered Design */}
+        {/* Floating background icons - Cloud Providers & DevOps Tools */}
+        {/* Top Row - Evenly Distributed */}
+        <FloatingIcon icon={<SiAmazonec2 size={70} />} delay={0} duration={20} x="8%" y="5%" />
+        <FloatingIcon icon={<VscAzure size={65} />} delay={2} duration={22} x="28%" y="8%" />
+        <FloatingIcon icon={<SiGooglecloud size={65} />} delay={4} duration={24} x="45%" y="4%" />
+        <FloatingIcon icon={<FaAws size={65} />} delay={6} duration={26} x="65%" y="7%" />
+        <FloatingIcon icon={<FaDocker size={62} />} delay={8} duration={28} x="85%" y="9%" />
+
+        {/* Second Row */}
+        <FloatingIcon icon={<SiKubernetes size={60} />} delay={1} duration={23} x="5%" y="22%" />
+        <FloatingIcon icon={<SecurityIcon />} delay={3} duration={25} x="20%" y="25%" />
+        <FloatingIcon icon={<SiTerraform size={58} />} delay={5} duration={27} x="38%" y="23%" />
+        <FloatingIcon icon={<SiAwselasticloadbalancing size={56} />} delay={7} duration={29} x="58%" y="24%" />
+        <FloatingIcon icon={<DnsIcon />} delay={9} duration={21} x="78%" y="26%" />
+        <FloatingIcon icon={<VscAzureDevops size={54} />} delay={11} duration={30} x="92%" y="22%" />
+        
+        {/* Third Row */}
+        <FloatingIcon icon={<SiNginx size={52} />} delay={2} duration={26} x="10%" y="38%" />
+        <FloatingIcon icon={<SiApachekafka size={50} />} delay={4} duration={28} x="30%" y="40%" />
+        <FloatingIcon icon={<ServerIcon />} delay={6} duration={24} x="50%" y="39%" />
+        <FloatingIcon icon={<SiAwsamplify size={48} />} delay={8} duration={22} x="70%" y="41%" />
+        <FloatingIcon icon={<NetworkIcon />} delay={10} duration={25} x="88%" y="38%" />
+        
+        {/* Fourth Row */}
+        <FloatingIcon icon={<SiAnsible size={56} />} delay={1.5} duration={27} x="6%" y="52%" />
+        <FloatingIcon icon={<StorageIcon />} delay={3.5} duration={29} x="24%" y="55%" />
+        <FloatingIcon icon={<DiagramIcon />} delay={5.5} duration={31} x="42%" y="53%" />
+        <FloatingIcon icon={<SiAwslambda size={54} />} delay={7.5} duration={23} x="60%" y="54%" />
+        <FloatingIcon icon={<MemoryIcon />} delay={9.5} duration={26} x="80%" y="56%" />
+        
+        {/* Fifth Row */}
+        <FloatingIcon icon={<FaJenkins size={52} />} delay={2.5} duration={28} x="12%" y="68%" />
+        <FloatingIcon icon={<DataIcon />} delay={4.5} duration={24} x="32%" y="70%" />
+        <FloatingIcon icon={<SiPrometheus size={50} />} delay={6.5} duration={30} x="52%" y="69%" />
+        <FloatingIcon icon={<ShieldIcon />} delay={8.5} duration={22} x="72%" y="71%" />
+        <FloatingIcon icon={<SiGrafana size={48} />} delay={10.5} duration={25} x="90%" y="68%" />
+        
+        {/* Bottom Row */}
+        <FloatingIcon icon={<SiPostgresql size={56} />} delay={3} duration={27} x="8%" y="82%" />
+        <FloatingIcon icon={<SiMongodb size={54} />} delay={5} duration={29} x="28%" y="85%" />
+        <FloatingIcon icon={<CodeIcon />} delay={7} duration={23} x="48%" y="83%" />
+        <FloatingIcon icon={<SiRedis size={52} />} delay={9} duration={26} x="68%" y="86%" />
+        <FloatingIcon icon={<SiElasticsearch size={50} />} delay={11} duration={28} x="88%" y="84%" />
+        
+        {/* Hero Section - Enhanced Modern Design */}
         <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
-          <Box sx={{ minHeight: { md: "90vh" }, py: { xs: 8, md: 12 }, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Box sx={{ textAlign: "center", maxWidth: 900, mx: "auto" }}>
+          <Box sx={{ minHeight: { md: "95vh" }, py: { xs: 10, md: 14 }, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box sx={{ textAlign: "center", maxWidth: 1000, mx: "auto" }}>
               <Box
                 sx={{
                   opacity: mounted ? 1 : 0,
@@ -461,56 +604,87 @@ const LandingPage: React.FC = () => {
                   transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
-                {/* Badge */}
+                {/* Enhanced Badge with Animation */}
                 <Box
                   sx={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 1,
-                    px: 2.5,
-                    py: 1,
-                    mb: 4,
+                    gap: 1.5,
+                    px: 3,
+                    py: 1.25,
+                    mb: 5,
                     borderRadius: 50,
-                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.secondary.main, 0.1)})`,
-                    border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                    backdropFilter: "blur(10px)",
+                    background: theme.palette.mode === "dark"
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)}, ${alpha(theme.palette.secondary.main, 0.15)})`
+                      : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, ${alpha(theme.palette.secondary.main, 0.08)})`,
+                    border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                    backdropFilter: "blur(20px)",
+                    boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
+                    animation: "pulse 3s ease-in-out infinite",
+                    "@keyframes pulse": {
+                      "0%, 100%": {
+                        boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
+                      },
+                      "50%": {
+                        boxShadow: `0 8px 30px ${alpha(theme.palette.primary.main, 0.25)}`,
+                      },
+                    },
                   }}
                 >
-                  <BoltIcon sx={{ fontSize: 20, color: theme.palette.primary.main }} />
-                  <Typography sx={{ fontSize: "0.9rem", fontWeight: 600, color: theme.palette.text.primary }}>
+                  <BoltIcon sx={{ fontSize: 22, color: theme.palette.primary.main }} />
+                  <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: theme.palette.text.primary, letterSpacing: "0.01em" }}>
                     Production-Ready Infrastructure as Code
                   </Typography>
-                  <TrendingUpIcon sx={{ fontSize: 18, color: theme.palette.secondary.main }} />
+                  <Chip 
+                    label="NEW" 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: "0.7rem", 
+                      fontWeight: 700,
+                      background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                      color: "#fff",
+                    }} 
+                  />
                 </Box>
 
-                {/* Main Heading */}
+                {/* Enhanced Main Heading with Better Gradient */}
                 <Typography
                   variant="h1"
                   sx={{
-                    fontSize: { xs: "2.75rem", sm: "3.5rem", md: "4.5rem", lg: "5.5rem" },
+                    fontSize: { xs: "3rem", sm: "4rem", md: "5rem", lg: "6.5rem" },
                     fontWeight: 900,
-                    lineHeight: 1.05,
-                    mb: 3,
-                    letterSpacing: "-0.04em",
+                    lineHeight: 1.1,
+                    mb: 4,
+                    letterSpacing: "-0.05em",
                   }}
                 >
                   <Box
                     component="span"
                     sx={{
                       display: "block",
-                      background: `linear-gradient(120deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                      background: theme.palette.mode === "dark"
+                        ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 50%, ${theme.palette.primary.main} 100%)`
+                        : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                      backgroundSize: "200% auto",
                       backgroundClip: "text",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
+                      animation: "gradient-shift 6s ease infinite",
+                      "@keyframes gradient-shift": {
+                        "0%, 100%": { backgroundPosition: "0% 50%" },
+                        "50%": { backgroundPosition: "100% 50%" },
+                      },
                     }}
                   >
-                    Build Cloud
+                    Design Cloud
                   </Box>
                   <Box
                     component="span"
                     sx={{
                       display: "block",
                       color: theme.palette.text.primary,
+                      mt: 1,
                     }}
                   >
                     Infrastructure
@@ -518,114 +692,263 @@ const LandingPage: React.FC = () => {
                   <Box
                     component="span"
                     sx={{
-                      display: "block",
-                      color: alpha(theme.palette.text.secondary, 0.8),
-                      fontSize: "0.6em",
-                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: { xs: 1, sm: 1.5, md: 2 },
+                      mt: 2,
+                      fontSize: "0.45em",
+                      fontWeight: 800,
+                      color: theme.palette.text.secondary,
+                      flexWrap: "wrap",
                     }}
                   >
-                    Visually, Instantly
+                    <Box component="span" sx={{ 
+                      height: 3, 
+                      width: { xs: 20, sm: 30, md: 40 }, 
+                      background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main})`,
+                      borderRadius: 2,
+                      flexShrink: 0,
+                    }} />
+                    <Box component="span" sx={{ whiteSpace: "nowrap" }}>
+                      Visually, Effortlessly, Instantly
+                    </Box>
+                    <Box component="span" sx={{ 
+                      height: 3, 
+                      width: { xs: 20, sm: 30, md: 40 }, 
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main}, transparent)`,
+                      borderRadius: 2,
+                      flexShrink: 0,
+                    }} />
                   </Box>
                 </Typography>
 
-                {/* Description */}
+                {/* Enhanced Description */}
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   sx={{
-                    fontSize: { xs: "1.1rem", md: "1.3rem" },
+                    fontSize: { xs: "1.15rem", md: "1.4rem" },
                     color: theme.palette.text.secondary,
                     lineHeight: 1.8,
-                    mb: 5,
+                    mb: 6,
+                    maxWidth: 800,
+                    mx: "auto",
+                    fontWeight: 400,
                   }}
                 >
-                  Drag, drop, and design cloud infrastructure with 75+ resources.
-                  Export production-ready Terraform code in one click.
+                  Design with <Box component="span" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>75+ cloud resources</Box> across AWS, Azure & GCP.
+                  Generate <Box component="span" sx={{ fontWeight: 700, color: theme.palette.secondary.main }}>production-ready Terraform</Box> code instantly.
                 </Typography>
 
-                {/* CTA Buttons */}
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 5, justifyContent: "center" }}>
+                {/* Enhanced CTA Buttons */}
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={3} sx={{ mb: 8, justifyContent: "center" }}>
                   <Button
                     variant="contained"
                     size="large"
                     onClick={() => navigate("/home")}
+                    startIcon={<DiagramIcon />}
                     sx={{
-                      px: 5,
-                      py: 2.5,
-                      fontSize: "1.1rem",
+                      px: 6,
+                      py: 3,
+                      fontSize: "1.15rem",
                       fontWeight: 700,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       textTransform: "none",
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                      boxShadow: `0 10px 40px ${alpha(theme.palette.primary.main, 0.3)}`,
-                      "&:hover": {
-                        boxShadow: `0 15px 50px ${alpha(theme.palette.primary.main, 0.4)}`,
-                        transform: "translateY(-2px)",
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                      boxShadow: `0 12px 50px ${alpha(theme.palette.primary.main, 0.4)}`,
+                      position: "relative",
+                      overflow: "hidden",
+                      "&::before": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: "-100%",
+                        width: "100%",
+                        height: "100%",
+                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
+                        transition: "left 0.5s",
                       },
-                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        boxShadow: `0 20px 60px ${alpha(theme.palette.primary.main, 0.5)}`,
+                        transform: "translateY(-4px) scale(1.02)",
+                        "&::before": {
+                          left: "100%",
+                        },
+                      },
+                      transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   >
                     Start Building Free
                   </Button>
                   <Button
-                    variant="text"
+                    variant="outlined"
                     size="large"
                     startIcon={<PlayIcon />}
                     sx={{
-                      px: 4,
-                      py: 2.5,
-                      fontSize: "1.1rem",
+                      px: 5,
+                      py: 3,
+                      fontSize: "1.15rem",
                       fontWeight: 600,
+                      borderRadius: 3,
                       textTransform: "none",
                       color: theme.palette.text.primary,
+                      borderColor: alpha(theme.palette.primary.main, 0.3),
+                      borderWidth: 2,
+                      background: alpha(theme.palette.background.paper, 0.5),
+                      backdropFilter: "blur(10px)",
                       "&:hover": {
-                        background: alpha(theme.palette.primary.main, 0.05),
+                        background: alpha(theme.palette.primary.main, 0.1),
+                        borderColor: theme.palette.primary.main,
+                        borderWidth: 2,
+                        transform: "translateY(-2px)",
+                        boxShadow: `0 8px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
                       },
+                      transition: "all 0.3s ease",
                     }}
                   >
                     Watch Demo
                   </Button>
                 </Stack>
 
-                {/* Stats */}
-                <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap sx={{ justifyContent: "center" }}>
+                {/* Enhanced Stats with Icons */}
+                <Box sx={{ 
+                  display: "flex", 
+                  justifyContent: "center", 
+                  gap: { xs: 3, md: 6 }, 
+                  flexWrap: "wrap",
+                  pt: 4,
+                  borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                }}>
                   {[
-                    { value: "75+", label: "Cloud Resources" },
-                    { value: "1000+", label: "Active Users" },
-                    { value: "5min", label: "Avg. Setup Time" },
+                    { value: "75+", label: "Cloud Resources", icon: <CloudIcon sx={{ fontSize: 28 }} /> },
+                    { value: "1000+", label: "Active Users", icon: <TrendingUpIcon sx={{ fontSize: 28 }} /> },
+                    { value: "<5min", label: "Setup Time", icon: <BoltIcon sx={{ fontSize: 28 }} /> },
                   ].map((stat, idx) => (
-                    <Box key={idx}>
+                    <Box 
+                      key={idx}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 1,
+                        px: 3,
+                        py: 2,
+                        borderRadius: 2,
+                        background: alpha(theme.palette.background.paper, 0.4),
+                        backdropFilter: "blur(10px)",
+                        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          background: alpha(theme.palette.primary.main, 0.05),
+                          border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                          transform: "translateY(-4px)",
+                        },
+                      }}
+                    >
+                      <Box sx={{ color: theme.palette.primary.main }}>
+                        {stat.icon}
+                      </Box>
                       <Typography
                         sx={{
-                          fontSize: "2rem",
-                          fontWeight: 800,
+                          fontSize: "2.5rem",
+                          fontWeight: 900,
                           color: theme.palette.primary.main,
                           lineHeight: 1,
-                          mb: 0.5,
+                          letterSpacing: "-0.02em",
                         }}
                       >
                         {stat.value}
                       </Typography>
                       <Typography
                         sx={{
-                          fontSize: "0.875rem",
+                          fontSize: "0.9rem",
                           color: theme.palette.text.secondary,
-                          fontWeight: 500,
+                          fontWeight: 600,
+                          textAlign: "center",
                         }}
                       >
                         {stat.label}
                       </Typography>
                     </Box>
                   ))}
-                </Stack>
+                </Box>
+
+                {/* Trusted By Section */}
+                <Box sx={{ mt: 8, opacity: 0.6 }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: theme.palette.text.secondary, 
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      mb: 3,
+                      display: "block",
+                    }}
+                  >
+                    Trusted by DevOps Teams Worldwide
+                  </Typography>
+                  <Stack 
+                    direction="row" 
+                    spacing={4} 
+                    sx={{ 
+                      justifyContent: "center", 
+                      alignItems: "center",
+                      opacity: 0.5,
+                    }}
+                  >
+                    <FaAws size={40} />
+                    <VscAzure size={36} />
+                    <SiGooglecloud size={38} />
+                  </Stack>
+                </Box>
               </Box>
             </Box>
           </Box>
         </Container>
+
+        {/* Decorative Wave Separator */}
+        <Box 
+          sx={{ 
+            position: "absolute",
+            bottom: -2,
+            left: 0,
+            width: "100%",
+            overflow: "hidden",
+            lineHeight: 0,
+            transform: "rotate(180deg)",
+          }}
+        >
+          <svg
+            viewBox="0 0 1200 120"
+            preserveAspectRatio="none"
+            style={{
+              position: "relative",
+              display: "block",
+              width: "calc(100% + 1.3px)",
+              height: "80px",
+            }}
+          >
+            <path
+              d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
+              fill={theme.palette.background.default}
+            />
+          </svg>
+        </Box>
       </Box>
 
-      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
-        {/* How It Works Section */}
-        <Box sx={{ py: { xs: 6, md: 10 } }}>
+      {/* Main Content Area with Different Background */}
+      <Box
+        sx={{
+          background: theme.palette.background.default,
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+          {/* How It Works Section */}
+          <Box sx={{ py: { xs: 6, md: 10 } }}>
           <Typography
             variant="h2"
             sx={{
@@ -1039,6 +1362,7 @@ const LandingPage: React.FC = () => {
           </Typography>
         </Container>
       </Box>
+    </Box>
     </Box>
   );
 };
