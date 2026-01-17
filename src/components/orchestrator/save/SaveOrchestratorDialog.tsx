@@ -18,6 +18,7 @@ import { orchestratorService } from "../../../services/orchestratorService";
 import { prepareOrchestratorForSave } from "../../../utils/orchestratorUtils";
 import { TemplateInfo } from "../../../types/orchestrator";
 import { generateFlowImage } from "../utils/downloadImage";
+import { useAuth } from "../../../context/AuthContext";
 
 interface SaveOrchestratorDialogProps {
   open: boolean;
@@ -42,6 +43,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
   currentOrchestratorId,
   onSaveSuccess,
 }) => {
+  const { user } = useAuth();
   const [templateName, setTemplateName] = useState(
     templateInfo?.templateName || ""
   );
@@ -103,7 +105,8 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
       const orchestratorData = prepareOrchestratorForSave(
         nodes,
         edges,
-        updatedTemplateInfo
+        updatedTemplateInfo,
+        user
       );
 
       // Step 3: Add the image to the request if generated successfully

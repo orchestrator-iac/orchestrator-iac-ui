@@ -28,6 +28,29 @@ const extractFriendlyIndex = (
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+/**
+ * Resolve template strings in values recursively
+ * Replaces {{ userInfo.email }}, {{ templateInfo.cloud }}, etc. with actual values
+ */
+const resolveTemplateValue = (value: any, context: { userInfo?: any; templateInfo?: any }): any => {
+  if (typeof value === 'string' && value.includes('{{')) {
+    // Simple template resolution - supports {{ userInfo.property }} and {{ templateInfo.property }}
+    return value.replace(/\{\{\s*(userInfo|templateInfo)\.(\w+)\s*\}\}/g, (_, objectName, property) => {
+      const obj = context[objectName as keyof typeof context];
+      return obj?.[property] ?? `{{ ${objectName}.${property} }}`;
+    });
+  } else if (Array.isArray(value)) {
+    return value.map(item => resolveTemplateValue(item, context));
+  } else if (value !== null && typeof value === 'object') {
+    const resolved: any = {};
+    for (const [key, val] of Object.entries(value)) {
+      resolved[key] = resolveTemplateValue(val, context);
+    }
+    return resolved;
+  }
+  return value;
+};
+
 const resolveNodeFriendlyId = (node: Node): string | undefined => {
   const friendly = (node.data as any)?.friendlyId as string | undefined;
   if (friendly) {
@@ -93,6 +116,16 @@ export const transformNodeForDB = (
   const isExpanded = values?.__isExpanded ?? node.data?.isExpanded ?? true;
   const persistedFriendlyId = resolveNodeFriendlyId(node);
   const outgoingFriendlyId = persistedFriendlyId ?? friendlyId;
+
+  // Get template context for resolving template values
+  const templateContext = (node.data?.__helpers as { templateContext?: any })?.templateContext;
+
+  // Resolve template values if context is available
+  if (templateContext) {
+    for (const [key, value] of Object.entries(values)) {
+      values[key] = resolveTemplateValue(value, templateContext);
+    }
+  }
 
   // For each link, if the value is a linked node id, store rich info
   if (node.data?.links && Array.isArray(node.data.links)) {
@@ -177,22 +210,25 @@ export const transformEdgeForDB = (edge: Edge): OrchestratorEdge => {
  * @param nodes - Array of React Flow nodes
  * @param edges - Array of React Flow edges
  * @param templateInfo - Template configuration metadata (includes templateName and description)
+ * @param userInfo - User information for template resolution
  * @returns Complete orchestrator save request
  */
 export const prepareOrchestratorForSave = (
   nodes: Node[],
   edges: Edge[],
-  templateInfo: TemplateInfo
+  templateInfo: TemplateInfo,
+  userInfo?: any
 ): SaveOrchestratorRequest => {
   const friendlyIdLookup = buildFriendlyIdLookup(nodes);
 
-  // Inject __helpers.allNodes into each node's data so transformNodeForDB can access all nodes
+  // Inject __helpers with allNodes and template resolution context
   const nodesWithHelpers = nodes.map((node) => ({
     ...node,
     data: {
       ...node.data,
       __helpers: {
         allNodes: nodes,
+        templateContext: { userInfo, templateInfo },
       },
     },
   }));
