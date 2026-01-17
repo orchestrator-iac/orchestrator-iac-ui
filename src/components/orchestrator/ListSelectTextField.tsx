@@ -89,7 +89,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
 
   const handleListItemChange = (index: number, newValue: string) => {
     let actualValue = newValue;
-    
+
     // Check for duplicates if allowDuplicates is false
     if (!allowDuplicates && newValue && currentList.includes(newValue)) {
       const existingIndex = currentList.indexOf(newValue);
@@ -98,11 +98,11 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
         actualValue = "";
       }
     }
-    
+
     const updatedList = [...currentList];
     updatedList[index] = actualValue;
     onChange(name, updatedList);
-    
+
     // For list fields, use indexed field names to create separate edges for each item
     // This allows each list item to have its own independent edge
     if (onLinkFieldChange) {
@@ -111,7 +111,9 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   };
 
   const handleAddItem = () => {
-    const baseList = Array.isArray(formData[name]) ? (formData[name] as string[]) : currentList;
+    const baseList = Array.isArray(formData[name])
+      ? (formData[name] as string[])
+      : currentList;
     const newIndex = baseList.length;
     const newList = [...baseList, ""];
     onChange(name, newList);
@@ -133,9 +135,12 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
   const renderSelectTextField = (itemValue: string, itemIndex: number) => {
     const resolvedOptions = resolveOptions(options, formData);
     const opts = (resolvedOptions ?? []).map((o: any) => {
-      const isAlreadySelected = !allowDuplicates && 
-        currentList.some((item, idx) => idx !== itemIndex && item === String(o.value));
-      
+      const isAlreadySelected =
+        !allowDuplicates &&
+        currentList.some(
+          (item, idx) => idx !== itemIndex && item === String(o.value)
+        );
+
       return {
         label: String(o.label),
         value: String(o.value),
@@ -143,7 +148,17 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
       };
     }) as Array<{ label: string; value: string; disabled?: boolean }>;
 
-    const currentVal = String(itemValue);
+    // Handle both string values and object values (e.g., {id: "...", value: "..."})
+    let currentVal: string;
+    if (typeof itemValue === "string") {
+      currentVal = itemValue;
+    } else if (itemValue && typeof itemValue === "object") {
+      const itemObj = itemValue as any;
+      currentVal = String(itemObj.id || itemObj.value || "");
+    } else {
+      currentVal = String(itemValue || "");
+    }
+
     const matched = opts.find((o) => o.value === currentVal) || null;
 
     return (
@@ -156,9 +171,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
           typeof opt === "string" ? opt : opt?.label ?? ""
         }
         isOptionEqualToValue={(opt, val) =>
-          typeof val === "string"
-            ? opt.value === val
-            : opt.value === val?.value
+          typeof val === "string" ? opt.value === val : opt.value === val?.value
         }
         clearOnEscape
         onChange={(_e, newVal) => {
@@ -188,23 +201,22 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
           />
         )}
         renderOption={(props, option) => {
-          const isAlreadySelected = !allowDuplicates && 
-            currentList.some((item, idx) => idx !== itemIndex && item === option.value);
+          const isAlreadySelected =
+            !allowDuplicates &&
+            currentList.some(
+              (item, idx) => idx !== itemIndex && item === option.value
+            );
           return (
-            <MenuItem
-              {...props}
-              key={option.value}
-              disabled={option.disabled}
-            >
-              <Typography 
+            <MenuItem {...props} key={option.value} disabled={option.disabled}>
+              <Typography
                 variant="body2"
-                sx={{ 
+                sx={{
                   opacity: option.disabled ? 0.5 : 1,
-                  fontStyle: isAlreadySelected ? 'italic' : 'normal'
+                  fontStyle: isAlreadySelected ? "italic" : "normal",
                 }}
               >
                 {option.label}
-                {isAlreadySelected && ' (Already selected)'}
+                {isAlreadySelected && " (Already selected)"}
               </Typography>
             </MenuItem>
           );
@@ -243,9 +255,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid size={10}>
-              {renderSelectTextField(item, index)}
-            </Grid>
+            <Grid size={10}>{renderSelectTextField(item, index)}</Grid>
             <Grid size={2}>
               <Tooltip title="Remove">
                 <IconButton
@@ -260,7 +270,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
           </Grid>
         </Card>
       ))}
-      
+
       <Button
         variant="outlined"
         onClick={handleAddItem}

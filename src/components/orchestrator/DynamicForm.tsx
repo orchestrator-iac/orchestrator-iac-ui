@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Card,
   TextField,
@@ -77,9 +77,14 @@ const DynamicForm: React.FC<Props> = ({
   }
 
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const prevValuesRef = useRef<string>("");
+
   useEffect(() => {
     if (!values) {
-      setFormData({});
+      if (Object.keys(formData).length > 0) {
+        setFormData({});
+        prevValuesRef.current = "";
+      }
       return;
     }
     try {
@@ -87,10 +92,20 @@ const DynamicForm: React.FC<Props> = ({
         userInfo: userInfo ?? {}, // <- ensure key exists
         templateInfo: templateInfo ?? {}, // <- ensure key exists
       });
-      setFormData(rendered);
+      
+      // Only update state if the data actually changed
+      const renderedStr = JSON.stringify(rendered);
+      if (renderedStr !== prevValuesRef.current) {
+        prevValuesRef.current = renderedStr;
+        setFormData(rendered);
+      }
     } catch (e) {
       console.error("Template render failed", e);
-      setFormData(values);
+      const valuesStr = JSON.stringify(values);
+      if (valuesStr !== prevValuesRef.current) {
+        prevValuesRef.current = valuesStr;
+        setFormData(values);
+      }
     }
   }, [values, userInfo, templateInfo]);
 
@@ -127,12 +142,12 @@ const DynamicForm: React.FC<Props> = ({
         const processedValue = v.replace(/\$\{([^}]+)\}/g, (_, fieldName) => {
           const contextValue = contextData[fieldName];
           if (!contextValue) return "";
-          
+
           // Direct mapping: use the field value as the type filter
           // This supports both single values and pipe-separated values from the field
           return String(contextValue);
         });
-        
+
         if (processedValue) {
           allowedTypes = processedValue.split("|").filter(Boolean);
         }
@@ -681,8 +696,8 @@ const DynamicForm: React.FC<Props> = ({
               card.fields.map(
                 (field) =>
                   validCondition(field, {
-                    ...(values ?? {}),
-                    ...(formData ?? {}),
+                    ...(values),
+                    ...(formData),
                   }) && (
                     <Grid size={field.size ?? 12} key={field.name}>
                       {field.label && (
