@@ -30,6 +30,7 @@ import { Box, Chip } from "@mui/material";
 
 import CustomNode from "./CustomNode";
 import ArchitectureNode from "./ArchitectureNode";
+import AnimatedGradientEdge from "./AnimatedGradientEdge";
 import { OrchestratorMenu } from "./menu";
 
 import Sidebar from "./sidebar/Sidebar";
@@ -440,17 +441,16 @@ const OrchestratorReactFlow: React.FC = () => {
               id: `${source.id}->${target.id}:${rule.bind}`,
               source: source.id,
               target: target.id,
-              data: rule.edgeData ?? { kind: rule.bind },
+              type: 'animatedGradient',
+              data: {
+                ...(rule.edgeData ?? { kind: rule.bind }),
+                animated: rule.edgeData?.animated ?? true,
+              },
               markerEnd: {
                 type: MarkerType.ArrowClosed,
                 width: 12,
                 height: 12,
               },
-              style: rule.edgeData?.style ?? {
-                strokeWidth: 4,
-                strokeDasharray: "8 2",
-              },
-              animated: rule.edgeData?.animated ?? false,
             };
 
             setEdges((eds) => addEdge(newEdge, eds));
@@ -511,13 +511,12 @@ const OrchestratorReactFlow: React.FC = () => {
         id: `${source.id}->${target.id}:${rule.bind}`,
         source: source.id,
         target: target.id,
-        data: rule.edgeData ?? { kind: rule.bind },
-        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
-        style: rule.edgeData?.style ?? {
-          strokeWidth: 4,
-          strokeDasharray: "8 2",
+        type: 'animatedGradient',
+        data: {
+          ...(rule.edgeData ?? { kind: rule.bind }),
+          animated: rule.edgeData?.animated ?? true,
         },
-        animated: rule.edgeData?.animated ?? false,
+        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
       };
 
       setEdges((eds) => addEdge(newEdge, eds));
@@ -767,10 +766,6 @@ const OrchestratorReactFlow: React.FC = () => {
                 width: 12,
                 height: 12,
               },
-              style: rule?.edgeData?.style ?? {
-                strokeWidth: 4,
-                strokeDasharray: "8 2",
-              },
               animated: rule?.edgeData?.animated ?? false,
             };
             working = addEdge(newEdge, working);
@@ -927,6 +922,21 @@ const OrchestratorReactFlow: React.FC = () => {
   );
 
   // Inject helpers for DynamicForm (dynamic options + dropdown→edge sync)
+  const nodeTypes = useMemo(
+    () => ({
+      customNode: CustomNode,
+      architectureNode: ArchitectureNode,
+    }),
+    []
+  );
+
+  const edgeTypes = useMemo(
+    () => ({
+      animatedGradient: AnimatedGradientEdge,
+    }),
+    []
+  );
+
   const nodesWithHelpers = useMemo(
     () =>
       nodes.map((n) => {
@@ -998,10 +1008,8 @@ const OrchestratorReactFlow: React.FC = () => {
           onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
           colorMode={theme.palette.mode}
-          nodeTypes={{
-            customNode: CustomNode,
-            architectureNode: ArchitectureNode,
-          }}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           proOptions={{ hideAttribution: true }}
           onDrop={onDrop}
           onDragOver={onDragOver}
