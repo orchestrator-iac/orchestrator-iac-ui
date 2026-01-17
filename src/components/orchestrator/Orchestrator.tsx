@@ -30,6 +30,7 @@ import { Box, Chip } from "@mui/material";
 
 import CustomNode from "./CustomNode";
 import ArchitectureNode from "./ArchitectureNode";
+import AnimatedGradientEdge from "./AnimatedGradientEdge";
 import { OrchestratorMenu } from "./menu";
 
 import Sidebar from "./sidebar/Sidebar";
@@ -234,9 +235,9 @@ const OrchestratorReactFlow: React.FC = () => {
   useEffect(() => {
     document.body.dataset.theme = theme.palette.mode;
     // Disable body scroll on Orchestrator page
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, [theme.palette.mode]);
 
@@ -440,13 +441,16 @@ const OrchestratorReactFlow: React.FC = () => {
               id: `${source.id}->${target.id}:${rule.bind}`,
               source: source.id,
               target: target.id,
-              data: rule.edgeData ?? { kind: rule.bind },
-              markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
-              style: rule.edgeData?.style ?? {
-                strokeWidth: 4,
-                strokeDasharray: "8 2",
+              type: 'animatedGradient',
+              data: {
+                ...(rule.edgeData ?? { kind: rule.bind }),
+                animated: rule.edgeData?.animated ?? true,
               },
-              animated: rule.edgeData?.animated ?? false,
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                width: 12,
+                height: 12,
+              },
             };
 
             setEdges((eds) => addEdge(newEdge, eds));
@@ -507,13 +511,12 @@ const OrchestratorReactFlow: React.FC = () => {
         id: `${source.id}->${target.id}:${rule.bind}`,
         source: source.id,
         target: target.id,
-        data: rule.edgeData ?? { kind: rule.bind },
-        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
-        style: rule.edgeData?.style ?? {
-          strokeWidth: 4,
-          strokeDasharray: "8 2",
+        type: 'animatedGradient',
+        data: {
+          ...(rule.edgeData ?? { kind: rule.bind }),
+          animated: rule.edgeData?.animated ?? true,
         },
-        animated: rule.edgeData?.animated ?? false,
+        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
       };
 
       setEdges((eds) => addEdge(newEdge, eds));
@@ -567,6 +570,19 @@ const OrchestratorReactFlow: React.FC = () => {
       if (isArchitectureMode) return;
       if (bind == null) return;
       const bindStr: string = typeof bind === "string" ? bind : String(bind);
+
+      // Ensure newSourceId is always a string (handle cases where object is passed)
+      let sourceId = "";
+      if (typeof newSourceId === "string") {
+        sourceId = newSourceId;
+      } else if (typeof newSourceId === "object" && newSourceId !== null) {
+        // Extract ID from object (handle cases like {id: "...", value: "..."})
+        const idObj = newSourceId as any;
+        sourceId = String(idObj.id || idObj.value || "");
+      } else {
+        sourceId = String(newSourceId || "");
+      }
+
       const target = nodes.find((n) => n.id === nodeId);
       if (!target) return;
       const baseBind = bindStr.includes("[") ? bindStr.split("[")[0] : bindStr;
@@ -608,7 +624,7 @@ const OrchestratorReactFlow: React.FC = () => {
                 ...n.data,
                 values: {
                   ...current,
-                  [baseBind]: newSourceId ?? "",
+                  [baseBind]: sourceId || "",
                 },
               },
             };
@@ -630,15 +646,15 @@ const OrchestratorReactFlow: React.FC = () => {
               : { ...prevArrObjs[objIndex] };
             const objAtIndex = { ...objAtIndexBase };
 
-            if (newSourceId) {
-              objAtIndex[objKey] = newSourceId;
+            if (sourceId) {
+              objAtIndex[objKey] = sourceId;
               prevArrObjs[objIndex] = objAtIndex;
 
               // Remove duplicate occurrences of the same id for this key across other indices
               for (let i = prevArrObjs.length - 1; i >= 0; i--) {
                 if (i !== objIndex) {
                   const item = prevArrObjs[i] ?? {};
-                  if (item && item[objKey] === newSourceId) {
+                  if (item && item[objKey] === sourceId) {
                     const rest = { ...item };
                     delete rest[objKey];
                     prevArrObjs[i] = rest;
@@ -667,18 +683,18 @@ const OrchestratorReactFlow: React.FC = () => {
 
           if (syntheticIndex === null) {
             // Fallback (no index provided): behave like set/append unique
-            if (newSourceId) {
-              if (!prevArr.includes(newSourceId)) prevArr.push(newSourceId);
+            if (sourceId) {
+              if (!prevArr.includes(sourceId)) prevArr.push(sourceId);
             }
           } else {
             // Ensure array large enough
             while (prevArr.length <= syntheticIndex) prevArr.push("");
-            if (newSourceId) {
+            if (sourceId) {
               // Replace value at index (respect ordering)
-              prevArr[syntheticIndex] = newSourceId;
+              prevArr[syntheticIndex] = sourceId;
               // Remove duplicate occurrences of same id beyond this index
               for (let i = prevArr.length - 1; i >= 0; i--) {
-                if (i !== syntheticIndex && prevArr[i] === newSourceId)
+                if (i !== syntheticIndex && prevArr[i] === sourceId)
                   prevArr.splice(i, 1);
               }
             } else {
@@ -711,10 +727,10 @@ const OrchestratorReactFlow: React.FC = () => {
             return true;
           });
 
-          if (newSourceId && objKey != null && objIndex != null) {
+          if (sourceId && objKey != null && objIndex != null) {
             working = working.filter((e) => {
               if (e.target !== nodeId) return true;
-              if (e.source !== newSourceId) return true;
+              if (e.source !== sourceId) return true;
               if ((e.data?.kind ?? baseBind) !== edgeKind) return true;
               const otherBindKey = e.data?.bindKey;
               if (typeof otherBindKey !== "string") return true;
@@ -727,18 +743,18 @@ const OrchestratorReactFlow: React.FC = () => {
             });
           }
         }
-        if (newSourceId) {
+        if (sourceId) {
           const duplicate = working.some(
             (e) =>
-              e.source === newSourceId &&
+              e.source === sourceId &&
               e.target === nodeId &&
               (e.data?.kind ?? baseBind) === edgeKind &&
               (cardinality === "1" || e.data?.bindKey === bindStr)
           );
           if (!duplicate) {
             const newEdge: Edge = {
-              id: `${newSourceId}->${nodeId}:${bindStr}`,
-              source: newSourceId,
+              id: `${sourceId}->${nodeId}:${bindStr}`,
+              source: sourceId,
               target: nodeId,
               data: {
                 ...(rule?.edgeData ?? { kind: baseBind }),
@@ -749,10 +765,6 @@ const OrchestratorReactFlow: React.FC = () => {
                 type: MarkerType.ArrowClosed,
                 width: 12,
                 height: 12,
-              },
-              style: rule?.edgeData?.style ?? {
-                strokeWidth: 4,
-                strokeDasharray: "8 2",
               },
               animated: rule?.edgeData?.animated ?? false,
             };
@@ -861,9 +873,9 @@ const OrchestratorReactFlow: React.FC = () => {
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== nodeId) return n;
-          
+
           // Special handling for accordion state
-          if (name === '__isExpanded') {
+          if (name === "__isExpanded") {
             return {
               ...n,
               data: {
@@ -873,7 +885,7 @@ const OrchestratorReactFlow: React.FC = () => {
               },
             };
           }
-          
+
           // Regular field update
           return {
             ...n,
@@ -910,6 +922,21 @@ const OrchestratorReactFlow: React.FC = () => {
   );
 
   // Inject helpers for DynamicForm (dynamic options + dropdown→edge sync)
+  const nodeTypes = useMemo(
+    () => ({
+      customNode: CustomNode,
+      architectureNode: ArchitectureNode,
+    }),
+    []
+  );
+
+  const edgeTypes = useMemo(
+    () => ({
+      animatedGradient: AnimatedGradientEdge,
+    }),
+    []
+  );
+
   const nodesWithHelpers = useMemo(
     () =>
       nodes.map((n) => {
@@ -981,7 +1008,8 @@ const OrchestratorReactFlow: React.FC = () => {
           onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
           colorMode={theme.palette.mode}
-          nodeTypes={{ customNode: CustomNode, architectureNode: ArchitectureNode }}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           proOptions={{ hideAttribution: true }}
           onDrop={onDrop}
           onDragOver={onDragOver}
@@ -1037,7 +1065,9 @@ const OrchestratorReactFlow: React.FC = () => {
                 onSaveSuccess={handleOrchestrationSaved}
                 orchestratorName={templateInfo?.templateName}
                 isArchitectureMode={isArchitectureMode}
-                onArchitectureModeChange={(value) => setIsArchitectureMode(value)}
+                onArchitectureModeChange={(value) =>
+                  setIsArchitectureMode(value)
+                }
               />
             </Box>
           </Panel>
