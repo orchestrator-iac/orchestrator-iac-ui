@@ -24,7 +24,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import parse from "html-react-parser";
 import { useViewport } from "@xyflow/react";
-import { Field, FieldGroup } from "../../types/node-info";
+import { Field, FieldGroup, LinkRule } from "../../types/node-info";
 import { CodeEditorField } from "../shared/code-editor/CodeEditorField";
 import { UserProfile } from "../../types/auth";
 import { CloudConfig } from "../../types/clouds-info";
@@ -40,12 +40,7 @@ type Props = {
   values?: Values;
 
   nodeId: string;
-  links?: Array<{
-    bind: string;
-    fromTypes: string[];
-    cardinality?: string;
-    edgeData?: any;
-  }>;
+  links?: LinkRule[];
   allNodes?: any[];
   allEdges?: any[];
   userInfo?: UserProfile;
