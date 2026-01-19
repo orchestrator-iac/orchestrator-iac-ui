@@ -60,7 +60,8 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
     zoom = 1;
   }
 
-  const currentList = (formData[name] ?? value ?? []) as any[];
+  const rawValue = formData[name] ?? value ?? [];
+  const currentList = Array.isArray(rawValue) ? rawValue : [];
 
   const renderInfo = (info?: string | JSX.Element) => {
     if (!info) return null;

@@ -756,17 +756,18 @@ const OrchestratorReactFlow: React.FC = () => {
               id: `${sourceId}->${nodeId}:${bindStr}`,
               source: sourceId,
               target: nodeId,
+              type: 'animatedGradient',
               data: {
                 ...(rule?.edgeData ?? { kind: baseBind }),
                 kind: edgeKind,
                 bindKey: bindStr,
+                animated: rule?.edgeData?.animated ?? true,
               },
               markerEnd: {
                 type: MarkerType.ArrowClosed,
                 width: 12,
                 height: 12,
               },
-              animated: rule?.edgeData?.animated ?? false,
             };
             working = addEdge(newEdge, working);
           }
