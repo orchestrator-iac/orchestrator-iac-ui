@@ -97,6 +97,17 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
   const handleRemoveItem = (index: number) => {
     const updatedList = currentList.filter((_, i) => i !== index);
     onChange(name, updatedList);
+    
+    // Clear edges for the removed item - notify link changes with empty string
+    if (onLinkFieldChange && fieldCfg?.schema) {
+      fieldCfg.schema.forEach((schemaField: any) => {
+        // Notify that this link should be cleared (same pattern as DynamicForm)
+        onLinkFieldChange(
+          `${name}[${index}].${schemaField.name}`,
+          ""
+        );
+      });
+    }
   };
 
   const renderObjectField = (
