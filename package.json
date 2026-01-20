@@ -32,7 +32,7 @@
     "@tiptap/react": "^2.6.6",
     "@tiptap/starter-kit": "^2.6.6",
     "@types/react-color": "^3.0.13",
-    "@xyflow/react": "^12.3.0",
+    "@xyflow/react": "^12.10.0",
     "ace-builds": "^1.43.2",
     "axios": "^1.11.0",
     "dompurify": "^3.2.7",
