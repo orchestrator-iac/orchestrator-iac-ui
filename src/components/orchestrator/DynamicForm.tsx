@@ -75,6 +75,10 @@ const DynamicForm: React.FC<Props> = ({
   const prevValuesRef = useRef<string>("");
 
   useEffect(() => {
+    console.log("Form Data Updated:", formData);
+  }, [formData]);
+
+  useEffect(() => {
     if (!values) {
       if (Object.keys(formData).length > 0) {
         setFormData({});

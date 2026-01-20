@@ -208,7 +208,16 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
           disabled: !!o.disabled,
         })) as Array<{ label: string; value: string; disabled?: boolean }>;
 
-        const currentVal = String(fieldValue);
+        // Handle both string values and object values (e.g., {id: "...", __nodeType: "..."})
+        let currentVal: string;
+        if (typeof fieldValue === "string") {
+          currentVal = fieldValue;
+        } else if (fieldValue && typeof fieldValue === "object") {
+          currentVal = String(fieldValue.id || fieldValue.value || "");
+        } else {
+          currentVal = String(fieldValue || "");
+        }
+        
         const matched = opts.find((o) => o.value === currentVal) || null;
 
         return (
