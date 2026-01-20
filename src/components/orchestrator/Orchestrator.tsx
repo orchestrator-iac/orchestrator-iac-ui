@@ -654,7 +654,7 @@ const OrchestratorReactFlow: React.FC = () => {
               for (let i = prevArrObjs.length - 1; i >= 0; i--) {
                 if (i !== objIndex) {
                   const item = prevArrObjs[i] ?? {};
-                  if (item && item[objKey] === sourceId) {
+                  if (item?.[objKey] === sourceId) {
                     const rest = { ...item };
                     delete rest[objKey];
                     prevArrObjs[i] = rest;

@@ -146,9 +146,34 @@ export const transformNodeForDB = (
         }
       } else if (Array.isArray(val)) {
         const allNodes: Node[] | undefined = (node.data?.__helpers as { allNodes?: Node[] })?.allNodes;
-        values[bind] = val.map((v: any) => {
-          if (typeof v === "string") {
-            const sourceNode = allNodes?.find((n) => n.id === v);
+        
+        values[bind] = val.map((item: any) => {
+          // Handle array of objects: each item might have a field that references a node
+          if (item && typeof item === "object" && !Array.isArray(item)) {
+            // Clone the object to avoid mutations
+            const itemCopy = { ...item };
+            
+            // Check if outputRef is specified and extract that field
+            if (linkRule.outputRef && itemCopy[linkRule.outputRef]) {
+              const refValue = itemCopy[linkRule.outputRef];
+              if (typeof refValue === "string") {
+                const sourceNode = allNodes?.find((n) => n.id === refValue);
+                if (sourceNode) {
+                  itemCopy[linkRule.outputRef] = {
+                    id: sourceNode.id,
+                    __nodeType: (sourceNode.data as any)?.__nodeType,
+                    friendlyId: resolveNodeFriendlyId(sourceNode),
+                    outputRef: linkRule.outputRef,
+                  };
+                }
+              }
+            }
+            return itemCopy;
+          }
+          
+          // Handle array of simple strings (legacy behavior)
+          if (typeof item === "string") {
+            const sourceNode = allNodes?.find((n) => n.id === item);
             if (sourceNode) {
               return {
                 id: sourceNode.id,
@@ -158,7 +183,8 @@ export const transformNodeForDB = (
               };
             }
           }
-          return v;
+          
+          return item;
         });
       }
     }
@@ -264,10 +290,34 @@ export const reconstructNodeFromDB = (
     for (const linkRule of resourceTemplate.resourceNode.data.links) {
       const bind: string = linkRule.bind;
       const val = values[bind];
+      
+      // Handle simple object links (e.g., vpc_id: { id, __nodeType, ... })
       if (val && typeof val === "object" && !Array.isArray(val) && "id" in val) {
         values[bind] = (val as { id: string }).id;
-      } else if (Array.isArray(val)) {
-        values[bind] = val.map((v: any) => (typeof v === "object" && v !== null && "id" in v ? (v as { id: string }).id : v));
+      } 
+      // Handle array links
+      else if (Array.isArray(val)) {
+        // Check if outputRef is specified (for array of objects)
+        if (linkRule.outputRef) {
+          // Array of objects: each object has a property (outputRef) that contains the link
+          values[bind] = val.map((item: any) => {
+            if (item && typeof item === "object" && !Array.isArray(item)) {
+              const itemCopy = { ...item };
+              const refValue = itemCopy[linkRule.outputRef];
+              // If the referenced field is a link object, flatten it to just the id
+              if (refValue && typeof refValue === "object" && "id" in refValue) {
+                itemCopy[linkRule.outputRef] = refValue.id;
+              }
+              return itemCopy;
+            }
+            return item;
+          });
+        } else {
+          // Array of simple strings/objects (legacy behavior)
+          values[bind] = val.map((v: any) => 
+            (typeof v === "object" && v !== null && "id" in v ? (v as { id: string }).id : v)
+          );
+        }
       }
     }
   }
