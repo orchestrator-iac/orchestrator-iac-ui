@@ -1,7 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import Fuse from 'fuse.js';
-import { Note } from '@/types/Note';
-import { notesService, CreateNoteRequest, UpdateNoteRequest } from '@/services/notesService';
+import { useState, useEffect, useRef } from "react";
+import Fuse from "fuse.js";
+import { Note } from "@/types/Note";
+import {
+  notesService,
+  CreateNoteRequest,
+  UpdateNoteRequest,
+} from "@/services/notesService";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -15,7 +19,7 @@ export const useNotes = () => {
 
   useEffect(() => {
     fuseRef.current = new Fuse(notes, {
-      keys: ['plainText', 'content'],
+      keys: ["plainText", "content"],
       threshold: 0.3, // Fuzzy matching threshold
       includeScore: true,
     });
@@ -35,12 +39,16 @@ export const useNotes = () => {
 
     if (fuseRef.current) {
       const results = fuseRef.current.search(searchQuery);
-      setFilteredNotes(results.map(result => result.item));
+      setFilteredNotes(results.map((result) => result.item));
     }
   }, [searchQuery, notes]);
 
   // Utility functions
-  const getPlainText = (html: string) => html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  const getPlainText = (html: string) =>
+    html
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .trim();
   const isContentEmpty = (html: string) => getPlainText(html).length === 0;
 
   // API functions
@@ -62,7 +70,7 @@ export const useNotes = () => {
     if (isContentEmpty(content)) {
       throw new Error("Note content cannot be empty");
     }
-    
+
     try {
       setLoading(true);
       const noteData: CreateNoteRequest = {
@@ -70,7 +78,7 @@ export const useNotes = () => {
         plainText: getPlainText(content),
       };
       const createdNote = await notesService.createNote(noteData);
-      setNotes(prev => [...prev, createdNote]);
+      setNotes((prev) => [...prev, createdNote]);
       setError("");
       return createdNote;
     } catch (err) {
@@ -85,7 +93,7 @@ export const useNotes = () => {
     if (isContentEmpty(content)) {
       throw new Error("Note content cannot be empty");
     }
-    
+
     try {
       setLoading(true);
       const updateData: UpdateNoteRequest = {
@@ -93,7 +101,7 @@ export const useNotes = () => {
         plainText: getPlainText(content),
       };
       const updatedNote = await notesService.updateNote(id, updateData);
-      setNotes(prev => prev.map(n => n.id === id ? updatedNote : n));
+      setNotes((prev) => prev.map((n) => (n.id === id ? updatedNote : n)));
       setError("");
       return updatedNote;
     } catch (err) {
@@ -108,7 +116,7 @@ export const useNotes = () => {
     try {
       setLoading(true);
       await notesService.deleteNote(id);
-      setNotes(prev => prev.filter(note => note.id !== id));
+      setNotes((prev) => prev.filter((note) => note.id !== id));
       setError("");
     } catch (err) {
       setError("Failed to delete note. Please try again.");
@@ -133,7 +141,7 @@ export const useNotes = () => {
     searchQuery,
     loading,
     error,
-    
+
     // Actions
     loadNotes,
     createNote,
@@ -141,7 +149,7 @@ export const useNotes = () => {
     deleteNote,
     handleSearch,
     clearSearch,
-    
+
     // Utilities
     getPlainText,
     isContentEmpty,

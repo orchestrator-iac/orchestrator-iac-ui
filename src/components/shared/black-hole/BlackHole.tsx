@@ -28,7 +28,14 @@ const BlackHole: React.FC = () => {
       ctx.fill();
 
       // Photon Sphere (thin glowing ring)
-      const glow = ctx.createRadialGradient(centerX, centerY, radius, centerX, centerY, radius + 15);
+      const glow = ctx.createRadialGradient(
+        centerX,
+        centerY,
+        radius,
+        centerX,
+        centerY,
+        radius + 15,
+      );
       glow.addColorStop(0, "rgba(255, 255, 200, 0.8)");
       glow.addColorStop(0.6, "rgba(255, 200, 50, 0.4)");
       glow.addColorStop(1, "transparent");

@@ -12,8 +12,8 @@ export type User = {
 };
 
 type UsersState = {
-  entities: Record<string, User>;              // key = _id
-  loadingById: Record<string, boolean>;        // key = _id
+  entities: Record<string, User>; // key = _id
+  loadingById: Record<string, boolean>; // key = _id
   errorById: Record<string, string | undefined>; // key = _id
 };
 
@@ -25,8 +25,8 @@ const initialState: UsersState = {
 
 // Bulk-first loader (expects /user/profiles?ids=... to return User[])
 export const loadUsersByIds = createAsyncThunk<
-  Record<string, User>,   // returns map<_id, User>
-  string[],               // arg is list of _id strings
+  Record<string, User>, // returns map<_id, User>
+  string[], // arg is list of _id strings
   { state: RootState }
 >("users/loadUsersByIds", async (ids, { getState }) => {
   const state = getState().users;
@@ -43,7 +43,7 @@ export const loadUsersByIds = createAsyncThunk<
       const map: Record<string, User> = Object.fromEntries(
         data
           .filter((u): u is User => Boolean(u && u._id))
-          .map((u) => [u._id, u])
+          .map((u) => [u._id, u]),
       );
 
       // any still missing? (bulk might not return all)
@@ -70,7 +70,7 @@ export const loadUsersByIds = createAsyncThunk<
             } catch {
               return [_id, { _id }] as const;
             }
-          })
+          }),
         );
         for (const [k, v] of entries) map[k] = v;
       }
@@ -97,7 +97,7 @@ export const loadUsersByIds = createAsyncThunk<
       } catch {
         return [_id, { _id }] as const;
       }
-    })
+    }),
   );
 
   return Object.fromEntries(entries);
@@ -146,9 +146,11 @@ export const { upsertUsers, clearUsers } = usersSlice.actions;
 
 // Selectors
 export const selectUsersMap = (s: RootState) => s.users.entities;
-export const selectUserById = (_id: string) => (s: RootState) => s.users.entities[_id];
+export const selectUserById = (_id: string) => (s: RootState) =>
+  s.users.entities[_id];
 export const selectUsersLoadingAny = (s: RootState, ids: string[]) =>
   ids.some((_id) => Boolean(s.users.loadingById[_id]));
-export const selectUserErrorById = (_id: string) => (s: RootState) => s.users.errorById[_id];
+export const selectUserErrorById = (_id: string) => (s: RootState) =>
+  s.users.errorById[_id];
 
 export default usersSlice.reducer;

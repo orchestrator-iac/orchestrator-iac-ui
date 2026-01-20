@@ -12,6 +12,7 @@ A React TypeScript application for managing cloud infrastructure with an integra
 ## Notes System
 
 ### Frontend Features
+
 - Rich text editor using TipTap with formatting options
 - Fuzzy search using Fuse.js for intelligent text matching
 - Real-time search as you type
@@ -20,6 +21,7 @@ A React TypeScript application for managing cloud infrastructure with an integra
 - User-specific note management
 
 ### API Integration
+
 The notes system expects these backend endpoints:
 
 ```typescript
@@ -42,6 +44,7 @@ Body: { content: string, plainText?: string }
 ```
 
 ### Note Interface
+
 ```typescript
 interface Note {
   id: string;
@@ -63,25 +66,25 @@ Instead of writing Terraform manually, users fill out a **form/UI** → the syst
 
 **Step 1 – Input**
 
-* Users log in via the **UI** (React frontend).
-* Fill in forms (e.g. VPC, Subnets, IAM, Networking) or upload configuration.
+- Users log in via the **UI** (React frontend).
+- Fill in forms (e.g. VPC, Subnets, IAM, Networking) or upload configuration.
 
 **Step 2 – Orchestration**
 
-* Input sent to **FastAPI backend**.
-* Backend stores request in **MongoDB** (config, user metadata).
-* Orchestrator generates Terraform code based on schema + templates.
+- Input sent to **FastAPI backend**.
+- Backend stores request in **MongoDB** (config, user metadata).
+- Orchestrator generates Terraform code based on schema + templates.
 
 **Step 3 – Validation**
 
-* Code is validated (lint, policy checks, schema validation).
-* Feedback/errors are surfaced to the user in the UI.
+- Code is validated (lint, policy checks, schema validation).
+- Feedback/errors are surfaced to the user in the UI.
 
 **Step 4 – Deployment (Future)**
 
-* Validated code is committed to Git.
-* CI/CD (e.g. GitHub Actions, Azure DevOps, GitLab CI) applies Terraform to provision resources.
-* Monitoring and status updates sent back to UI.
+- Validated code is committed to Git.
+- CI/CD (e.g. GitHub Actions, Azure DevOps, GitLab CI) applies Terraform to provision resources.
+- Monitoring and status updates sent back to UI.
 
 ---
 
@@ -109,39 +112,38 @@ Instead of writing Terraform manually, users fill out a **form/UI** → the syst
 
 ### **Frontend (React)**
 
-* Multi-step forms for resources (VPC, Subnets, IAM, etc.).
-* Schema-based editor (JSON + visual).
-* Validation per step.
-* Auth screens (login, registration).
+- Multi-step forms for resources (VPC, Subnets, IAM, etc.).
+- Schema-based editor (JSON + visual).
+- Validation per step.
+- Auth screens (login, registration).
 
 ### **Backend (FastAPI)**
 
-* REST APIs for resources, wrappers, and templates.
-* Authentication (JWT).
-* Code generation module:
-
-  * Converts user schema → Terraform HCL.
-  * Manages versioning.
+- REST APIs for resources, wrappers, and templates.
+- Authentication (JWT).
+- Code generation module:
+  - Converts user schema → Terraform HCL.
+  - Manages versioning.
 
 ### **Database (MongoDB Atlas)**
 
-* Stores projects, templates, and user configs.
-* Provides history/audit trail.
+- Stores projects, templates, and user configs.
+- Provides history/audit trail.
 
 ### **Terraform Engine**
 
-* Current: Generate TF code for user to download.
-* Future: Auto-commit to Git, trigger pipelines.
+- Current: Generate TF code for user to download.
+- Future: Auto-commit to Git, trigger pipelines.
 
 ---
 
 ## 5. Current Features
 
-* User authentication & role-based access.
-* Schema-driven form builder.
-* Terraform template generation.
-* Error feedback in UI.
-* Project storage in MongoDB.
+- User authentication & role-based access.
+- Schema-driven form builder.
+- Terraform template generation.
+- Error feedback in UI.
+- Project storage in MongoDB.
 
 ---
 
@@ -149,24 +151,24 @@ Instead of writing Terraform manually, users fill out a **form/UI** → the syst
 
 **Near Term (3–6 months):**
 
-* ✅ Export Terraform as `.zip`.
-* ✅ Support multiple providers (AWS, Azure, GCP).
-* 🔄 Add reusable building blocks (modules library).
-* 🔄 Improve validation (policy as code, e.g. OPA/Conftest).
+- ✅ Export Terraform as `.zip`.
+- ✅ Support multiple providers (AWS, Azure, GCP).
+- 🔄 Add reusable building blocks (modules library).
+- 🔄 Improve validation (policy as code, e.g. OPA/Conftest).
 
 **Mid Term (6–12 months):**
 
-* 🚀 GitOps integration: commit Terraform to Git automatically.
-* 🚀 CI/CD integration (GitHub Actions, GitLab, Azure DevOps).
-* 🚀 Automated apply/destroy workflows.
-* 📊 Add monitoring dashboards for deployments.
+- 🚀 GitOps integration: commit Terraform to Git automatically.
+- 🚀 CI/CD integration (GitHub Actions, GitLab, Azure DevOps).
+- 🚀 Automated apply/destroy workflows.
+- 📊 Add monitoring dashboards for deployments.
 
 **Long Term (12+ months):**
 
-* 🌐 Multi-cloud orchestration.
-* 🤖 Self-healing infra (auto-fix drift, auto-scale).
-* 🧩 Marketplace of templates/modules.
-* 🔐 Compliance & governance enforcement.
+- 🌐 Multi-cloud orchestration.
+- 🤖 Self-healing infra (auto-fix drift, auto-scale).
+- 🧩 Marketplace of templates/modules.
+- 🔐 Compliance & governance enforcement.
 
 ---
 

@@ -19,7 +19,7 @@ const depExpr: z.ZodType<any> = z.lazy(() =>
     z.object({ all: z.array(depExpr) }),
     z.object({ any: z.array(depExpr) }),
     z.object({ not: depExpr }),
-  ])
+  ]),
 );
 
 export const FieldConfigSchema = z.record(z.string(), z.any());

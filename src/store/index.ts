@@ -1,11 +1,11 @@
-import { configureStore } from '@reduxjs/toolkit';
-import resourceReducer from './resourceSlice';
-import iconReducer from './iconsSlice';
-import customWrappersReducer from './customWrappersSlice';
-import wrappersTemplateReducer from './wrappersTemplateSlice';
-import resourcesReducer from './resourcesSlice';
-import usersReducer from './usersSlice';
-import orchestratorsReducer from './orchestratorsSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import resourceReducer from "./resourceSlice";
+import iconReducer from "./iconsSlice";
+import customWrappersReducer from "./customWrappersSlice";
+import wrappersTemplateReducer from "./wrappersTemplateSlice";
+import resourcesReducer from "./resourcesSlice";
+import usersReducer from "./usersSlice";
+import orchestratorsReducer from "./orchestratorsSlice";
 
 export const store = configureStore({
   reducer: {

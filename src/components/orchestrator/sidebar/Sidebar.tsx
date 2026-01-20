@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
 
   const dispatch = useDispatch<AppDispatch>();
   const { data: resources, status: resourcesStatus } = useSelector(
-    (state: RootState) => state.resources
+    (state: RootState) => state.resources,
   );
 
   // --- local state for search ---
@@ -60,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
    */
   const onDragStart = (
     event: React.DragEvent<HTMLDivElement>,
-    resourceId: string
+    resourceId: string,
   ) => {
     setId(resourceId);
     event.dataTransfer.effectAllowed = "move";
@@ -85,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
    */
   const providerScoped = useMemo(() => {
     return (resources || []).filter(
-      (r: any) => r?.cloudProvider === cloudProvider
+      (r: any) => r?.cloudProvider === cloudProvider,
     );
   }, [resources, cloudProvider]);
 
@@ -175,9 +175,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
               px: 1,
               py: 0.5,
               borderRadius: 2,
-              transition: 'all 0.3s ease',
-              '&:focus-within': {
-                borderColor: 'primary.main',
+              transition: "all 0.3s ease",
+              "&:focus-within": {
+                borderColor: "primary.main",
                 boxShadow: 1,
               },
             }}
@@ -205,10 +205,10 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
                 borderRadius: 2,
                 mx: 1,
                 mb: 0.5,
-                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                  transform: 'translateX(4px)',
+                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                "&:hover": {
+                  bgcolor: "action.hover",
+                  transform: "translateX(4px)",
                 },
               }}
               className="dndnode"

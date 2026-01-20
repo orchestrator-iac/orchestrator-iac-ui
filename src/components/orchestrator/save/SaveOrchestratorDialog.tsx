@@ -45,10 +45,10 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
 }) => {
   const { user } = useAuth();
   const [templateName, setTemplateName] = useState(
-    templateInfo?.templateName || ""
+    templateInfo?.templateName || "",
   );
   const [templateDescription, setTemplateDescription] = useState(
-    templateInfo?.description || ""
+    templateInfo?.description || "",
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -106,7 +106,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
         nodes,
         edges,
         updatedTemplateInfo,
-        user
+        user,
       );
 
       // Step 3: Add the image to the request if generated successfully
@@ -130,7 +130,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
         // Update existing
         response = await orchestratorService.updateOrchestrator(
           currentOrchestratorId,
-          dataWithImage
+          dataWithImage,
         );
       } else {
         // Create new
@@ -143,7 +143,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
       if (!savedId) {
         console.error(
           "Save succeeded but no id was returned in response",
-          response
+          response,
         );
         throw new Error("Backend did not return an orchestrator id");
       }

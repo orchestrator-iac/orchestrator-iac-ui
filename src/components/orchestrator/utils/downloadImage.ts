@@ -40,7 +40,7 @@ export const generateFlowImage = async ({
 
       if (node.classList) {
         return !exclusionClasses.some((className) =>
-          node.classList.contains(className)
+          node.classList.contains(className),
         );
       }
 

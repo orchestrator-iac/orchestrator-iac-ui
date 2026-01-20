@@ -34,7 +34,7 @@ const ConfirmEmail: React.FC = () => {
         console.error(err);
         setError(
           err.response?.data?.detail ||
-            "Email verification failed. The link may be expired."
+            "Email verification failed. The link may be expired.",
         );
       } finally {
         setLoading(false);
@@ -56,7 +56,7 @@ const ConfirmEmail: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       toast.error(
-        err.response?.data?.detail || "Failed to resend verification email."
+        err.response?.data?.detail || "Failed to resend verification email.",
       );
     } finally {
       setResending(false);

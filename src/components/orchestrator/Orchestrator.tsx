@@ -98,7 +98,7 @@ const useLayoutElements = () => {
         console.error("ELK layout error:", err);
       }
     },
-    [getNodes, getEdges, setNodes, fitView]
+    [getNodes, getEdges, setNodes, fitView],
   );
 
   return { getLayoutElements };
@@ -135,7 +135,7 @@ const OrchestratorReactFlow: React.FC = () => {
   >(null);
 
   const { data: orchestrators, status: orchestratorsStatus } = useSelector(
-    (state: RootState) => state.orchestrators
+    (state: RootState) => state.orchestrators,
   );
 
   const drawerWidth = 240;
@@ -147,10 +147,10 @@ const OrchestratorReactFlow: React.FC = () => {
   useEffect(() => {
     if (!isArchitectureMode) return;
     setNodes((nds) =>
-      nds.map((node) => (node.selected ? { ...node, selected: false } : node))
+      nds.map((node) => (node.selected ? { ...node, selected: false } : node)),
     );
     setEdges((eds) =>
-      eds.map((edge) => (edge.selected ? { ...edge, selected: false } : edge))
+      eds.map((edge) => (edge.selected ? { ...edge, selected: false } : edge)),
     );
   }, [isArchitectureMode, setNodes, setEdges]);
 
@@ -217,7 +217,7 @@ const OrchestratorReactFlow: React.FC = () => {
       getLayoutElements,
       templateInfo,
       user,
-    ]
+    ],
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -253,7 +253,7 @@ const OrchestratorReactFlow: React.FC = () => {
 
         const isEqualObjectArray = (
           left: Array<Record<string, any>>,
-          right: Array<Record<string, any>>
+          right: Array<Record<string, any>>,
         ) => {
           if (left.length !== right.length) return false;
           for (let i = 0; i < left.length; i += 1) {
@@ -270,15 +270,16 @@ const OrchestratorReactFlow: React.FC = () => {
         rules.forEach((rule: any) => {
           const edgeKind = rule?.edgeData?.kind ?? rule.bind;
           const incoming = edges.filter(
-            (e) => e.target === n.id && (e.data?.kind ?? rule.bind) === edgeKind
+            (e) =>
+              e.target === n.id && (e.data?.kind ?? rule.bind) === edgeKind,
           );
 
           if ((rule.cardinality ?? "1") === "many") {
             const incomingWithBindKey = incoming.filter(
-              (edge) => typeof edge.data?.bindKey === "string"
+              (edge) => typeof edge.data?.bindKey === "string",
             );
             const hasObjectSyntax = incomingWithBindKey.some((edge) =>
-              /\[\d+\]\.[^.]+$/.test(edge.data?.bindKey as string)
+              /\[\d+\]\.[^.]+$/.test(edge.data?.bindKey as string),
             );
             const existingValue = nextValues[rule.bind];
             const existingHasObjects = Array.isArray(existingValue)
@@ -286,20 +287,20 @@ const OrchestratorReactFlow: React.FC = () => {
                   (item) =>
                     item != null &&
                     typeof item === "object" &&
-                    !Array.isArray(item)
+                    !Array.isArray(item),
                 )
               : false;
 
             if (hasObjectSyntax || existingHasObjects) {
               const baseArray: Array<Record<string, any>> = Array.isArray(
-                existingValue
+                existingValue,
               )
                 ? existingValue.map((item) =>
                     item != null &&
                     typeof item === "object" &&
                     !Array.isArray(item)
                       ? { ...item }
-                      : {}
+                      : {},
                   )
                 : [];
 
@@ -324,7 +325,7 @@ const OrchestratorReactFlow: React.FC = () => {
                     typeof item === "object" &&
                     !Array.isArray(item)
                       ? { ...item }
-                      : {}
+                      : {},
                   )
                 : [];
 
@@ -360,7 +361,7 @@ const OrchestratorReactFlow: React.FC = () => {
         });
 
         return changed ? { ...n, data: { ...n.data, values: nextValues } } : n;
-      })
+      }),
     );
   }, [edges, setNodes]);
 
@@ -433,7 +434,7 @@ const OrchestratorReactFlow: React.FC = () => {
 
             const rule = rules.find(
               (r: any) =>
-                Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType)
+                Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType),
             );
             if (!rule) continue;
 
@@ -441,7 +442,7 @@ const OrchestratorReactFlow: React.FC = () => {
               id: `${source.id}->${target.id}:${rule.bind}`,
               source: source.id,
               target: target.id,
-              type: 'animatedGradient',
+              type: "animatedGradient",
               data: {
                 ...(rule.edgeData ?? { kind: rule.bind }),
                 animated: rule.edgeData?.animated ?? true,
@@ -480,7 +481,7 @@ const OrchestratorReactFlow: React.FC = () => {
 
       const rule = rules.find(
         (r: any) =>
-          Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType)
+          Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType),
       );
       if (!rule) return;
 
@@ -494,15 +495,15 @@ const OrchestratorReactFlow: React.FC = () => {
               !(
                 e.target === target.id &&
                 (e.data?.kind ?? rule.bind) === edgeKind
-              )
-          )
+              ),
+          ),
         );
       } else {
         const exists = edges.some(
           (e) =>
             e.source === source.id &&
             e.target === target.id &&
-            (e.data?.kind ?? rule.bind) === edgeKind
+            (e.data?.kind ?? rule.bind) === edgeKind,
         );
         if (exists) return;
       }
@@ -511,7 +512,7 @@ const OrchestratorReactFlow: React.FC = () => {
         id: `${source.id}->${target.id}:${rule.bind}`,
         source: source.id,
         target: target.id,
-        type: 'animatedGradient',
+        type: "animatedGradient",
         data: {
           ...(rule.edgeData ?? { kind: rule.bind }),
           animated: rule.edgeData?.animated ?? true,
@@ -546,10 +547,10 @@ const OrchestratorReactFlow: React.FC = () => {
               values: { ...currentValues, [rule.bind]: next },
             },
           };
-        })
+        }),
       );
     },
-    [nodes, edges, setNodes, setEdges, isArchitectureMode]
+    [nodes, edges, setNodes, setEdges, isArchitectureMode],
   );
 
   // Dropdown change → rewire edges & values
@@ -590,7 +591,7 @@ const OrchestratorReactFlow: React.FC = () => {
       const rule = rules.find((r: any) => r.bind === baseBind);
       if (!rule) {
         console.warn(
-          `No rule found for bind: ${bindStr} (base: ${baseBind}) on node: ${nodeId}`
+          `No rule found for bind: ${bindStr} (base: ${baseBind}) on node: ${nodeId}`,
         );
         return;
       }
@@ -634,7 +635,7 @@ const OrchestratorReactFlow: React.FC = () => {
           // Case 1: array of objects with key path: fieldName[index].key
           if (objIndex !== null && objKey) {
             const prevArrObjs: Array<Record<string, any>> = Array.isArray(
-              current[baseBind]
+              current[baseBind],
             )
               ? [...current[baseBind]]
               : [];
@@ -707,7 +708,7 @@ const OrchestratorReactFlow: React.FC = () => {
             ...n,
             data: { ...n.data, values: { ...current, [baseBind]: prevArr } },
           };
-        })
+        }),
       );
 
       setEdges((eds) => {
@@ -715,7 +716,7 @@ const OrchestratorReactFlow: React.FC = () => {
         if (cardinality === "1") {
           working = working.filter(
             (e) =>
-              !(e.target === nodeId && (e.data?.kind ?? baseBind) === edgeKind)
+              !(e.target === nodeId && (e.data?.kind ?? baseBind) === edgeKind),
           );
         } else {
           // Remove existing edge for this specific synthetic bind (if any)
@@ -749,14 +750,14 @@ const OrchestratorReactFlow: React.FC = () => {
               e.source === sourceId &&
               e.target === nodeId &&
               (e.data?.kind ?? baseBind) === edgeKind &&
-              (cardinality === "1" || e.data?.bindKey === bindStr)
+              (cardinality === "1" || e.data?.bindKey === bindStr),
           );
           if (!duplicate) {
             const newEdge: Edge = {
               id: `${sourceId}->${nodeId}:${bindStr}`,
               source: sourceId,
               target: nodeId,
-              type: 'animatedGradient',
+              type: "animatedGradient",
               data: {
                 ...(rule?.edgeData ?? { kind: baseBind }),
                 kind: edgeKind,
@@ -775,7 +776,7 @@ const OrchestratorReactFlow: React.FC = () => {
         return working;
       });
     },
-    [nodes, setNodes, setEdges, isArchitectureMode]
+    [nodes, setNodes, setEdges, isArchitectureMode],
   );
 
   const onCloneNode = useCallback(
@@ -806,17 +807,17 @@ const OrchestratorReactFlow: React.FC = () => {
         return nds.concat(clone);
       });
     },
-    [setNodes, isArchitectureMode]
+    [setNodes, isArchitectureMode],
   );
 
   const actuallyDeleteNode = useCallback(
     (nodeId: string) => {
       setNodes((nds) => nds.filter((n) => n.id !== nodeId));
       setEdges((eds) =>
-        eds.filter((e) => e.source !== nodeId && e.target !== nodeId)
+        eds.filter((e) => e.source !== nodeId && e.target !== nodeId),
       );
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges],
   );
 
   const onDeleteNode = useCallback(
@@ -828,7 +829,7 @@ const OrchestratorReactFlow: React.FC = () => {
       // perform delete
       actuallyDeleteNode(nodeId);
     },
-    [nodes, edges, actuallyDeleteNode, isArchitectureMode]
+    [nodes, edges, actuallyDeleteNode, isArchitectureMode],
   );
 
   // Delete selected edges via keyboard/backspace is automatic if you enable deleteKeyCode,
@@ -840,7 +841,7 @@ const OrchestratorReactFlow: React.FC = () => {
       setSnackOpen(true);
       setEdges((eds) => eds.filter((e) => !deleted.some((d) => d.id === e.id)));
     },
-    [nodes, edges, setEdges, isArchitectureMode]
+    [nodes, edges, setEdges, isArchitectureMode],
   );
 
   // Optional: onNodesDelete for consistency (if you allow multi-select deletions)
@@ -852,10 +853,10 @@ const OrchestratorReactFlow: React.FC = () => {
       const ids = new Set(deleted.map((n) => n.id));
       setNodes((nds) => nds.filter((n) => !ids.has(n.id)));
       setEdges((eds) =>
-        eds.filter((e) => !ids.has(e.source) && !ids.has(e.target))
+        eds.filter((e) => !ids.has(e.source) && !ids.has(e.target)),
       );
     },
-    [nodes, edges, setNodes, setEdges, isArchitectureMode]
+    [nodes, edges, setNodes, setEdges, isArchitectureMode],
   );
 
   // Undo handler
@@ -895,10 +896,10 @@ const OrchestratorReactFlow: React.FC = () => {
               values: { ...(n.data as any)?.values, [name]: value },
             },
           };
-        })
+        }),
       );
     },
-    [setNodes, isArchitectureMode]
+    [setNodes, isArchitectureMode],
   );
 
   // Handler for when orchestrator is successfully saved
@@ -911,7 +912,7 @@ const OrchestratorReactFlow: React.FC = () => {
       if (isArchitectureMode) return;
       onNodesChange(changes);
     },
-    [isArchitectureMode, onNodesChange]
+    [isArchitectureMode, onNodesChange],
   );
 
   const handleEdgesChange = useCallback(
@@ -919,7 +920,7 @@ const OrchestratorReactFlow: React.FC = () => {
       if (isArchitectureMode) return;
       onEdgesChange(changes);
     },
-    [isArchitectureMode, onEdgesChange]
+    [isArchitectureMode, onEdgesChange],
   );
 
   // Inject helpers for DynamicForm (dynamic options + dropdown→edge sync)
@@ -928,14 +929,14 @@ const OrchestratorReactFlow: React.FC = () => {
       customNode: CustomNode,
       architectureNode: ArchitectureNode,
     }),
-    []
+    [],
   );
 
   const edgeTypes = useMemo(
     () => ({
       animatedGradient: AnimatedGradientEdge,
     }),
-    []
+    [],
   );
 
   const nodesWithHelpers = useMemo(
@@ -955,7 +956,7 @@ const OrchestratorReactFlow: React.FC = () => {
               onLinkFieldChange: (
                 bind: string,
                 newSourceId: string,
-                context?: { objectSnapshot?: Record<string, any> }
+                context?: { objectSnapshot?: Record<string, any> },
               ) =>
                 onLinkFieldChange({ nodeId: n.id, bind, newSourceId, context }),
               onValuesChange: (name: string, value: any) =>
@@ -975,7 +976,7 @@ const OrchestratorReactFlow: React.FC = () => {
       onValuesChange,
       onCloneNode,
       onDeleteNode,
-    ]
+    ],
   );
 
   return (

@@ -34,12 +34,12 @@ type ListObjectFieldProps = {
   onChange: (name: string, value: any) => void;
   resolveOptions: (
     options: any,
-    contextData?: Record<string, any>
+    contextData?: Record<string, any>,
   ) => { value: string; label: string; disabled?: boolean }[] | undefined;
   onLinkFieldChange?: (
     bind: string,
     newSourceId: string,
-    context?: { objectSnapshot?: Record<string, any> }
+    context?: { objectSnapshot?: Record<string, any> },
   ) => void;
 };
 
@@ -71,7 +71,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
   const handleListItemChange = (
     index: number,
     fieldName: string,
-    fieldValue: any
+    fieldValue: any,
   ) => {
     const updatedList = [...currentList];
     if (!updatedList[index]) {
@@ -97,15 +97,12 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
   const handleRemoveItem = (index: number) => {
     const updatedList = currentList.filter((_, i) => i !== index);
     onChange(name, updatedList);
-    
+
     // Clear edges for the removed item - notify link changes with empty string
     if (onLinkFieldChange && fieldCfg?.schema) {
       fieldCfg.schema.forEach((schemaField: any) => {
         // Notify that this link should be cleared (same pattern as DynamicForm)
-        onLinkFieldChange(
-          `${name}[${index}].${schemaField.name}`,
-          ""
-        );
+        onLinkFieldChange(`${name}[${index}].${schemaField.name}`, "");
       });
     }
   };
@@ -113,7 +110,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
   const renderObjectField = (
     schemaField: any,
     itemData: any,
-    itemIndex: number
+    itemIndex: number,
   ) => {
     const fieldValue = itemData?.[schemaField.name] ?? schemaField.value ?? "";
 
@@ -153,7 +150,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
               handleListItemChange(
                 itemIndex,
                 schemaField.name,
-                val === "" ? "" : Number(val)
+                val === "" ? "" : Number(val),
               );
             }}
           />
@@ -162,7 +159,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
       case "select": {
         const resolvedSchemaOptions = resolveOptions(
           schemaField.options,
-          itemData
+          itemData,
         );
         return (
           <FormControl fullWidth required={!!schemaField.required}>
@@ -200,7 +197,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
       case "select+text": {
         const resolvedSchemaOptions = resolveOptions(
           schemaField.options,
-          itemData
+          itemData,
         );
         const opts = (resolvedSchemaOptions ?? []).map((o: any) => ({
           label: String(o.label),
@@ -217,7 +214,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
         } else {
           currentVal = String(fieldValue || "");
         }
-        
+
         const matched = opts.find((o) => o.value === currentVal) || null;
 
         return (
@@ -227,7 +224,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             options={opts}
             value={matched ?? currentVal}
             getOptionLabel={(opt) =>
-              typeof opt === "string" ? opt : opt?.label ?? ""
+              typeof opt === "string" ? opt : (opt?.label ?? "")
             }
             isOptionEqualToValue={(opt, val) =>
               typeof val === "string"
@@ -245,7 +242,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                 onLinkFieldChange?.(
                   `${name}[${itemIndex}].${schemaField.name}`,
                   "",
-                  { objectSnapshot: snapshot }
+                  { objectSnapshot: snapshot },
                 );
                 return;
               }
@@ -262,7 +259,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
               onLinkFieldChange?.(
                 `${name}[${itemIndex}].${schemaField.name}`,
                 pickedVal,
-                { objectSnapshot: snapshot }
+                { objectSnapshot: snapshot },
               );
             }}
             onInputChange={(_e, newInput, reason) => {
@@ -278,13 +275,13 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                   onLinkFieldChange(
                     `${name}[${itemIndex}].${schemaField.name}`,
                     "",
-                    { objectSnapshot: snapshot }
+                    { objectSnapshot: snapshot },
                   );
                 }
                 handleListItemChange(
                   itemIndex,
                   schemaField.name,
-                  String(newInput ?? "")
+                  String(newInput ?? ""),
                 );
               }
             }}
@@ -327,7 +324,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
       case "radio": {
         const resolvedSchemaOptions = resolveOptions(
           schemaField.options,
-          itemData
+          itemData,
         );
         return (
           <FormControl fullWidth required={!!schemaField.required}>
@@ -337,7 +334,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                 handleListItemChange(
                   itemIndex,
                   schemaField.name,
-                  e.target.value
+                  e.target.value,
                 )
               }
             >
@@ -360,7 +357,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
       case "checkbox": {
         const resolvedSchemaOptions = resolveOptions(
           schemaField.options,
-          itemData
+          itemData,
         );
         const opts = (resolvedSchemaOptions ?? schemaField.options) as
           | any[]
@@ -383,7 +380,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                         handleListItemChange(
                           itemIndex,
                           schemaField.name,
-                          updatedValues
+                          updatedValues,
                         );
                       }}
                     />
@@ -419,7 +416,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                     handleListItemChange(
                       itemIndex,
                       schemaField.name,
-                      e.target.checked
+                      e.target.checked,
                     )
                   }
                 />
@@ -445,7 +442,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                 handleListItemChange(
                   itemIndex,
                   schemaField.name,
-                  val === "enabled"
+                  val === "enabled",
                 );
             }}
             size="small"

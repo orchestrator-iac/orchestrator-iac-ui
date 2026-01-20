@@ -1,5 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { refreshAccessToken } from './auth'; 
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import { refreshAccessToken } from "./auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -9,27 +9,26 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 10000,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
-
 
 let isRefreshing = false;
 let refreshPromise: Promise<string> | null = null;
 const waiters: Array<(t: string) => void> = [];
-const onRefreshed = (token: string) => waiters.splice(0).forEach(fn => fn(token));
-
+const onRefreshed = (token: string) =>
+  waiters.splice(0).forEach((fn) => fn(token));
 
 // Request interceptor (e.g., for adding Authorization headers)
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 apiClient.interceptors.response.use(
@@ -46,7 +45,7 @@ apiClient.interceptors.response.use(
           isRefreshing = true;
           refreshPromise = refreshAccessToken()
             .then((newToken) => {
-              localStorage.setItem('token', newToken);
+              localStorage.setItem("token", newToken);
               onRefreshed(newToken);
               return newToken;
             })
@@ -62,13 +61,13 @@ apiClient.interceptors.response.use(
         return apiClient(original); // retry
       } catch (e) {
         // refresh failed -> clear and bubble up
-        localStorage.removeItem('token');
+        localStorage.removeItem("token");
         return Promise.reject(e);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // API service methods

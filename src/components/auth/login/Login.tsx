@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TextField, Button, Typography, Box, useTheme, Divider } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
+  useTheme,
+  Divider,
+} from "@mui/material";
 import { GoogleLogin } from "@react-oauth/google";
 import { loginUser } from "../../../services/auth";
 import { useAuth } from "../../../context/AuthContext";
@@ -32,7 +39,7 @@ const Login: React.FC = () => {
             acc[key] = value.errors?.[0] || "Invalid value";
             return acc;
           },
-          {} as Record<string, string>
+          {} as Record<string, string>,
         );
         setFieldErrors(errors);
       } else if (err?.status === 401) {

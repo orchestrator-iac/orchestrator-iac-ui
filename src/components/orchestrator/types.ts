@@ -9,7 +9,7 @@ export interface OrchestratorNodeHelpers {
   onLinkFieldChange?: (
     bind: string,
     newSourceId: string,
-    context?: { objectSnapshot?: Record<string, any> }
+    context?: { objectSnapshot?: Record<string, any> },
   ) => void;
   onValuesChange?: (name: string, value: any) => void;
   onCloneNode?: (nodeId: string) => void;

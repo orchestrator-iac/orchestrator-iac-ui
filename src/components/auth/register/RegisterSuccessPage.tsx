@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import VerificationSent from "../../shared/verification-sent/VerificationSent";
 
-
 const RegisterSuccessPage: React.FC = () => {
   const [email] = useState("user@example.com");
   const navigate = useNavigate();

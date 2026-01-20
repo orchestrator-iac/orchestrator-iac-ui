@@ -1,7 +1,7 @@
 export const getFriendlyId = (
   nodeId: string,
   nodeType?: string | null,
-  allNodes?: Array<{ id: string; data?: any; type?: string }>
+  allNodes?: Array<{ id: string; data?: any; type?: string }>,
 ): string => {
   if (!Array.isArray(allNodes) || allNodes.length === 0) {
     return "";
@@ -22,7 +22,7 @@ export const getFriendlyId = (
   }
 
   const sameTypeNodes = allNodes.filter((node) => {
-  const candidateType = node?.data?.__nodeType ?? node?.type;
+    const candidateType = node?.data?.__nodeType ?? node?.type;
     return candidateType === effectiveType;
   });
 
@@ -37,7 +37,7 @@ export const getFriendlyId = (
 
 export const resolveValueByPath = (
   source: Record<string, any> | undefined,
-  path?: string | null
+  path?: string | null,
 ): any => {
   if (!source || !path) {
     return undefined;

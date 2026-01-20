@@ -19,13 +19,13 @@ export const fetchIcons = createAsyncThunk(
   }: FetchIconsArgs) => {
     const endpoint = query
       ? `/icons/search?query=${encodeURIComponent(
-          query
+          query,
         )}&exact_search=${exact_search}&page=${page}&page_size=${pageSize}`
       : `/icons?page=${page}&page_size=${pageSize}`;
 
     const response = await apiService.get(endpoint);
     return response;
-  }
+  },
 );
 
 const iconsSlice = createSlice({

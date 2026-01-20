@@ -222,6 +222,6 @@ const Register: React.FC = () => {
       </Box>
     </Box>
   );
-}
+};
 
 export default Register;

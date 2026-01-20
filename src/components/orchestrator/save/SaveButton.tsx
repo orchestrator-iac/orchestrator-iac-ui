@@ -66,7 +66,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
       onSaveSuccess(orchestratorId);
       setDialogOpen(false);
     },
-    [onSaveSuccess]
+    [onSaveSuccess],
   );
 
   return (
@@ -101,4 +101,4 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   );
 };
 
-SaveButton.displayName = 'SaveButton';
+SaveButton.displayName = "SaveButton";

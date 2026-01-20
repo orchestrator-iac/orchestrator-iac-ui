@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token")
+    localStorage.getItem("token"),
   );
   const [user, setUser] = useState<UserProfile | null>(null);
 
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
 
   const contextValue = useMemo(
     () => ({ token, user, login, logout, refreshProfile, googleLogin }),
-    [token, user]
+    [token, user],
   );
 
   return (

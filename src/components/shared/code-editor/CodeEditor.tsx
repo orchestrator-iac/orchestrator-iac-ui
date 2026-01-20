@@ -31,9 +31,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   completers = [],
   errorMessage = "",
 }) => {
-
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
-  
+
   let effectiveMode = themeMode;
   if (themeMode === "system") {
     effectiveMode = prefersDark ? "dark" : "light";

@@ -12,7 +12,7 @@ export const fetchResourceById = createAsyncThunk(
 
     const response = await apiService.get(`/configs/${id}`);
     return { id, data: response, cached: false };
-  }
+  },
 );
 
 interface ResourceState {

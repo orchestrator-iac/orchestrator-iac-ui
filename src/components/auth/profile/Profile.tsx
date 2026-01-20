@@ -54,7 +54,7 @@ const Profile: React.FC = () => {
         role: user.role ?? "",
         company: user.company ?? "",
         imageUrl: user.imageUrl ?? "",
-        themePreference: user.themePreference ?? "system"
+        themePreference: user.themePreference ?? "system",
       });
     }
   }, [user]);
@@ -128,7 +128,8 @@ const Profile: React.FC = () => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(new Error(`File reading failed: ${JSON.stringify(error)}`));
+      reader.onerror = (error) =>
+        reject(new Error(`File reading failed: ${JSON.stringify(error)}`));
     });
   };
 

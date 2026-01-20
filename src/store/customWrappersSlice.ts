@@ -1,15 +1,15 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import apiService from '../services/apiService';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import apiService from "../services/apiService";
 
 export const fetchCustomWrappers = createAsyncThunk(
-  'customWrappers/fetchCustomWrappers',
+  "customWrappers/fetchCustomWrappers",
   async () => {
-    const response = await apiService.get('/wrapper/custom');
+    const response = await apiService.get("/wrapper/custom");
     return response?.data ?? [];
-  }
+  },
 );
 
-type Status = 'idle' | 'loading' | 'succeeded' | 'failed';
+type Status = "idle" | "loading" | "succeeded" | "failed";
 
 interface CustomWrappersState {
   data: any[];
@@ -18,24 +18,24 @@ interface CustomWrappersState {
 
 const initialState: CustomWrappersState = {
   data: [],
-  status: 'idle',
+  status: "idle",
 };
 
 const customWrappersSlice = createSlice({
-  name: 'customWrappers',
+  name: "customWrappers",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchCustomWrappers.pending, (state) => {
-        state.status = 'loading';
+        state.status = "loading";
       })
       .addCase(fetchCustomWrappers.fulfilled, (state, action) => {
-        state.status = 'succeeded';
+        state.status = "succeeded";
         state.data = action.payload;
       })
       .addCase(fetchCustomWrappers.rejected, (state) => {
-        state.status = 'failed';
+        state.status = "failed";
       });
   },
 });

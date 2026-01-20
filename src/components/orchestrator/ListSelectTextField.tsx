@@ -23,7 +23,7 @@ type ListSelectTextFieldProps = {
   onChange: (name: string, value: any) => void;
   resolveOptions: (
     options: any,
-    contextData?: Record<string, any>
+    contextData?: Record<string, any>,
   ) => { value: string; label: string; disabled?: boolean }[] | undefined;
   options?: any;
   placeholder?: string;
@@ -32,7 +32,7 @@ type ListSelectTextFieldProps = {
   onLinkFieldChange?: (
     bind: string,
     newSourceId: string,
-    context?: { objectSnapshot?: Record<string, any> }
+    context?: { objectSnapshot?: Record<string, any> },
   ) => void;
   allowDuplicates?: boolean;
 };
@@ -138,7 +138,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
       const isAlreadySelected =
         !allowDuplicates &&
         currentList.some(
-          (item, idx) => idx !== itemIndex && item === String(o.value)
+          (item, idx) => idx !== itemIndex && item === String(o.value),
         );
 
       return {
@@ -168,7 +168,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
         options={opts}
         value={matched ?? currentVal}
         getOptionLabel={(opt) =>
-          typeof opt === "string" ? opt : opt?.label ?? ""
+          typeof opt === "string" ? opt : (opt?.label ?? "")
         }
         isOptionEqualToValue={(opt, val) =>
           typeof val === "string" ? opt.value === val : opt.value === val?.value
@@ -204,7 +204,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
           const isAlreadySelected =
             !allowDuplicates &&
             currentList.some(
-              (item, idx) => idx !== itemIndex && item === option.value
+              (item, idx) => idx !== itemIndex && item === option.value,
             );
           return (
             <MenuItem {...props} key={option.value} disabled={option.disabled}>

@@ -15,7 +15,11 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import apiService from "../../../services/apiService";
-import { CloudConfig, CloudProvider, cloudRegions } from "../../../types/clouds-info";
+import {
+  CloudConfig,
+  CloudProvider,
+  cloudRegions,
+} from "../../../types/clouds-info";
 
 type TeamMember = {
   id?: string;
@@ -35,7 +39,6 @@ type InitPopupProps = {
     team: TeamMember[];
   }) => void;
 };
-
 
 const InitPopup = ({
   open,
@@ -139,7 +142,7 @@ const InitPopup = ({
               fullWidth
               required
               sx={{
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                 },
               }}
@@ -156,7 +159,7 @@ const InitPopup = ({
               multiline
               minRows={2}
               sx={{
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                 },
               }}
@@ -178,7 +181,7 @@ const InitPopup = ({
               fullWidth
               required
               sx={{
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                 },
               }}
@@ -198,7 +201,7 @@ const InitPopup = ({
               value={
                 form.cloud
                   ? cloudRegions[form.cloud].find(
-                      (r) => r.code === form.region
+                      (r) => r.code === form.region,
                     ) || null
                   : null
               }
@@ -251,7 +254,7 @@ const InitPopup = ({
               }
               fullWidth
               sx={{
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                 },
               }}
@@ -262,10 +265,10 @@ const InitPopup = ({
               sx={{
                 mt: 1,
                 borderRadius: 2,
-                textTransform: 'none',
-                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
+                textTransform: "none",
+                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                "&:hover": {
+                  transform: "translateY(-2px)",
                 },
               }}
             >
@@ -291,10 +294,10 @@ const InitPopup = ({
               sx={{
                 mt: 2,
                 borderRadius: 2,
-                textTransform: 'none',
-                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
+                textTransform: "none",
+                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                "&:hover": {
+                  transform: "translateY(-2px)",
                 },
               }}
               disabled={!isFormValid}

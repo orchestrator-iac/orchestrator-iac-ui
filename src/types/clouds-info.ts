@@ -1,4 +1,4 @@
-export type CloudProvider = 'aws' | 'azure' | 'gcp';
+export type CloudProvider = "aws" | "azure" | "gcp";
 
 export interface CloudConfig {
   templateName: string;

@@ -6,10 +6,10 @@
  */
 function escapeJSXtoJSONString(input) {
   return input
-    .replace(/\\/g, '\\\\') // escape backslashes
-    .replace(/"/g, '\\"')   // escape double quotes
-    .replace(/\r?\n/g, '\\n') // convert newlines
-    .replace(/\s+/g, ' ')     // optional: compress multiple spaces
+    .replace(/\\/g, "\\\\") // escape backslashes
+    .replace(/"/g, '\\"') // escape double quotes
+    .replace(/\r?\n/g, "\\n") // convert newlines
+    .replace(/\s+/g, " ") // optional: compress multiple spaces
     .trim();
 }
 

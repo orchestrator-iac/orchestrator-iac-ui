@@ -1,28 +1,28 @@
 import { ThemeMode } from "../components/shared/theme/ThemeContext";
 
 export interface Register {
-    firstName: string;
-    lastName: string;
-    email: string;
-    company?: string;
-    role: string;
-    password: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  company?: string;
+  role: string;
+  password: string;
 }
 
 export interface Login {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export interface UserProfile {
-    _id?: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    role: string;
-    company?: string;
-    imageUrl?: string;
-    themePreference?: ThemeMode;
+  _id?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  company?: string;
+  imageUrl?: string;
+  themePreference?: ThemeMode;
 }
 
 export interface AuthContextType {
@@ -35,7 +35,7 @@ export interface AuthContextType {
 }
 
 export interface ImageUpdate {
-    imageBase64: string
+  imageBase64: string;
 }
 
 export interface UpdatePasswordRequest {
