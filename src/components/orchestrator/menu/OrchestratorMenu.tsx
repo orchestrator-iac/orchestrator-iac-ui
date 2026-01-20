@@ -260,7 +260,6 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           }}
           sx={{
             alignItems: "center",
-            gap: 1,
             borderRadius: 1.5,
             mx: 0.5,
             '&:hover': {
@@ -276,7 +275,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           </ListItemIcon>
           <ListItemText
             primary="Architecture mode"
-            secondary={isArchitectureMode ? "Compact cards" : "Detailed forms"}
+            secondary={isArchitectureMode ? "Compact arch's" : "Detailed forms"}
             slotProps={{ primary: { sx: { fontWeight: 500 } } }}
             sx={{ cursor: "pointer", mr: 1 }}
             onClick={(event) => {
