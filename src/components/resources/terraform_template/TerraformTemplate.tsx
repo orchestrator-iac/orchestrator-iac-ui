@@ -39,21 +39,21 @@ const TerraformTemplate: React.FC<TerraformTemplateProps> = ({
           value={activeTab}
           onChange={(_, newIndex) => setActiveTab(newIndex)}
           sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
+            "& .MuiTab-root": {
+              textTransform: "none",
               fontWeight: 500,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                color: 'primary.main',
+              transition: "all 0.3s ease",
+              "&:hover": {
+                color: "primary.main",
                 opacity: 1,
               },
             },
-            '& .Mui-selected': {
+            "& .Mui-selected": {
               fontWeight: 600,
             },
-            '& .MuiTabs-indicator': {
+            "& .MuiTabs-indicator": {
               height: 3,
-              borderRadius: '3px 3px 0 0',
+              borderRadius: "3px 3px 0 0",
             },
           }}
         >
@@ -69,11 +69,11 @@ const TerraformTemplate: React.FC<TerraformTemplateProps> = ({
                       component="span"
                       ml={1}
                       sx={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 8,
                         right: 8,
-                        fontSize: '1.2rem',
-                        fontWeight: 'bold',
+                        fontSize: "1.2rem",
+                        fontWeight: "bold",
                       }}
                     >
                       *
@@ -84,8 +84,11 @@ const TerraformTemplate: React.FC<TerraformTemplateProps> = ({
               id={`template-tab-${index}`}
               aria-controls={`template-tabpanel-${index}`}
               sx={{
-                position: 'relative',
-                color: (showErrors && !value[tab.key]?.trim()) ? 'error.main' : 'inherit',
+                position: "relative",
+                color:
+                  showErrors && !value[tab.key]?.trim()
+                    ? "error.main"
+                    : "inherit",
               }}
             />
           ))}

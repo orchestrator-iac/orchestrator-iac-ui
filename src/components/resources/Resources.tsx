@@ -47,7 +47,7 @@ const Resources: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const resourceData = useSelector((state: RootState) =>
-    resource_id ? state.resource.resources[resource_id] : null
+    resource_id ? state.resource.resources[resource_id] : null,
   );
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
@@ -104,7 +104,7 @@ const Resources: React.FC = () => {
   useEffect(() => {
     document.body.dataset.theme = theme.palette.mode;
     // Restore body scroll for Resources page
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = "auto";
   }, [theme.palette.mode]);
 
   useEffect(() => {
@@ -136,7 +136,7 @@ const Resources: React.FC = () => {
           main: "",
           variables: "",
           outputs: "",
-        }
+        },
       );
 
       setTemplateFiles(
@@ -145,7 +145,7 @@ const Resources: React.FC = () => {
           variables: "",
           outputs: "",
           tfvars: "",
-        }
+        },
       );
 
       setResourceNode(resourceData.resourceNode || null);
@@ -162,7 +162,7 @@ const Resources: React.FC = () => {
 
   const validateTemplateFiles = () => {
     const allFilled = Object.values(templateFiles).every(
-      (content) => content.trim() !== ""
+      (content) => content.trim() !== "",
     );
     setTemplateValid(allFilled);
     return allFilled;
@@ -210,7 +210,7 @@ const Resources: React.FC = () => {
         } else {
           showSnackbar(
             "Please fill all template files before submitting.",
-            "error"
+            "error",
           );
         }
         break;
@@ -266,7 +266,7 @@ const Resources: React.FC = () => {
       if (error?.response?.status === 409) {
         showSnackbar(
           "Config with this resourceId and version already exists.",
-          "error"
+          "error",
         );
       } else {
         showSnackbar("Failed to save configuration.", "error");
@@ -315,8 +315,8 @@ const Resources: React.FC = () => {
       <form>
         <Box
           sx={{
-            maxWidth: '1400px',
-            margin: '0 auto',
+            maxWidth: "1400px",
+            margin: "0 auto",
             px: { xs: 2, sm: 3, md: 4 },
             py: 4,
           }}
@@ -328,39 +328,41 @@ const Resources: React.FC = () => {
               borderRadius: 3,
               backgroundColor: theme.palette.background.paper,
               color: theme.palette.text.primary,
-              border: '1px solid',
-              borderColor: theme.palette.mode === 'dark' 
-                ? 'rgba(255, 255, 255, 0.08)' 
-                : 'rgba(0, 0, 0, 0.06)',
-              boxShadow: theme.palette.mode === 'dark'
-                ? '0 4px 20px rgba(0, 0, 0, 0.3)'
-                : '0 4px 20px rgba(0, 0, 0, 0.08)',
+              border: "1px solid",
+              borderColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.06)",
+              boxShadow:
+                theme.palette.mode === "dark"
+                  ? "0 4px 20px rgba(0, 0, 0, 0.3)"
+                  : "0 4px 20px rgba(0, 0, 0, 0.08)",
             }}
           >
-            <Stepper 
-              activeStep={activeStep} 
+            <Stepper
+              activeStep={activeStep}
               alternativeLabel
               sx={{
                 mb: 4,
-                '& .MuiStepLabel-label': {
+                "& .MuiStepLabel-label": {
                   fontWeight: 500,
-                  fontSize: '0.95rem',
+                  fontSize: "0.95rem",
                 },
-                '& .MuiStepLabel-label.Mui-active': {
+                "& .MuiStepLabel-label.Mui-active": {
                   fontWeight: 600,
-                  color: theme.palette.mode === 'dark' ? '#7dd3d3' : '#1a5757',
+                  color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
                 },
-                '& .MuiStepLabel-label.Mui-completed': {
+                "& .MuiStepLabel-label.Mui-completed": {
                   fontWeight: 500,
                 },
-                '& .MuiStepIcon-root': {
-                  fontSize: '2rem',
+                "& .MuiStepIcon-root": {
+                  fontSize: "2rem",
                 },
-                '& .MuiStepIcon-root.Mui-active': {
-                  color: theme.palette.mode === 'dark' ? '#4bbebe' : '#1a5757',
+                "& .MuiStepIcon-root.Mui-active": {
+                  color: theme.palette.mode === "dark" ? "#4bbebe" : "#1a5757",
                 },
-                '& .MuiStepIcon-root.Mui-completed': {
-                  color: theme.palette.mode === 'dark' ? '#4bbebe' : '#3da9a9',
+                "& .MuiStepIcon-root.Mui-completed": {
+                  color: theme.palette.mode === "dark" ? "#4bbebe" : "#3da9a9",
                 },
               }}
             >
@@ -373,58 +375,65 @@ const Resources: React.FC = () => {
 
             <Box mt={4}>{renderStepContent(activeStep)}</Box>
 
-            <Box 
-              mt={4} 
+            <Box
+              mt={4}
               pt={3}
-              display="flex" 
+              display="flex"
               justifyContent="space-between"
               borderTop="1px solid"
-              borderColor={theme.palette.mode === 'dark' 
-                ? 'rgba(255, 255, 255, 0.08)' 
-                : 'rgba(0, 0, 0, 0.06)'}
+              borderColor={
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : "rgba(0, 0, 0, 0.06)"
+              }
             >
-              <Button 
-                disabled={activeStep === 0} 
+              <Button
+                disabled={activeStep === 0}
                 onClick={onBack}
                 sx={{
                   px: 3,
                   py: 1,
                   borderRadius: 2,
-                  textTransform: 'none',
+                  textTransform: "none",
                   fontWeight: 500,
-                  fontSize: '0.95rem',
-                  '&:hover': {
-                    backgroundColor: theme.palette.mode === 'dark' 
-                      ? 'rgba(255, 255, 255, 0.05)' 
-                      : 'rgba(0, 0, 0, 0.04)',
+                  fontSize: "0.95rem",
+                  "&:hover": {
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 255, 255, 0.05)"
+                        : "rgba(0, 0, 0, 0.04)",
                   },
                 }}
               >
                 Back
               </Button>
 
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 onClick={onNext}
                 sx={{
                   px: 4,
                   py: 1,
                   borderRadius: 2,
-                  textTransform: 'none',
+                  textTransform: "none",
                   fontWeight: 600,
-                  fontSize: '0.95rem',
-                  backgroundColor: theme.palette.mode === 'dark' ? '#4bbebe' : '#1a5757',
-                  boxShadow: theme.palette.mode === 'dark'
-                    ? '0 4px 12px rgba(75, 190, 190, 0.3)'
-                    : '0 4px 12px rgba(26, 87, 87, 0.2)',
-                  '&:hover': {
-                    backgroundColor: theme.palette.mode === 'dark' ? '#7dd3d3' : '#205a5a',
-                    boxShadow: theme.palette.mode === 'dark'
-                      ? '0 6px 16px rgba(75, 190, 190, 0.4)'
-                      : '0 6px 16px rgba(26, 87, 87, 0.3)',
-                    transform: 'translateY(-2px)',
+                  fontSize: "0.95rem",
+                  backgroundColor:
+                    theme.palette.mode === "dark" ? "#4bbebe" : "#1a5757",
+                  boxShadow:
+                    theme.palette.mode === "dark"
+                      ? "0 4px 12px rgba(75, 190, 190, 0.3)"
+                      : "0 4px 12px rgba(26, 87, 87, 0.2)",
+                  "&:hover": {
+                    backgroundColor:
+                      theme.palette.mode === "dark" ? "#7dd3d3" : "#205a5a",
+                    boxShadow:
+                      theme.palette.mode === "dark"
+                        ? "0 6px 16px rgba(75, 190, 190, 0.4)"
+                        : "0 6px 16px rgba(26, 87, 87, 0.3)",
+                    transform: "translateY(-2px)",
                   },
-                  transition: 'all 0.3s ease',
+                  transition: "all 0.3s ease",
                 }}
               >
                 {activeStep === steps.length - 1 ? "Finish" : "Next"}

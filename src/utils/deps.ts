@@ -81,7 +81,7 @@ export const evalJsonPredicate = (expr: DepExpr, vals: Values): boolean => {
 export const evalLegacyString = (dep: string, vals: Values): boolean => {
   const m =
     dep.match(
-      /^\s*values\.([a-zA-Z0-9_.]+)\s*(===|==|!==|!=)\s*(true|false|null|\d+(\.\d+)?|'[^']*'|"[^"]*")\s*$/
+      /^\s*values\.([a-zA-Z0-9_.]+)\s*(===|==|!==|!=)\s*(true|false|null|\d+(\.\d+)?|'[^']*'|"[^"]*")\s*$/,
     ) || [];
   const path = m[1];
   const op = m[2] as "===" | "==" | "!==" | "!=";
@@ -120,7 +120,7 @@ export const evalLegacyString = (dep: string, vals: Values): boolean => {
  */
 export const validCondition = (
   field: { depends_on?: unknown },
-  vals: Values = {}
+  vals: Values = {},
 ): boolean => {
   const dep = field?.depends_on;
   if (!dep) return true;

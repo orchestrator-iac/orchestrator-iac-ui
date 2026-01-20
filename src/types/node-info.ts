@@ -21,7 +21,7 @@ export interface NodeData {
   links?: Array<LinkRule>;
   /** Optional compact architecture view configuration */
   architectureView?: ArchitectureViewConfig;
-  
+
   /** Accordion expanded state - saved to preserve UI state across sessions */
   isExpanded?: boolean;
 }

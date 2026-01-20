@@ -196,7 +196,7 @@ export const components = {
                 {
                   value: "true",
                   label: "IPAM-allocated IPv4 CIDR block",
-                  disabled: true
+                  disabled: true,
                 },
               ],
             },
@@ -308,17 +308,17 @@ export const components = {
                 {
                   value: "IPAM-allocated_IPv6_CIDR_block",
                   label: "IPAM-allocated IPv6 CIDR block",
-                  disabled: true
+                  disabled: true,
                 },
                 {
                   value: "Amazon-provided_IPv6_CIDR_block",
                   label: "Amazon-provided IPv6 CIDR block",
-                  disabled: true
+                  disabled: true,
                 },
                 {
                   value: "IPv6_CIDR_owned_by_me",
                   label: "IPv6 CIDR owned by me",
-                  disabled: true
+                  disabled: true,
                 },
               ],
             },

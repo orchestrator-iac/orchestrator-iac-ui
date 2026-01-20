@@ -179,8 +179,15 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   const handleSaveSuccessInternal = useCallback(
     async (savedId: string) => {
       if (!savedId) {
-        console.error("handleSaveSuccessInternal received empty id", { savedId, pendingAction });
-        setSnackbar({ open: true, message: "Save returned no ID", severity: "error" });
+        console.error("handleSaveSuccessInternal received empty id", {
+          savedId,
+          pendingAction,
+        });
+        setSnackbar({
+          open: true,
+          message: "Save returned no ID",
+          severity: "error",
+        });
         return;
       }
 
@@ -194,7 +201,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         await triggerDownload(savedId);
       }
     },
-    [onSaveSuccess, pendingAction, triggerDownload, triggerGenerate]
+    [onSaveSuccess, pendingAction, triggerDownload, triggerGenerate],
   );
 
   // If the save dialog is closed without saving (cancel), clear pending action
@@ -218,10 +225,10 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
             bgcolor: "background.paper",
             borderRadius: 2,
             boxShadow: 1,
-            transition: 'all 0.3s ease',
+            transition: "all 0.3s ease",
             "&:hover": {
               bgcolor: "background.paper",
-              transform: 'translateY(-2px)',
+              transform: "translateY(-2px)",
               boxShadow: 2,
             },
           }}
@@ -262,8 +269,8 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
             alignItems: "center",
             borderRadius: 1.5,
             mx: 0.5,
-            '&:hover': {
-              bgcolor: 'action.hover',
+            "&:hover": {
+              bgcolor: "action.hover",
             },
           }}
         >
@@ -300,7 +307,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           sx={{
             borderRadius: 1.5,
             mx: 0.5,
-            '&:hover': { bgcolor: 'action.hover' },
+            "&:hover": { bgcolor: "action.hover" },
           }}
         >
           <ListItemIcon>
@@ -315,7 +322,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           sx={{
             borderRadius: 1.5,
             mx: 0.5,
-            '&:hover': { bgcolor: 'action.hover' },
+            "&:hover": { bgcolor: "action.hover" },
           }}
         >
           <ListItemIcon>
@@ -339,7 +346,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           sx={{
             borderRadius: 1.5,
             mx: 0.5,
-            '&:hover': { bgcolor: 'action.hover' },
+            "&:hover": { bgcolor: "action.hover" },
           }}
         >
           <ListItemIcon>
@@ -363,7 +370,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           sx={{
             borderRadius: 1.5,
             mx: 0.5,
-            '&:hover': { bgcolor: 'action.hover' },
+            "&:hover": { bgcolor: "action.hover" },
           }}
         >
           <ListItemIcon>
@@ -382,7 +389,9 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
             borderRadius: 1.5,
             mx: 0.5,
             color: canDelete ? "error.main" : "text.disabled",
-            '&:hover': { bgcolor: canDelete ? 'error.lighter' : 'action.hover' },
+            "&:hover": {
+              bgcolor: canDelete ? "error.lighter" : "action.hover",
+            },
           }}
         >
           <ListItemIcon>

@@ -14,7 +14,7 @@
   --text4: #94a3b8;
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   --primary: #4bbebe;
   --secondary: #7dd3d3;
   --ternary: #8ecacc;
@@ -29,7 +29,7 @@
   --text4: #64748b;
 }
 
-[data-theme='light'] {
+[data-theme="light"] {
   --primary: #1a5757;
   --secondary: #3da9a9;
   --ternary: #52c9c9;
@@ -47,14 +47,16 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
   overflow-x: hidden;
   overflow-y: auto;
   position: relative;
@@ -62,23 +64,39 @@ body {
 }
 
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: 
-    radial-gradient(circle at 20% 10%, rgba(75, 190, 190, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(32, 90, 90, 0.03) 0%, transparent 50%);
+  background:
+    radial-gradient(
+      circle at 20% 10%,
+      rgba(75, 190, 190, 0.03) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(32, 90, 90, 0.03) 0%,
+      transparent 50%
+    );
   pointer-events: none;
   z-index: 0;
 }
 
-[data-theme='dark'] body::before {
-  background: 
-    radial-gradient(circle at 20% 10%, rgba(75, 190, 190, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(136, 207, 207, 0.05) 0%, transparent 50%);
+[data-theme="dark"] body::before {
+  background:
+    radial-gradient(
+      circle at 20% 10%,
+      rgba(75, 190, 190, 0.05) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(136, 207, 207, 0.05) 0%,
+      transparent 50%
+    );
 }
 
 #root {
@@ -123,7 +141,7 @@ body::before {
   margin: 8px 0 8px 0;
   padding: 8px 12px;
   border-left: 4px solid var(--primary);
-  background: rgba(32,90,90,0.06);
+  background: rgba(32, 90, 90, 0.06);
   font-style: italic;
   border-radius: 4px;
 }
@@ -137,10 +155,14 @@ body::before {
   line-height: 1.45;
   overflow-x: auto;
   position: relative;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-.note-rich-editor pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.note-rich-editor pre code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
 
 .note-rich-editor pre::after {
   content: attr(data-lang);
@@ -153,5 +175,10 @@ body::before {
   opacity: 0.55;
 }
 
-[data-theme='dark'] .note-rich-editor blockquote { background: rgba(67,173,173,0.08); }
-[data-theme='dark'] .note-rich-editor pre { background:#1e293b; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+[data-theme="dark"] .note-rich-editor blockquote {
+  background: rgba(67, 173, 173, 0.08);
+}
+[data-theme="dark"] .note-rich-editor pre {
+  background: #1e293b;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}

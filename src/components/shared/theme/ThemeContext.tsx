@@ -18,7 +18,7 @@ interface ThemeContextType {
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
@@ -42,7 +42,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   }, [mode]);
 
   useEffect(() => {
-    if(user?.themePreference) {
+    if (user?.themePreference) {
       setMode(user?.themePreference);
     }
   }, [user]);
@@ -52,10 +52,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
     if (stored) setMode(stored);
   }, []);
 
-  const contextValue = useMemo(
-    () => ({ mode, setMode }),
-    [mode]
-  );
+  const contextValue = useMemo(() => ({ mode, setMode }), [mode]);
 
   return (
     <ThemeContext.Provider value={contextValue}>

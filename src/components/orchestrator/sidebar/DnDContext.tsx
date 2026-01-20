@@ -9,7 +9,7 @@ import React, {
 // Define the type of our context value
 type DnDContextType = [
   string | null,
-  React.Dispatch<React.SetStateAction<string | null>>
+  React.Dispatch<React.SetStateAction<string | null>>,
 ];
 
 // Create context with a proper default

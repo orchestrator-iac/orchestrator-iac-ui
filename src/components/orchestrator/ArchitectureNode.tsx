@@ -1,11 +1,18 @@
 import React from "react";
-import { Box, Chip, Divider, Paper, Stack, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Chip,
+  Divider,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { Handle } from "@xyflow/react";
 import { useTheme } from "@mui/material/styles";
 
 import { getFriendlyId, resolveValueByPath } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
-
 
 const asDisplayString = (value: any): string => {
   if (value == null) {
@@ -32,7 +39,7 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
 
   const friendlyId = React.useMemo(
     () => getFriendlyId(id, data?.__nodeType, data?.__helpers?.allNodes),
-    [id, data?.__nodeType, data?.__helpers?.allNodes]
+    [id, data?.__nodeType, data?.__helpers?.allNodes],
   );
 
   const iconSrc = React.useMemo(() => {
@@ -54,7 +61,12 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
     }
     const fallback = data?.header?.label ?? "";
     return fallback;
-  }, [architectureView?.primaryKey, architectureView?.primaryText, data?.header?.label, data?.values]);
+  }, [
+    architectureView?.primaryKey,
+    architectureView?.primaryText,
+    data?.header?.label,
+    data?.values,
+  ]);
 
   const secondaryText = React.useMemo(() => {
     const configured = architectureView?.secondaryText;
@@ -68,7 +80,12 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
       return asDisplayString(derived);
     }
     return data?.header?.sub_label ?? "";
-  }, [architectureView?.secondaryKey, architectureView?.secondaryText, data?.header?.sub_label, data?.values]);
+  }, [
+    architectureView?.secondaryKey,
+    architectureView?.secondaryText,
+    data?.header?.sub_label,
+    data?.values,
+  ]);
 
   const tagItems = React.useMemo(() => {
     if (!architectureView?.tags?.length) {
@@ -78,23 +95,29 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
     const seen = new Set<string>();
 
     return architectureView.tags
-      .map<{ key: string; label: string; color?: string } | null>((tag, idx) => {
-        const raw = tag.valueKey
-          ? resolveValueByPath(data?.values, tag.valueKey)
-          : tag.value;
-        const displayValue = asDisplayString(raw);
-        if (!displayValue) {
-          return null;
-        }
-        const tagLabel = tag.label ? `${tag.label}: ${displayValue}` : displayValue;
-        const key = tag.valueKey ?? `${idx}-${displayValue}`;
-        if (seen.has(key)) {
-          return null;
-        }
-        seen.add(key);
-        return { key, label: tagLabel, color: tag.color };
-      })
-      .filter((chip): chip is { key: string; label: string; color?: string } => Boolean(chip));
+      .map<{ key: string; label: string; color?: string } | null>(
+        (tag, idx) => {
+          const raw = tag.valueKey
+            ? resolveValueByPath(data?.values, tag.valueKey)
+            : tag.value;
+          const displayValue = asDisplayString(raw);
+          if (!displayValue) {
+            return null;
+          }
+          const tagLabel = tag.label
+            ? `${tag.label}: ${displayValue}`
+            : displayValue;
+          const key = tag.valueKey ?? `${idx}-${displayValue}`;
+          if (seen.has(key)) {
+            return null;
+          }
+          seen.add(key);
+          return { key, label: tagLabel, color: tag.color };
+        },
+      )
+      .filter((chip): chip is { key: string; label: string; color?: string } =>
+        Boolean(chip),
+      );
   }, [architectureView?.tags, data?.values]);
 
   const fieldEntries = React.useMemo(() => {
@@ -111,7 +134,10 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
       entries.set(field.label, displayValue);
     });
 
-    const resourceName = data?.values?.name ?? data?.values?.resourceName ?? data?.values?.resource_name;
+    const resourceName =
+      data?.values?.name ??
+      data?.values?.resourceName ??
+      data?.values?.resource_name;
     if (resourceName && !entries.has("Resource Name")) {
       entries.set("Resource Name", asDisplayString(resourceName));
     }
@@ -120,7 +146,10 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
       entries.set("Resource Type", data.__nodeType);
     }
 
-    return Array.from(entries.entries()).map(([label, value]) => ({ label, value }));
+    return Array.from(entries.entries()).map(([label, value]) => ({
+      label,
+      value,
+    }));
   }, [architectureView?.fields, data?.values, data?.__nodeType]);
 
   return (
@@ -155,7 +184,12 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            sx={{
+              fontWeight: 700,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
           >
             {primaryText}
           </Typography>
@@ -163,7 +197,9 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
             <Typography
               variant="body2"
               sx={{
-                color: theme.palette.textVariants?.text4 || theme.palette.text.secondary,
+                color:
+                  theme.palette.textVariants?.text4 ||
+                  theme.palette.text.secondary,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -180,7 +216,9 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
               size="small"
               label={friendlyId}
               sx={{
-                color: theme.palette.textVariants?.text4 || theme.palette.text.secondary,
+                color:
+                  theme.palette.textVariants?.text4 ||
+                  theme.palette.text.secondary,
                 maxWidth: "92px",
                 "& .MuiChip-label": {
                   overflow: "hidden",
@@ -213,7 +251,8 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
           variant="body2"
           sx={{
             mt: 1.25,
-            color: theme.palette.textVariants?.text3 || theme.palette.text.secondary,
+            color:
+              theme.palette.textVariants?.text3 || theme.palette.text.secondary,
           }}
         >
           {architectureView.description}
@@ -227,17 +266,31 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
             {fieldEntries.map((field) => (
               <Box
                 key={field.label}
-                sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 1,
+                }}
               >
                 <Typography
                   variant="caption"
-                  sx={{ color: theme.palette.textVariants?.text4 || theme.palette.text.secondary }}
+                  sx={{
+                    color:
+                      theme.palette.textVariants?.text4 ||
+                      theme.palette.text.secondary,
+                  }}
                 >
                   {field.label}
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ fontWeight: 600, color: theme.palette.textVariants?.text1 || theme.palette.text.primary }}
+                  sx={{
+                    fontWeight: 600,
+                    color:
+                      theme.palette.textVariants?.text1 ||
+                      theme.palette.text.primary,
+                  }}
                 >
                   {field.value}
                 </Typography>

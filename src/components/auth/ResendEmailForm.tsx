@@ -26,11 +26,11 @@ export default function ResendEmail() {
       setSuccessMessage(
         type === "verify"
           ? "Verification email has been sent. Please check your inbox."
-          : "Password reset link has been sent. Please check your inbox."
+          : "Password reset link has been sent. Please check your inbox.",
       );
     } catch (err: any) {
       setErrorMessage(
-        err.response?.data?.message || "Something went wrong. Try again."
+        err.response?.data?.message || "Something went wrong. Try again.",
       );
     } finally {
       setLoading(false);

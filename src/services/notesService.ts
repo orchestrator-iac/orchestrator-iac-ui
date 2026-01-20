@@ -56,7 +56,7 @@ export const notesService = {
   // Update an existing note
   updateNote: async (
     id: string,
-    noteData: UpdateNoteRequest
+    noteData: UpdateNoteRequest,
   ): Promise<Note> => {
     try {
       const data = await apiService.put(`/notes/${id}`, noteData);
@@ -85,7 +85,7 @@ export const notesService = {
   searchNotes: async (query: string): Promise<Note[]> => {
     try {
       const data = await apiService.get(
-        `/notes/search?q=${encodeURIComponent(query)}`
+        `/notes/search?q=${encodeURIComponent(query)}`,
       );
       // Handle paginated response structure
       const notes = data.notes || data; // Support both paginated and direct array responses

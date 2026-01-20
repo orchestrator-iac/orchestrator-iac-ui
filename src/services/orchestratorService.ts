@@ -58,7 +58,7 @@ export const orchestratorService = {
    * @returns Saved configuration with generated ID
    */
   saveOrchestrator: async (
-    data: SaveOrchestratorRequest
+    data: SaveOrchestratorRequest,
   ): Promise<SaveOrchestratorResponse> => {
     try {
       const response = await apiService.post("/orchestrators", data);
@@ -77,7 +77,7 @@ export const orchestratorService = {
    */
   updateOrchestrator: async (
     id: string,
-    data: Partial<SaveOrchestratorRequest>
+    data: Partial<SaveOrchestratorRequest>,
   ): Promise<SaveOrchestratorResponse> => {
     try {
       const response = await apiService.put(`/orchestrators/${id}`, data);
@@ -111,17 +111,20 @@ export const orchestratorService = {
    */
   listOrchestrators: async (
     page: number = 1,
-    size: number = 10
+    size: number = 10,
   ): Promise<ListOrchestrationsResponse> => {
     try {
       const response = await apiService.get(
-        `/orchestrators?page=${page}&size=${size}`
+        `/orchestrators?page=${page}&size=${size}`,
       );
-      
+
       // Handle different response formats
-      const orchestrations = response.orchestrators || response.data || response || [];
-      const orchestrationsList = Array.isArray(orchestrations) ? orchestrations : [];
-      
+      const orchestrations =
+        response.orchestrators || response.data || response || [];
+      const orchestrationsList = Array.isArray(orchestrations)
+        ? orchestrations
+        : [];
+
       const mappedOrchestrations = orchestrationsList.map((item: any) => ({
         _id: item.id || item._id,
         templateInfo: item.templateInfo,
@@ -135,13 +138,15 @@ export const orchestratorService = {
         updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
         metadata: normalizeMetadataDates(item.metadata),
       }));
-      
+
       return {
         orchestrations: mappedOrchestrations,
         total: response.total || orchestrationsList.length,
         page: response.page || page,
         size: response.size || size,
-        totalPages: response.totalPages || Math.ceil((response.total || orchestrationsList.length) / size),
+        totalPages:
+          response.totalPages ||
+          Math.ceil((response.total || orchestrationsList.length) / size),
       };
     } catch (error) {
       console.error("Failed to list orchestrators:", error);
@@ -170,7 +175,7 @@ export const orchestratorService = {
    */
   duplicateOrchestrator: async (
     id: string,
-    newName: string
+    newName: string,
   ): Promise<SaveOrchestratorResponse> => {
     try {
       const response = await apiService.post(`/orchestrators/${id}/duplicate`, {
@@ -189,11 +194,11 @@ export const orchestratorService = {
    * @returns List of matching orchestrations
    */
   searchOrchestrators: async (
-    query: string
+    query: string,
   ): Promise<OrchestratorListItem[]> => {
     try {
       const response = await apiService.get(
-        `/orchestrators/search?q=${encodeURIComponent(query)}`
+        `/orchestrators/search?q=${encodeURIComponent(query)}`,
       );
       const orchestrations = response.orchestrations || response;
       return orchestrations.map((item: any) => ({
@@ -214,8 +219,15 @@ export const orchestratorService = {
    * @returns Backend response (message, status, optional links)
    */
   generateIac: async (
-    id: string
-  ): Promise<{ status?: string; message?: string; downloadIaCUrl?: string; downloadUrl?: string; url?: string; link?: string }> => {
+    id: string,
+  ): Promise<{
+    status?: string;
+    message?: string;
+    downloadIaCUrl?: string;
+    downloadUrl?: string;
+    url?: string;
+    link?: string;
+  }> => {
     try {
       // Adjust endpoint as needed to match backend
       const response = await apiService.post(`/orchestrators/${id}/generate`);

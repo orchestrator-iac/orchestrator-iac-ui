@@ -13,7 +13,7 @@ const formatFriendlySequence = (type: string, index: number): string =>
 
 const extractFriendlyIndex = (
   _type: string,
-  friendlyId?: string
+  friendlyId?: string,
 ): number | null => {
   if (!friendlyId) {
     return null;
@@ -32,16 +32,22 @@ const extractFriendlyIndex = (
  * Resolve template strings in values recursively
  * Replaces {{ userInfo.email }}, {{ templateInfo.cloud }}, etc. with actual values
  */
-const resolveTemplateValue = (value: any, context: { userInfo?: any; templateInfo?: any }): any => {
-  if (typeof value === 'string' && value.includes('{{')) {
+const resolveTemplateValue = (
+  value: any,
+  context: { userInfo?: any; templateInfo?: any },
+): any => {
+  if (typeof value === "string" && value.includes("{{")) {
     // Simple template resolution - supports {{ userInfo.property }} and {{ templateInfo.property }}
-    return value.replace(/\{\{\s*(userInfo|templateInfo)\.(\w+)\s*\}\}/g, (_, objectName, property) => {
-      const obj = context[objectName as keyof typeof context];
-      return obj?.[property] ?? `{{ ${objectName}.${property} }}`;
-    });
+    return value.replace(
+      /\{\{\s*(userInfo|templateInfo)\.(\w+)\s*\}\}/g,
+      (_, objectName, property) => {
+        const obj = context[objectName as keyof typeof context];
+        return obj?.[property] ?? `{{ ${objectName}.${property} }}`;
+      },
+    );
   } else if (Array.isArray(value)) {
-    return value.map(item => resolveTemplateValue(item, context));
-  } else if (value !== null && typeof value === 'object') {
+    return value.map((item) => resolveTemplateValue(item, context));
+  } else if (value !== null && typeof value === "object") {
     const resolved: any = {};
     for (const [key, val] of Object.entries(value)) {
       resolved[key] = resolveTemplateValue(val, context);
@@ -65,8 +71,9 @@ const buildFriendlyIdLookup = (nodes: Node[]): Record<string, string> => {
   const lookup: Record<string, string> = {};
 
   for (const node of nodes) {
-    const nodeType =
-      ((node.data as any)?.__nodeType || node.type || "node") as string;
+    const nodeType = ((node.data as any)?.__nodeType ||
+      node.type ||
+      "node") as string;
     if (!nodeType) {
       continue;
     }
@@ -80,8 +87,9 @@ const buildFriendlyIdLookup = (nodes: Node[]): Record<string, string> => {
   }
 
   for (const node of nodes) {
-    const nodeType =
-      ((node.data as any)?.__nodeType || node.type || "node") as string;
+    const nodeType = ((node.data as any)?.__nodeType ||
+      node.type ||
+      "node") as string;
     if (!nodeType) {
       continue;
     }
@@ -106,9 +114,11 @@ const buildFriendlyIdLookup = (nodes: Node[]): Record<string, string> => {
  */
 export const transformNodeForDB = (
   node: Node,
-  friendlyId?: string
+  friendlyId?: string,
 ): OrchestratorNode => {
-  const resourceId = (node.data?.__resourceId || node.data?.__nodeType || node.type) as string;
+  const resourceId = (node.data?.__resourceId ||
+    node.data?.__nodeType ||
+    node.type) as string;
 
   // Extract isExpanded from values if it was stored there, otherwise check node.data
   // Add index signature for values to allow dynamic property access
@@ -118,7 +128,8 @@ export const transformNodeForDB = (
   const outgoingFriendlyId = persistedFriendlyId ?? friendlyId;
 
   // Get template context for resolving template values
-  const templateContext = (node.data?.__helpers as { templateContext?: any })?.templateContext;
+  const templateContext = (node.data?.__helpers as { templateContext?: any })
+    ?.templateContext;
 
   // Resolve template values if context is available
   if (templateContext) {
@@ -134,7 +145,9 @@ export const transformNodeForDB = (
       const val = values[bind];
       if (val && typeof val === "string") {
         // Find the source node
-        const allNodes: Node[] | undefined = (node.data?.__helpers as { allNodes?: Node[] })?.allNodes;
+        const allNodes: Node[] | undefined = (
+          node.data?.__helpers as { allNodes?: Node[] }
+        )?.allNodes;
         const sourceNode = allNodes?.find((n) => n.id === val);
         if (sourceNode) {
           values[bind] = {
@@ -145,14 +158,16 @@ export const transformNodeForDB = (
           };
         }
       } else if (Array.isArray(val)) {
-        const allNodes: Node[] | undefined = (node.data?.__helpers as { allNodes?: Node[] })?.allNodes;
-        
+        const allNodes: Node[] | undefined = (
+          node.data?.__helpers as { allNodes?: Node[] }
+        )?.allNodes;
+
         values[bind] = val.map((item: any) => {
           // Handle array of objects: each item might have a field that references a node
           if (item && typeof item === "object" && !Array.isArray(item)) {
             // Clone the object to avoid mutations
             const itemCopy = { ...item };
-            
+
             // Check if outputRef is specified and extract that field
             if (linkRule.outputRef && itemCopy[linkRule.outputRef]) {
               const refValue = itemCopy[linkRule.outputRef];
@@ -170,7 +185,7 @@ export const transformNodeForDB = (
             }
             return itemCopy;
           }
-          
+
           // Handle array of simple strings (legacy behavior)
           if (typeof item === "string") {
             const sourceNode = allNodes?.find((n) => n.id === item);
@@ -183,7 +198,7 @@ export const transformNodeForDB = (
               };
             }
           }
-          
+
           return item;
         });
       }
@@ -202,7 +217,7 @@ export const transformNodeForDB = (
     friendlyId: outgoingFriendlyId,
     isExpanded: isExpanded,
   };
-};/**
+}; /**
  * Transform React Flow edge to minimal database format
  * Preserves relationship metadata (bindKey for array fields)
  * @param edge - React Flow edge instance
@@ -210,13 +225,14 @@ export const transformNodeForDB = (
  */
 export const transformEdgeForDB = (edge: Edge): OrchestratorEdge => {
   // Extract kind from edge data or parse from edge ID
-  const kind = (edge.data?.kind as string) || edge.id.split(':')[1] || 'unknown';
-  
+  const kind =
+    (edge.data?.kind as string) || edge.id.split(":")[1] || "unknown";
+
   // bindKey is required by backend - if not present, use kind as fallback
   // For simple 1:1 relationships, bindKey equals kind
   // For array relationships, bindKey includes index like "routes[0]"
   const bindKey = (edge.data?.bindKey as string) || kind;
-  
+
   return {
     id: edge.id,
     source: edge.source,
@@ -243,7 +259,7 @@ export const prepareOrchestratorForSave = (
   nodes: Node[],
   edges: Edge[],
   templateInfo: TemplateInfo,
-  userInfo?: any
+  userInfo?: any,
 ): SaveOrchestratorRequest => {
   const friendlyIdLookup = buildFriendlyIdLookup(nodes);
 
@@ -262,7 +278,7 @@ export const prepareOrchestratorForSave = (
   return {
     templateInfo,
     nodes: nodesWithHelpers.map((node) =>
-      transformNodeForDB(node, friendlyIdLookup[node.id])
+      transformNodeForDB(node, friendlyIdLookup[node.id]),
     ),
     edges: edges.map(transformEdgeForDB),
     metadata: {
@@ -282,19 +298,27 @@ export const prepareOrchestratorForSave = (
  */
 export const reconstructNodeFromDB = (
   dbNode: OrchestratorNode,
-  resourceTemplate: any // Will be fetched from API using dbNode.resourceId
+  resourceTemplate: any, // Will be fetched from API using dbNode.resourceId
 ): Node => {
   // When reconstructing, flatten linked value objects back to just id for UI fields
   const values = { ...(dbNode.values || {}) };
-  if (resourceTemplate?.resourceNode?.data?.links && Array.isArray(resourceTemplate.resourceNode.data.links)) {
+  if (
+    resourceTemplate?.resourceNode?.data?.links &&
+    Array.isArray(resourceTemplate.resourceNode.data.links)
+  ) {
     for (const linkRule of resourceTemplate.resourceNode.data.links) {
       const bind: string = linkRule.bind;
       const val = values[bind];
-      
+
       // Handle simple object links (e.g., vpc_id: { id, __nodeType, ... })
-      if (val && typeof val === "object" && !Array.isArray(val) && "id" in val) {
+      if (
+        val &&
+        typeof val === "object" &&
+        !Array.isArray(val) &&
+        "id" in val
+      ) {
         values[bind] = (val as { id: string }).id;
-      } 
+      }
       // Handle array links
       else if (Array.isArray(val)) {
         // Check if outputRef is specified (for array of objects)
@@ -305,7 +329,11 @@ export const reconstructNodeFromDB = (
               const itemCopy = { ...item };
               const refValue = itemCopy[linkRule.outputRef];
               // If the referenced field is a link object, flatten it to just the id
-              if (refValue && typeof refValue === "object" && "id" in refValue) {
+              if (
+                refValue &&
+                typeof refValue === "object" &&
+                "id" in refValue
+              ) {
                 itemCopy[linkRule.outputRef] = refValue.id;
               }
               return itemCopy;
@@ -314,8 +342,10 @@ export const reconstructNodeFromDB = (
           });
         } else {
           // Array of simple strings/objects (legacy behavior)
-          values[bind] = val.map((v: any) => 
-            (typeof v === "object" && v !== null && "id" in v ? (v as { id: string }).id : v)
+          values[bind] = val.map((v: any) =>
+            typeof v === "object" && v !== null && "id" in v
+              ? (v as { id: string }).id
+              : v,
           );
         }
       }
@@ -368,7 +398,7 @@ export const reconstructEdgeFromDB = (dbEdge: OrchestratorEdge): Edge => {
  */
 export const validateOrchestratorData = (
   nodes: Node[],
-  edges: Edge[]
+  edges: Edge[],
 ): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
@@ -389,10 +419,14 @@ export const validateOrchestratorData = (
   // Validate edges reference existing nodes
   for (const edge of edges) {
     if (!nodeIds.has(edge.source)) {
-      errors.push(`Edge ${edge.id} references non-existent source node: ${edge.source}`);
+      errors.push(
+        `Edge ${edge.id} references non-existent source node: ${edge.source}`,
+      );
     }
     if (!nodeIds.has(edge.target)) {
-      errors.push(`Edge ${edge.id} references non-existent target node: ${edge.target}`);
+      errors.push(
+        `Edge ${edge.id} references non-existent target node: ${edge.target}`,
+      );
     }
   }
 
@@ -410,10 +444,10 @@ export const validateOrchestratorData = (
  */
 export const extractOrchestratorSummary = (nodes: Node[], edges: Edge[]) => {
   const resourceTypes = new Set<string>();
-  
+
   for (const node of nodes) {
     const type = (node.data?.__nodeType || node.type) as string;
-    if (type && typeof type === 'string') {
+    if (type && typeof type === "string") {
       resourceTypes.add(type);
     }
   }

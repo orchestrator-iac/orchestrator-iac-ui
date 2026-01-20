@@ -62,10 +62,10 @@ function TerraformTabPanel({
                 color: "error.main",
                 display: "flex",
                 alignItems: "center",
-                bgcolor: 'error.lighter',
+                bgcolor: "error.lighter",
                 borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'error.light',
+                border: "1px solid",
+                borderColor: "error.light",
               }}
             >
               <ErrorOutlineIcon sx={{ mr: 1 }} />
@@ -109,21 +109,21 @@ const TerraformCore: React.FC<TerraformCoreProps> = ({
           value={activeTabIndex}
           onChange={handleTabChange}
           sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
+            "& .MuiTab-root": {
+              textTransform: "none",
               fontWeight: 500,
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                color: 'primary.main',
+              transition: "all 0.3s ease",
+              "&:hover": {
+                color: "primary.main",
                 opacity: 1,
               },
             },
-            '& .Mui-selected': {
+            "& .Mui-selected": {
               fontWeight: 600,
             },
-            '& .MuiTabs-indicator': {
+            "& .MuiTabs-indicator": {
               height: 3,
-              borderRadius: '3px 3px 0 0',
+              borderRadius: "3px 3px 0 0",
             },
           }}
         >
@@ -134,16 +134,18 @@ const TerraformCore: React.FC<TerraformCoreProps> = ({
               {...a11yProps(index)}
               sx={{
                 color: errors[key] ? "error.main" : "inherit",
-                position: 'relative',
-                '&::after': errors[key] ? {
-                  content: '"*"',
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  color: 'error.main',
-                  fontSize: '1.2rem',
-                  fontWeight: 'bold',
-                } : {},
+                position: "relative",
+                "&::after": errors[key]
+                  ? {
+                      content: '"*"',
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      color: "error.main",
+                      fontSize: "1.2rem",
+                      fontWeight: "bold",
+                    }
+                  : {},
               }}
             />
           ))}

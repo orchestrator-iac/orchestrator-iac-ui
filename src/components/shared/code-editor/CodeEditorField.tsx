@@ -24,12 +24,12 @@ export const CodeEditorField: React.FC<{
   const { mode } = useThemeContext();
   const [tempErrorMessage, setTempErrorMessage] = useState<string>("");
   const [resourceNodeTemp, setResourceNodeTemp] = useState<string>(
-    toEditorValue(value)
+    toEditorValue(value),
   );
 
   useEffect(() => {
     console.log(resourceNodeTemp);
-    
+
     // Validate and notify parent component of changes
     try {
       // Try to parse as JSON first

@@ -30,7 +30,7 @@ import ResendEmailForm from "./components/auth/ResendEmailForm";
 import NightSky from "./components/shared/night-sky/NightSky";
 import BlackHoleDemo from "./components/shared/black-hole/BlackHoleDemo";
 import UpdatePassword from "./components/auth/login/UpdatePassword";
-import Chatbot from './components/chatbot/Chatbot';
+import Chatbot from "./components/chatbot/Chatbot";
 import LandingPage from "./components/landing/LandingPage";
 
 // Add FontAwesome icon packs
@@ -38,7 +38,7 @@ library.add(fab, fas);
 
 const App = () => {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-  
+
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthProvider>
@@ -46,51 +46,75 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Layout />}>
-              <Route index element={<LandingPage />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="register-success" element={<RegisterSuccessPage />} />
-              <Route path="confirm" element={<ConfirmEmail />} />
-              <Route path="night-sky" element={<NightSky />} />
-              <Route path="black-hole" element={<BlackHoleDemo />} />
-              <Route path="update-password" element={<UpdatePassword />} />
-              <Route path="email-verification/:type" element={<ResendEmailForm />} />
-              <Route path="profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="resources/:resource_id" element={
-                <ProtectedRoute>
-                  <Resources />
-                </ProtectedRoute>
-              } />
-              <Route path="orchestrator/:template_id" element={
-                <ProtectedRoute>
-                  <Orchestrator />
-                </ProtectedRoute>
-              } />
-              <Route path="home" element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              } />
-              <Route path="dashboard" element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={
-                <ProtectedRoute>
-                  <NotFound />
-                </ProtectedRoute>
-              } />
-            </Route>
-          </Routes>
-          <Chatbot />
-        </BrowserRouter>
-      </ThemeProvider>
-    </AuthProvider>
+                <Route index element={<LandingPage />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route
+                  path="register-success"
+                  element={<RegisterSuccessPage />}
+                />
+                <Route path="confirm" element={<ConfirmEmail />} />
+                <Route path="night-sky" element={<NightSky />} />
+                <Route path="black-hole" element={<BlackHoleDemo />} />
+                <Route path="update-password" element={<UpdatePassword />} />
+                <Route
+                  path="email-verification/:type"
+                  element={<ResendEmailForm />}
+                />
+                <Route
+                  path="profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="resources/:resource_id"
+                  element={
+                    <ProtectedRoute>
+                      <Resources />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="orchestrator/:template_id"
+                  element={
+                    <ProtectedRoute>
+                      <Orchestrator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="home"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="*"
+                  element={
+                    <ProtectedRoute>
+                      <NotFound />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
+            </Routes>
+            <Chatbot />
+          </BrowserRouter>
+        </ThemeProvider>
+      </AuthProvider>
     </GoogleOAuthProvider>
   );
 };

@@ -48,7 +48,7 @@ type Props = {
   onLinkFieldChange?: (
     bind: string,
     newSourceId: string,
-    context?: { objectSnapshot?: Record<string, any> }
+    context?: { objectSnapshot?: Record<string, any> },
   ) => void;
   onValuesChange?: (name: string, value: any) => void;
 };
@@ -91,7 +91,7 @@ const DynamicForm: React.FC<Props> = ({
         userInfo: userInfo ?? {}, // <- ensure key exists
         templateInfo: templateInfo ?? {}, // <- ensure key exists
       });
-      
+
       // Only update state if the data actually changed
       const renderedStr = JSON.stringify(rendered);
       if (renderedStr !== prevValuesRef.current) {
@@ -123,7 +123,7 @@ const DynamicForm: React.FC<Props> = ({
   // Enhanced to support conditional filtering based on context data
   const resolveOptions = (
     options: any,
-    contextData?: Record<string, any>
+    contextData?: Record<string, any>,
   ): { value: string; label: string; disabled?: boolean }[] | undefined => {
     if (typeof options !== "string") return options;
     if (!options.startsWith("from:nodes:")) return undefined;
@@ -287,7 +287,7 @@ const DynamicForm: React.FC<Props> = ({
             options={opts}
             value={matched ?? currentVal}
             getOptionLabel={(opt) =>
-              typeof opt === "string" ? opt : opt?.label ?? ""
+              typeof opt === "string" ? opt : (opt?.label ?? "")
             }
             isOptionEqualToValue={(opt, val) =>
               typeof val === "string"
@@ -360,7 +360,7 @@ const DynamicForm: React.FC<Props> = ({
         const handleCheckboxChange = (
           fieldName: string,
           optionValue: string,
-          checked: boolean
+          checked: boolean,
         ) => {
           const currentValues: string[] = formData[fieldName] ?? value ?? [];
           let updatedValues = [...currentValues];
@@ -393,7 +393,7 @@ const DynamicForm: React.FC<Props> = ({
                           handleCheckboxChange(
                             name,
                             option.value,
-                            e.target.checked
+                            e.target.checked,
                           )
                         }
                       />
@@ -599,7 +599,7 @@ const DynamicForm: React.FC<Props> = ({
                         </Tooltip>
                       </Grid>
                     </Grid>
-                  )
+                  ),
                 )}
                 <Button
                   variant={fieldCfg.add_button.variant}
@@ -695,8 +695,8 @@ const DynamicForm: React.FC<Props> = ({
               card.fields.map(
                 (field) =>
                   validCondition(field, {
-                    ...(values),
-                    ...(formData),
+                    ...values,
+                    ...formData,
                   }) && (
                     <Grid size={field.size ?? 12} key={field.name}>
                       {field.label && (
@@ -754,7 +754,7 @@ const DynamicForm: React.FC<Props> = ({
                       )}
                       {renderField(field)}
                     </Grid>
-                  )
+                  ),
               )}
           </Grid>
         </Card>

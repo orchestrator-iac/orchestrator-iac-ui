@@ -64,14 +64,14 @@ export default function ModificationHistory({
         .slice()
         .sort(
           (a, b) =>
-            new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime()
+            new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime(),
         ),
-    [history]
+    [history],
   );
 
   const ids = useMemo(
     () => Array.from(new Set(sorted.map((h) => h.modifiedBy))),
-    [sorted]
+    [sorted],
   );
 
   const usersMap = useSelector((s: RootState) => selectUsersMap(s));

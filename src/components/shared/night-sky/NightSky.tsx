@@ -32,13 +32,14 @@ export default function NightSky({ starCount = 480 }: Readonly<NightSkyProps>) {
       } else {
         // normal small star
         size = Math.random() * 2 + 1;
-        star.style.setProperty("--twinkle-duration", `${2 + Math.random() * 4}s`);
+        star.style.setProperty(
+          "--twinkle-duration",
+          `${2 + Math.random() * 4}s`,
+        );
         star.style.setProperty("--twinkle-delay", `${Math.random() * 15}s`);
       }
       star.style.width = `${size}px`;
       star.style.height = `${size}px`;
-
-      
 
       container.appendChild(star);
     }

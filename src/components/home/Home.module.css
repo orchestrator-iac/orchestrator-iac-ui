@@ -15,20 +15,26 @@
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   background-color: var(--card-bg);
   color: var(--card-color);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   border: 1px solid transparent;
 }
 
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(75, 190, 190, 0.05) 0%, rgba(32, 90, 90, 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(75, 190, 190, 0.05) 0%,
+    rgba(32, 90, 90, 0.02) 100%
+  );
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -37,7 +43,9 @@
 
 .card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.14), 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.14),
+    0 10px 20px rgba(0, 0, 0, 0.1);
   border-color: rgba(75, 190, 190, 0.15);
 }
 
@@ -70,13 +78,15 @@
   overflow: hidden;
 }
 
-[data-theme='dark'] .card .cloudTypeLogo {
+[data-theme="dark"] .card .cloudTypeLogo {
   background-color: rgba(226, 232, 240, 0.95);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
 .card .cloudTypeLogo::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   left: -50%;
@@ -113,7 +123,7 @@
 }
 
 .cardTitle::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -2px;
   left: 0;
@@ -154,7 +164,11 @@
   opacity: 0.85;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(32, 90, 90, 0.02) 0%, rgba(75, 190, 190, 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(32, 90, 90, 0.02) 0%,
+    rgba(75, 190, 190, 0.02) 100%
+  );
   filter: brightness(0.95);
   display: flex;
   align-items: center;
@@ -181,7 +195,8 @@
 .card:hover .orchestratorCardImage {
   opacity: 1;
   transform: scale(1.05);
-  filter: brightness(1.05) saturate(1.1) drop-shadow(0 4px 12px rgba(75, 190, 190, 0.15));
+  filter: brightness(1.05) saturate(1.1)
+    drop-shadow(0 4px 12px rgba(75, 190, 190, 0.15));
 }
 
 .cardBlank {
@@ -203,7 +218,8 @@
 }
 
 @keyframes gentle-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.7;
   }

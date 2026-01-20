@@ -40,7 +40,7 @@ const BasicInfo: React.FC = () => {
 
   const dispatch = useDispatch<any>();
   const { icons, loading, page, hasMore } = useSelector(
-    (state: any) => state.icons
+    (state: any) => state.icons,
   );
 
   // Open popup and load first page
@@ -70,7 +70,7 @@ const BasicInfo: React.FC = () => {
         dispatch(fetchIcons({ query: searchQuery, page, pageSize: 20 }));
       }
     },
-    [dispatch, loading, hasMore, page, searchQuery]
+    [dispatch, loading, hasMore, page, searchQuery],
   );
 
   const handleSelectIcon = (icon: any) => {
@@ -104,7 +104,7 @@ const BasicInfo: React.FC = () => {
                     error={!!errors?.resourceId}
                     helperText={errors?.resourceId?.message as string}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
+                      "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
                       },
                     }}
@@ -127,7 +127,7 @@ const BasicInfo: React.FC = () => {
                     error={!!errors?.resourceName}
                     helperText={errors?.resourceName?.message as string}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
+                      "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
                       },
                     }}
@@ -175,7 +175,7 @@ const BasicInfo: React.FC = () => {
                     error={!!errors?.resourceVersion}
                     helperText={errors?.resourceVersion?.message as string}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
+                      "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
                       },
                     }}
@@ -198,7 +198,7 @@ const BasicInfo: React.FC = () => {
                     error={!!errors?.terraformCorePath}
                     helperText={errors?.terraformCorePath?.message as string}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
+                      "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
                       },
                     }}
@@ -223,7 +223,7 @@ const BasicInfo: React.FC = () => {
                       errors?.terraformTemplatePath?.message as string
                     }
                     sx={{
-                      '& .MuiOutlinedInput-root': {
+                      "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
                       },
                     }}
@@ -246,11 +246,12 @@ const BasicInfo: React.FC = () => {
                         color={errors?.resourceIcon ? "error" : "primary"} // ✅ fixed
                         sx={{
                           borderRadius: 2,
-                          textTransform: 'none',
+                          textTransform: "none",
                           px: 2,
-                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
+                          transition:
+                            "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                          "&:hover": {
+                            transform: "translateY(-2px)",
                           },
                         }}
                       >
@@ -304,7 +305,7 @@ const BasicInfo: React.FC = () => {
                     multiline
                     rows={4}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
+                      "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
                       },
                     }}
@@ -331,7 +332,13 @@ const BasicInfo: React.FC = () => {
           </Typography>
           <Card
             variant="outlined"
-            sx={{ height: "100%", maxHeight: 300, overflowY: "auto", bgcolor: "inherit", border: "none" }}
+            sx={{
+              height: "100%",
+              maxHeight: 300,
+              overflowY: "auto",
+              bgcolor: "inherit",
+              border: "none",
+            }}
           >
             <CardContent>
               <ModificationHistory history={modifiedHistory} />
@@ -371,7 +378,7 @@ const BasicInfo: React.FC = () => {
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             sx={{
               mb: 2,
-              '& .MuiOutlinedInput-root': {
+              "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
               },
             }}
@@ -383,9 +390,9 @@ const BasicInfo: React.FC = () => {
                 <Card
                   sx={{
                     borderRadius: 2,
-                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
+                    transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
                       boxShadow: 3,
                     },
                   }}

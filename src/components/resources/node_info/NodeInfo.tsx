@@ -34,7 +34,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   const { mode } = useThemeContext();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [resourceNodeTemp, setResourceNodeTemp] = useState<string>(
-    JSON.stringify(resourceNode, null, 2)
+    JSON.stringify(resourceNode, null, 2),
   );
   const default_info = {
     type: "customNode",
@@ -77,7 +77,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
           setErrorMessage(
             e.errors
               ?.map((err: any) => `${err.path.join(".")}: ${err.message}`)
-              .join("\n") || "Schema validation failed."
+              .join("\n") || "Schema validation failed.",
           );
         } else {
           setErrorMessage("Invalid JSON format. Please correct the syntax.");
@@ -87,7 +87,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   }, [resourceNodeTemp]);
 
   const getSchemaSuggestions = (
-    path: string[]
+    path: string[],
   ): { caption: string; value: string; meta: string }[] => {
     let current: any = default_info;
     for (const p of path) {
@@ -107,7 +107,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
         valueToSuggest = JSON.stringify(current[key], null, spaces);
         valueToSuggest = valueToSuggest.replace(
           /\}$/,
-          " ".repeat(spaces - 2) + "}"
+          " ".repeat(spaces - 2) + "}",
         );
       } else {
         valueToSuggest = `"${current[key]}"`;
@@ -126,7 +126,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
       session: Ace.EditSession,
       pos: Ace.Point,
       _prefix: string,
-      callback: (error: null, results: Ace.Completion[]) => void
+      callback: (error: null, results: Ace.Completion[]) => void,
     ) {
       const lines = session.getValue().split("\n");
       const indentSize = 2;
@@ -188,10 +188,10 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
                   alignItems: "center",
                   justifyContent: "center",
                   bgcolor: previewBgColor,
-                  border: hasData ? 'none' : '2px dashed',
-                  borderColor: 'divider',
+                  border: hasData ? "none" : "2px dashed",
+                  borderColor: "divider",
                   p: 2,
-                  transition: 'all 0.3s ease',
+                  transition: "all 0.3s ease",
                 }}
               >
                 {hasData ? (
