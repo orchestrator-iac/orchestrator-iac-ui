@@ -497,6 +497,7 @@ const DynamicForm: React.FC<Props> = ({
             onChange={handleChange}
             resolveOptions={resolveOptions}
             onLinkFieldChange={onLinkFieldChange}
+            placeholder={placeholder}
           />
         );
 
@@ -538,6 +539,64 @@ const DynamicForm: React.FC<Props> = ({
               handleChange(name, val === "" ? "" : Number(val));
             }}
           />
+        );
+
+      case "list<text>":
+        return (
+          <Box>
+            {(formData[name] ?? value ?? []).map((item: string, index: number) => (
+              <Grid
+                container
+                spacing={2}
+                alignItems="center"
+                key={`${name}-${index}`}
+                sx={{ mb: 1 }}
+              >
+                <Grid size={10}>
+                  <TextField
+                    fullWidth
+                    value={item}
+                    placeholder={placeholder ?? ""}
+                    onChange={(e) => {
+                      const updatedList = [...(formData[name] ?? value ?? [])];
+                      updatedList[index] = e.target.value;
+                      handleChange(name, updatedList);
+                    }}
+                  />
+                </Grid>
+                <Grid size={2}>
+                  <Tooltip title="Remove">
+                    <IconButton
+                      onClick={() => {
+                        const updatedList = [...(formData[name] ?? value ?? [])];
+                        updatedList.splice(index, 1);
+                        handleChange(name, updatedList);
+                      }}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+              </Grid>
+            ))}
+            <Button
+              variant={fieldCfg?.add_button?.variant || "outlined"}
+              startIcon={<AddIcon />}
+              onClick={() => {
+                const updatedList = [...(formData[name] ?? value ?? []), ""];
+                handleChange(name, updatedList);
+              }}
+              sx={{ mt: 1 }}
+            >
+              {fieldCfg?.add_button?.label || `Add ${placeholder ?? "Item"}`}
+            </Button>
+            {(error_text || hint) && (
+              <Typography variant="caption" color={error_text ? "error" : "text.secondary"} sx={{ display: "block", mt: 1 }}>
+                {error_text || hint}
+              </Typography>
+            )}
+          </Box>
         );
 
       case "list<key-value>":
@@ -611,6 +670,7 @@ const DynamicForm: React.FC<Props> = ({
                     updatedList[""] = "";
                     handleChange(name, updatedList);
                   }}
+                  sx={{ mt: 1 }}
                 >
                   <AddIcon /> {fieldCfg.add_button.label}
                 </Button>

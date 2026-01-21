@@ -41,6 +41,7 @@ type ListObjectFieldProps = {
     newSourceId: string,
     context?: { objectSnapshot?: Record<string, any> },
   ) => void;
+  placeholder?: string;
 };
 
 const ListObjectField: React.FC<ListObjectFieldProps> = ({
@@ -51,6 +52,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
   onChange,
   resolveOptions,
   onLinkFieldChange,
+  placeholder,
 }) => {
   const theme = useTheme();
   let zoom = 1;
@@ -590,7 +592,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
         startIcon={<AddIcon />}
         sx={{ mt: 1 }}
       >
-        {fieldCfg?.add_button?.label || "Add Item"}
+        {fieldCfg?.add_button?.label || `Add ${placeholder ?? "Item"}`}
       </Button>
     </Box>
   );
