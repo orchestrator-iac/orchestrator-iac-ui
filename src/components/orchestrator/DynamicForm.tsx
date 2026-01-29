@@ -19,9 +19,12 @@ import {
   Autocomplete,
   ToggleButtonGroup,
   ToggleButton,
+  Collapse,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import parse from "html-react-parser";
 import { useViewport } from "@xyflow/react";
 import { Field, FieldGroup, LinkRule } from "../../types/node-info";
@@ -72,11 +75,8 @@ const DynamicForm: React.FC<Props> = ({
   }
 
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [collapsedCards, setCollapsedCards] = useState<Record<number, boolean>>({});
   const prevValuesRef = useRef<string>("");
-
-  useEffect(() => {
-    console.log("Form Data Updated:", formData);
-  }, [formData]);
 
   useEffect(() => {
     if (!values) {
@@ -697,128 +697,163 @@ const DynamicForm: React.FC<Props> = ({
 
   return (
     <Box>
-      {config.map((card, index) => (
-        <Card key={`${card.type}-${card.label}-${index}`} sx={{ mb: 2, p: 2 }}>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              mb: 1,
-              borderBottom: `1px solid ${theme.palette.background.paper}`,
-              color: "primary.main",
-              fontWeight: "bold",
-            }}
-          >
-            {card.label}
-            {card?.info && (
-              <Tooltip
-                title={
-                  <Box sx={{ maxHeight: 200, overflowY: "auto", p: 1 }}>
-                    {renderInfo(card.info)}
-                  </Box>
-                }
-                arrow
-                placement="top"
-                slotProps={{
-                  tooltip: {
-                    sx: {
-                      bgcolor: theme.palette.background.paper,
-                      color:
-                        theme.palette.textVariants?.text1 ??
-                        theme.palette.text.primary,
-                      "& .MuiTooltip-arrow": {
-                        color: theme.palette.background.paper,
-                      },
-                    },
-                  },
+      {config.map((card, index) => {
+        const isCollapsible = card.isCollapsible;
+        const isCollapsed = collapsedCards[index] ?? (isCollapsible === true);
+
+        const toggleCollapse = () => {
+          setCollapsedCards((prev) => {
+            const currentState = prev[index] ?? (isCollapsible === true);
+            return {
+              ...prev,
+              [index]: !currentState,
+            };
+          });
+        };
+
+        return (
+          <Card key={`${card.type}-${card.label}-${index}`} sx={{ mb: 2, p: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                cursor: isCollapsible !== null && isCollapsible !== undefined ? "pointer" : "default",
+              }}
+              onClick={isCollapsible !== null && isCollapsible !== undefined ? toggleCollapse : undefined}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  mb: 1,
+                  borderBottom: `1px solid ${theme.palette.background.paper}`,
+                  color: "primary.main",
+                  fontWeight: "bold",
+                  flex: 1,
                 }}
               >
-                <Typography
-                  component="strong"
-                  variant="caption"
-                  sx={{
-                    fontWeight: "bold",
-                    color: "primary.main",
-                    mx: "0.8rem",
-                    mb: "3px",
-                    cursor: "pointer",
-                  }}
-                >
-                  info
-                </Typography>
-              </Tooltip>
-            )}
-          </Typography>
+                {card.label}
+                {card?.info && (
+                  <Tooltip
+                    title={
+                      <Box sx={{ maxHeight: 200, overflowY: "auto", p: 1 }}>
+                        {renderInfo(card.info)}
+                      </Box>
+                    }
+                    arrow
+                    placement="top"
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          bgcolor: theme.palette.background.paper,
+                          color:
+                            theme.palette.textVariants?.text1 ??
+                            theme.palette.text.primary,
+                          "& .MuiTooltip-arrow": {
+                            color: theme.palette.background.paper,
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    <Typography
+                      component="strong"
+                      variant="caption"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "primary.main",
+                        mx: "0.8rem",
+                        mb: "3px",
+                        cursor: "pointer",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      info
+                    </Typography>
+                  </Tooltip>
+                )}
+              </Typography>
 
-          <Grid container spacing={2}>
-            {card?.fields &&
-              card?.fields?.length > 0 &&
-              card.fields.map(
-                (field) =>
-                  validCondition(field, {
-                    ...values,
-                    ...formData,
-                  }) && (
-                    <Grid size={field.size ?? 12} key={field.name}>
-                      {field.label && (
-                        <Typography
-                          component="label"
-                          variant="body2"
-                          sx={{ display: "block", mb: 0.5 }}
-                        >
-                          {field.label}
-                          {field?.info && (
-                            <Tooltip
-                              title={
-                                <Box
-                                  sx={{
-                                    maxHeight: 200,
-                                    overflowY: "auto",
-                                    p: 1,
+              {isCollapsible !== null && isCollapsible !== undefined && (
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  {isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                </IconButton>
+              )}
+            </Box>
+
+            <Collapse in={!isCollapsed} timeout="auto" unmountOnExit>
+              <Grid container spacing={2}>
+                {card?.fields &&
+                  card?.fields?.length > 0 &&
+                  card.fields.map(
+                    (field) =>
+                      validCondition(field, {
+                        ...values,
+                        ...formData,
+                      }) && (
+                        <Grid size={field.size ?? 12} key={field.name}>
+                          {field.label && (
+                            <Typography
+                              component="label"
+                              variant="body2"
+                              sx={{ display: "block", mb: 0.5 }}
+                            >
+                              {field.label}
+                              {field?.info && (
+                                <Tooltip
+                                  title={
+                                    <Box
+                                      sx={{
+                                        maxHeight: 200,
+                                        overflowY: "auto",
+                                        p: 1,
+                                      }}
+                                    >
+                                      {renderInfo(field.info)}
+                                    </Box>
+                                  }
+                                  arrow
+                                  placement="top"
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        bgcolor: theme.palette.background.paper,
+                                        color:
+                                          theme.palette.textVariants?.text1 ??
+                                          theme.palette.text.primary,
+                                        "& .MuiTooltip-arrow": {
+                                          color: theme.palette.background.paper,
+                                        },
+                                      },
+                                    },
                                   }}
                                 >
-                                  {renderInfo(field.info)}
-                                </Box>
-                              }
-                              arrow
-                              placement="top"
-                              slotProps={{
-                                tooltip: {
-                                  sx: {
-                                    bgcolor: theme.palette.background.paper,
-                                    color:
-                                      theme.palette.textVariants?.text1 ??
-                                      theme.palette.text.primary,
-                                    "& .MuiTooltip-arrow": {
-                                      color: theme.palette.background.paper,
-                                    },
-                                  },
-                                },
-                              }}
-                            >
-                              <Typography
-                                component="strong"
-                                variant="caption"
-                                sx={{
-                                  fontWeight: "bold",
-                                  color: "primary.main",
-                                  mx: "0.8rem",
-                                  mb: "3px",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                info
-                              </Typography>
-                            </Tooltip>
+                                  <Typography
+                                    component="strong"
+                                    variant="caption"
+                                    sx={{
+                                      fontWeight: "bold",
+                                      color: "primary.main",
+                                      mx: "0.8rem",
+                                      mb: "3px",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    info
+                                  </Typography>
+                                </Tooltip>
+                              )}
+                            </Typography>
                           )}
-                        </Typography>
-                      )}
-                      {renderField(field)}
-                    </Grid>
-                  ),
-              )}
-          </Grid>
-        </Card>
-      ))}
+                          {renderField(field)}
+                        </Grid>
+                      ),
+                  )}
+              </Grid>
+            </Collapse>
+          </Card>
+        );
+      })}
     </Box>
   );
 };

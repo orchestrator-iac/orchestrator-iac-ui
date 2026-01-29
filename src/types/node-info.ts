@@ -41,8 +41,13 @@ export interface LinkRule {
    */
   cardinality?: number | string;
 
-  /** Output name from source module (e.g., 'vpc_id' becomes 'module.vpc_instance.vpc_id') */
-  outputRef?: string;
+  /**
+   * Output name from source module.
+   * - String: For single fromType (e.g., 'vpc_id' -> 'module.vpc_instance.vpc_id')
+   * - Object: For multiple fromTypes, maps resource type to output name
+   *   (e.g., { internet_gateway: 'internet_gateway_id', nat_gateway: 'nat_gateway_id' })
+   */
+  outputRef?: string | Record<string, string>;
 
   /** Arbitrary metadata to stamp onto the edge (e.g., { kind: "vpc-link" }) */
   edgeData?: Record<string, any>;
@@ -103,6 +108,7 @@ export interface FieldGroup {
   sub_label?: string;
   info?: string;
   type: string;
+  isCollapsible?: boolean;
   fields?: Array<Field>;
 }
 

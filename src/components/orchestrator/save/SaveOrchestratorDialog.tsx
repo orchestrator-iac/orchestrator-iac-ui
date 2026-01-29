@@ -83,13 +83,11 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
       // Step 1: Generate the orchestrator image
       let imageDataUrl: string | undefined;
       try {
-        console.log("Generating orchestrator preview image...");
         imageDataUrl = await generateFlowImage({
           backgroundColor: "#ffffff",
           quality: 0.85,
           pixelRatio: 1.5,
         });
-        console.log("Image generated successfully");
       } catch (imageError) {
         console.warn("Failed to generate preview image:", imageError);
         // Continue with save even if image generation fails

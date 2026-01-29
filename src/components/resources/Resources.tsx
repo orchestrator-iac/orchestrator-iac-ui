@@ -246,7 +246,6 @@ const Resources: React.FC = () => {
         },
       ],
     };
-    console.log("Final payload", fullData);
 
     try {
       const method = resource_id !== "new" ? "put" : "post";
@@ -258,7 +257,6 @@ const Resources: React.FC = () => {
           "Content-Type": "application/json",
         },
       });
-      console.log("Response from API:", response);
       showSnackbar("Configuration saved successfully!", "success");
       navigate("/home");
     } catch (error: any) {

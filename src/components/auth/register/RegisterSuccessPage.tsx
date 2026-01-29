@@ -5,10 +5,8 @@ import VerificationSent from "../../shared/verification-sent/VerificationSent";
 const RegisterSuccessPage: React.FC = () => {
   const [email] = useState("user@example.com");
   const navigate = useNavigate();
-
   const handleResend = () => {
-    // Call your API to resend verification email
-    console.log("Resend verification email");
+    // TODO: Call your API to resend verification email
   };
 
   const handleBackToLogin = () => {

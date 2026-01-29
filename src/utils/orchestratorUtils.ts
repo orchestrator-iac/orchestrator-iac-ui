@@ -57,6 +57,50 @@ const resolveTemplateValue = (
   return value;
 };
 
+/**
+ * Resolve the outputRef for a link based on the source node type.
+ * Handles both string (single fromType) and object (multi fromType) formats.
+ *
+ * @param linkRule - The link rule configuration
+ * @param sourceNode - The source node being linked
+ * @param bind - The field name being bound (fallback for legacy cases only)
+ * @returns The resolved output reference name
+ */
+const resolveOutputRef = (
+  linkRule: any,
+  sourceNode: Node | undefined,
+  bind: string,
+): string => {
+  // If no outputRef defined, use bind as fallback (legacy behavior)
+  if (!linkRule.outputRef) {
+    return bind;
+  }
+
+  // String case: single fromType scenario - use the outputRef directly
+  if (typeof linkRule.outputRef === "string") {
+    return linkRule.outputRef;
+  }
+
+  // Object case: multiple fromTypes scenario - resolve based on source node type
+  if (typeof linkRule.outputRef === "object" && sourceNode) {
+    const sourceResourceType =
+      (sourceNode.data as any)?.__nodeType ||
+      (sourceNode.data as any)?.resourceId;
+
+    if (sourceResourceType && linkRule.outputRef[sourceResourceType]) {
+      return linkRule.outputRef[sourceResourceType];
+    }
+
+    // Emergency fallback: use first available outputRef
+    const firstOutputRef = Object.values(linkRule.outputRef)[0];
+    if (firstOutputRef && typeof firstOutputRef === 'string') {
+      return firstOutputRef;
+    }
+  }
+
+  return bind;
+};
+
 const resolveNodeFriendlyId = (node: Node): string | undefined => {
   const friendly = (node.data as any)?.friendlyId as string | undefined;
   if (friendly) {
@@ -168,17 +212,16 @@ export const transformNodeForDB = (
             // Clone the object to avoid mutations
             const itemCopy = { ...item };
 
-            // Check if outputRef is specified and extract that field
-            if (linkRule.outputRef && itemCopy[linkRule.outputRef]) {
-              const refValue = itemCopy[linkRule.outputRef];
-              if (typeof refValue === "string") {
-                const sourceNode = allNodes?.find((n) => n.id === refValue);
+            // For list<object> with nested links, check each field
+            for (const [fieldName, fieldValue] of Object.entries(itemCopy)) {
+              if (typeof fieldValue === "string") {
+                const sourceNode = allNodes?.find((n) => n.id === fieldValue);
                 if (sourceNode) {
-                  itemCopy[linkRule.outputRef] = {
+                  itemCopy[fieldName] = {
                     id: sourceNode.id,
                     __nodeType: (sourceNode.data as any)?.__nodeType,
                     friendlyId: resolveNodeFriendlyId(sourceNode),
-                    outputRef: linkRule.outputRef,
+                    outputRef: resolveOutputRef(linkRule, sourceNode, fieldName),
                   };
                 }
               }
@@ -263,13 +306,22 @@ export const prepareOrchestratorForSave = (
 ): SaveOrchestratorRequest => {
   const friendlyIdLookup = buildFriendlyIdLookup(nodes);
 
-  // Inject __helpers with allNodes and template resolution context
-  const nodesWithHelpers = nodes.map((node) => ({
+  // Inject friendlyId into node.data first
+  const nodesWithFriendlyId = nodes.map((node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      friendlyId: friendlyIdLookup[node.id],
+    },
+  }));
+
+  // Then inject __helpers with the enriched nodes array
+  const nodesWithHelpers = nodesWithFriendlyId.map((node) => ({
     ...node,
     data: {
       ...node.data,
       __helpers: {
-        allNodes: nodes,
+        allNodes: nodesWithFriendlyId, // Pass nodes WITH friendlyId, not original nodes
         templateContext: { userInfo, templateInfo },
       },
     },
