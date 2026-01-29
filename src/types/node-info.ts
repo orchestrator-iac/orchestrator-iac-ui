@@ -108,6 +108,7 @@ export interface FieldGroup {
   sub_label?: string;
   info?: string;
   type: string;
+  isCollapsible?: boolean;
   fields?: Array<Field>;
 }
 

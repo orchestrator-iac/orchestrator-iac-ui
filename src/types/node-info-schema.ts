@@ -55,6 +55,7 @@ export const FieldGroupSchema = z.object({
   sub_label: z.string().nullable().optional(),
   info: z.string().nullable().optional(),
   type: z.string(),
+  isCollapsible: z.boolean().nullable().optional(),
   fields: z.array(FieldSchema).nullable().optional(),
 });
 
