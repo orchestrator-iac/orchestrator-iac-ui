@@ -28,8 +28,6 @@ export const CodeEditorField: React.FC<{
   );
 
   useEffect(() => {
-    console.log(resourceNodeTemp);
-
     // Validate and notify parent component of changes
     try {
       // Try to parse as JSON first

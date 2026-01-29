@@ -63,7 +63,7 @@ const resolveTemplateValue = (
  *
  * @param linkRule - The link rule configuration
  * @param sourceNode - The source node being linked
- * @param bind - The field name being bound (fallback)
+ * @param bind - The field name being bound (fallback for legacy cases only)
  * @returns The resolved output reference name
  */
 const resolveOutputRef = (
@@ -71,18 +71,18 @@ const resolveOutputRef = (
   sourceNode: Node | undefined,
   bind: string,
 ): string => {
+  // If no outputRef defined, use bind as fallback (legacy behavior)
   if (!linkRule.outputRef) {
     return bind;
   }
 
-  // String case: single fromType scenario
+  // String case: single fromType scenario - use the outputRef directly
   if (typeof linkRule.outputRef === "string") {
     return linkRule.outputRef;
   }
 
-  // Object case: multiple fromTypes scenario
+  // Object case: multiple fromTypes scenario - resolve based on source node type
   if (typeof linkRule.outputRef === "object" && sourceNode) {
-    // Try to get resource type from source node
     const sourceResourceType =
       (sourceNode.data as any)?.__nodeType ||
       (sourceNode.data as any)?.resourceId;
@@ -91,14 +91,13 @@ const resolveOutputRef = (
       return linkRule.outputRef[sourceResourceType];
     }
 
-    // Log warning if no matching type found
-    console.warn(
-      `No outputRef mapping found for resource type '${sourceResourceType}' in link rule`,
-      linkRule,
-    );
+    // Emergency fallback: use first available outputRef
+    const firstOutputRef = Object.values(linkRule.outputRef)[0];
+    if (firstOutputRef && typeof firstOutputRef === 'string') {
+      return firstOutputRef;
+    }
   }
 
-  // Fallback to bind field name
   return bind;
 };
 
@@ -199,7 +198,7 @@ export const transformNodeForDB = (
             id: sourceNode.id,
             __nodeType: (sourceNode.data as any)?.__nodeType,
             friendlyId: resolveNodeFriendlyId(sourceNode),
-            outputRef: resolveOutputRef(linkRule, sourceNode, bind),
+            outputRef: linkRule.outputRef ?? bind,
           };
         }
       } else if (Array.isArray(val)) {
@@ -213,14 +212,11 @@ export const transformNodeForDB = (
             // Clone the object to avoid mutations
             const itemCopy = { ...item };
 
-            // For list<object> with nested links, we need to find which field contains the node reference
-            // The field name might be different from bind (e.g., bind="routes", field="target_id")
-            // We look for fields that contain node IDs
+            // For list<object> with nested links, check each field
             for (const [fieldName, fieldValue] of Object.entries(itemCopy)) {
               if (typeof fieldValue === "string") {
                 const sourceNode = allNodes?.find((n) => n.id === fieldValue);
                 if (sourceNode) {
-                  // Found a linked node - enrich it with metadata
                   itemCopy[fieldName] = {
                     id: sourceNode.id,
                     __nodeType: (sourceNode.data as any)?.__nodeType,
@@ -241,7 +237,7 @@ export const transformNodeForDB = (
                 id: sourceNode.id,
                 __nodeType: (sourceNode.data as any)?.__nodeType,
                 friendlyId: resolveNodeFriendlyId(sourceNode),
-                outputRef: resolveOutputRef(linkRule, sourceNode, bind),
+                outputRef: linkRule.outputRef ?? bind,
               };
             }
           }
@@ -310,13 +306,22 @@ export const prepareOrchestratorForSave = (
 ): SaveOrchestratorRequest => {
   const friendlyIdLookup = buildFriendlyIdLookup(nodes);
 
-  // Inject __helpers with allNodes and template resolution context
-  const nodesWithHelpers = nodes.map((node) => ({
+  // Inject friendlyId into node.data first
+  const nodesWithFriendlyId = nodes.map((node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      friendlyId: friendlyIdLookup[node.id],
+    },
+  }));
+
+  // Then inject __helpers with the enriched nodes array
+  const nodesWithHelpers = nodesWithFriendlyId.map((node) => ({
     ...node,
     data: {
       ...node.data,
       __helpers: {
-        allNodes: nodes,
+        allNodes: nodesWithFriendlyId, // Pass nodes WITH friendlyId, not original nodes
         templateContext: { userInfo, templateInfo },
       },
     },

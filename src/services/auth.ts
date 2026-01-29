@@ -56,7 +56,6 @@ export const registerUser = async (register: Register) => {
     await apiService.post("/user/register", register);
   } catch (error) {
     if (error instanceof Error) {
-      console.log(error.message);
       throw new Error(error.message);
     }
     throw error;
