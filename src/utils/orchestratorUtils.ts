@@ -57,6 +57,51 @@ const resolveTemplateValue = (
   return value;
 };
 
+/**
+ * Resolve the outputRef for a link based on the source node type.
+ * Handles both string (single fromType) and object (multi fromType) formats.
+ *
+ * @param linkRule - The link rule configuration
+ * @param sourceNode - The source node being linked
+ * @param bind - The field name being bound (fallback)
+ * @returns The resolved output reference name
+ */
+const resolveOutputRef = (
+  linkRule: any,
+  sourceNode: Node | undefined,
+  bind: string,
+): string => {
+  if (!linkRule.outputRef) {
+    return bind;
+  }
+
+  // String case: single fromType scenario
+  if (typeof linkRule.outputRef === "string") {
+    return linkRule.outputRef;
+  }
+
+  // Object case: multiple fromTypes scenario
+  if (typeof linkRule.outputRef === "object" && sourceNode) {
+    // Try to get resource type from source node
+    const sourceResourceType =
+      (sourceNode.data as any)?.__nodeType ||
+      (sourceNode.data as any)?.resourceId;
+
+    if (sourceResourceType && linkRule.outputRef[sourceResourceType]) {
+      return linkRule.outputRef[sourceResourceType];
+    }
+
+    // Log warning if no matching type found
+    console.warn(
+      `No outputRef mapping found for resource type '${sourceResourceType}' in link rule`,
+      linkRule,
+    );
+  }
+
+  // Fallback to bind field name
+  return bind;
+};
+
 const resolveNodeFriendlyId = (node: Node): string | undefined => {
   const friendly = (node.data as any)?.friendlyId as string | undefined;
   if (friendly) {
@@ -154,7 +199,7 @@ export const transformNodeForDB = (
             id: sourceNode.id,
             __nodeType: (sourceNode.data as any)?.__nodeType,
             friendlyId: resolveNodeFriendlyId(sourceNode),
-            outputRef: linkRule.outputRef ?? bind,
+            outputRef: resolveOutputRef(linkRule, sourceNode, bind),
           };
         }
       } else if (Array.isArray(val)) {
@@ -168,17 +213,19 @@ export const transformNodeForDB = (
             // Clone the object to avoid mutations
             const itemCopy = { ...item };
 
-            // Check if outputRef is specified and extract that field
-            if (linkRule.outputRef && itemCopy[linkRule.outputRef]) {
-              const refValue = itemCopy[linkRule.outputRef];
-              if (typeof refValue === "string") {
-                const sourceNode = allNodes?.find((n) => n.id === refValue);
+            // For list<object> with nested links, we need to find which field contains the node reference
+            // The field name might be different from bind (e.g., bind="routes", field="target_id")
+            // We look for fields that contain node IDs
+            for (const [fieldName, fieldValue] of Object.entries(itemCopy)) {
+              if (typeof fieldValue === "string") {
+                const sourceNode = allNodes?.find((n) => n.id === fieldValue);
                 if (sourceNode) {
-                  itemCopy[linkRule.outputRef] = {
+                  // Found a linked node - enrich it with metadata
+                  itemCopy[fieldName] = {
                     id: sourceNode.id,
                     __nodeType: (sourceNode.data as any)?.__nodeType,
                     friendlyId: resolveNodeFriendlyId(sourceNode),
-                    outputRef: linkRule.outputRef,
+                    outputRef: resolveOutputRef(linkRule, sourceNode, fieldName),
                   };
                 }
               }
@@ -194,7 +241,7 @@ export const transformNodeForDB = (
                 id: sourceNode.id,
                 __nodeType: (sourceNode.data as any)?.__nodeType,
                 friendlyId: resolveNodeFriendlyId(sourceNode),
-                outputRef: linkRule.outputRef ?? bind,
+                outputRef: resolveOutputRef(linkRule, sourceNode, bind),
               };
             }
           }
