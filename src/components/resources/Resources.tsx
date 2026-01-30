@@ -248,11 +248,11 @@ const Resources: React.FC = () => {
     };
 
     try {
-      const method = resource_id !== "new" ? "put" : "post";
+      const method = resource_id === "new" ? "post" : "put";
       const url =
-        resource_id !== "new" ? `/configs/${resource_id}` : "/configs";
+        resource_id === "new" ? "/configs" : `/configs/${resource_id}`;
 
-      const response = await apiService[method](url, fullData, {
+      await apiService[method](url, fullData, {
         headers: {
           "Content-Type": "application/json",
         },

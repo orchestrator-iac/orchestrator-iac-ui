@@ -30,7 +30,7 @@ import { useViewport } from "@xyflow/react";
 import { Field, FieldGroup, LinkRule } from "../../types/node-info";
 import { CodeEditorField } from "../shared/code-editor/CodeEditorField";
 import { UserProfile } from "../../types/auth";
-import { CloudConfig } from "../../types/clouds-info";
+import { CloudConfig, availabilityZones } from "../../types/clouds-info";
 import { validCondition } from "../../utils/deps";
 import { renderTemplate } from "@/utils/renderTemplate";
 import ListObjectField from "./ListObjectField";
@@ -75,7 +75,9 @@ const DynamicForm: React.FC<Props> = ({
   }
 
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [collapsedCards, setCollapsedCards] = useState<Record<number, boolean>>({});
+  const [collapsedCards, setCollapsedCards] = useState<Record<number, boolean>>(
+    {},
+  );
   const prevValuesRef = useRef<string>("");
 
   useEffect(() => {
@@ -121,11 +123,53 @@ const DynamicForm: React.FC<Props> = ({
 
   // "from:nodes:resourceId=vpc" or "from:nodes:type=vpc" (generic)
   // Enhanced to support conditional filtering based on context data
+  // Also supports "from:region:availability_zones" to generate AZs based on template region
   const resolveOptions = (
     options: any,
     contextData?: Record<string, any>,
   ): { value: string; label: string; disabled?: boolean }[] | undefined => {
     if (typeof options !== "string") return options;
+
+    // Handle region-based options (e.g., availability zones)
+    if (options.startsWith("from:region:")) {
+      const [, , optionType] = options.split(":");
+
+      if (optionType === "availability_zones") {
+        const cloud = templateInfo?.cloud;
+        const region = templateInfo?.region;
+
+        if (!cloud || !region) return [];
+
+        // Get availability zones from the comprehensive mapping
+        const zones = availabilityZones[cloud]?.[region];
+
+        if (!zones || zones.length === 0) {
+          // Fallback: generate default zones if mapping doesn't exist
+          const azSuffixes =
+            cloud === "azure"
+              ? ["1", "2", "3"]
+              : ["a", "b", "c", "d", "e", "f"];
+
+          return azSuffixes.map((suffix) => {
+            const separator = cloud === "azure" ? "-" : "";
+            const azCode = `${region}${separator}${suffix}`;
+            return {
+              value: azCode,
+              label: azCode,
+            };
+          });
+        }
+
+        // Return zones from mapping
+        return zones.map((zone) => ({
+          value: zone,
+          label: zone,
+        }));
+      }
+
+      return undefined;
+    }
+
     if (!options.startsWith("from:nodes:")) return undefined;
 
     const [, , filter] = options.split(":"); // e.g., "resourceId=vpc" or "type=internet_gateway|nat_gateway"
@@ -200,6 +244,8 @@ const DynamicForm: React.FC<Props> = ({
     const resolvedOptions = resolveOptions(options, formData);
 
     switch (type) {
+      case "info":
+        return <></>;
       case "text":
         return (
           <TextField
@@ -544,42 +590,48 @@ const DynamicForm: React.FC<Props> = ({
       case "list<text>":
         return (
           <Box>
-            {(formData[name] ?? value ?? []).map((item: string, index: number) => (
-              <Grid
-                container
-                spacing={2}
-                alignItems="center"
-                key={`${name}-${index}`}
-                sx={{ mb: 1 }}
-              >
-                <Grid size={10}>
-                  <TextField
-                    fullWidth
-                    value={item}
-                    placeholder={placeholder ?? ""}
-                    onChange={(e) => {
-                      const updatedList = [...(formData[name] ?? value ?? [])];
-                      updatedList[index] = e.target.value;
-                      handleChange(name, updatedList);
-                    }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Tooltip title="Remove">
-                    <IconButton
-                      onClick={() => {
-                        const updatedList = [...(formData[name] ?? value ?? [])];
-                        updatedList.splice(index, 1);
+            {(formData[name] ?? value ?? []).map(
+              (item: string, index: number) => (
+                <Grid
+                  container
+                  spacing={2}
+                  alignItems="center"
+                  key={`${name}-${index}`}
+                  sx={{ mb: 1 }}
+                >
+                  <Grid size={10}>
+                    <TextField
+                      fullWidth
+                      value={item}
+                      placeholder={placeholder ?? ""}
+                      onChange={(e) => {
+                        const updatedList = [
+                          ...(formData[name] ?? value ?? []),
+                        ];
+                        updatedList[index] = e.target.value;
                         handleChange(name, updatedList);
                       }}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
+                    />
+                  </Grid>
+                  <Grid size={2}>
+                    <Tooltip title="Remove">
+                      <IconButton
+                        onClick={() => {
+                          const updatedList = [
+                            ...(formData[name] ?? value ?? []),
+                          ];
+                          updatedList.splice(index, 1);
+                          handleChange(name, updatedList);
+                        }}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
                 </Grid>
-              </Grid>
-            ))}
+              ),
+            )}
             <Button
               variant={fieldCfg?.add_button?.variant || "outlined"}
               startIcon={<AddIcon />}
@@ -592,7 +644,11 @@ const DynamicForm: React.FC<Props> = ({
               {fieldCfg?.add_button?.label || `Add ${placeholder ?? "Item"}`}
             </Button>
             {(error_text || hint) && (
-              <Typography variant="caption" color={error_text ? "error" : "text.secondary"} sx={{ display: "block", mt: 1 }}>
+              <Typography
+                variant="caption"
+                color={error_text ? "error" : "text.secondary"}
+                sx={{ display: "block", mt: 1 }}
+              >
                 {error_text || hint}
               </Typography>
             )}
@@ -611,6 +667,9 @@ const DynamicForm: React.FC<Props> = ({
                       spacing={2}
                       alignItems="center"
                       key={`${key}-${index}`}
+                      sx={{
+                        marginTop: 2,
+                      }}
                     >
                       <Grid size={fieldCfg.key.size}>
                         <TextField
@@ -619,7 +678,7 @@ const DynamicForm: React.FC<Props> = ({
                           value={key}
                           onChange={(e) => {
                             const updatedList = {
-                              ...(formData[name] ?? {}),
+                              ...(formData[name]),
                             } as Record<string, any>;
                             const oldKey = Object.keys(updatedList)[index];
                             delete updatedList[oldKey];
@@ -634,7 +693,7 @@ const DynamicForm: React.FC<Props> = ({
                           value={val as any}
                           onChange={(e) => {
                             const updatedList = {
-                              ...(formData[name] ?? {}),
+                              ...(formData[name]),
                             } as Record<string, any>;
                             updatedList[key] = e.target.value;
                             handleChange(name, updatedList);
@@ -646,7 +705,7 @@ const DynamicForm: React.FC<Props> = ({
                           <IconButton
                             onClick={() => {
                               const updatedList = {
-                                ...(formData[name] ?? {}),
+                                ...(formData[name]),
                               } as Record<string, any>;
                               const oldKey = Object.keys(updatedList)[index];
                               delete updatedList[oldKey];
@@ -699,11 +758,11 @@ const DynamicForm: React.FC<Props> = ({
     <Box>
       {config.map((card, index) => {
         const isCollapsible = card.isCollapsible;
-        const isCollapsed = collapsedCards[index] ?? (isCollapsible === true);
+        const isCollapsed = collapsedCards[index] ?? isCollapsible === true;
 
         const toggleCollapse = () => {
           setCollapsedCards((prev) => {
-            const currentState = prev[index] ?? (isCollapsible === true);
+            const currentState = prev[index] ?? isCollapsible === true;
             return {
               ...prev,
               [index]: !currentState,
@@ -712,15 +771,25 @@ const DynamicForm: React.FC<Props> = ({
         };
 
         return (
-          <Card key={`${card.type}-${card.label}-${index}`} sx={{ mb: 2, p: 2 }}>
+          <Card
+            key={`${card.type}-${card.label}-${index}`}
+            sx={{ mb: 2, p: 2 }}
+          >
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                cursor: isCollapsible !== null && isCollapsible !== undefined ? "pointer" : "default",
+                cursor:
+                  isCollapsible !== null && isCollapsible !== undefined
+                    ? "pointer"
+                    : "default",
               }}
-              onClick={isCollapsible !== null && isCollapsible !== undefined ? toggleCollapse : undefined}
+              onClick={
+                isCollapsible !== null && isCollapsible !== undefined
+                  ? toggleCollapse
+                  : undefined
+              }
             >
               <Typography
                 variant="subtitle1"
