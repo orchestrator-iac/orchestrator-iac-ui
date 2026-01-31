@@ -245,7 +245,7 @@ const DynamicForm: React.FC<Props> = ({
 
     switch (type) {
       case "info":
-        return <></>;
+        return <>{formData[name] ?? ""}</>;
       case "text":
         return (
           <TextField
