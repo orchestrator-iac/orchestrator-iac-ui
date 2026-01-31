@@ -258,6 +258,20 @@ const DynamicForm: React.FC<Props> = ({
           />
         );
 
+      case "textarea":
+        return (
+          <TextField
+            fullWidth
+            multiline
+            rows={fieldCfg?.rows ?? 4}
+            required={!!required}
+            value={formData[name] ?? value ?? ""}
+            placeholder={placeholder ?? ""}
+            helperText={error_text || hint}
+            onChange={(e) => handleChange(name, e.target.value)}
+          />
+        );
+
       case "radio":
         return (
           <FormControl fullWidth required={!!required}>

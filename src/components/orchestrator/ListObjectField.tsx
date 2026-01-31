@@ -131,6 +131,22 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
           />
         );
 
+      case "textarea":
+        return (
+          <TextField
+            fullWidth
+            multiline
+            rows={schemaField.config?.rows ?? 4}
+            required={!!schemaField.required}
+            value={fieldValue}
+            placeholder={schemaField.placeholder ?? ""}
+            helperText={schemaField.error_text || schemaField.hint}
+            onChange={(e) =>
+              handleListItemChange(itemIndex, schemaField.name, e.target.value)
+            }
+          />
+        );
+
       case "number":
         return (
           <TextField
