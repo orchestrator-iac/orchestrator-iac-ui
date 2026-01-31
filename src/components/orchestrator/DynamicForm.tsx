@@ -245,11 +245,25 @@ const DynamicForm: React.FC<Props> = ({
 
     switch (type) {
       case "info":
-        return <></>;
+        return <>{formData[name] ?? ""}</>;
       case "text":
         return (
           <TextField
             fullWidth
+            required={!!required}
+            value={formData[name] ?? value ?? ""}
+            placeholder={placeholder ?? ""}
+            helperText={error_text || hint}
+            onChange={(e) => handleChange(name, e.target.value)}
+          />
+        );
+
+      case "textarea":
+        return (
+          <TextField
+            fullWidth
+            multiline
+            rows={fieldCfg?.rows ?? 4}
             required={!!required}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
