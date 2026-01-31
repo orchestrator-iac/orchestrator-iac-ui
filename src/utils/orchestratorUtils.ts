@@ -93,7 +93,7 @@ const resolveOutputRef = (
 
     // Emergency fallback: use first available outputRef
     const firstOutputRef = Object.values(linkRule.outputRef)[0];
-    if (firstOutputRef && typeof firstOutputRef === 'string') {
+    if (firstOutputRef && typeof firstOutputRef === "string") {
       return firstOutputRef;
     }
   }
@@ -221,7 +221,11 @@ export const transformNodeForDB = (
                     id: sourceNode.id,
                     __nodeType: (sourceNode.data as any)?.__nodeType,
                     friendlyId: resolveNodeFriendlyId(sourceNode),
-                    outputRef: resolveOutputRef(linkRule, sourceNode, fieldName),
+                    outputRef: resolveOutputRef(
+                      linkRule,
+                      sourceNode,
+                      fieldName,
+                    ),
                   };
                 }
               }
