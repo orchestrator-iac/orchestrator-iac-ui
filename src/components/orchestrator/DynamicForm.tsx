@@ -692,7 +692,7 @@ const DynamicForm: React.FC<Props> = ({
                           value={key}
                           onChange={(e) => {
                             const updatedList = {
-                              ...(formData[name]),
+                              ...formData[name],
                             } as Record<string, any>;
                             const oldKey = Object.keys(updatedList)[index];
                             delete updatedList[oldKey];
@@ -707,7 +707,7 @@ const DynamicForm: React.FC<Props> = ({
                           value={val as any}
                           onChange={(e) => {
                             const updatedList = {
-                              ...(formData[name]),
+                              ...formData[name],
                             } as Record<string, any>;
                             updatedList[key] = e.target.value;
                             handleChange(name, updatedList);
@@ -719,7 +719,7 @@ const DynamicForm: React.FC<Props> = ({
                           <IconButton
                             onClick={() => {
                               const updatedList = {
-                                ...(formData[name]),
+                                ...formData[name],
                               } as Record<string, any>;
                               const oldKey = Object.keys(updatedList)[index];
                               delete updatedList[oldKey];
