@@ -935,45 +935,51 @@ const LandingPage: React.FC = () => {
                   >
                     Infrastructure
                   </Box>
+                </Typography>
+
+                {/* Subtitle tagline */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: { xs: 1, sm: 1.5, md: 2 },
+                    mt: -2,
+                    mb: 4,
+                    flexWrap: "wrap",
+                  }}
+                >
                   <Box
-                    component="span"
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: { xs: 1, sm: 1.5, md: 2 },
-                      mt: 2,
-                      fontSize: "0.45em",
-                      fontWeight: 800,
+                      height: 2,
+                      width: { xs: 30, sm: 50, md: 70 },
+                      background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main})`,
+                      borderRadius: 2,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
+                      fontWeight: 700,
                       color: theme.palette.text.secondary,
-                      flexWrap: "wrap",
+                      whiteSpace: "nowrap",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
                     }}
                   >
-                    <Box
-                      component="span"
-                      sx={{
-                        height: 3,
-                        width: { xs: 20, sm: 30, md: 40 },
-                        background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main})`,
-                        borderRadius: 2,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Box component="span" sx={{ whiteSpace: "nowrap" }}>
-                      Visually, Effortlessly, Instantly
-                    </Box>
-                    <Box
-                      component="span"
-                      sx={{
-                        height: 3,
-                        width: { xs: 20, sm: 30, md: 40 },
-                        background: `linear-gradient(90deg, ${theme.palette.primary.main}, transparent)`,
-                        borderRadius: 2,
-                        flexShrink: 0,
-                      }}
-                    />
-                  </Box>
-                </Typography>
+                    Visually, Effortlessly, Instantly
+                  </Typography>
+                  <Box
+                    sx={{
+                      height: 2,
+                      width: { xs: 30, sm: 50, md: 70 },
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main}, transparent)`,
+                      borderRadius: 2,
+                      flexShrink: 0,
+                    }}
+                  />
+                </Box>
 
                 {/* Enhanced Description */}
                 <Typography
