@@ -28,7 +28,6 @@ import ConfirmEmail from "./components/auth/ConfirmEmail";
 import NotFound from "./components/shared/NotFound";
 import ResendEmailForm from "./components/auth/ResendEmailForm";
 import NightSky from "./components/shared/night-sky/NightSky";
-import BlackHoleDemo from "./components/shared/black-hole/BlackHoleDemo";
 import UpdatePassword from "./components/auth/login/UpdatePassword";
 import Chatbot from "./components/chatbot/Chatbot";
 import LandingPage from "./components/landing/LandingPage";
@@ -55,7 +54,6 @@ const App = () => {
                 />
                 <Route path="confirm" element={<ConfirmEmail />} />
                 <Route path="night-sky" element={<NightSky />} />
-                <Route path="black-hole" element={<BlackHoleDemo />} />
                 <Route path="update-password" element={<UpdatePassword />} />
                 <Route
                   path="email-verification/:type"
