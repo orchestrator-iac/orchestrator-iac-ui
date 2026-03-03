@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   TextField,
   Button,
@@ -18,12 +18,14 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as any)?.redirect || "/home";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [resendEmailVerification, setResendEmailVerification] = useState(false);
-  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
+  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth(redirectTo);
 
   const handleLogin = async () => {
     setError("");
@@ -31,7 +33,7 @@ const Login: React.FC = () => {
     try {
       const token = await loginUser({ email, password });
       login(token);
-      navigate("/home");
+      navigate(redirectTo);
     } catch (err: any) {
       if (err.type === "validation" && err.errors?.properties) {
         const errors = Object.entries(err.errors.properties).reduce(

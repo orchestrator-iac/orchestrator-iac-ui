@@ -102,6 +102,29 @@ const Header: React.FC = () => {
         </Typography>
 
         <div className={styles.controls}>
+          <Typography
+            component={Link}
+            to="/templates"
+            sx={{
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              textDecoration: "none",
+              color: "text.secondary",
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 2,
+              transition: "all 0.2s",
+              "&:hover": {
+                color: theme.palette.mode === "dark" ? "#88cfcf" : "#1a5757",
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(136, 207, 207, 0.07)"
+                    : "rgba(26, 87, 87, 0.06)",
+              },
+            }}
+          >
+            Templates
+          </Typography>
           <PillToggle mode={mode} setMode={setMode} />
           {user && (
             <>

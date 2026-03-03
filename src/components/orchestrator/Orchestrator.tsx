@@ -113,6 +113,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const { fitView } = useReactFlow();
   const [searchParams] = useSearchParams();
   const template_type = searchParams.get("template_type");
+  const isViewMode = template_type === "template";
   const [id] = useDnD();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -989,7 +990,7 @@ const OrchestratorReactFlow: React.FC = () => {
         color: theme.palette.text.primary,
       }}
     >
-      {templateInfo?.cloud && (
+      {!isViewMode && templateInfo?.cloud && (
         <Sidebar
           open={sidebarOpen}
           setOpen={setSidebarOpen}
@@ -999,7 +1000,7 @@ const OrchestratorReactFlow: React.FC = () => {
       <Box
         sx={{
           flexGrow: 1,
-          width: sidebarOpen ? `calc(100% - ${drawerWidth}px)` : "100%",
+          width: !isViewMode && sidebarOpen ? `calc(100% - ${drawerWidth}px)` : "100%",
           transition: "width 0.3s ease",
         }}
       >
@@ -1008,19 +1009,19 @@ const OrchestratorReactFlow: React.FC = () => {
           edges={edges}
           onNodesChange={handleNodesChange}
           onEdgesChange={handleEdgesChange}
-          onConnect={onConnect}
+          onConnect={isViewMode ? undefined : onConnect}
           colorMode={theme.palette.mode}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           proOptions={{ hideAttribution: true }}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onEdgesDelete={onEdgesDelete}
-          onNodesDelete={onNodesDelete}
-          nodesDraggable={!isArchitectureMode}
-          nodesConnectable={!isArchitectureMode}
-          elementsSelectable={!isArchitectureMode}
-          selectionOnDrag={!isArchitectureMode}
+          onDrop={isViewMode ? undefined : onDrop}
+          onDragOver={isViewMode ? undefined : onDragOver}
+          onEdgesDelete={isViewMode ? undefined : onEdgesDelete}
+          onNodesDelete={isViewMode ? undefined : onNodesDelete}
+          nodesDraggable={!isArchitectureMode && !isViewMode}
+          nodesConnectable={!isArchitectureMode && !isViewMode}
+          elementsSelectable={!isArchitectureMode && !isViewMode}
+          selectionOnDrag={!isArchitectureMode && !isViewMode}
           connectionMode={ConnectionMode.Loose}
           deleteKeyCode={["Delete", "Backspace"]}
           fitView
@@ -1031,21 +1032,29 @@ const OrchestratorReactFlow: React.FC = () => {
                 <Chip
                   icon={<DeblurIcon />}
                   label={templateInfo?.templateName}
-                  onClick={() => setInitOpen(true)}
+                  onClick={isViewMode ? undefined : () => setInitOpen(true)}
                 />
               )}
               {templateInfo?.cloud && (
                 <Chip
                   icon={<CloudCircleIcon />}
                   label={templateInfo?.cloud.toUpperCase()}
-                  onClick={() => setInitOpen(true)}
+                  onClick={isViewMode ? undefined : () => setInitOpen(true)}
                 />
               )}
               {templateInfo?.region && (
                 <Chip
                   icon={<SouthAmericaIcon />}
                   label={templateInfo?.region}
-                  onClick={() => setInitOpen(true)}
+                  onClick={isViewMode ? undefined : () => setInitOpen(true)}
+                />
+              )}
+              {isViewMode && (
+                <Chip
+                  label="Read-only preview"
+                  size="small"
+                  variant="outlined"
+                  sx={{ opacity: 0.7, fontSize: "0.75rem" }}
                 />
               )}
             </Box>
@@ -1059,18 +1068,20 @@ const OrchestratorReactFlow: React.FC = () => {
                 gap: 1,
               }}
             >
-              <OrchestratorMenu
-                nodes={nodes}
-                edges={edges}
-                templateInfo={templateInfo}
-                currentOrchestratorId={currentOrchestratorId}
-                onSaveSuccess={handleOrchestrationSaved}
-                orchestratorName={templateInfo?.templateName}
-                isArchitectureMode={isArchitectureMode}
-                onArchitectureModeChange={(value) =>
-                  setIsArchitectureMode(value)
-                }
-              />
+              {!isViewMode && (
+                <OrchestratorMenu
+                  nodes={nodes}
+                  edges={edges}
+                  templateInfo={templateInfo}
+                  currentOrchestratorId={currentOrchestratorId}
+                  onSaveSuccess={handleOrchestrationSaved}
+                  orchestratorName={templateInfo?.templateName}
+                  isArchitectureMode={isArchitectureMode}
+                  onArchitectureModeChange={(value) =>
+                    setIsArchitectureMode(value)
+                  }
+                />
+              )}
             </Box>
           </Panel>
 

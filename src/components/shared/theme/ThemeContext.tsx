@@ -37,6 +37,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
 
   const theme = effectiveMode === "light" ? lightTheme : darkTheme;
 
+  // Keep data-theme in sync globally so CSS variables (--card-bg, --text1, etc.) work on every page
+  useEffect(() => {
+    document.body.dataset.theme = effectiveMode;
+  }, [effectiveMode]);
+
   useEffect(() => {
     localStorage.setItem("themePreference", mode);
   }, [mode]);

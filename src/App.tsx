@@ -31,6 +31,8 @@ import NightSky from "./components/shared/night-sky/NightSky";
 import UpdatePassword from "./components/auth/login/UpdatePassword";
 import Chatbot from "./components/chatbot/Chatbot";
 import LandingPage from "./components/landing/LandingPage";
+import TemplatesGallery from "./components/templates/TemplatesGallery";
+import TemplateDetail from "./components/templates/TemplateDetail";
 
 // Add FontAwesome icon packs
 library.add(fab, fas);
@@ -59,6 +61,9 @@ const App = () => {
                   path="email-verification/:type"
                   element={<ResendEmailForm />}
                 />
+                {/* Public template routes */}
+                <Route path="templates" element={<TemplatesGallery />} />
+                <Route path="templates/:id" element={<TemplateDetail />} />
                 <Route
                   path="profile"
                   element={
