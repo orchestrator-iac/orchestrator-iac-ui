@@ -9,7 +9,7 @@ interface UseGoogleAuthReturn {
   setError: (error: string) => void;
 }
 
-export const useGoogleAuth = (): UseGoogleAuthReturn => {
+export const useGoogleAuth = (redirectTo = "/home"): UseGoogleAuthReturn => {
   const navigate = useNavigate();
   const { googleLogin } = useAuth();
   const [error, setError] = useState<string>("");
@@ -17,7 +17,7 @@ export const useGoogleAuth = (): UseGoogleAuthReturn => {
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       await googleLogin(credentialResponse.credential);
-      navigate("/home");
+      navigate(redirectTo);
     } catch (err: any) {
       setError(err?.message || "Google authentication failed");
     }

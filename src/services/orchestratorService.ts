@@ -128,6 +128,7 @@ export const orchestratorService = {
       const mappedOrchestrations = orchestrationsList.map((item: any) => ({
         _id: item.id || item._id,
         templateInfo: item.templateInfo,
+        templateId: item.templateId || undefined,
         nodes: item.nodes || [],
         edges: item.edges || [],
         // Calculate counts from arrays if not provided

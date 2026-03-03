@@ -10,6 +10,13 @@ import {
   InputAdornment,
   TextField,
   alpha,
+  Tooltip,
+  IconButton,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,6 +25,8 @@ import { RootState, AppDispatch } from "../../store";
 
 import { fetchResources } from "../../store/resourcesSlice";
 import { fetchOrchestrators } from "../../store/orchestratorsSlice";
+import { templateService } from "../../services/templateService";
+import PublishTemplateDialog from "../orchestrator/publish-template/PublishTemplateDialog";
 
 import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
@@ -46,6 +55,16 @@ const Home: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [searchQuery, setSearchQuery] = useState("");
   const [showContent, setShowContent] = useState(false);
+  const [publishTarget, setPublishTarget] = useState<{
+    orchestratorId: string;
+    orchestratorName?: string;
+    templateId?: string;
+  } | null>(null);
+  const [unpublishTarget, setUnpublishTarget] = useState<{
+    templateId: string;
+    name: string;
+  } | null>(null);
+  const [unpublishLoading, setUnpublishLoading] = useState(false);
 
   const { data: resources, status: resourcesStatus } = useSelector(
     (state: RootState) => state.resources,
@@ -103,6 +122,20 @@ const Home: React.FC = () => {
 
   const navigateOrchestrator = (orchestratorId: string | undefined) => {
     navigate(`/orchestrator/${orchestratorId ?? "new"}?template_type=custom`);
+  };
+
+  const handleUnpublishConfirm = async () => {
+    if (!unpublishTarget || unpublishLoading) return;
+    setUnpublishLoading(true);
+    try {
+      await templateService.deleteTemplate(unpublishTarget.templateId);
+      setUnpublishTarget(null);
+      dispatch(fetchOrchestrators({}));
+    } catch {
+      // keep dialog open on error
+    } finally {
+      setUnpublishLoading(false);
+    }
   };
 
   const isLoading =
@@ -422,39 +455,108 @@ const Home: React.FC = () => {
                         {orchestrator.templateInfo?.description ||
                           "No description"}
                       </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                        }}
-                      >
                         <Box
-                          component="code"
                           sx={{
-                            fontSize: "0.8rem",
-                            color: "text.secondary",
-                            backgroundColor:
-                              theme.palette.mode === "dark"
-                                ? "rgba(255, 255, 255, 0.05)"
-                                : "rgba(0, 0, 0, 0.04)",
-                            px: 1.5,
-                            py: 0.75,
-                            borderRadius: 1,
-                            display: "inline-flex",
+                            display: "flex",
+                            gap: 1,
                             alignItems: "center",
-                            gap: 0.5,
+                            flexWrap: "wrap",
+                            justifyContent: "space-between",
                           }}
                         >
-                          <FontAwesomeIcon
-                            icon="circle-nodes"
-                            style={{ fontSize: "0.75rem" }}
-                          />
-                          {orchestrator.nodeCount} nodes •{" "}
-                          {orchestrator.edgeCount} edges
+                          <Box
+                            component="code"
+                            sx={{
+                              fontSize: "0.8rem",
+                              color: "text.secondary",
+                              backgroundColor:
+                                theme.palette.mode === "dark"
+                                  ? "rgba(255, 255, 255, 0.05)"
+                                  : "rgba(0, 0, 0, 0.04)",
+                              px: 1.5,
+                              py: 0.75,
+                              borderRadius: 1,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <FontAwesomeIcon
+                              icon="circle-nodes"
+                              style={{ fontSize: "0.75rem" }}
+                            />
+                            {orchestrator.nodeCount} nodes •{" "}
+                            {orchestrator.edgeCount} connections
+                          </Box>
+                          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+                          <Tooltip
+                            title={
+                              orchestrator.templateId
+                                ? "Manage Template"
+                                : "Publish as Template"
+                            }
+                          >
+                            <span>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPublishTarget({
+                                    orchestratorId: orchestrator._id || "",
+                                    orchestratorName:
+                                      orchestrator.templateInfo?.templateName,
+                                    templateId: orchestrator.templateId,
+                                  });
+                                }}
+                                sx={{
+                                  color: orchestrator.templateId
+                                    ? (theme.palette.mode === "dark"
+                                        ? "#7dd3d3"
+                                        : "#1a5757")
+                                    : "text.secondary",
+                                  fontSize: "0.8rem",
+                                  p: 0.5,
+                                  opacity: orchestrator.templateId ? 1 : 0.6,
+                                  "&:hover": { opacity: 1 },
+                                }}
+                              >
+                                <FontAwesomeIcon
+                                  icon={
+                                    orchestrator.templateId
+                                      ? "pen"
+                                      : "layer-group"
+                                  }
+                                />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          {orchestrator.templateId && (
+                            <Tooltip title="Unpublish Template">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setUnpublishTarget({
+                                      templateId: orchestrator.templateId!,
+                                      name: orchestrator.templateInfo?.templateName || "this template",
+                                    });
+                                  }}
+                                  sx={{
+                                    color: "text.secondary",
+                                    fontSize: "0.8rem",
+                                    p: 0.5,
+                                    opacity: 0.5,
+                                    "&:hover": { opacity: 1, color: "error.main" },
+                                  }}
+                                >
+                                  <FontAwesomeIcon icon="eye-slash" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          )}
+                          </Box>
                         </Box>
-                      </Box>
                     </Box>
                   </Fade>
                 </Grid>
@@ -761,6 +863,60 @@ const Home: React.FC = () => {
           </>
         )}
       </Grid>
+
+      {/* Publish as Template dialog */}
+      {publishTarget && (
+        <PublishTemplateDialog
+          open={!!publishTarget}
+          onClose={() => setPublishTarget(null)}
+          orchestratorId={publishTarget.orchestratorId}
+          orchestratorName={publishTarget.orchestratorName}
+          onSuccess={() => setPublishTarget(null)}
+        />
+      )}
+
+      {/* Unpublish confirmation dialog */}
+      <Dialog
+        open={!!unpublishTarget}
+        onClose={() => !unpublishLoading && setUnpublishTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      >
+        <DialogTitle sx={{ pb: 1, fontWeight: 700 }}>
+          Unpublish Template?
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            This will remove <strong>{unpublishTarget?.name}</strong> from the public gallery.
+            Your orchestrator won't be affected — you can re-publish it any time.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setUnpublishTarget(null)}
+            disabled={unpublishLoading}
+            sx={{ borderRadius: 2, textTransform: "none" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleUnpublishConfirm}
+            disabled={unpublishLoading}
+            startIcon={
+              unpublishLoading
+                ? <FontAwesomeIcon icon="spinner" spin style={{ fontSize: "0.75rem" }} />
+                : <FontAwesomeIcon icon="trash" style={{ fontSize: "0.75rem" }} />
+            }
+            sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
+          >
+            {unpublishLoading ? "Removing..." : "Yes, Unpublish"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

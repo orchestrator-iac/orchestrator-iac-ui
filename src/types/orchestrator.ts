@@ -86,6 +86,8 @@ export interface OrchestratorListItem {
     version?: string;
     tags?: string[];
   };
+  /** ID of the published template derived from this orchestrator, if any. */
+  templateId?: string;
 }
 
 // Response for listing orchestrations

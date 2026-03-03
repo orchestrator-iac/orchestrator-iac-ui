@@ -13,6 +13,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Node, Edge } from "@xyflow/react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -25,6 +26,7 @@ import { DeleteButton } from "../delete";
 import { TemplateInfo } from "../../../types/orchestrator";
 import { downloadFlowAsImage } from "../utils/downloadImage.ts";
 import { orchestratorService } from "../../../services/orchestratorService";
+import PublishTemplateDialog from "../publish-template/PublishTemplateDialog";
 
 interface OrchestratorMenuProps {
   nodes: Node[];
@@ -35,6 +37,8 @@ interface OrchestratorMenuProps {
   orchestratorName?: string;
   isArchitectureMode: boolean;
   onArchitectureModeChange: (value: boolean) => void;
+  /** templateId set on the orchestrator if it has been published to the gallery */
+  templateId?: string;
 }
 
 export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
@@ -46,10 +50,12 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   orchestratorName,
   isArchitectureMode,
   onArchitectureModeChange,
+  templateId,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<
     "none" | "generate" | "downloadZip"
   >("none");
@@ -402,6 +408,26 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           </ListItemIcon>
           <ListItemText>Delete Orchestrator</ListItemText>
         </MenuItem>
+
+        <MenuItem
+          onClick={() => { setPublishDialogOpen(true); handleMenuClose(); }}
+          disabled={!canDelete}
+          sx={{
+            borderRadius: 1.5,
+            mx: 0.5,
+            "&:hover": { bgcolor: "action.hover" },
+          }}
+        >
+          <ListItemIcon>
+            <FontAwesomeIcon
+              icon={templateId ? "pen" : "layer-group"}
+              style={{ fontSize: 16, opacity: canDelete ? 1 : 0.4 }}
+            />
+          </ListItemIcon>
+          <ListItemText>
+            {templateId ? "Manage Template" : "Publish as Template"}
+          </ListItemText>
+        </MenuItem>
       </Menu>
 
       {/* Hidden SaveButton - controlled by menu */}
@@ -428,6 +454,17 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           onOpenChange={setDeleteDialogOpen}
         />
       </Box>
+
+      {/* Publish as Template dialog */}
+      {publishDialogOpen && (
+        <PublishTemplateDialog
+          open={publishDialogOpen}
+          onClose={() => setPublishDialogOpen(false)}
+          orchestratorId={currentOrchestratorId || ""}
+          orchestratorName={orchestratorName}
+          onSuccess={() => setPublishDialogOpen(false)}
+        />
+      )}
 
       {/* Notifications */}
       <Snackbar

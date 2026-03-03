@@ -1,0 +1,206 @@
+/* Templates feature — CSS module */
+/* Reuses the same CSS variable conventions as Home.module.css */
+
+.pageHeader {
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ── Card — identical to .card in Home.module.css ── */
+.card {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background-color: var(--card-bg);
+  color: var(--card-color);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(75, 190, 190, 0.05) 0%,
+    rgba(32, 90, 90, 0.02) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.14),
+    0 10px 20px rgba(0, 0, 0, 0.1);
+  border-color: rgba(75, 190, 190, 0.15);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.card:active {
+  transform: translateY(-2px);
+  transition: all 0.15s ease;
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.cloudTypeLogo {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+[data-theme="dark"] .cloudTypeLogo {
+  background-color: rgba(226, 232, 240, 0.95);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.card:hover .cloudTypeLogo {
+  transform: scale(1.15);
+  box-shadow: 0 4px 16px rgba(75, 190, 190, 0.3);
+}
+
+.cardTitle {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text1);
+  transition: all 0.3s ease;
+  position: relative;
+  display: inline-block;
+}
+
+.cardTitle::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--secondary), var(--ternary));
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 2px;
+}
+
+.card:hover .cardTitle {
+  color: var(--secondary);
+}
+
+.card:hover .cardTitle::after {
+  width: 100%;
+}
+
+.cardDescription {
+  font-size: 0.875rem;
+  margin: 0;
+  color: var(--text3);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.templateCardImage {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background-color: var(--card-bg);
+}
+
+/* ── Readme markdown render area ── */
+.readmeContent {
+  line-height: 1.75;
+  font-size: 0.95rem;
+  color: var(--text1);
+  word-break: break-word;
+}
+
+.readmeContent h1,
+.readmeContent h2,
+.readmeContent h3,
+.readmeContent h4 {
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: var(--text1);
+}
+
+.readmeContent p {
+  margin-bottom: 0.75em;
+}
+
+.readmeContent ul,
+.readmeContent ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.readmeContent code {
+  background: rgba(75, 190, 190, 0.1);
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: monospace;
+}
+
+.readmeContent pre {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin-bottom: 1em;
+}
+
+[data-theme="dark"] .readmeContent pre {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.readmeContent blockquote {
+  border-left: 4px solid rgba(75, 190, 190, 0.5);
+  padding-left: 1em;
+  color: var(--text3);
+  margin: 0 0 0.75em 0;
+}
+
+.readmeContent a {
+  color: var(--secondary);
+  text-decoration: underline;
+}

@@ -6,6 +6,7 @@ import wrappersTemplateReducer from "./wrappersTemplateSlice";
 import resourcesReducer from "./resourcesSlice";
 import usersReducer from "./usersSlice";
 import orchestratorsReducer from "./orchestratorsSlice";
+import templatesReducer from "./templatesSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     resources: resourcesReducer,
     users: usersReducer,
     orchestrators: orchestratorsReducer,
+    templates: templatesReducer,
   },
 });
 
