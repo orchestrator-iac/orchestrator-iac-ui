@@ -230,9 +230,11 @@ const TemplateDetail: React.FC = () => {
                 variant="outlined"
                 sx={{ fontSize: "0.7rem" }}
               />
-              <Typography variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
-                by <strong>{template.authorName || "Unknown"}</strong>
-              </Typography>
+              {template.authorName && (
+                <Typography variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
+                  by <strong>{template.authorName}</strong>
+                </Typography>
+              )}
             </Box>
           </Box>
 
