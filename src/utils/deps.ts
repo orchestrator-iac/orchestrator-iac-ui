@@ -104,10 +104,8 @@ export const evalLegacyString = (dep: string, vals: Values): boolean => {
     case "!==":
       return lhs !== rhs;
     case "==":
-      // eslint-disable-next-line eqeqeq
       return lhs == rhs;
     case "!=":
-      // eslint-disable-next-line eqeqeq
       return lhs != rhs;
     default:
       return false;

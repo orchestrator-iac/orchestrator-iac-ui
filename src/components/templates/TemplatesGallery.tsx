@@ -43,6 +43,35 @@ const TemplatesGallery: React.FC = () => {
     document.body.style.overflow = "auto";
   }, []);
 
+  // SEO — keep meta tags in sync when navigating client-side
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "Infrastructure Templates | Orchestrator";
+
+    const set = (sel: string, attr: string, val: string) => {
+      let el = document.querySelector<HTMLMetaElement | HTMLLinkElement>(sel);
+      if (!el) {
+        el = document.createElement(sel.startsWith("link") ? "link" : "meta") as any;
+        document.head.appendChild(el!);
+      }
+      el!.setAttribute(attr, val);
+    };
+
+    const desc =
+      "Browse community infrastructure templates for AWS, Azure, and GCP. Deploy production-ready cloud architectures in one click.";
+    const url = "https://orchestrator.next-zen.dev/templates";
+
+    set('meta[name="description"]', "content", desc);
+    set('meta[name="robots"]', "content", "index, follow");
+    set('meta[property="og:title"]', "content", "Infrastructure Templates | Orchestrator");
+    set('meta[property="og:description"]', "content", desc);
+    set('meta[property="og:url"]', "content", url);
+    set('meta[property="og:type"]', "content", "website");
+    set('link[rel="canonical"]', "href", url);
+
+    return () => { document.title = prevTitle; };
+  }, []);
+
   // Reveal animation
   useEffect(() => {
     const t = setTimeout(() => setShowContent(true), 100);
