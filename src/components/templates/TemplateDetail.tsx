@@ -60,6 +60,41 @@ const TemplateDetail: React.FC = () => {
     document.body.style.overflow = "auto";
   }, []);
 
+  // SEO — update meta tags whenever template data loads (or route changes)
+  useEffect(() => {
+    const prevTitle = document.title;
+
+    const set = (sel: string, attr: string, val: string) => {
+      let el = document.querySelector<HTMLMetaElement | HTMLLinkElement>(sel);
+      if (!el) {
+        el = document.createElement(sel.startsWith("link") ? "link" : "meta") as any;
+        document.head.appendChild(el!);
+      }
+      el!.setAttribute(attr, val);
+    };
+
+    if (template) {
+      const title = `${template.templateName} | Orchestrator`;
+      const desc = (template.description || "").slice(0, 160) ||
+        `A ${(template.cloud || "cloud").toUpperCase()} infrastructure template on Orchestrator.`;
+      const url = `https://orchestrator.next-zen.dev/templates/${template.id}`;
+
+      document.title = title;
+      set('meta[name="description"]', "content", desc);
+      set('meta[name="robots"]', "content", "index, follow");
+      set('meta[property="og:title"]', "content", title);
+      set('meta[property="og:description"]', "content", desc);
+      set('meta[property="og:url"]', "content", url);
+      set('meta[property="og:type"]', "content", "article");
+      set('link[rel="canonical"]', "href", url);
+    } else {
+      document.title = "Template | Orchestrator";
+      set('meta[name="robots"]', "content", "index, follow");
+    }
+
+    return () => { document.title = prevTitle; };
+  }, [template]);
+
   // Fetch template — one call per mount. AbortController cleanup cancels the
   // inflight request on StrictMode's double-invoke so viewCount increments once.
   useEffect(() => {
