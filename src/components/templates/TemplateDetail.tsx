@@ -185,7 +185,12 @@ const TemplateDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
+      <Box
+        role="status"
+        aria-label="Loading template"
+        aria-busy="true"
+        sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}
+      >
         <Skeleton variant="text" width={300} height={48} sx={{ mb: 2 }} />
         <Skeleton variant="text" width={500} height={28} sx={{ mb: 1 }} />
         <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
@@ -219,18 +224,37 @@ const TemplateDetail: React.FC = () => {
     <Fade in={showContent} timeout={600}>
       <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: 4 }}>
         {/* Breadcrumb */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3, color: "text.secondary" }}>
+        <Box
+          component="nav"
+          aria-label="Breadcrumb"
+          sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 3 }}
+        >
           <Button
             size="small"
             variant="text"
             onClick={() => navigate("/templates")}
-            startIcon={<FontAwesomeIcon icon="arrow-left" style={{ fontSize: "0.7rem" }} />}
-            sx={{ color: "text.secondary", textTransform: "none", p: 0.5 }}
+            startIcon={<FontAwesomeIcon icon="arrow-left" aria-hidden="true" style={{ fontSize: "0.7rem" }} />}
+            sx={{
+              color: "text.secondary",
+              textTransform: "none",
+              p: 0.5,
+              borderRadius: 1.5,
+              fontWeight: 500,
+              "&:hover": { color: "text.primary" },
+              "&:focus-visible": {
+                outline: `2px solid ${theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757"}`,
+                outlineOffset: 2,
+              },
+            }}
           >
             Templates
           </Button>
-          <Typography variant="body2" sx={{ opacity: 0.5 }}>/</Typography>
-          <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
+          <FontAwesomeIcon
+            icon="chevron-right"
+            aria-hidden="true"
+            style={{ fontSize: "0.6rem", opacity: 0.4 }}
+          />
+          <Typography variant="body2" noWrap sx={{ maxWidth: 300, color: "text.primary", fontWeight: 500 }}>
             {template.templateName}
           </Typography>
         </Box>
@@ -276,18 +300,35 @@ const TemplateDetail: React.FC = () => {
           {/* Right: stats + like + use template + owner actions */}
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1.5, flexShrink: 0 }}>
             {/* Stats row */}
-            <Box sx={{ display: "flex", gap: 2.5 }}>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               {[
                 { icon: "eye", val: template.analytics?.viewCount ?? 0, label: "views" },
                 { icon: "heart", val: likeCount, label: "likes" },
                 { icon: "copy", val: template.analytics?.usageCount ?? 0, label: "uses" },
               ].map(({ icon, val, label }) => (
-                <Box key={label} sx={{ textAlign: "center" }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }}>
+                <Box
+                  key={label}
+                  aria-label={`${val} ${label}`}
+                  sx={{
+                    textAlign: "center",
+                    px: 1.5,
+                    py: 1,
+                    borderRadius: 2,
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? alpha("#fff", 0.04)
+                        : alpha("#000", 0.03),
+                    minWidth: 56,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1, fontSize: "1.1rem" }}>
                     {val}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <FontAwesomeIcon icon={icon as any} style={{ fontSize: "0.6rem" }} />
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary", display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5, mt: 0.25 }}
+                  >
+                    <FontAwesomeIcon icon={icon as any} aria-hidden="true" style={{ fontSize: "0.6rem" }} />
                     {label}
                   </Typography>
                 </Box>
@@ -296,11 +337,19 @@ const TemplateDetail: React.FC = () => {
 
             {/* Like + Use Template */}
             <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-              <Tooltip title={user ? (liked ? "Unlike" : "Like this template") : "Login to like"}>
-                <span>
-                  <IconButton
-                    onClick={handleLike}
-                    disabled={likeLoading}
+              {(() => {
+                const likeTooltip = user ? (liked ? "Unlike" : "Like this template") : "Login to like";
+                const likeAriaLabel = user
+                  ? liked ? "Unlike this template" : "Like this template"
+                  : "Login to like this template";
+                return (
+                  <Tooltip title={likeTooltip}>
+                    <span>
+                      <IconButton
+                        onClick={handleLike}
+                        disabled={likeLoading}
+                        aria-label={likeAriaLabel}
+                    aria-pressed={liked}
                     sx={{
                       borderRadius: 2,
                       border: "1px solid",
@@ -318,35 +367,49 @@ const TemplateDetail: React.FC = () => {
                         borderColor: "error.main",
                         backgroundColor: alpha(theme.palette.error.main, 0.06),
                       },
+                      "&:focus-visible": {
+                        outline: "2px solid",
+                        outlineColor: "error.main",
+                        outlineOffset: 2,
+                      },
                     }}
                   >
-                    <FontAwesomeIcon icon={liked ? "heart" : ["far", "heart"] as any} />
+                    <FontAwesomeIcon aria-hidden="true" icon={liked ? "heart" : ["far", "heart"] as any} />
                     <Typography variant="caption" sx={{ fontWeight: 600, fontSize: "0.8rem" }}>
                       {liked ? "Liked" : "Like"}
                     </Typography>
                   </IconButton>
                 </span>
               </Tooltip>
+                );
+              })()}
 
               <Button
                 variant="contained"
                 size="large"
                 onClick={handleUseTemplate}
                 disabled={useLoading}
+                aria-label={useLoading ? "Forking template, please wait" : `Use template: ${template.templateName}`}
                 sx={{
                   borderRadius: 2,
                   fontWeight: 700,
                   textTransform: "none",
+                  px: 3,
                   backgroundColor: theme.palette.mode === "dark" ? "#4bbebe" : "#1a5757",
                   color: "#fff",
                   "&:hover": {
                     backgroundColor: theme.palette.mode === "dark" ? "#6dd0d0" : "#256969",
                   },
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                    outlineOffset: 3,
+                  },
                 }}
               >
                 {useLoading
-                  ? <FontAwesomeIcon icon="spinner" spin style={{ marginRight: 8 }} />
-                  : <FontAwesomeIcon icon="copy" style={{ marginRight: 8 }} />}
+                  ? <FontAwesomeIcon aria-hidden="true" icon="spinner" spin style={{ marginRight: 8 }} />
+                  : <FontAwesomeIcon aria-hidden="true" icon="copy" style={{ marginRight: 8 }} />}
                 {useLoading ? "Forking..." : "Use Template"}
               </Button>
             </Box>

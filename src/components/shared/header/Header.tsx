@@ -131,11 +131,18 @@ const Header: React.FC = () => {
               <IconButton
                 onClick={handleMenuOpen}
                 size="small"
+                aria-label={`Open user menu for ${user.firstName}`}
+                aria-haspopup="true"
+                aria-expanded={Boolean(anchorEl)}
                 sx={{
                   transition: "all 0.2s ease",
                   position: "relative",
                   "&:hover": {
                     transform: "scale(1.05)",
+                  },
+                  "&:focus-visible": {
+                    outline: `2px solid ${theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757"}`,
+                    outlineOffset: 3,
                   },
                   "&::before": {
                     content: '""',
@@ -224,7 +231,7 @@ const Header: React.FC = () => {
                     },
                   }}
                 >
-                  <FontAwesomeIcon icon="user" style={{ fontSize: "0.9rem" }} />
+                  <FontAwesomeIcon aria-hidden="true" icon="user" style={{ fontSize: "0.9rem" }} />
                   View Profile
                 </MenuItem>
                 <MenuItem
@@ -244,6 +251,7 @@ const Header: React.FC = () => {
                   }}
                 >
                   <FontAwesomeIcon
+                    aria-hidden="true"
                     icon="sign-out-alt"
                     style={{ fontSize: "0.9rem" }}
                   />

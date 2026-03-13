@@ -6,6 +6,11 @@ import {
   InputAdornment,
   Skeleton,
   Fade,
+  Chip,
+  Button,
+  Stack,
+  Collapse,
+  IconButton,
   ToggleButtonGroup,
   ToggleButton,
   useTheme,
@@ -15,6 +20,7 @@ import Grid from "@mui/material/Grid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSelector, useDispatch } from "react-redux";
 import { useDebouncedCallback } from "use-debounce";
+import { useNavigate } from "react-router-dom";
 
 import { RootState, AppDispatch } from "../../store";
 import {
@@ -30,8 +36,10 @@ const PAGE_SIZE = 20;
 const TemplatesGallery: React.FC = () => {
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const [localSearch, setLocalSearch] = useState("");
   const [showContent, setShowContent] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { items, status, hasMore, page, searchQuery, sortBy } = useSelector(
@@ -43,6 +51,15 @@ const TemplatesGallery: React.FC = () => {
     document.body.style.overflow = "auto";
   }, []);
 
+  // First-visit welcome banner
+  useEffect(() => {
+    const seen = localStorage.getItem("orchestrator-templates-visited");
+    if (!seen) {
+      setShowWelcome(true);
+      localStorage.setItem("orchestrator-templates-visited", "1");
+    }
+  }, []);
+
   // SEO — keep meta tags in sync when navigating client-side
   useEffect(() => {
     const prevTitle = document.title;
@@ -51,7 +68,9 @@ const TemplatesGallery: React.FC = () => {
     const set = (sel: string, attr: string, val: string) => {
       let el = document.querySelector<HTMLMetaElement | HTMLLinkElement>(sel);
       if (!el) {
-        el = document.createElement(sel.startsWith("link") ? "link" : "meta") as any;
+        el = document.createElement(
+          sel.startsWith("link") ? "link" : "meta",
+        ) as any;
         document.head.appendChild(el!);
       }
       el!.setAttribute(attr, val);
@@ -63,13 +82,19 @@ const TemplatesGallery: React.FC = () => {
 
     set('meta[name="description"]', "content", desc);
     set('meta[name="robots"]', "content", "index, follow");
-    set('meta[property="og:title"]', "content", "Infrastructure Templates | Orchestrator");
+    set(
+      'meta[property="og:title"]',
+      "content",
+      "Infrastructure Templates | Orchestrator",
+    );
     set('meta[property="og:description"]', "content", desc);
     set('meta[property="og:url"]', "content", url);
     set('meta[property="og:type"]', "content", "website");
     set('link[rel="canonical"]', "href", url);
 
-    return () => { document.title = prevTitle; };
+    return () => {
+      document.title = prevTitle;
+    };
   }, []);
 
   // Reveal animation
@@ -81,16 +106,19 @@ const TemplatesGallery: React.FC = () => {
   // Initial load
   useEffect(() => {
     dispatch(resetTemplates());
-    dispatch(
-      fetchTemplates({ page: 1, size: PAGE_SIZE, sort: "popularity" }),
-    );
+    dispatch(fetchTemplates({ page: 1, size: PAGE_SIZE, sort: "popularity" }));
   }, []);
 
   // Debounced search — resets to page 1
   const debouncedSearch = useDebouncedCallback((value: string) => {
     dispatch(setSearchQuery(value));
     dispatch(
-      fetchTemplates({ page: 1, size: PAGE_SIZE, search: value || undefined, sort: sortBy }),
+      fetchTemplates({
+        page: 1,
+        size: PAGE_SIZE,
+        search: value || undefined,
+        sort: sortBy,
+      }),
     );
   }, 400);
 
@@ -114,6 +142,11 @@ const TemplatesGallery: React.FC = () => {
         sort: newSort,
       }),
     );
+  };
+
+  const handleQuickSearch = (term: string) => {
+    setLocalSearch(term);
+    debouncedSearch(term);
   };
 
   // Infinite scroll via IntersectionObserver
@@ -159,20 +192,27 @@ const TemplatesGallery: React.FC = () => {
     >
       {/* Page header */}
       <Fade in={showContent} timeout={600}>
-        <Box sx={{ mb: 4 }}>
+        <Box
+          component="section"
+          aria-labelledby="templates-heading"
+          sx={{ mb: 4 }}
+        >
           <Typography
+            id="templates-heading"
             variant="h4"
             sx={{
               fontWeight: 700,
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.025em",
               fontSize: { xs: "1.75rem", md: "2.25rem" },
               mb: 0.75,
-              color:
-                theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              color: theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
             }}
           >
             <Box
-              component="span"
+              aria-hidden="true"
               sx={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -180,15 +220,14 @@ const TemplatesGallery: React.FC = () => {
                 width: 44,
                 height: 44,
                 borderRadius: 2,
-                backgroundColor:
+                background:
                   theme.palette.mode === "dark"
-                    ? alpha("#4bbebe", 0.12)
-                    : alpha("#1a5757", 0.08),
-                color:
-                  theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
-                mr: 1.5,
+                    ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.2)}, ${alpha("#4bbebe", 0.08)})`
+                    : `linear-gradient(135deg, ${alpha("#1a5757", 0.12)}, ${alpha("#1a5757", 0.04)})`,
+                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                border: `1px solid ${theme.palette.mode === "dark" ? alpha("#4bbebe", 0.25) : alpha("#1a5757", 0.15)}`,
+                flexShrink: 0,
                 fontSize: "1.1rem",
-                verticalAlign: "middle",
               }}
             >
               <FontAwesomeIcon icon="layer-group" />
@@ -197,7 +236,12 @@ const TemplatesGallery: React.FC = () => {
           </Typography>
           <Typography
             variant="body2"
-            sx={{ color: "text.secondary", ml: 7.5, fontSize: "0.925rem" }}
+            sx={{
+              color: "text.secondary",
+              ml: 7.5,
+              fontSize: "0.925rem",
+              letterSpacing: "0.01em",
+            }}
           >
             Ready-made infrastructure blueprints. Fork any template to start
             building.
@@ -205,9 +249,171 @@ const TemplatesGallery: React.FC = () => {
         </Box>
       </Fade>
 
+      {/* First-visit Welcome Banner */}
+      <Collapse in={showWelcome} timeout={500}>
+        <Box
+          sx={{
+            mb: 4,
+            borderRadius: 3,
+            overflow: "hidden",
+            position: "relative",
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.12)} 0%, ${alpha("#1a3030", 0.9)} 100%)`
+                : `linear-gradient(135deg, ${alpha("#1a5757", 0.06)} 0%, ${alpha("#e6f4f4", 0.95)} 100%)`,
+            border: `1px solid ${
+              theme.palette.mode === "dark"
+                ? alpha("#4bbebe", 0.25)
+                : alpha("#1a5757", 0.15)
+            }`,
+            p: { xs: 3, sm: 4 },
+          }}
+        >
+          {/* Decorative background orb */}
+          <Box
+            aria-hidden="true"
+            sx={{
+              position: "absolute",
+              right: -50,
+              top: -50,
+              width: 200,
+              height: 200,
+              borderRadius: "50%",
+              background:
+                theme.palette.mode === "dark"
+                  ? alpha("#4bbebe", 0.07)
+                  : alpha("#1a5757", 0.04),
+              pointerEvents: "none",
+            }}
+          />
+
+          <IconButton
+            aria-label="Dismiss welcome banner"
+            size="small"
+            onClick={() => setShowWelcome(false)}
+            sx={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              opacity: 0.45,
+              transition: "opacity 0.2s",
+              "&:hover": { opacity: 1 },
+            }}
+          >
+            <FontAwesomeIcon icon="xmark" style={{ fontSize: "0.8rem" }} />
+          </IconButton>
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={3}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+          >
+            {/* Icon */}
+            <Box
+              aria-hidden="true"
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: 2.5,
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background:
+                  theme.palette.mode === "dark"
+                    ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.28)}, ${alpha("#4bbebe", 0.1)})`
+                    : `linear-gradient(135deg, ${alpha("#1a5757", 0.16)}, ${alpha("#1a5757", 0.05)})`,
+                border: `1px solid ${
+                  theme.palette.mode === "dark"
+                    ? alpha("#4bbebe", 0.35)
+                    : alpha("#1a5757", 0.2)
+                }`,
+                fontSize: "1.4rem",
+                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+              }}
+            >
+              <FontAwesomeIcon icon="rocket" />
+            </Box>
+
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 700,
+                  mb: 0.5,
+                  color: theme.palette.mode === "dark" ? "#88cfcf" : "#1a5757",
+                }}
+              >
+                Welcome to Templates
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", mb: 2, lineHeight: 1.65 }}
+              >
+                Community-built infrastructure blueprints for AWS, Azure, and
+                GCP. Fork any template to start building — no setup required.
+              </Typography>
+
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {(
+                  [
+                    { icon: "search", label: "Browse patterns" },
+                    { icon: "code-branch", label: "Fork & customise" },
+                    { icon: "layer-group", label: "Deploy anywhere" },
+                  ] as const
+                ).map(({ icon, label }) => (
+                  <Stack
+                    key={label}
+                    direction="row"
+                    spacing={0.75}
+                    alignItems="center"
+                    sx={{
+                      px: 1.5,
+                      py: 0.75,
+                      borderRadius: 2,
+                      background:
+                        theme.palette.mode === "dark"
+                          ? alpha("#4bbebe", 0.08)
+                          : alpha("#1a5757", 0.05),
+                      border: `1px solid ${
+                        theme.palette.mode === "dark"
+                          ? alpha("#4bbebe", 0.15)
+                          : alpha("#1a5757", 0.1)
+                      }`,
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      icon={icon}
+                      aria-hidden="true"
+                      style={{
+                        fontSize: "0.7rem",
+                        color:
+                          theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 600,
+                        color:
+                          theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+                      }}
+                    >
+                      {label}
+                    </Typography>
+                  </Stack>
+                ))}
+              </Box>
+            </Box>
+          </Stack>
+        </Box>
+      </Collapse>
+
       {/* Search + Sort bar */}
       <Fade in={showContent} timeout={700}>
         <Box
+          component="search"
+          aria-label="Filter templates"
           sx={{
             display: "flex",
             gap: 2,
@@ -217,16 +423,49 @@ const TemplatesGallery: React.FC = () => {
           }}
         >
           <TextField
-            placeholder="Search templates..."
+            placeholder="Search templates…"
             value={localSearch}
             onChange={handleSearchChange}
             size="small"
-            sx={{ flexGrow: 1, minWidth: 240, maxWidth: 480 }}
+            inputProps={{ "aria-label": "Search templates" }}
+            sx={{
+              flexGrow: 1,
+              minWidth: 240,
+              maxWidth: 480,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 3,
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha("#fff", 0.03)
+                    : alpha("#000", 0.02),
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha("#fff", 0.05)
+                      : alpha("#000", 0.04),
+                },
+                "&.Mui-focused": {
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha("#fff", 0.07)
+                      : alpha("#fff", 1),
+                  boxShadow:
+                    theme.palette.mode === "dark"
+                      ? "0 0 0 3px rgba(136, 207, 207, 0.12)"
+                      : "0 0 0 3px rgba(32, 90, 90, 0.1)",
+                },
+              },
+            }}
             slotProps={{
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <FontAwesomeIcon icon="search" style={{ fontSize: "0.9rem", opacity: 0.5 }} />
+                    <FontAwesomeIcon
+                      icon="search"
+                      aria-hidden="true"
+                      style={{ fontSize: "0.9rem", opacity: 0.45 }}
+                    />
                   </InputAdornment>
                 ),
               },
@@ -238,36 +477,54 @@ const TemplatesGallery: React.FC = () => {
             exclusive
             onChange={handleSortChange}
             size="small"
+            aria-label="Sort templates"
             sx={{
               "& .MuiToggleButton-root": {
                 textTransform: "none",
-                fontWeight: 500,
+                fontWeight: 600,
                 px: 2,
+                borderRadius: "10px !important",
                 borderColor:
                   theme.palette.mode === "dark"
                     ? "rgba(255,255,255,0.1)"
                     : "rgba(0,0,0,0.12)",
+                transition: "all 0.2s ease",
+                "&:focus-visible": {
+                  outline: `2px solid ${theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757"}`,
+                  outlineOffset: 2,
+                },
               },
               "& .MuiToggleButton-root.Mui-selected": {
                 backgroundColor:
                   theme.palette.mode === "dark"
                     ? "rgba(136, 207, 207, 0.15)"
                     : "rgba(32, 90, 90, 0.08)",
-                color:
-                  theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+                color: theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+                borderColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(136,207,207,0.3)"
+                    : "rgba(32,90,90,0.2)",
               },
             }}
           >
-            <ToggleButton value="popularity">
+            <ToggleButton
+              value="popularity"
+              aria-label="Sort by popularity"
+              sx={{
+                marginRight: 1,
+              }}
+            >
               <FontAwesomeIcon
                 icon="fire"
+                aria-hidden="true"
                 style={{ marginRight: 6, fontSize: "0.8rem" }}
               />
               Popular
             </ToggleButton>
-            <ToggleButton value="newest">
+            <ToggleButton value="newest" aria-label="Sort by newest">
               <FontAwesomeIcon
                 icon="clock"
+                aria-hidden="true"
                 style={{ marginRight: 6, fontSize: "0.8rem" }}
               />
               Newest
@@ -283,82 +540,541 @@ const TemplatesGallery: React.FC = () => {
         spacing={{ xs: 2, sm: 2.5, md: 3 }}
         alignItems="stretch"
       >
-        {isLoading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <Grid key={`sk-${i}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }} display="flex">
-                <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
-                  <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2, mb: 1.5 }} />
-                  <Skeleton variant="text" width="75%" height={24} sx={{ mb: 0.75 }} />
-                  <Skeleton variant="text" width="100%" height={16} />
-                  <Skeleton variant="text" width="60%" height={16} sx={{ mb: 1.5 }} />
-                  <Skeleton variant="rounded" width={110} height={28} />
+        {isLoading ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <Grid
+              key={`sk-${i}`}
+              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+              display="flex"
+            >
+              <Box
+                sx={{
+                  width: "100%",
+                  borderRadius: "12px",
+                  padding: "20px",
+                  position: "relative",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.03)"
+                      : "#fff",
+                  boxShadow:
+                    "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
+                  border: `1px solid ${
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.06)"
+                      : "rgba(0,0,0,0.06)"
+                  }`,
+                  animation: `sk-rise 0.5s ease ${i * 70}ms both`,
+                  "@keyframes sk-rise": {
+                    from: { opacity: 0, transform: "translateY(14px)" },
+                    to: { opacity: 1, transform: "translateY(0)" },
+                  },
+                }}
+              >
+                {/* Cloud logo badge placeholder */}
+                <Skeleton
+                  variant="rounded"
+                  animation="wave"
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    width: 40,
+                    height: 40,
+                    borderRadius: "8px",
+                    flexShrink: 0,
+                  }}
+                />
+
+                {/* Preview image */}
+                <Skeleton
+                  variant="rectangular"
+                  animation="wave"
+                  height={140}
+                  sx={{ borderRadius: "8px", mb: 1.5, flexShrink: 0 }}
+                />
+
+                {/* Title */}
+                <Skeleton
+                  variant="text"
+                  animation="wave"
+                  width="68%"
+                  sx={{ fontSize: "1.05rem", mb: 0.5 }}
+                />
+
+                {/* Description — 2 lines */}
+                <Skeleton
+                  variant="text"
+                  animation="wave"
+                  width="100%"
+                  sx={{ fontSize: "0.875rem" }}
+                />
+                <Skeleton
+                  variant="text"
+                  animation="wave"
+                  width="82%"
+                  sx={{ fontSize: "0.875rem", mb: 1 }}
+                />
+
+                {/* Author */}
+                <Skeleton
+                  variant="text"
+                  animation="wave"
+                  width="42%"
+                  sx={{ fontSize: "0.75rem", mb: 1.5 }}
+                />
+
+                {/* Analytics row: views / likes / uses / nodes badge */}
+                <Box sx={{ display: "flex", gap: 1.5, mb: 1.5, flexWrap: "wrap" }}>
+                  <Skeleton variant="rounded" animation="wave" width={34} height={18} sx={{ borderRadius: 1 }} />
+                  <Skeleton variant="rounded" animation="wave" width={26} height={18} sx={{ borderRadius: 1 }} />
+                  <Skeleton variant="rounded" animation="wave" width={26} height={18} sx={{ borderRadius: 1 }} />
+                  <Skeleton variant="rounded" animation="wave" width={68} height={18} sx={{ borderRadius: 1 }} />
                 </Box>
-              </Grid>
-            ))
-          : items.length === 0 && status === "succeeded"
-            ? (
-              <Grid size={12}>
-                <Fade in timeout={800}>
+
+                {/* Use Template button */}
+                <Skeleton
+                  variant="rounded"
+                  animation="wave"
+                  width={112}
+                  height={30}
+                  sx={{ borderRadius: 1, mt: "auto" }}
+                />
+              </Box>
+            </Grid>
+          ))
+        ) : items.length === 0 && status === "succeeded" ? (
+          <Grid size={12}>
+            <Fade in timeout={800}>
+              {localSearch ? (
+                /* ── Search empty state ───────────────────────────────── */
+                <Box
+                  role="status"
+                  aria-live="polite"
+                  sx={{
+                    p: { xs: 5, sm: 8 },
+                    textAlign: "center",
+                    borderRadius: 3,
+                    border: "1px dashed",
+                    borderColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(0,0,0,0.1)",
+                  }}
+                >
                   <Box
+                    aria-hidden="true"
                     sx={{
-                      p: 8,
-                      textAlign: "center",
-                      color: "text.secondary",
-                      backgroundColor:
+                      width: 72,
+                      height: 72,
+                      borderRadius: "50%",
+                      mx: "auto",
+                      mb: 2.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background:
                         theme.palette.mode === "dark"
-                          ? alpha("#fff", 0.02)
-                          : alpha("#000", 0.02),
-                      borderRadius: 3,
-                      border: "1px dashed",
-                      borderColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(255,255,255,0.1)"
-                          : "rgba(0,0,0,0.1)",
+                          ? alpha("#4bbebe", 0.1)
+                          : alpha("#1a5757", 0.06),
+                      color:
+                        theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                      fontSize: "1.75rem",
                     }}
                   >
-                    <FontAwesomeIcon
-                      icon="layer-group"
-                      size="3x"
-                      style={{
-                        opacity: 0.3,
-                        marginBottom: 16,
-                        color: theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
-                      }}
-                    />
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
-                      {localSearch ? "No templates found" : "No templates yet"}
-                    </Typography>
-                    <Typography variant="body2">
-                      {localSearch
-                        ? "Try a different search term"
-                        : "Be the first to publish a template from your orchestrator!"}
-                    </Typography>
+                    <FontAwesomeIcon icon="search" />
                   </Box>
-                </Fade>
-              </Grid>
-            )
-            : items.map((template, index) => (
-              <Grid
-                key={template.id}
-                size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
-                display="flex"
+
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.75 }}>
+                    No results for &ldquo;{localSearch}&rdquo;
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", mb: 3, lineHeight: 1.6 }}
+                  >
+                    Try a cloud service, pattern, or architecture keyword.
+                  </Typography>
+
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: "text.disabled",
+                      letterSpacing: "0.1em",
+                      display: "block",
+                      mb: 1.5,
+                      fontSize: "0.68rem",
+                    }}
+                  >
+                    Popular searches
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      justifyContent: "center",
+                      gap: 1,
+                      mb: 3,
+                      maxWidth: 480,
+                      mx: "auto",
+                    }}
+                  >
+                    {[
+                      "VPC",
+                      "EKS",
+                      "Lambda",
+                      "S3",
+                      "Aurora",
+                      "Redis",
+                      "Terraform",
+                      "Azure",
+                    ].map((term) => (
+                      <Chip
+                        key={term}
+                        label={term}
+                        size="small"
+                        onClick={() => handleQuickSearch(term)}
+                        sx={{
+                          borderRadius: 2,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          bgcolor:
+                            theme.palette.mode === "dark"
+                              ? alpha("#4bbebe", 0.08)
+                              : alpha("#1a5757", 0.05),
+                          color:
+                            theme.palette.mode === "dark"
+                              ? "#88cfcf"
+                              : "#205a5a",
+                          border: `1px solid ${
+                            theme.palette.mode === "dark"
+                              ? alpha("#4bbebe", 0.2)
+                              : alpha("#1a5757", 0.12)
+                          }`,
+                          "&:hover": {
+                            bgcolor:
+                              theme.palette.mode === "dark"
+                                ? alpha("#4bbebe", 0.18)
+                                : alpha("#1a5757", 0.12),
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleQuickSearch("")}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      borderColor:
+                        theme.palette.mode === "dark"
+                          ? alpha("#4bbebe", 0.3)
+                          : alpha("#1a5757", 0.25),
+                      color:
+                        theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+                      "&:hover": {
+                        borderColor:
+                          theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                        background:
+                          theme.palette.mode === "dark"
+                            ? alpha("#4bbebe", 0.08)
+                            : alpha("#1a5757", 0.05),
+                      },
+                    }}
+                  >
+                    Clear search
+                  </Button>
+                </Box>
+              ) : (
+                /* ── No templates yet — onboarding empty state ─────────── */
+                <Box
+                  role="status"
+                  aria-live="polite"
+                  sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}
+                >
+                  <Box
+                    aria-hidden="true"
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: "50%",
+                      mx: "auto",
+                      mb: 3,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background:
+                        theme.palette.mode === "dark"
+                          ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.2)}, ${alpha("#4bbebe", 0.06)})`
+                          : `linear-gradient(135deg, ${alpha("#1a5757", 0.12)}, ${alpha("#1a5757", 0.03)})`,
+                      border: `1px solid ${
+                        theme.palette.mode === "dark"
+                          ? alpha("#4bbebe", 0.25)
+                          : alpha("#1a5757", 0.15)
+                      }`,
+                      color:
+                        theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                      fontSize: "2rem",
+                    }}
+                  >
+                    <FontAwesomeIcon icon="layer-group" />
+                  </Box>
+
+                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
+                    No templates yet — be the first!
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: "text.secondary",
+                      mb: 5,
+                      maxWidth: 440,
+                      mx: "auto",
+                      lineHeight: 1.65,
+                    }}
+                  >
+                    Design your cloud architecture on the canvas, then publish
+                    it as a reusable template for the whole community.
+                  </Typography>
+
+                  {/* 3-step guide */}
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={2}
+                    justifyContent="center"
+                    sx={{ mb: 5, maxWidth: 680, mx: "auto" }}
+                  >
+                    {(
+                      [
+                        {
+                          num: "01",
+                          icon: "layer-group",
+                          title: "Design",
+                          desc: "Build your architecture visually on the canvas",
+                        },
+                        {
+                          num: "02",
+                          icon: "code-branch",
+                          title: "Publish",
+                          desc: "Share it as a community template in one click",
+                        },
+                        {
+                          num: "03",
+                          icon: "rocket",
+                          title: "Impact",
+                          desc: "Others fork and deploy your pattern instantly",
+                        },
+                      ] as const
+                    ).map(({ num, icon, title, desc }) => (
+                      <Box
+                        key={num}
+                        sx={{
+                          flex: 1,
+                          p: 2.5,
+                          borderRadius: 3,
+                          textAlign: "left",
+                          border: `1px solid ${
+                            theme.palette.mode === "dark"
+                              ? alpha("#4bbebe", 0.15)
+                              : alpha("#1a5757", 0.1)
+                          }`,
+                          background:
+                            theme.palette.mode === "dark"
+                              ? alpha("#4bbebe", 0.04)
+                              : alpha("#1a5757", 0.03),
+                          position: "relative",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Typography
+                          aria-hidden="true"
+                          sx={{
+                            position: "absolute",
+                            top: 6,
+                            right: 10,
+                            fontWeight: 900,
+                            fontSize: "2.4rem",
+                            lineHeight: 1,
+                            color:
+                              theme.palette.mode === "dark"
+                                ? alpha("#4bbebe", 0.1)
+                                : alpha("#1a5757", 0.07),
+                            userSelect: "none",
+                          }}
+                        >
+                          {num}
+                        </Typography>
+
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 2,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            mb: 1.5,
+                            background:
+                              theme.palette.mode === "dark"
+                                ? alpha("#4bbebe", 0.12)
+                                : alpha("#1a5757", 0.07),
+                            color:
+                              theme.palette.mode === "dark"
+                                ? "#7dd3d3"
+                                : "#1a5757",
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          <FontAwesomeIcon icon={icon} aria-hidden="true" />
+                        </Box>
+
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: 700, mb: 0.5 }}
+                        >
+                          {title}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            lineHeight: 1.5,
+                            display: "block",
+                          }}
+                        >
+                          {desc}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={() => navigate("/home")}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: 3,
+                      px: 5,
+                      py: 1.5,
+                      fontSize: "1rem",
+                      background:
+                        theme.palette.mode === "dark"
+                          ? `linear-gradient(135deg, #4bbebe 0%, #7dd3d3 100%)`
+                          : `linear-gradient(135deg, #1a5757 0%, #3da9a9 100%)`,
+                      boxShadow: `0 8px 32px ${
+                        theme.palette.mode === "dark"
+                          ? alpha("#4bbebe", 0.35)
+                          : alpha("#1a5757", 0.3)
+                      }`,
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: `0 12px 40px ${
+                          theme.palette.mode === "dark"
+                            ? alpha("#4bbebe", 0.5)
+                            : alpha("#1a5757", 0.4)
+                        }`,
+                      },
+                      transition: "all 0.25s ease",
+                    }}
+                  >
+                    Start Building Free
+                  </Button>
+                </Box>
+              )}
+            </Fade>
+          </Grid>
+        ) : (
+          items.map((template, index) => (
+            <Grid
+              key={template.id}
+              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+              display="flex"
+            >
+              <Box
+                sx={{
+                  width: "100%",
+                  animation: `card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(index * 55, 550)}ms both`,
+                  "@keyframes card-enter": {
+                    from: { opacity: 0, transform: "translateY(18px) scale(0.97)" },
+                    to: { opacity: 1, transform: "translateY(0) scale(1)" },
+                  },
+                }}
               >
-                <Fade in={showContent} timeout={800 + index * 60}>
-                  <Box sx={{ width: "100%" }}>
-                    <TemplateCard template={template} />
-                  </Box>
-                </Fade>
-              </Grid>
-            ))}
+                <TemplateCard template={template} />
+              </Box>
+            </Grid>
+          ))
+        )}
 
         {/* Infinite scroll loading indicator */}
-        {status === "loading" && items.length > 0 &&
+        {status === "loading" &&
+          items.length > 0 &&
           Array.from({ length: 4 }).map((_, i) => (
-            <Grid key={`sk-more-${i}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }} display="flex">
-              <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
-                <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2, mb: 1.5 }} />
-                <Skeleton variant="text" width="75%" height={24} sx={{ mb: 0.75 }} />
-                <Skeleton variant="text" width="100%" height={16} />
+            <Grid
+              key={`sk-more-${i}`}
+              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+              display="flex"
+            >
+              <Box
+                sx={{
+                  width: "100%",
+                  borderRadius: "12px",
+                  padding: "20px",
+                  position: "relative",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.03)"
+                      : "#fff",
+                  boxShadow:
+                    "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
+                  border: `1px solid ${
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.06)"
+                      : "rgba(0,0,0,0.06)"
+                  }`,
+                  animation: `sk-rise 0.4s ease ${i * 60}ms both`,
+                }}
+              >
+                <Skeleton
+                  variant="rounded"
+                  animation="wave"
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    width: 40,
+                    height: 40,
+                    borderRadius: "8px",
+                  }}
+                />
+                <Skeleton
+                  variant="rectangular"
+                  animation="wave"
+                  height={140}
+                  sx={{ borderRadius: "8px", mb: 1.5, flexShrink: 0 }}
+                />
+                <Skeleton variant="text" animation="wave" width="68%" sx={{ fontSize: "1.05rem", mb: 0.5 }} />
+                <Skeleton variant="text" animation="wave" width="100%" sx={{ fontSize: "0.875rem" }} />
+                <Skeleton variant="text" animation="wave" width="75%" sx={{ fontSize: "0.875rem", mb: 1 }} />
+                <Skeleton variant="text" animation="wave" width="42%" sx={{ fontSize: "0.75rem", mb: 1.5 }} />
+                <Box sx={{ display: "flex", gap: 1.5, mb: 1.5 }}>
+                  <Skeleton variant="rounded" animation="wave" width={34} height={18} sx={{ borderRadius: 1 }} />
+                  <Skeleton variant="rounded" animation="wave" width={26} height={18} sx={{ borderRadius: 1 }} />
+                  <Skeleton variant="rounded" animation="wave" width={68} height={18} sx={{ borderRadius: 1 }} />
+                </Box>
+                <Skeleton variant="rounded" animation="wave" width={112} height={30} sx={{ borderRadius: 1 }} />
               </Box>
             </Grid>
           ))}
