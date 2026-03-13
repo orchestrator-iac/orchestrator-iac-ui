@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Button, Tooltip, useTheme } from "@mui/material";
+import { Box, Typography, Button, Tooltip, useTheme, alpha } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { TemplateListItem } from "../../types/template";
@@ -34,7 +34,15 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
   };
 
   return (
-    <Box className={styles.card} onClick={handleClick}>
+    <Box
+      className={styles.card}
+      onClick={handleClick}
+      role="article"
+      aria-label={`Template: ${template.templateName}`}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleClick(); }}
+      sx={{ "&:focus-visible": { outline: "2px solid", outlineColor: theme.palette.primary.main, outlineOffset: 2 } }}
+    >
       {/* Cloud logo badge */}
       {logoSrc && (
         <img
@@ -48,28 +56,23 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
       {template.previewImageUrl ? (
         <img
           src={template.previewImageUrl}
-          alt={template.templateName}
+          alt={`Preview of ${template.templateName}`}
           className={styles.templateCardImage}
         />
       ) : (
         <Box
           className={styles.templateCardImage}
+          aria-hidden="true"
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "2.5rem",
-            color:
-              theme.palette.mode === "dark"
-                ? "rgba(136, 207, 207, 0.5)"
-                : "rgba(32, 90, 90, 0.4)",
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? "rgba(136, 207, 207, 0.05)"
-                : "rgba(32, 90, 90, 0.03)",
+            color: alpha(theme.palette.primary.main, 0.5),
+            backgroundColor: alpha(theme.palette.primary.main, 0.04),
           }}
         >
-          <FontAwesomeIcon icon="sitemap" />
+          <FontAwesomeIcon aria-hidden="true" icon="sitemap" />
         </Box>
       )}
 
@@ -113,6 +116,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
       >
         <Tooltip title="Views" arrow>
           <Box
+            aria-label={`${template.analytics.viewCount} views`}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -121,12 +125,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
               color: "text.secondary",
             }}
           >
-            <FontAwesomeIcon icon="eye" style={{ fontSize: "0.75rem" }} />
+            <FontAwesomeIcon aria-hidden="true" icon="eye" style={{ fontSize: "0.75rem" }} />
             {template.analytics.viewCount}
           </Box>
         </Tooltip>
         <Tooltip title="Likes" arrow>
           <Box
+            aria-label={`${template.analytics.likeCount} likes`}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -137,12 +142,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
                 : "text.secondary",
             }}
           >
-            <FontAwesomeIcon icon="heart" style={{ fontSize: "0.75rem" }} />
+            <FontAwesomeIcon aria-hidden="true" icon="heart" style={{ fontSize: "0.75rem" }} />
             {template.analytics.likeCount}
           </Box>
         </Tooltip>
         <Tooltip title="Times used" arrow>
           <Box
+            aria-label={`Used ${template.analytics.usageCount} times`}
             sx={{
               display: "flex",
               alignItems: "center",
@@ -151,12 +157,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
               color: "text.secondary",
             }}
           >
-            <FontAwesomeIcon icon="copy" style={{ fontSize: "0.75rem" }} />
+            <FontAwesomeIcon aria-hidden="true" icon="copy" style={{ fontSize: "0.75rem" }} />
             {template.analytics.usageCount}
           </Box>
         </Tooltip>
         <Box
-          component="code"
+          component="span"
+          aria-label={`${template.nodeCount} nodes`}
           sx={{
             fontSize: "0.75rem",
             color: "text.secondary",
@@ -173,6 +180,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
           }}
         >
           <FontAwesomeIcon
+            aria-hidden="true"
             icon="circle-nodes"
             style={{ fontSize: "0.7rem" }}
           />
@@ -185,27 +193,20 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
         variant="outlined"
         size="small"
         onClick={handleUseTemplate}
+        aria-label={`View details for template: ${template.templateName}`}
         sx={{
-          borderColor:
-            theme.palette.mode === "dark"
-              ? "rgba(136, 207, 207, 0.5)"
-              : "rgba(32, 90, 90, 0.4)",
-          color:
-            theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+          borderColor: alpha(theme.palette.primary.main, 0.5),
+          color: theme.palette.primary.main,
           "&:hover": {
-            borderColor:
-              theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? "rgba(136, 207, 207, 0.1)"
-                : "rgba(32, 90, 90, 0.05)",
+            borderColor: theme.palette.primary.main,
+            backgroundColor: alpha(theme.palette.primary.main, 0.08),
           },
           textTransform: "none",
           fontWeight: 500,
           alignSelf: "flex-start",
         }}
       >
-        Use Template
+        View Details
       </Button>
     </Box>
   );

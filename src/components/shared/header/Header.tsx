@@ -10,6 +10,7 @@ import {
   MenuItem,
   Avatar,
   useTheme,
+  alpha,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -78,12 +79,12 @@ const Header: React.FC = () => {
           sx={{
             fontSize: "1.35rem",
             textDecoration: "none",
-            color: theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+            color: theme.palette.primary.main,
             fontWeight: 600,
             letterSpacing: "-0.02em",
             transition: "all 0.2s ease",
             "&:hover": {
-              color: theme.palette.mode === "dark" ? "#a5e3e3" : "#4bbebe",
+              color: theme.palette.secondary.main,
             },
           }}
         >
@@ -115,11 +116,8 @@ const Header: React.FC = () => {
               borderRadius: 2,
               transition: "all 0.2s",
               "&:hover": {
-                color: theme.palette.mode === "dark" ? "#88cfcf" : "#1a5757",
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(136, 207, 207, 0.07)"
-                    : "rgba(26, 87, 87, 0.06)",
+              color: theme.palette.primary.main,
+              backgroundColor: alpha(theme.palette.primary.main, 0.06),
               },
             }}
           >
@@ -131,11 +129,18 @@ const Header: React.FC = () => {
               <IconButton
                 onClick={handleMenuOpen}
                 size="small"
+                aria-label={`Open user menu for ${user.firstName}`}
+                aria-haspopup="true"
+                aria-expanded={Boolean(anchorEl)}
                 sx={{
                   transition: "all 0.2s ease",
                   position: "relative",
                   "&:hover": {
                     transform: "scale(1.05)",
+                  },
+                  "&:focus-visible": {
+                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outlineOffset: 3,
                   },
                   "&::before": {
                     content: '""',
@@ -143,7 +148,7 @@ const Header: React.FC = () => {
                     inset: -2,
                     borderRadius: "50%",
                     padding: "2px",
-                    background: `linear-gradient(135deg, ${theme.palette.mode === "dark" ? "#4bbebe" : "#1a5757"}, ${theme.palette.mode === "dark" ? "#7dd3d3" : "#3da9a9"})`,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitMask:
                       "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
                     WebkitMaskComposite: "xor",
@@ -160,16 +165,12 @@ const Header: React.FC = () => {
                   sx={{
                     bgcolor:
                       theme.palette.mode === "dark" ? "#2a2a2a" : "#f0f0f0",
-                    color:
-                      theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+                    color: theme.palette.primary.main,
                     fontWeight: 600,
                     width: 40,
                     height: 40,
                     border: "2px solid",
-                    borderColor:
-                      theme.palette.mode === "dark"
-                        ? "rgba(136, 207, 207, 0.2)"
-                        : "rgba(32, 90, 90, 0.15)",
+                    borderColor: alpha(theme.palette.primary.main, 0.2),
                     transition: "all 0.3s ease",
                   }}
                   alt={user.firstName}
@@ -217,14 +218,11 @@ const Header: React.FC = () => {
                     gap: 1.5,
                     transition: "all 0.2s ease",
                     "&:hover": {
-                      backgroundColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(75, 190, 190, 0.08)"
-                          : "rgba(26, 87, 87, 0.04)",
+                          backgroundColor: alpha(theme.palette.primary.main, 0.06),
                     },
                   }}
                 >
-                  <FontAwesomeIcon icon="user" style={{ fontSize: "0.9rem" }} />
+                  <FontAwesomeIcon aria-hidden="true" icon="user" style={{ fontSize: "0.9rem" }} />
                   View Profile
                 </MenuItem>
                 <MenuItem
@@ -244,6 +242,7 @@ const Header: React.FC = () => {
                   }}
                 >
                   <FontAwesomeIcon
+                    aria-hidden="true"
                     icon="sign-out-alt"
                     style={{ fontSize: "0.9rem" }}
                   />

@@ -8,6 +8,7 @@ import {
   Typography,
   Paper,
   useTheme,
+  alpha,
   Snackbar,
   Alert,
 } from "@mui/material";
@@ -348,7 +349,7 @@ const Resources: React.FC = () => {
                 },
                 "& .MuiStepLabel-label.Mui-active": {
                   fontWeight: 600,
-                  color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                  color: theme.palette.primary.main,
                 },
                 "& .MuiStepLabel-label.Mui-completed": {
                   fontWeight: 500,
@@ -357,10 +358,10 @@ const Resources: React.FC = () => {
                   fontSize: "2rem",
                 },
                 "& .MuiStepIcon-root.Mui-active": {
-                  color: theme.palette.mode === "dark" ? "#4bbebe" : "#1a5757",
+                  color: theme.palette.primary.main,
                 },
                 "& .MuiStepIcon-root.Mui-completed": {
-                  color: theme.palette.mode === "dark" ? "#4bbebe" : "#3da9a9",
+                  color: theme.palette.secondary.main,
                 },
               }}
             >
@@ -416,19 +417,11 @@ const Resources: React.FC = () => {
                   textTransform: "none",
                   fontWeight: 600,
                   fontSize: "0.95rem",
-                  backgroundColor:
-                    theme.palette.mode === "dark" ? "#4bbebe" : "#1a5757",
-                  boxShadow:
-                    theme.palette.mode === "dark"
-                      ? "0 4px 12px rgba(75, 190, 190, 0.3)"
-                      : "0 4px 12px rgba(26, 87, 87, 0.2)",
+                  backgroundColor: theme.palette.primary.main,
+                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
                   "&:hover": {
-                    backgroundColor:
-                      theme.palette.mode === "dark" ? "#7dd3d3" : "#205a5a",
-                    boxShadow:
-                      theme.palette.mode === "dark"
-                        ? "0 6px 16px rgba(75, 190, 190, 0.4)"
-                        : "0 6px 16px rgba(26, 87, 87, 0.3)",
+                    backgroundColor: theme.palette.primary.dark,
+                    boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
                     transform: "translateY(-2px)",
                   },
                   transition: "all 0.3s ease",

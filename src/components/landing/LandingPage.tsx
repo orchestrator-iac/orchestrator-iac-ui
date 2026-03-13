@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -74,11 +74,12 @@ const FloatingIcon: React.FC<FloatingIconProps> = ({
   const theme = useTheme();
   return (
     <Box
+      aria-hidden="true"
       sx={{
         position: "absolute",
         left: x,
         top: y,
-        opacity: theme.palette.mode === "dark" ? 0.08 : 0.15,
+        opacity: theme.palette.mode === "dark" ? 0.14 : 0.25,
         fontSize: "64px",
         color: theme.palette.primary.main,
         animation: `float ${duration}s ease-in-out infinite`,
@@ -126,26 +127,24 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         flexDirection: "column",
         alignItems: "center",
         textAlign: "center",
-        cursor: "pointer",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        transform: isHovered ? "translateY(-8px)" : "translateY(0)",
       }}
     >
       <Box
         sx={{
-          width: 56,
-          height: 56,
+          width: 72,
+          height: 72,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: "16px",
+          borderRadius: "20px",
           mb: 2,
           background: isHovered
-            ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
-            : alpha(theme.palette.primary.main, 0.1),
+            ? theme.palette.primary.main
+            : alpha(theme.palette.primary.main, 0.12),
+          border: `2px solid ${isHovered ? "transparent" : alpha(theme.palette.primary.main, 0.3)}`,
           color: isHovered ? "#fff" : theme.palette.primary.main,
           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          transform: isHovered ? "scale(1.1)" : "scale(1)",
+          transform: isHovered ? "scale(1.15)" : "scale(1)",
         }}
       >
         {icon}
@@ -195,11 +194,16 @@ const PathCard: React.FC<PathCardProps> = ({
 
   return (
     <Box
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      aria-label={title}
       sx={{
         p: 4,
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         borderRadius: 3,
@@ -208,19 +212,19 @@ const PathCard: React.FC<PathCardProps> = ({
             ? alpha(theme.palette.background.paper, 0.4)
             : alpha(theme.palette.background.paper, 0.8),
         backdropFilter: "blur(20px)",
-        border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.2 : 0.1)}`,
+        border: `2px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.3 : 0.15)}`,
         cursor: "pointer",
         transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-        transform: isHovered ? "translateY(-4px)" : "translateY(0)",
+        transform: isHovered ? "translateY(-8px)" : "translateY(0)",
         boxShadow: isHovered
-          ? `0 8px 24px ${alpha(theme.palette.primary.main, 0.2)}`
-          : "none",
+          ? `0 16px 48px ${alpha(theme.palette.primary.main, 0.4)}`
+          : `0 2px 12px ${alpha(theme.palette.common.black, 0.08)}`,
         "&:hover": {
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+          border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
         },
       }}
     >
-      <Typography sx={{ fontSize: "48px", mb: 2 }}>{emoji}</Typography>
+      <Typography sx={{ fontSize: "64px", mb: 2, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))" }}>{emoji}</Typography>
       <Typography
         variant="h5"
         sx={{
@@ -248,6 +252,7 @@ const PathCard: React.FC<PathCardProps> = ({
           gap: 1,
           color: theme.palette.primary.main,
           fontWeight: 600,
+          fontSize: "0.95rem",
           transition: "gap 0.3s ease",
         }}
       >
@@ -280,18 +285,22 @@ const Testimonial: React.FC<TestimonialProps> = ({ quote, author, role }) => {
       sx={{
         p: 4,
         borderRadius: 3,
-        background: alpha(theme.palette.background.paper, 0.4),
-        backdropFilter: "blur(10px)",
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        background: alpha(theme.palette.background.paper, 0.6),
+        backdropFilter: "blur(16px)",
+        border: `2px solid ${alpha(theme.palette.divider, 0.2)}`,
+        borderLeft: `4px solid ${theme.palette.primary.main}`,
+        boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.1)}`,
         height: "100%",
       }}
     >
       <Typography
         sx={{
-          fontSize: "32px",
+          fontSize: "56px",
+          fontWeight: 900,
           color: theme.palette.primary.main,
-          mb: 2,
+          mb: -1,
           lineHeight: 1,
+          opacity: 0.7,
         }}
       >
         "
@@ -325,6 +334,27 @@ const Testimonial: React.FC<TestimonialProps> = ({ quote, author, role }) => {
   );
 };
 
+const useInView = (threshold = 0.12) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+};
+
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -333,6 +363,12 @@ const LandingPage: React.FC = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const workflowView = useInView();
+  const useCasesView = useInView();
+  const pathsView = useInView();
+  const featuresView = useInView();
+  const testimonialsView = useInView();
 
   const features = [
     {
@@ -545,9 +581,9 @@ const LandingPage: React.FC = () => {
             width: "600px",
             height: "600px",
             borderRadius: "50%",
-            background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.3)} 0%, transparent 70%)`,
             filter: "blur(60px)",
-            opacity: theme.palette.mode === "dark" ? 0.6 : 0.4,
+            opacity: theme.palette.mode === "dark" ? 0.9 : 0.65,
             animation: "float-slow 20s ease-in-out infinite",
             "@keyframes float-slow": {
               "0%, 100%": { transform: "translate(0, 0) scale(1)" },
@@ -564,9 +600,9 @@ const LandingPage: React.FC = () => {
             width: "500px",
             height: "500px",
             borderRadius: "50%",
-            background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.12)} 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.25)} 0%, transparent 70%)`,
             filter: "blur(60px)",
-            opacity: theme.palette.mode === "dark" ? 0.5 : 0.3,
+            opacity: theme.palette.mode === "dark" ? 0.8 : 0.55,
             animation: "float-slow 25s ease-in-out infinite reverse",
           }}
         />
@@ -820,7 +856,7 @@ const LandingPage: React.FC = () => {
           <Box
             sx={{
               minHeight: { md: "95vh" },
-              py: { xs: 10, md: 14 },
+              py: { xs: 4, md: 5 },
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -834,58 +870,73 @@ const LandingPage: React.FC = () => {
                   transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               >
-                {/* Enhanced Badge with Animation */}
+                {/* Delightful Badge — animated gradient border + shimmer sweep */}
                 <Box
                   sx={{
+                    position: "relative",
                     display: "inline-flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    px: 3,
-                    py: 1.25,
                     mb: 5,
                     borderRadius: 50,
-                    background:
-                      theme.palette.mode === "dark"
-                        ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)}, ${alpha(theme.palette.secondary.main, 0.15)})`
-                        : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, ${alpha(theme.palette.secondary.main, 0.08)})`,
-                    border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                    backdropFilter: "blur(20px)",
-                    boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
-                    animation: "pulse 3s ease-in-out infinite",
-                    "@keyframes pulse": {
-                      "0%, 100%": {
-                        boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
-                      },
-                      "50%": {
-                        boxShadow: `0 8px 30px ${alpha(theme.palette.primary.main, 0.25)}`,
-                      },
+                    p: "2px",
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                    backgroundSize: "200% 200%",
+                    animation: "badge-border 4s ease infinite",
+                    boxShadow: `0 0 32px ${alpha(theme.palette.primary.main, 0.45)}, 0 0 64px ${alpha(theme.palette.primary.main, 0.2)}`,
+                    "@keyframes badge-border": {
+                      "0%, 100%": { backgroundPosition: "0% 50%" },
+                      "50%": { backgroundPosition: "100% 50%" },
                     },
                   }}
                 >
-                  <BoltIcon
-                    sx={{ fontSize: 22, color: theme.palette.primary.main }}
-                  />
-                  <Typography
+                  <Box
                     sx={{
-                      fontSize: "0.95rem",
-                      fontWeight: 700,
-                      color: theme.palette.text.primary,
-                      letterSpacing: "0.01em",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      px: 3,
+                      py: 1.25,
+                      borderRadius: 50,
+                      background:
+                        theme.palette.mode === "dark"
+                          ? alpha(theme.palette.background.default, 0.92)
+                          : alpha(theme.palette.background.paper, 0.95),
+                      backdropFilter: "blur(20px)",
+                      position: "relative",
+                      overflow: "hidden",
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: "-100%",
+                        width: "55%",
+                        height: "100%",
+                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent)",
+                        animation: "badge-shimmer 3.5s ease-in-out infinite",
+                        "@keyframes badge-shimmer": {
+                          "0%": { left: "-100%" },
+                          "55%, 100%": { left: "210%" },
+                        },
+                      },
                     }}
                   >
-                    Production-Ready Infrastructure as Code
-                  </Typography>
-                  <Chip
-                    label="NEW"
-                    size="small"
-                    sx={{
-                      height: 20,
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
-                      color: "#fff",
-                    }}
-                  />
+                    <ArchitectureIcon
+                      sx={{
+                        fontSize: 22,
+                        color: theme.palette.primary.main,
+                        filter: `drop-shadow(0 0 6px ${alpha(theme.palette.primary.main, 0.9)})`,
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: "0.95rem",
+                        fontWeight: 700,
+                        color: theme.palette.text.primary,
+                        letterSpacing: "0.01em",
+                      }}
+                    >
+                      Production-Ready Infrastructure as Code
+                    </Typography>
+                  </Box>
                 </Box>
 
                 {/* Enhanced Main Heading with Better Gradient */}
@@ -893,15 +944,15 @@ const LandingPage: React.FC = () => {
                   variant="h1"
                   sx={{
                     fontSize: {
-                      xs: "3rem",
-                      sm: "4rem",
-                      md: "5rem",
+                      xs: "3.5rem",
+                      sm: "5rem",
+                      md: "6.5rem",
                       lg: "6.5rem",
                     },
                     fontWeight: 900,
-                    lineHeight: 1.1,
+                    lineHeight: 1,
                     mb: 4,
-                    letterSpacing: "-0.05em",
+                    letterSpacing: "-0.06em",
                   }}
                 >
                   <Box
@@ -931,54 +982,103 @@ const LandingPage: React.FC = () => {
                       display: "block",
                       color: theme.palette.text.primary,
                       mt: 1,
+                      position: "relative",
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        bottom: -14,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: "40%",
+                        height: 5,
+                        borderRadius: 3,
+                        background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main}, transparent)`,
+                        boxShadow: `0 0 24px ${alpha(theme.palette.primary.main, 0.8)}, 0 0 48px ${alpha(theme.palette.primary.main, 0.4)}`,
+                        animation: "heading-glow-line 3s ease-in-out infinite",
+                        "@keyframes heading-glow-line": {
+                          "0%, 100%": { opacity: 0.6, width: "35%" },
+                          "50%": { opacity: 1, width: "58%" },
+                        },
+                      },
                     }}
                   >
                     Infrastructure
                   </Box>
                 </Typography>
 
-                {/* Subtitle tagline */}
+                {/* Delightful tagline — individually lit words */}
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: { xs: 1, sm: 1.5, md: 2 },
-                    mt: -2,
-                    mb: 4,
+                    gap: { xs: 2, sm: 3 },
+                    mt: 3,
+                    mb: 5,
                     flexWrap: "wrap",
                   }}
                 >
-                  <Box
-                    sx={{
-                      height: 2,
-                      width: { xs: 30, sm: 50, md: 70 },
-                      background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main})`,
-                      borderRadius: 2,
-                      flexShrink: 0,
-                    }}
-                  />
                   <Typography
+                    component="span"
                     sx={{
-                      fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
-                      fontWeight: 700,
-                      color: theme.palette.text.secondary,
-                      whiteSpace: "nowrap",
-                      letterSpacing: "0.08em",
+                      fontSize: { xs: "0.9rem", sm: "1rem", md: "1.15rem" },
+                      fontWeight: 800,
+                      color: theme.palette.primary.main,
+                      letterSpacing: "0.12em",
                       textTransform: "uppercase",
+                      textShadow: `0 0 28px ${alpha(theme.palette.primary.main, 0.7)}`,
                     }}
                   >
-                    Visually, Effortlessly, Instantly
+                    Visually
                   </Typography>
                   <Box
+                    component="span"
                     sx={{
-                      height: 2,
-                      width: { xs: 30, sm: 50, md: 70 },
-                      background: `linear-gradient(90deg, ${theme.palette.primary.main}, transparent)`,
-                      borderRadius: 2,
-                      flexShrink: 0,
+                      color: alpha(theme.palette.primary.main, 0.45),
+                      fontSize: "1.1rem",
+                      lineHeight: 1,
+                      userSelect: "none",
                     }}
-                  />
+                  >
+                    ✦
+                  </Box>
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: { xs: "0.9rem", sm: "1rem", md: "1.15rem" },
+                      fontWeight: 800,
+                      color: theme.palette.secondary.main,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      textShadow: `0 0 28px ${alpha(theme.palette.secondary.main, 0.7)}`,
+                    }}
+                  >
+                    Effortlessly
+                  </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      color: alpha(theme.palette.primary.main, 0.45),
+                      fontSize: "1.1rem",
+                      lineHeight: 1,
+                      userSelect: "none",
+                    }}
+                  >
+                    ✦
+                  </Box>
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: { xs: "0.9rem", sm: "1rem", md: "1.15rem" },
+                      fontWeight: 800,
+                      color: theme.palette.primary.light,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      textShadow: `0 0 28px ${alpha(theme.palette.primary.main, 0.6)}`,
+                    }}
+                  >
+                    Instantly
+                  </Typography>
                 </Box>
 
                 {/* Enhanced Description */}
@@ -1024,37 +1124,27 @@ const LandingPage: React.FC = () => {
                     variant="contained"
                     size="large"
                     onClick={() => navigate("/home")}
-                    startIcon={<DiagramIcon />}
+                    aria-label="Start Building Free — open the design canvas"
+                    startIcon={<DiagramIcon aria-hidden="true" />}
                     sx={{
-                      px: 6,
-                      py: 3,
-                      fontSize: "1.15rem",
-                      fontWeight: 700,
-                      borderRadius: 3,
+                      px: 5,
+                      py: 1.75,
+                      fontSize: "1rem",
+                      fontWeight: 600,
+                      borderRadius: 2,
                       textTransform: "none",
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                      boxShadow: `0 12px 50px ${alpha(theme.palette.primary.main, 0.4)}`,
-                      position: "relative",
-                      overflow: "hidden",
-                      "&::before": {
-                        content: '""',
-                        position: "absolute",
-                        top: 0,
-                        left: "-100%",
-                        width: "100%",
-                        height: "100%",
-                        background:
-                          "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
-                        transition: "left 0.5s",
-                      },
+                      background: theme.palette.primary.main,
+                      color: theme.palette.primary.contrastText,
+                      boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
                       "&:hover": {
-                        boxShadow: `0 20px 60px ${alpha(theme.palette.primary.main, 0.5)}`,
-                        transform: "translateY(-4px) scale(1.02)",
-                        "&::before": {
-                          left: "100%",
-                        },
+                        background: theme.palette.primary.dark,
+                        boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
+                        transform: "translateY(-1px)",
                       },
-                      transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                      "&:active": {
+                        transform: "scale(0.98)",
+                      },
+                      transition: "all 0.2s ease",
                     }}
                   >
                     Start Building Free
@@ -1062,13 +1152,14 @@ const LandingPage: React.FC = () => {
                   <Button
                     variant="outlined"
                     size="large"
-                    startIcon={<PlayIcon />}
+                    aria-label="Watch a product demo"
+                    startIcon={<PlayIcon aria-hidden="true" />}
                     sx={{
                       px: 5,
-                      py: 3,
-                      fontSize: "1.15rem",
+                      py: 1.75,
+                      fontSize: "1rem",
                       fontWeight: 600,
-                      borderRadius: 3,
+                      borderRadius: 2,
                       textTransform: "none",
                       color: theme.palette.text.primary,
                       borderColor: alpha(theme.palette.primary.main, 0.3),
@@ -1119,35 +1210,39 @@ const LandingPage: React.FC = () => {
                   ].map((stat, idx) => (
                     <Box
                       key={idx}
+                      aria-label={`${stat.value} ${stat.label}`}
                       sx={{
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         gap: 1,
-                        px: 3,
-                        py: 2,
-                        borderRadius: 2,
-                        background: alpha(theme.palette.background.paper, 0.4),
-                        backdropFilter: "blur(10px)",
-                        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                        transition: "all 0.3s ease",
+                        px: 4,
+                        py: 3,
+                        borderRadius: 3,
+                        background:
+                          theme.palette.mode === "dark"
+                            ? alpha(theme.palette.background.paper, 0.55)
+                            : alpha(theme.palette.background.paper, 0.85),
+                        backdropFilter: "blur(16px)",
+                        boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, 0.28)}, 0 8px 32px ${alpha(theme.palette.primary.main, 0.12)}`,
+                        transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
                         "&:hover": {
-                          background: alpha(theme.palette.primary.main, 0.05),
-                          border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                          transform: "translateY(-4px)",
+                          background: alpha(theme.palette.primary.main, 0.08),
+                          boxShadow: `0 0 0 2px ${theme.palette.primary.main}, 0 16px 48px ${alpha(theme.palette.primary.main, 0.35)}`,
+                          transform: "translateY(-10px)",
                         },
                       }}
                     >
-                      <Box sx={{ color: theme.palette.primary.main }}>
+                      <Box sx={{ color: theme.palette.primary.main }} aria-hidden="true">
                         {stat.icon}
                       </Box>
                       <Typography
                         sx={{
-                          fontSize: "2.5rem",
+                          fontSize: "3.5rem",
                           fontWeight: 900,
                           color: theme.palette.primary.main,
                           lineHeight: 1,
-                          letterSpacing: "-0.02em",
+                          letterSpacing: "-0.03em",
                         }}
                       >
                         {stat.value}
@@ -1167,14 +1262,14 @@ const LandingPage: React.FC = () => {
                 </Box>
 
                 {/* Trusted By Section */}
-                <Box sx={{ mt: 8, opacity: 0.6 }}>
+                <Box sx={{ mt: 8 }}>
                   <Typography
                     variant="caption"
                     sx={{
-                      color: theme.palette.text.secondary,
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      letterSpacing: "0.1em",
+                      color: alpha(theme.palette.text.secondary, 0.65),
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.15em",
                       textTransform: "uppercase",
                       mb: 3,
                       display: "block",
@@ -1184,16 +1279,55 @@ const LandingPage: React.FC = () => {
                   </Typography>
                   <Stack
                     direction="row"
-                    spacing={4}
+                    spacing={2}
                     sx={{
                       justifyContent: "center",
                       alignItems: "center",
-                      opacity: 0.5,
+                      flexWrap: "wrap",
                     }}
                   >
-                    <FaAws size={40} />
-                    <VscAzure size={36} />
-                    <SiGooglecloud size={38} />
+                    {[
+                      { icon: <FaAws size={36} />, label: "AWS" },
+                      { icon: <VscAzure size={32} />, label: "Azure" },
+                      { icon: <SiGooglecloud size={34} />, label: "GCP" },
+                    ].map(({ icon, label }) => (
+                      <Box
+                        key={label}
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 0.75,
+                          px: 3,
+                          py: 1.5,
+                          borderRadius: 2,
+                          background: alpha(theme.palette.background.paper, 0.5),
+                          border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+                          backdropFilter: "blur(8px)",
+                          color: alpha(theme.palette.text.primary, 0.45),
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            color: theme.palette.primary.main,
+                            border: `1px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+                            background: alpha(theme.palette.primary.main, 0.05),
+                            transform: "translateY(-3px)",
+                            boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.25)}`,
+                          },
+                        }}
+                      >
+                        {icon}
+                        <Typography
+                          sx={{
+                            fontSize: "0.62rem",
+                            fontWeight: 700,
+                            letterSpacing: "0.12em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {label}
+                        </Typography>
+                      </Box>
+                    ))}
                   </Stack>
                 </Box>
               </Box>
@@ -1241,13 +1375,14 @@ const LandingPage: React.FC = () => {
       >
         <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
           {/* How It Works Section */}
-          <Box sx={{ py: { xs: 6, md: 10 } }}>
+          <Box component="section" aria-labelledby="how-it-works-heading" sx={{ py: { xs: 6, md: 10 } }}>
             <Typography
+              id="how-it-works-heading"
               variant="h2"
               sx={{
                 textAlign: "center",
-                fontWeight: 800,
-                fontSize: { xs: "2rem", md: "2.5rem" },
+                fontWeight: 900,
+                fontSize: { xs: "2.4rem", md: "3.2rem" },
                 mb: 2,
                 color: theme.palette.text.primary,
               }}
@@ -1268,9 +1403,17 @@ const LandingPage: React.FC = () => {
               From design to deployment in four simple steps
             </Typography>
 
-            <Grid container spacing={4}>
+            <Grid container spacing={4} ref={workflowView.ref}>
               {workflow.map((step, index) => (
-                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+                <Grid
+                  size={{ xs: 12, sm: 6, md: 3 }}
+                  key={index}
+                  sx={{
+                    opacity: workflowView.inView ? 1 : 0,
+                    transform: workflowView.inView ? "none" : "translateY(28px)",
+                    transition: `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`,
+                  }}
+                >
                   <Card
                     sx={{
                       height: "100%",
@@ -1282,12 +1425,12 @@ const LandingPage: React.FC = () => {
                           ? alpha(theme.palette.background.paper, 0.6)
                           : alpha(theme.palette.background.paper, 0.9),
                       backdropFilter: "blur(20px)",
-                      border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.2 : 0.1)}`,
+                      border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.25 : 0.15)}`,
                       transition: "all 0.3s ease",
                       "&:hover": {
-                        transform: "translateY(-8px)",
-                        boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.2)}`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                        transform: "translateY(-12px)",
+                        boxShadow: `0 20px 56px ${alpha(theme.palette.primary.main, 0.35)}`,
+                        border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
                       },
                     }}
                   >
@@ -1297,19 +1440,24 @@ const LandingPage: React.FC = () => {
                       <Typography
                         variant="h3"
                         sx={{
-                          fontWeight: 700,
+                          fontWeight: 900,
                           mb: 2,
-                          color: alpha(theme.palette.primary.main, 0.5),
+                          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                          backgroundClip: "text",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
                         }}
                       >
                         {step.number}
                       </Typography>
                       <Box
                         sx={{
-                          width: 80,
-                          height: 80,
+                          width: 96,
+                          height: 96,
                           borderRadius: "50%",
-                          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.secondary.main, 0.2)})`,
+                          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.secondary.main, 0.3)})`,
+                          border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                          color: theme.palette.primary.main,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -1344,13 +1492,14 @@ const LandingPage: React.FC = () => {
           </Box>
 
           {/* Use Cases Section */}
-          <Box sx={{ py: { xs: 6, md: 10 } }}>
+          <Box component="section" aria-labelledby="use-cases-heading" sx={{ py: { xs: 6, md: 10 } }}>
             <Typography
+              id="use-cases-heading"
               variant="h2"
               sx={{
                 textAlign: "center",
-                fontWeight: 800,
-                fontSize: { xs: "2rem", md: "2.5rem" },
+                fontWeight: 900,
+                fontSize: { xs: "2.4rem", md: "3.2rem" },
                 mb: 2,
                 color: theme.palette.text.primary,
               }}
@@ -1371,9 +1520,17 @@ const LandingPage: React.FC = () => {
               Whether you're a startup or enterprise, we've got you covered
             </Typography>
 
-            <Grid container spacing={4}>
+            <Grid container spacing={4} ref={useCasesView.ref}>
               {useCases.map((useCase, index) => (
-                <Grid size={{ xs: 12, md: 4 }} key={index}>
+                <Grid
+                  size={{ xs: 12, md: 4 }}
+                  key={index}
+                  sx={{
+                    opacity: useCasesView.inView ? 1 : 0,
+                    transform: useCasesView.inView ? "none" : "translateY(28px)",
+                    transition: `opacity 0.5s ease ${index * 0.12}s, transform 0.5s ease ${index * 0.12}s`,
+                  }}
+                >
                   <Card
                     sx={{
                       height: "100%",
@@ -1385,12 +1542,12 @@ const LandingPage: React.FC = () => {
                           ? alpha(theme.palette.background.paper, 0.6)
                           : alpha(theme.palette.background.paper, 0.9),
                       backdropFilter: "blur(20px)",
-                      border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.2 : 0.1)}`,
+                      border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.25 : 0.15)}`,
                       transition: "all 0.3s ease",
                       "&:hover": {
-                        transform: "translateY(-8px)",
-                        boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.2)}`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                        transform: "translateY(-12px)",
+                        boxShadow: `0 20px 56px ${alpha(theme.palette.primary.main, 0.35)}`,
+                        border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
                       },
                     }}
                   >
@@ -1404,10 +1561,12 @@ const LandingPage: React.FC = () => {
                     >
                       <Box
                         sx={{
-                          width: 60,
-                          height: 60,
-                          borderRadius: 2,
-                          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.secondary.main, 0.2)})`,
+                          width: 76,
+                          height: 76,
+                          borderRadius: 3,
+                          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.secondary.main, 0.3)})`,
+                          border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                          color: theme.palette.primary.main,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -1441,11 +1600,9 @@ const LandingPage: React.FC = () => {
                             label={example}
                             size="small"
                             sx={{
-                              background: alpha(
-                                theme.palette.primary.main,
-                                0.1,
-                              ),
+                              background: alpha(theme.palette.primary.main, 0.1),
                               border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                              color: theme.palette.primary.main,
                             }}
                           />
                         ))}
@@ -1458,13 +1615,14 @@ const LandingPage: React.FC = () => {
           </Box>
 
           {/* Choose Your Path Section */}
-          <Box sx={{ py: { xs: 6, md: 10 } }}>
+          <Box component="section" aria-labelledby="choose-path-heading" sx={{ py: { xs: 6, md: 10 } }}>
             <Typography
+              id="choose-path-heading"
               variant="h2"
               sx={{
                 textAlign: "center",
-                fontWeight: 800,
-                fontSize: { xs: "2rem", md: "2.5rem" },
+                fontWeight: 900,
+                fontSize: { xs: "2.4rem", md: "3.2rem" },
                 mb: 2,
                 color: theme.palette.text.primary,
               }}
@@ -1486,9 +1644,17 @@ const LandingPage: React.FC = () => {
               covered
             </Typography>
 
-            <Grid container spacing={3}>
+            <Grid container spacing={4} ref={pathsView.ref}>
               {paths.map((path, index) => (
-                <Grid size={{ xs: 12, md: 4 }} key={index}>
+                <Grid
+                  size={{ xs: 12, md: 4 }}
+                  key={index}
+                  sx={{
+                    opacity: pathsView.inView ? 1 : 0,
+                    transform: pathsView.inView ? "none" : "translateY(28px)",
+                    transition: `opacity 0.5s ease ${index * 0.12}s, transform 0.5s ease ${index * 0.12}s`,
+                  }}
+                >
                   <Box sx={{ height: "100%", py: 1 }}>
                     <PathCard {...path} />
                   </Box>
@@ -1498,13 +1664,14 @@ const LandingPage: React.FC = () => {
           </Box>
 
           {/* Powerful Features Section */}
-          <Box sx={{ py: { xs: 6, md: 10 } }}>
+          <Box component="section" aria-labelledby="features-heading" sx={{ py: { xs: 6, md: 10 } }}>
             <Typography
+              id="features-heading"
               variant="h2"
               sx={{
                 textAlign: "center",
-                fontWeight: 800,
-                fontSize: { xs: "2rem", md: "2.5rem" },
+                fontWeight: 900,
+                fontSize: { xs: "2.4rem", md: "3.2rem" },
                 mb: 2,
                 color: theme.palette.text.primary,
               }}
@@ -1526,9 +1693,17 @@ const LandingPage: React.FC = () => {
               architectures
             </Typography>
 
-            <Grid container spacing={3}>
+            <Grid container spacing={4} ref={featuresView.ref}>
               {features.map((feature, index) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                <Grid
+                  size={{ xs: 12, sm: 6, md: 4 }}
+                  key={index}
+                  sx={{
+                    opacity: featuresView.inView ? 1 : 0,
+                    transform: featuresView.inView ? "none" : "translateY(28px)",
+                    transition: `opacity 0.5s ease ${index * 0.08}s, transform 0.5s ease ${index * 0.08}s`,
+                  }}
+                >
                   <Card
                     sx={{
                       height: "100%",
@@ -1540,12 +1715,12 @@ const LandingPage: React.FC = () => {
                           ? alpha(theme.palette.background.paper, 0.6)
                           : alpha(theme.palette.background.paper, 0.9),
                       backdropFilter: "blur(20px)",
-                      border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.2 : 0.1)}`,
+                      border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.25 : 0.15)}`,
                       transition: "all 0.3s ease",
                       "&:hover": {
-                        transform: "translateY(-8px)",
-                        boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.2)}`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                        transform: "translateY(-12px)",
+                        boxShadow: `0 20px 56px ${alpha(theme.palette.primary.main, 0.35)}`,
+                        border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
                       },
                     }}
                   >
@@ -1554,6 +1729,7 @@ const LandingPage: React.FC = () => {
                         flexGrow: 1,
                         display: "flex",
                         flexDirection: "column",
+                        p: "0 !important",
                       }}
                     >
                       <FeatureCard {...feature} />
@@ -1565,18 +1741,19 @@ const LandingPage: React.FC = () => {
           </Box>
 
           {/* Testimonials Section */}
-          <Box sx={{ py: { xs: 6, md: 10 } }}>
+          <Box component="section" aria-labelledby="testimonials-heading" sx={{ py: { xs: 6, md: 10 } }}>
             <Typography
+              id="testimonials-heading"
               variant="h2"
               sx={{
                 textAlign: "center",
-                fontWeight: 800,
-                fontSize: { xs: "2rem", md: "2.5rem" },
+                fontWeight: 900,
+                fontSize: { xs: "2.4rem", md: "3.2rem" },
                 mb: 2,
                 color: theme.palette.text.primary,
               }}
             >
-              Loved by Designers Worldwide
+              Loved by Cloud Teams Worldwide
             </Typography>
             <Typography
               variant="body1"
@@ -1593,9 +1770,17 @@ const LandingPage: React.FC = () => {
               infrastructure needs
             </Typography>
 
-            <Grid container spacing={3}>
+            <Grid container spacing={4} ref={testimonialsView.ref}>
               {testimonials.map((testimonial, index) => (
-                <Grid size={{ xs: 12, md: 4 }} key={index}>
+                <Grid
+                  size={{ xs: 12, md: 4 }}
+                  key={index}
+                  sx={{
+                    opacity: testimonialsView.inView ? 1 : 0,
+                    transform: testimonialsView.inView ? "none" : "translateY(28px)",
+                    transition: `opacity 0.5s ease ${index * 0.15}s, transform 0.5s ease ${index * 0.15}s`,
+                  }}
+                >
                   <Testimonial {...testimonial} />
                 </Grid>
               ))}
@@ -1604,16 +1789,19 @@ const LandingPage: React.FC = () => {
 
           {/* Final CTA */}
           <Box
+            component="section"
+            aria-labelledby="final-cta-heading"
             sx={{
               py: { xs: 8, md: 12 },
               textAlign: "center",
             }}
           >
             <Typography
+              id="final-cta-heading"
               variant="h2"
               sx={{
-                fontWeight: 800,
-                fontSize: { xs: "2rem", md: "2.5rem" },
+                fontWeight: 900,
+                fontSize: { xs: "2.6rem", md: "3.5rem" },
                 mb: 2,
                 color: theme.palette.text.primary,
               }}
@@ -1638,18 +1826,19 @@ const LandingPage: React.FC = () => {
               variant="contained"
               size="large"
               onClick={() => navigate("/home")}
+              aria-label="Launch free canvas — start designing your infrastructure"
               sx={{
-                px: 6,
-                py: 2,
-                fontSize: "1.2rem",
-                fontWeight: 600,
-                borderRadius: 2,
+                px: 8,
+                py: 2.5,
+                fontSize: "1.3rem",
+                fontWeight: 700,
+                borderRadius: 3,
                 textTransform: "none",
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.3)}`,
+                boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.45)}`,
                 "&:hover": {
-                  boxShadow: `0 12px 32px ${alpha(theme.palette.primary.main, 0.4)}`,
-                  transform: "translateY(-2px)",
+                  boxShadow: `0 20px 60px ${alpha(theme.palette.primary.main, 0.6)}`,
+                  transform: "translateY(-4px) scale(1.02)",
                 },
                 transition: "all 0.3s ease",
               }}
@@ -1676,7 +1865,7 @@ const LandingPage: React.FC = () => {
               variant="body2"
               sx={{ color: theme.palette.text.secondary }}
             >
-              © 2025 Cloud Orchestrator. Built with ❤️ for cloud architects
+              © 2026 Cloud Orchestrator. Built with ❤️ for cloud architects
             </Typography>
           </Container>
         </Box>

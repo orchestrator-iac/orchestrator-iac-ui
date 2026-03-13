@@ -14,7 +14,7 @@ const ThemeSwitch = styled(Switch)(({ theme }) => ({
       transform: "translateX(22px)",
       color: "#fff",
       "& + .MuiSwitch-track": {
-        backgroundColor: theme.palette.mode === "dark" ? "#4bb3b3" : "#057474",
+        backgroundColor: theme.palette.primary.main,
         opacity: 1,
       },
     },

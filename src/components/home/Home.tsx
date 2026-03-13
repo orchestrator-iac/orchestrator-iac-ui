@@ -153,6 +153,8 @@ const Home: React.FC = () => {
       {/* Search and Stats Bar */}
       <Fade in={showContent} timeout={600}>
         <Box
+          component="search"
+          aria-label="Search orchestrators and resources"
           sx={{
             mb: 4,
             display: "flex",
@@ -163,13 +165,14 @@ const Home: React.FC = () => {
           }}
         >
           <TextField
-            placeholder="Search orchestrators and resources..."
+            placeholder="Search orchestrators and resources…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             variant="outlined"
             size="small"
+            inputProps={{ "aria-label": "Search orchestrators and resources" }}
             sx={{
-              flex: { xs: "1", md: "0 1 400px" },
+              flex: { xs: "1", md: "0 1 420px" },
               "& .MuiOutlinedInput-root": {
                 borderRadius: 3,
                 backgroundColor:
@@ -188,10 +191,7 @@ const Home: React.FC = () => {
                     theme.palette.mode === "dark"
                       ? alpha("#fff", 0.07)
                       : alpha("#fff", 1),
-                  boxShadow:
-                    theme.palette.mode === "dark"
-                      ? "0 0 0 3px rgba(136, 207, 207, 0.1)"
-                      : "0 0 0 3px rgba(32, 90, 90, 0.08)",
+                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
                 },
               },
             }}
@@ -201,7 +201,8 @@ const Home: React.FC = () => {
                   <InputAdornment position="start">
                     <FontAwesomeIcon
                       icon="search"
-                      style={{ fontSize: "0.9rem", opacity: 0.5 }}
+                      aria-hidden="true"
+                      style={{ fontSize: "0.9rem", opacity: 0.45 }}
                     />
                   </InputAdornment>
                 ),
@@ -213,35 +214,34 @@ const Home: React.FC = () => {
               icon={
                 <FontAwesomeIcon
                   icon="sitemap"
+                  aria-hidden="true"
                   style={{ fontSize: "0.85rem" }}
                 />
               }
               label={`${filteredOrchestrators.length} Orchestrators`}
               size="small"
               sx={{
-                fontWeight: 500,
+                fontWeight: 600,
                 px: 0.5,
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha("#4bbebe", 0.15)
-                    : alpha("#1a5757", 0.08),
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                letterSpacing: "0.01em",
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             />
             <Chip
               icon={
-                <FontAwesomeIcon icon="cube" style={{ fontSize: "0.85rem" }} />
+                <FontAwesomeIcon icon="cube" aria-hidden="true" style={{ fontSize: "0.85rem" }} />
               }
               label={`${filteredResources.length} Resources`}
               size="small"
               sx={{
-                fontWeight: 500,
+                fontWeight: 600,
                 px: 0.5,
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha("#4bbebe", 0.15)
-                    : alpha("#1a5757", 0.08),
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                letterSpacing: "0.01em",
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             />
           </Box>
@@ -249,14 +249,15 @@ const Home: React.FC = () => {
       </Fade>
       {/* ===== ORCHESTRATORS ===== */}
       <Fade in={showContent} timeout={800}>
-        <Box sx={{ mb: 3 }}>
+        <Box component="section" aria-labelledby="orchestrators-heading" sx={{ mb: 3 }}>
           <Typography
+            id="orchestrators-heading"
             variant="h4"
             className={styles.wrapperHeader}
             sx={{
               fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
+              fontWeight: 700,
+              letterSpacing: "-0.025em",
               mb: 0.5,
               display: "flex",
               alignItems: "center",
@@ -264,18 +265,17 @@ const Home: React.FC = () => {
             }}
           >
             <Box
+              aria-hidden="true"
               sx={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 40,
-                height: 40,
+                width: 42,
+                height: 42,
                 borderRadius: 2,
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha("#4bbebe", 0.12)
-                    : alpha("#1a5757", 0.08),
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             >
               <FontAwesomeIcon icon="sitemap" style={{ fontSize: "1rem" }} />
@@ -287,7 +287,8 @@ const Home: React.FC = () => {
             sx={{
               color: "text.secondary",
               fontSize: "0.925rem",
-              ml: 7,
+              ml: 7.25,
+              letterSpacing: "0.01em",
             }}
           >
             Manage your infrastructure orchestration workflows
@@ -340,20 +341,11 @@ const Home: React.FC = () => {
                   onClick={() => navigateOrchestrator("new")}
                   sx={{
                     border: "2px dashed",
-                    borderColor:
-                      theme.palette.mode === "dark"
-                        ? "rgba(136, 207, 207, 0.3)"
-                        : "rgba(32, 90, 90, 0.2)",
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
                     backgroundColor: "transparent !important",
                     "&:hover": {
-                      borderColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(136, 207, 207, 0.6)"
-                          : "rgba(32, 90, 90, 0.4)",
-                      backgroundColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(136, 207, 207, 0.05) !important"
-                          : "rgba(32, 90, 90, 0.02) !important",
+                      borderColor: alpha(theme.palette.primary.main, 0.6),
+                      backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
                     },
                   }}
                 >
@@ -362,8 +354,7 @@ const Home: React.FC = () => {
                       icon="plus"
                       size="3x"
                       style={{
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
+                        color: theme.palette.primary.main,
                         opacity: 0.7,
                       }}
                     />
@@ -415,14 +406,8 @@ const Home: React.FC = () => {
                             alignItems: "center",
                             justifyContent: "center",
                             fontSize: "2.5rem",
-                            color:
-                              theme.palette.mode === "dark"
-                                ? "rgba(136, 207, 207, 0.5)"
-                                : "rgba(32, 90, 90, 0.4)",
-                            backgroundColor:
-                              theme.palette.mode === "dark"
-                                ? "rgba(136, 207, 207, 0.05)"
-                                : "rgba(32, 90, 90, 0.03)",
+                            color: alpha(theme.palette.primary.main, 0.5),
+                            backgroundColor: alpha(theme.palette.primary.main, 0.04),
                           }}
                         >
                           <FontAwesomeIcon icon="sitemap" />
@@ -499,6 +484,11 @@ const Home: React.FC = () => {
                             <span>
                               <IconButton
                                 size="small"
+                                aria-label={
+                                  orchestrator.templateId
+                                    ? `Manage template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`
+                                    : `Publish ${orchestrator.templateInfo?.templateName || "orchestrator"} as template`
+                                }
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setPublishTarget({
@@ -510,17 +500,26 @@ const Home: React.FC = () => {
                                 }}
                                 sx={{
                                   color: orchestrator.templateId
-                                    ? (theme.palette.mode === "dark"
-                                        ? "#7dd3d3"
-                                        : "#1a5757")
+                                    ? theme.palette.primary.main
                                     : "text.secondary",
                                   fontSize: "0.8rem",
                                   p: 0.5,
-                                  opacity: orchestrator.templateId ? 1 : 0.6,
-                                  "&:hover": { opacity: 1 },
+                                  borderRadius: 1.5,
+                                  opacity: orchestrator.templateId ? 1 : 0.55,
+                                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                                  transition: "all 0.2s ease",
+                                  "&:hover": {
+                                    opacity: 1,
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                                  },
+                                  "&:focus-visible": {
+                                    outline: `2px solid ${theme.palette.primary.main}`,
+                                    outlineOffset: 2,
+                                  },
                                 }}
                               >
                                 <FontAwesomeIcon
+                                  aria-hidden="true"
                                   icon={
                                     orchestrator.templateId
                                       ? "pen"
@@ -535,6 +534,7 @@ const Home: React.FC = () => {
                               <span>
                                 <IconButton
                                   size="small"
+                                  aria-label={`Unpublish template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setUnpublishTarget({
@@ -546,11 +546,14 @@ const Home: React.FC = () => {
                                     color: "text.secondary",
                                     fontSize: "0.8rem",
                                     p: 0.5,
+                                    borderRadius: 1.5,
                                     opacity: 0.5,
-                                    "&:hover": { opacity: 1, color: "error.main" },
+                                    transition: "all 0.2s ease",
+                                    "&:hover": { opacity: 1, color: "error.main", backgroundColor: alpha(theme.palette.error.main, 0.08) },
+                                    "&:focus-visible": { outline: "2px solid", outlineColor: "error.main", outlineOffset: 2 },
                                   }}
                                 >
-                                  <FontAwesomeIcon icon="eye-slash" />
+                                  <FontAwesomeIcon aria-hidden="true" icon="eye-slash" />
                                 </IconButton>
                               </span>
                             </Tooltip>
@@ -565,8 +568,10 @@ const Home: React.FC = () => {
               <Grid size={12}>
                 <Fade in={showContent} timeout={1200}>
                   <Box
+                    role="status"
+                    aria-live="polite"
                     sx={{
-                      p: 6,
+                      p: { xs: 5, sm: 7 },
                       textAlign: "center",
                       color: "text.secondary",
                       backgroundColor:
@@ -584,19 +589,19 @@ const Home: React.FC = () => {
                     <FontAwesomeIcon
                       icon="sitemap"
                       size="3x"
+                      aria-hidden="true"
                       style={{
-                        opacity: 0.3,
+                        opacity: 0.25,
                         marginBottom: "16px",
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
+                        color: theme.palette.primary.main,
                       }}
                     />
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
+                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
                       {searchQuery
                         ? "No orchestrators found"
                         : "No orchestrators yet"}
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ maxWidth: 360, mx: "auto", lineHeight: 1.6 }}>
                       {searchQuery
                         ? "Try adjusting your search query"
                         : 'Click "New Orchestrator" to create your first infrastructure workflow!'}
@@ -611,14 +616,15 @@ const Home: React.FC = () => {
 
       {/* ===== RESOURCES ===== */}
       <Fade in={showContent} timeout={1000}>
-        <Box sx={{ mb: 3, mt: 6 }}>
+        <Box component="section" aria-labelledby="resources-heading" sx={{ mb: 3, mt: 7 }}>
           <Typography
+            id="resources-heading"
             variant="h4"
             className={styles.wrapperHeader}
             sx={{
               fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
+              fontWeight: 700,
+              letterSpacing: "-0.025em",
               mb: 0.5,
               display: "flex",
               alignItems: "center",
@@ -626,18 +632,17 @@ const Home: React.FC = () => {
             }}
           >
             <Box
+              aria-hidden="true"
               sx={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 40,
-                height: 40,
+                width: 42,
+                height: 42,
                 borderRadius: 2,
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha("#4bbebe", 0.12)
-                    : alpha("#1a5757", 0.08),
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             >
               <FontAwesomeIcon icon="cube" style={{ fontSize: "1rem" }} />
@@ -649,7 +654,8 @@ const Home: React.FC = () => {
             sx={{
               color: "text.secondary",
               fontSize: "0.925rem",
-              ml: 7,
+              ml: 7.25,
+              letterSpacing: "0.01em",
             }}
           >
             Cloud resources and templates for your projects
@@ -703,20 +709,11 @@ const Home: React.FC = () => {
                   onClick={() => navigateResource(undefined)}
                   sx={{
                     border: "2px dashed",
-                    borderColor:
-                      theme.palette.mode === "dark"
-                        ? "rgba(136, 207, 207, 0.3)"
-                        : "rgba(32, 90, 90, 0.2)",
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
                     backgroundColor: "transparent !important",
                     "&:hover": {
-                      borderColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(136, 207, 207, 0.6)"
-                          : "rgba(32, 90, 90, 0.4)",
-                      backgroundColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(136, 207, 207, 0.05) !important"
-                          : "rgba(32, 90, 90, 0.02) !important",
+                      borderColor: alpha(theme.palette.primary.main, 0.6),
+                      backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
                     },
                   }}
                 >
@@ -725,8 +722,7 @@ const Home: React.FC = () => {
                       icon="plus"
                       size="3x"
                       style={{
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
+                        color: theme.palette.primary.main,
                         opacity: 0.7,
                       }}
                     />
@@ -822,8 +818,10 @@ const Home: React.FC = () => {
               <Grid size={12}>
                 <Fade in={showContent} timeout={1400}>
                   <Box
+                    role="status"
+                    aria-live="polite"
                     sx={{
-                      p: 6,
+                      p: { xs: 5, sm: 7 },
                       textAlign: "center",
                       color: "text.secondary",
                       backgroundColor:
@@ -841,17 +839,17 @@ const Home: React.FC = () => {
                     <FontAwesomeIcon
                       icon="cube"
                       size="3x"
+                      aria-hidden="true"
                       style={{
-                        opacity: 0.3,
+                        opacity: 0.25,
                         marginBottom: "16px",
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
+                        color: theme.palette.primary.main,
                       }}
                     />
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
+                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
                       {searchQuery ? "No resources found" : "No resources yet"}
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant="body2" sx={{ maxWidth: 340, mx: "auto", lineHeight: 1.6 }}>
                       {searchQuery
                         ? "Try adjusting your search query"
                         : 'Click "New Resource" to add your first cloud resource!'}

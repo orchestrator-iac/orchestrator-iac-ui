@@ -5,7 +5,6 @@ import {
   Typography,
   Button,
   IconButton,
-  Chip,
   Tooltip,
   Skeleton,
   Fade,
@@ -67,7 +66,9 @@ const TemplateDetail: React.FC = () => {
     const set = (sel: string, attr: string, val: string) => {
       let el = document.querySelector<HTMLMetaElement | HTMLLinkElement>(sel);
       if (!el) {
-        el = document.createElement(sel.startsWith("link") ? "link" : "meta") as any;
+        el = document.createElement(
+          sel.startsWith("link") ? "link" : "meta",
+        ) as any;
         document.head.appendChild(el!);
       }
       el!.setAttribute(attr, val);
@@ -75,7 +76,8 @@ const TemplateDetail: React.FC = () => {
 
     if (template) {
       const title = `${template.templateName} | Orchestrator`;
-      const desc = (template.description || "").slice(0, 160) ||
+      const desc =
+        (template.description || "").slice(0, 160) ||
         `A ${(template.cloud || "cloud").toUpperCase()} infrastructure template on Orchestrator.`;
       const url = `https://orchestrator.next-zen.dev/templates/${template.id}`;
 
@@ -92,7 +94,9 @@ const TemplateDetail: React.FC = () => {
       set('meta[name="robots"]', "content", "index, follow");
     }
 
-    return () => { document.title = prevTitle; };
+    return () => {
+      document.title = prevTitle;
+    };
   }, [template]);
 
   // Fetch template — one call per mount. AbortController cleanup cancels the
@@ -113,7 +117,8 @@ const TemplateDetail: React.FC = () => {
         setTimeout(() => setShowContent(true), 50);
       })
       .catch((err: any) => {
-        if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") return;
+        if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED")
+          return;
         setError("Failed to load template. It may have been removed.");
         setLoading(false);
       });
@@ -180,19 +185,45 @@ const TemplateDetail: React.FC = () => {
     }
   };
 
-  const isOwner = !!(user && template && user._id && user._id === template.userId);
+  const isOwner = !!(
+    user &&
+    template &&
+    user._id &&
+    user._id === template.userId
+  );
   const logoSrc = template ? logoMap[template.cloud || ""] : null;
+  let likeTooltip: string;
+  if (user) {
+    likeTooltip = liked ? "Unlike" : "Like this template";
+  } else {
+    likeTooltip = "Login to like";
+  }
+  let likeAriaLabel: string;
+  if (user) {
+    likeAriaLabel = liked ? "Unlike this template" : "Like this template";
+  } else {
+    likeAriaLabel = "Login to like this template";
+  }
 
   if (loading) {
     return (
-      <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}>
-        <Skeleton variant="text" width={300} height={48} sx={{ mb: 2 }} />
-        <Skeleton variant="text" width={500} height={28} sx={{ mb: 1 }} />
+      <Box
+        role="status"
+        aria-label="Loading template"
+        aria-busy="true"
+        sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}
+      >
+        <Skeleton variant="text" width="55%" height={48} sx={{ mb: 2 }} />
+        <Skeleton variant="text" width="75%" height={28} sx={{ mb: 1 }} />
         <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
           <Skeleton variant="rounded" width={80} height={24} />
           <Skeleton variant="rounded" width={80} height={24} />
         </Box>
-        <Skeleton variant="rectangular" height={520} sx={{ borderRadius: 3, mb: 3 }} />
+        <Skeleton
+          variant="rectangular"
+          height={520}
+          sx={{ borderRadius: 3, mb: 3 }}
+        />
         <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 3 }} />
       </Box>
     );
@@ -217,77 +248,215 @@ const TemplateDetail: React.FC = () => {
 
   return (
     <Fade in={showContent} timeout={600}>
-      <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: 4 }}>
-        {/* Breadcrumb */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3, color: "text.secondary" }}>
-          <Button
-            size="small"
-            variant="text"
-            onClick={() => navigate("/templates")}
-            startIcon={<FontAwesomeIcon icon="arrow-left" style={{ fontSize: "0.7rem" }} />}
-            sx={{ color: "text.secondary", textTransform: "none", p: 0.5 }}
-          >
-            Templates
-          </Button>
-          <Typography variant="body2" sx={{ opacity: 0.5 }}>/</Typography>
-          <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
-            {template.templateName}
-          </Typography>
-        </Box>
-
+      <Box
+        sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: 4 }}
+      >
         {/* Header: title + meta LEFT — stats + actions RIGHT */}
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3, mb: 3, flexWrap: "wrap" }}>
-          {/* Left: title, description, chips */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 3,
+            mb: 3,
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Left: title + description */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, letterSpacing: "-0.03em", mb: 0.5, lineHeight: 1.2 }}
+            {/* Breadcrumb */}
+            <Box
+              component="nav"
+              aria-label="Breadcrumb"
+              sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 2 }}
             >
-              {template.templateName}
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.secondary", mb: 1.5 }}>
-              {template.description}
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-              {logoSrc && (
-                <Chip
-                  icon={<img src={logoSrc} alt="" style={{ width: 16, height: 16, borderRadius: 2 }} />}
-                  label={template.cloud?.toUpperCase()}
-                  size="small"
-                  variant="outlined"
-                  sx={{ textTransform: "uppercase", fontSize: "0.7rem" }}
-                />
-              )}
-              <Chip
-                icon={<FontAwesomeIcon icon="circle-nodes" style={{ fontSize: "0.65rem" }} />}
-                label={`${template.nodeCount ?? 0} nodes`}
+              <Button
                 size="small"
-                variant="outlined"
-                sx={{ fontSize: "0.7rem" }}
+                variant="text"
+                onClick={() => navigate("/templates")}
+                startIcon={
+                  <FontAwesomeIcon
+                    icon="arrow-left"
+                    aria-hidden="true"
+                    style={{ fontSize: "0.7rem" }}
+                  />
+                }
+                sx={{
+                  color: "text.secondary",
+                  textTransform: "none",
+                  p: 0.5,
+                  borderRadius: 1.5,
+                  fontWeight: 500,
+                  "&:hover": { color: "text.primary" },
+                  "&:focus-visible": {
+                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outlineOffset: 2,
+                  },
+                }}
+              >
+                Templates
+              </Button>
+              <FontAwesomeIcon
+                icon="chevron-right"
+                aria-hidden="true"
+                style={{ fontSize: "0.6rem", opacity: 0.4 }}
               />
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 800,
+                  letterSpacing: "-0.04em",
+                  mb: 0.5,
+                  lineHeight: 1.15,
+                  fontSize: { xs: "1.75rem", sm: "2rem", md: "2.25rem" },
+                }}
+              >
+                {template.templateName}
+              </Typography>
+            </Box>
+
+            {/* Meta row */}
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1.5,
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
+              {template.cloud &&
+                (logoSrc ? (
+                  <img
+                    src={logoSrc}
+                    alt={template.cloud}
+                    style={{
+                      width: 28,
+                      height: 20,
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                  />
+                ) : (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      color: "text.secondary",
+                    }}
+                  >
+                    {template.cloud}
+                  </Typography>
+                ))}
+              {template.cloud && (
+                <Box component="span" sx={{ color: "text.disabled" }}>
+                  .
+                </Box>
+              )}
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "1rem",
+                }}
+              >
+                {template.nodeCount ?? 0} Resources
+              </Typography>
               {template.authorName && (
-                <Typography variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
-                  by <strong>{template.authorName}</strong>
-                </Typography>
+                <>
+                  <Box component="span" sx={{ color: "text.disabled" }}>
+                    .
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    component="span"
+                    onClick={() =>
+                      navigate(`/templates?author=${template.userId}`)
+                    }
+                    sx={{
+                      color: "text.secondary",
+                      cursor: "pointer",
+                      "&:hover": { color: "text.primary" },
+                    }}
+                  >
+                    by <strong>{template.authorName}</strong>
+                  </Typography>
+                </>
               )}
             </Box>
+
+            <Typography
+              variant="body1"
+              sx={{ color: "text.secondary", mb: 1.5 }}
+            >
+              {template.description}
+            </Typography>
           </Box>
 
-          {/* Right: stats + like + use template + owner actions */}
-          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1.5, flexShrink: 0 }}>
+          {/* Right: meta + stats + like + use template + owner actions */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 1.5,
+              flexShrink: 0,
+            }}
+          >
             {/* Stats row */}
-            <Box sx={{ display: "flex", gap: 2.5 }}>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               {[
-                { icon: "eye", val: template.analytics?.viewCount ?? 0, label: "views" },
+                {
+                  icon: "eye",
+                  val: template.analytics?.viewCount ?? 0,
+                  label: "views",
+                },
                 { icon: "heart", val: likeCount, label: "likes" },
-                { icon: "copy", val: template.analytics?.usageCount ?? 0, label: "uses" },
+                {
+                  icon: "copy",
+                  val: template.analytics?.usageCount ?? 0,
+                  label: "uses",
+                },
               ].map(({ icon, val, label }) => (
-                <Box key={label} sx={{ textAlign: "center" }}>
-                  <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }}>
+                <Box
+                  key={label}
+                  aria-label={`${val} ${label}`}
+                  sx={{
+                    textAlign: "center",
+                    px: 2,
+                    py: 1.25,
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    minWidth: 68,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      fontSize: "1.5rem",
+                      letterSpacing: "-0.02em",
+                    }}
+                  >
                     {val}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <FontAwesomeIcon icon={icon as any} style={{ fontSize: "0.6rem" }} />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 0.5,
+                      mt: 0.5,
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      icon={icon as any}
+                      aria-hidden="true"
+                      style={{ fontSize: "0.6rem" }}
+                    />
                     {label}
                   </Typography>
                 </Box>
@@ -296,19 +465,25 @@ const TemplateDetail: React.FC = () => {
 
             {/* Like + Use Template */}
             <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-              <Tooltip title={user ? (liked ? "Unlike" : "Like this template") : "Login to like"}>
+              <Tooltip title={likeTooltip}>
                 <span>
                   <IconButton
                     onClick={handleLike}
                     disabled={likeLoading}
+                    aria-label={likeAriaLabel}
+                    aria-pressed={liked}
                     sx={{
                       borderRadius: 2,
                       border: "1px solid",
                       borderColor: liked
-                        ? (theme.palette.mode === "dark" ? "rgba(255,100,120,0.5)" : "rgba(220,50,80,0.4)")
+                        ? theme.palette.mode === "dark"
+                          ? "rgba(255,100,120,0.5)"
+                          : "rgba(220,50,80,0.4)"
                         : "divider",
                       color: liked ? "error.main" : "text.secondary",
-                      backgroundColor: liked ? alpha(theme.palette.error.main, 0.06) : "transparent",
+                      backgroundColor: liked
+                        ? alpha(theme.palette.error.main, 0.06)
+                        : "transparent",
                       gap: 0.75,
                       px: 1.5,
                       py: 0.85,
@@ -318,37 +493,78 @@ const TemplateDetail: React.FC = () => {
                         borderColor: "error.main",
                         backgroundColor: alpha(theme.palette.error.main, 0.06),
                       },
+                      "&:focus-visible": {
+                        outline: "2px solid",
+                        outlineColor: "error.main",
+                        outlineOffset: 2,
+                      },
                     }}
                   >
-                    <FontAwesomeIcon icon={liked ? "heart" : ["far", "heart"] as any} />
-                    <Typography variant="caption" sx={{ fontWeight: 600, fontSize: "0.8rem" }}>
+                    <FontAwesomeIcon
+                      aria-hidden="true"
+                      icon={liked ? "heart" : (["far", "heart"] as any)}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 600, fontSize: "0.8rem" }}
+                    >
                       {liked ? "Liked" : "Like"}
                     </Typography>
                   </IconButton>
                 </span>
               </Tooltip>
 
-              <Button
-                variant="contained"
-                size="large"
-                onClick={handleUseTemplate}
-                disabled={useLoading}
-                sx={{
-                  borderRadius: 2,
-                  fontWeight: 700,
-                  textTransform: "none",
-                  backgroundColor: theme.palette.mode === "dark" ? "#4bbebe" : "#1a5757",
-                  color: "#fff",
-                  "&:hover": {
-                    backgroundColor: theme.palette.mode === "dark" ? "#6dd0d0" : "#256969",
-                  },
-                }}
-              >
-                {useLoading
-                  ? <FontAwesomeIcon icon="spinner" spin style={{ marginRight: 8 }} />
-                  : <FontAwesomeIcon icon="copy" style={{ marginRight: 8 }} />}
-                {useLoading ? "Forking..." : "Use Template"}
-              </Button>
+              <Tooltip title="Creates your own editable copy" arrow>
+                <span>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={handleUseTemplate}
+                    disabled={useLoading}
+                    aria-label={
+                      useLoading
+                        ? "Forking template, please wait"
+                        : `Use template: ${template.templateName}`
+                    }
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 700,
+                      textTransform: "none",
+                      px: 3,
+                      py: 1.1,
+                      backgroundColor: theme.palette.primary.main,
+                      color: theme.palette.primary.contrastText,
+                      boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.35)}`,
+                      "&:hover": {
+                        backgroundColor: theme.palette.primary.dark,
+                        boxShadow: `0 6px 22px ${alpha(theme.palette.primary.main, 0.5)}`,
+                        transform: "translateY(-1px)",
+                      },
+                      "&:focus-visible": {
+                        outline: "2px solid",
+                        outlineColor: theme.palette.primary.main,
+                        outlineOffset: 3,
+                      },
+                    }}
+                  >
+                    {useLoading ? (
+                      <FontAwesomeIcon
+                        aria-hidden="true"
+                        icon="spinner"
+                        spin
+                        style={{ marginRight: 8 }}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        aria-hidden="true"
+                        icon="copy"
+                        style={{ marginRight: 8 }}
+                      />
+                    )}
+                    {useLoading ? "Forking..." : "Use Template"}
+                  </Button>
+                </span>
+              </Tooltip>
             </Box>
 
             {/* Owner actions */}
@@ -357,9 +573,18 @@ const TemplateDetail: React.FC = () => {
                 <Button
                   variant="outlined"
                   size="small"
-                  startIcon={<FontAwesomeIcon icon="pen" style={{ fontSize: "0.75rem" }} />}
+                  startIcon={
+                    <FontAwesomeIcon
+                      icon="pen"
+                      style={{ fontSize: "0.75rem" }}
+                    />
+                  }
                   onClick={() => setEditDialogOpen(true)}
-                  sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                  }}
                 >
                   Edit
                 </Button>
@@ -367,9 +592,18 @@ const TemplateDetail: React.FC = () => {
                   variant="outlined"
                   color="error"
                   size="small"
-                  startIcon={<FontAwesomeIcon icon="eye-slash" style={{ fontSize: "0.75rem" }} />}
+                  startIcon={
+                    <FontAwesomeIcon
+                      icon="eye-slash"
+                      style={{ fontSize: "0.75rem" }}
+                    />
+                  }
                   onClick={() => setUnpublishDialogOpen(true)}
-                  sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                  }}
                 >
                   Unpublish
                 </Button>
@@ -381,22 +615,48 @@ const TemplateDetail: React.FC = () => {
         <Divider sx={{ mb: 3 }} />
 
         {/* Canvas Preview — static image + open button */}
-        <Typography
-          variant="subtitle2"
-          sx={{ fontWeight: 700, mb: 1.5, color: "text.secondary", textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: "0.08em" }}
-        >
-          Canvas Preview
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <Box
+            sx={{
+              width: 5,
+              height: 28,
+              borderRadius: 2,
+              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.25)})`,
+              flexShrink: 0,
+            }}
+          />
+          <Typography
+            variant="subtitle2"
+            sx={{
+              fontWeight: 800,
+              color: theme.palette.primary.main,
+              textTransform: "uppercase",
+              fontSize: "0.78rem",
+              letterSpacing: "0.14em",
+            }}
+          >
+            Canvas Preview
+          </Typography>
+        </Box>
         <Box
           sx={{
-            mb: 3,
+            mb: 4,
             position: "relative",
-            height: `calc(100vh * 0.8)`,
-            borderRadius: 3,
+            minHeight: 480,
+            maxHeight: 620,
+            borderRadius: 4,
             overflow: "hidden",
-            border: "1px solid",
-            borderColor: "divider",
-            backgroundColor: theme.palette.mode === "dark" ? alpha("#fff", 0.02) : alpha("#000", 0.015),
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`
+                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, ${alpha(theme.palette.secondary.main, 0.06)} 100%)`,
+            border: "1.5px solid",
+            borderColor: alpha(theme.palette.primary.main, 0.25),
+            boxShadow:
+              theme.palette.mode === "dark"
+                ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}, 0 24px 60px rgba(0,0,0,0.35)`
+                : `0 0 0 1px ${alpha(theme.palette.primary.main, 0.06)}, 0 20px 50px rgba(0,0,0,0.1)`,
+
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -411,16 +671,37 @@ const TemplateDetail: React.FC = () => {
               sx={{
                 width: "100%",
                 height: "100%",
-                objectFit: "cover",
+                objectFit: "contain",
                 display: "block",
               }}
             />
           ) : (
-            <Typography variant="body2" sx={{ color: "text.secondary", opacity: 0.4 }}>
-              {template.nodeCount
-                ? `${template.nodeCount} node${template.nodeCount !== 1 ? "s" : ""}${template.edgeCount ? `, ${template.edgeCount} connection${template.edgeCount !== 1 ? "s" : ""}` : ""}`
-                : "No preview available"}
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 1.5,
+                opacity: 0.35,
+              }}
+            >
+              <FontAwesomeIcon
+                icon="sitemap"
+                aria-hidden="true"
+                style={{
+                  fontSize: "3.5rem",
+                  color: theme.palette.primary.main,
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", fontWeight: 500 }}
+              >
+                {template.nodeCount
+                  ? `${template.nodeCount} nodes`
+                  : "No preview available"}
+              </Typography>
+            </Box>
           )}
 
           {/* Gradient overlay */}
@@ -430,8 +711,8 @@ const TemplateDetail: React.FC = () => {
               inset: 0,
               background:
                 theme.palette.mode === "dark"
-                  ? "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.72) 100%)"
-                  : "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.45) 100%)",
+                  ? "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.82) 100%)"
+                  : "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.52) 100%)",
               pointerEvents: "none",
             }}
           />
@@ -440,7 +721,7 @@ const TemplateDetail: React.FC = () => {
           <Box
             sx={{
               position: "absolute",
-              bottom: 20,
+              bottom: 24,
               left: "50%",
               transform: "translateX(-50%)",
             }}
@@ -449,23 +730,43 @@ const TemplateDetail: React.FC = () => {
               variant="contained"
               size="medium"
               onClick={handleViewInCanvas}
-              startIcon={<FontAwesomeIcon icon="up-right-from-square" style={{ fontSize: "0.8rem" }} />}
+              startIcon={
+                <FontAwesomeIcon
+                  icon="up-right-from-square"
+                  style={{ fontSize: "0.8rem" }}
+                />
+              }
               sx={{
-                borderRadius: 2,
+                borderRadius: 2.5,
                 textTransform: "none",
                 fontWeight: 700,
-                px: 3,
-                backgroundColor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.55)",
-                backdropFilter: "blur(8px)",
+                px: 3.5,
+                py: 1.1,
+                fontSize: "0.9rem",
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.primary.main, 0.18)
+                    : alpha(theme.palette.primary.main, 0.75),
+                backdropFilter: "blur(12px)",
                 color: "#fff",
-                boxShadow: "none",
+                border: "1px solid",
+                borderColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.primary.main, 0.4)
+                    : "rgba(255,255,255,0.25)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                transition: "all 0.2s ease",
                 "&:hover": {
-                  backgroundColor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.72)",
-                  boxShadow: "none",
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.primary.main, 0.32)
+                      : alpha(theme.palette.primary.main, 0.92),
+                  boxShadow: "0 6px 28px rgba(0,0,0,0.4)",
+                  transform: "translateY(-1px)",
                 },
               }}
             >
-              {user ? "Open in Canvas" : "Login to View"}
+              {user ? "Preview (Read Only)" : "Login to Preview"}
             </Button>
           </Box>
         </Box>
@@ -473,34 +774,84 @@ const TemplateDetail: React.FC = () => {
         <Divider sx={{ mb: 3 }} />
 
         {/* README — full width */}
-        <Typography
-          variant="subtitle2"
-          sx={{ fontWeight: 700, mb: 1.5, color: "text.secondary", textTransform: "uppercase", fontSize: "0.7rem", letterSpacing: "0.08em" }}
-        >
-          README
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <Box
+            sx={{
+              width: 5,
+              height: 28,
+              borderRadius: 2,
+              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.25)})`,
+              flexShrink: 0,
+            }}
+          />
+          <Typography
+            variant="subtitle2"
+            sx={{
+              fontWeight: 800,
+              color: theme.palette.primary.main,
+              textTransform: "uppercase",
+              fontSize: "0.78rem",
+              letterSpacing: "0.14em",
+            }}
+          >
+            README
+          </Typography>
+        </Box>
         <Box
           className={styles.readmeContent}
           sx={{
-            backgroundColor: theme.palette.mode === "dark" ? alpha("#fff", 0.03) : alpha("#000", 0.015),
-            border: "1px solid",
-            borderColor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
-            borderRadius: 3,
-            p: { xs: 2.5, sm: 3.5 },
+            background:
+              theme.palette.mode === "dark"
+                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, rgba(0,0,0,0) 60%)`
+                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.025)} 0%, rgba(255,255,255,0) 60%)`,
+            border: "1.5px solid",
+            borderColor: alpha(
+              theme.palette.primary.main,
+              theme.palette.mode === "dark" ? 0.15 : 0.1,
+            ),
+            borderRadius: 4,
+            p: { xs: 3, sm: 4 },
             minHeight: 220,
             mb: 4,
+            boxShadow: `inset 0 1px 0 ${alpha(theme.palette.primary.main, 0.08)}`,
           }}
         >
           {template.readme ? (
             <Box
               className="note-rich-editor note-readonly"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(template.readme) }}
-              sx={{ fontSize: "0.95rem", lineHeight: 1.75, wordBreak: "break-word" }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(template.readme),
+              }}
+              sx={{
+                fontSize: "0.95rem",
+                lineHeight: 1.75,
+                wordBreak: "break-word",
+              }}
             />
           ) : (
-            <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
-              No readme provided.
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 160,
+                gap: 1,
+                opacity: 0.45,
+              }}
+            >
+              <FontAwesomeIcon
+                icon="file-lines"
+                aria-hidden="true"
+                style={{ fontSize: "2rem", color: theme.palette.primary.main }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", fontStyle: "italic" }}
+              >
+                No readme provided.
+              </Typography>
+            </Box>
           )}
         </Box>
 
@@ -535,8 +886,9 @@ const TemplateDetail: React.FC = () => {
           </DialogTitle>
           <DialogContent>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              This will remove <strong>{template.templateName}</strong> from the public gallery.
-              Your orchestrator won't be affected — you can re-publish it any time.
+              This will remove <strong>{template.templateName}</strong> from the
+              public gallery. Your orchestrator won't be affected — you can
+              re-publish it any time.
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
@@ -554,9 +906,18 @@ const TemplateDetail: React.FC = () => {
               onClick={handleUnpublish}
               disabled={unpublishLoading}
               startIcon={
-                unpublishLoading
-                  ? <FontAwesomeIcon icon="spinner" spin style={{ fontSize: "0.75rem" }} />
-                  : <FontAwesomeIcon icon="trash" style={{ fontSize: "0.75rem" }} />
+                unpublishLoading ? (
+                  <FontAwesomeIcon
+                    icon="spinner"
+                    spin
+                    style={{ fontSize: "0.75rem" }}
+                  />
+                ) : (
+                  <FontAwesomeIcon
+                    icon="trash"
+                    style={{ fontSize: "0.75rem" }}
+                  />
+                )
               }
               sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
             >
