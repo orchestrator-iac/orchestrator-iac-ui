@@ -35,8 +35,8 @@ const Login: React.FC = () => {
   const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth(redirectTo);
 
   const isDark = theme.palette.mode === "dark";
-  const tealMain = isDark ? "#4bbebe" : "#1a5757";
-  const tealLight = isDark ? "#7dd3d3" : "#3da9a9";
+  const tealMain = theme.palette.primary.main;
+  const tealLight = theme.palette.secondary.main;
 
   const handleLogin = async () => {
     setError("");

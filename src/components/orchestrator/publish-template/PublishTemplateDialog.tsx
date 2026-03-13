@@ -144,15 +144,11 @@ const PublishTemplateDialog: React.FC<PublishTemplateDialogProps> = ({
               width: 36,
               height: 36,
               borderRadius: 2,
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? alpha("#4bbebe", 0.12)
-                  : alpha("#1a5757", 0.08),
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color:
-                theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+              color: theme.palette.primary.main,
               fontSize: "0.9rem",
             }}
           >
@@ -300,12 +296,10 @@ const PublishTemplateDialog: React.FC<PublishTemplateDialogProps> = ({
               borderRadius: 2,
               textTransform: "none",
               fontWeight: 700,
-              backgroundColor:
-                theme.palette.mode === "dark" ? "#4bbebe" : "#1a5757",
+              backgroundColor: theme.palette.primary.main,
               color: "#fff",
               "&:hover": {
-                backgroundColor:
-                  theme.palette.mode === "dark" ? "#6dd0d0" : "#256969",
+                backgroundColor: theme.palette.primary.dark,
               },
             }}
           >

@@ -208,7 +208,7 @@ const TemplatesGallery: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: 1.5,
-              color: theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+              color: theme.palette.primary.main,
             }}
           >
             <Box
@@ -220,12 +220,9 @@ const TemplatesGallery: React.FC = () => {
                 width: 44,
                 height: 44,
                 borderRadius: 2,
-                background:
-                  theme.palette.mode === "dark"
-                    ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.2)}, ${alpha("#4bbebe", 0.08)})`
-                    : `linear-gradient(135deg, ${alpha("#1a5757", 0.12)}, ${alpha("#1a5757", 0.04)})`,
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
-                border: `1px solid ${theme.palette.mode === "dark" ? alpha("#4bbebe", 0.25) : alpha("#1a5757", 0.15)}`,
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
                 flexShrink: 0,
                 fontSize: "1.1rem",
               }}
@@ -257,15 +254,8 @@ const TemplatesGallery: React.FC = () => {
             borderRadius: 3,
             overflow: "hidden",
             position: "relative",
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.12)} 0%, ${alpha("#1a3030", 0.9)} 100%)`
-                : `linear-gradient(135deg, ${alpha("#1a5757", 0.06)} 0%, ${alpha("#e6f4f4", 0.95)} 100%)`,
-            border: `1px solid ${
-              theme.palette.mode === "dark"
-                ? alpha("#4bbebe", 0.25)
-                : alpha("#1a5757", 0.15)
-            }`,
+            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.background.default, 0.9)} 100%)`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
             p: { xs: 3, sm: 4 },
           }}
         >
@@ -279,10 +269,7 @@ const TemplatesGallery: React.FC = () => {
               width: 200,
               height: 200,
               borderRadius: "50%",
-              background:
-                theme.palette.mode === "dark"
-                  ? alpha("#4bbebe", 0.07)
-                  : alpha("#1a5757", 0.04),
+              background: alpha(theme.palette.primary.main, 0.06),
               pointerEvents: "none",
             }}
           />
@@ -319,17 +306,10 @@ const TemplatesGallery: React.FC = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background:
-                  theme.palette.mode === "dark"
-                    ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.28)}, ${alpha("#4bbebe", 0.1)})`
-                    : `linear-gradient(135deg, ${alpha("#1a5757", 0.16)}, ${alpha("#1a5757", 0.05)})`,
-                border: `1px solid ${
-                  theme.palette.mode === "dark"
-                    ? alpha("#4bbebe", 0.35)
-                    : alpha("#1a5757", 0.2)
-                }`,
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.28)}, ${alpha(theme.palette.primary.main, 0.1)})`,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
                 fontSize: "1.4rem",
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                color: theme.palette.primary.main,
               }}
             >
               <FontAwesomeIcon icon="rocket" />
@@ -341,7 +321,7 @@ const TemplatesGallery: React.FC = () => {
                 sx={{
                   fontWeight: 700,
                   mb: 0.5,
-                  color: theme.palette.mode === "dark" ? "#88cfcf" : "#1a5757",
+                  color: theme.palette.primary.main,
                 }}
               >
                 Welcome to Templates
@@ -371,15 +351,8 @@ const TemplatesGallery: React.FC = () => {
                       px: 1.5,
                       py: 0.75,
                       borderRadius: 2,
-                      background:
-                        theme.palette.mode === "dark"
-                          ? alpha("#4bbebe", 0.08)
-                          : alpha("#1a5757", 0.05),
-                      border: `1px solid ${
-                        theme.palette.mode === "dark"
-                          ? alpha("#4bbebe", 0.15)
-                          : alpha("#1a5757", 0.1)
-                      }`,
+                      background: alpha(theme.palette.primary.main, 0.06),
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
                     }}
                   >
                     <FontAwesomeIcon
@@ -387,16 +360,14 @@ const TemplatesGallery: React.FC = () => {
                       aria-hidden="true"
                       style={{
                         fontSize: "0.7rem",
-                        color:
-                          theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                        color: theme.palette.primary.main,
                       }}
                     />
                     <Typography
                       variant="caption"
                       sx={{
                         fontWeight: 600,
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+                        color: theme.palette.primary.main,
                       }}
                     >
                       {label}
@@ -450,10 +421,7 @@ const TemplatesGallery: React.FC = () => {
                     theme.palette.mode === "dark"
                       ? alpha("#fff", 0.07)
                       : alpha("#fff", 1),
-                  boxShadow:
-                    theme.palette.mode === "dark"
-                      ? "0 0 0 3px rgba(136, 207, 207, 0.12)"
-                      : "0 0 0 3px rgba(32, 90, 90, 0.1)",
+                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
                 },
               },
             }}
@@ -490,20 +458,14 @@ const TemplatesGallery: React.FC = () => {
                     : "rgba(0,0,0,0.12)",
                 transition: "all 0.2s ease",
                 "&:focus-visible": {
-                  outline: `2px solid ${theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757"}`,
+                  outline: `2px solid ${theme.palette.primary.main}`,
                   outlineOffset: 2,
                 },
               },
               "& .MuiToggleButton-root.Mui-selected": {
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(136, 207, 207, 0.15)"
-                    : "rgba(32, 90, 90, 0.08)",
-                color: theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
-                borderColor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(136,207,207,0.3)"
-                    : "rgba(32,90,90,0.2)",
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                borderColor: alpha(theme.palette.primary.main, 0.25),
               },
             }}
           >
@@ -676,12 +638,8 @@ const TemplatesGallery: React.FC = () => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      background:
-                        theme.palette.mode === "dark"
-                          ? alpha("#4bbebe", 0.1)
-                          : alpha("#1a5757", 0.06),
-                      color:
-                        theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                      background: alpha(theme.palette.primary.main, 0.08),
+                      color: theme.palette.primary.main,
                       fontSize: "1.75rem",
                     }}
                   >
@@ -741,24 +699,11 @@ const TemplatesGallery: React.FC = () => {
                           borderRadius: 2,
                           fontWeight: 600,
                           cursor: "pointer",
-                          bgcolor:
-                            theme.palette.mode === "dark"
-                              ? alpha("#4bbebe", 0.08)
-                              : alpha("#1a5757", 0.05),
-                          color:
-                            theme.palette.mode === "dark"
-                              ? "#88cfcf"
-                              : "#205a5a",
-                          border: `1px solid ${
-                            theme.palette.mode === "dark"
-                              ? alpha("#4bbebe", 0.2)
-                              : alpha("#1a5757", 0.12)
-                          }`,
+                          bgcolor: alpha(theme.palette.primary.main, 0.06),
+                          color: theme.palette.primary.main,
+                          border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
                           "&:hover": {
-                            bgcolor:
-                              theme.palette.mode === "dark"
-                                ? alpha("#4bbebe", 0.18)
-                                : alpha("#1a5757", 0.12),
+                            bgcolor: alpha(theme.palette.primary.main, 0.15),
                           },
                         }}
                       />
@@ -773,19 +718,11 @@ const TemplatesGallery: React.FC = () => {
                       textTransform: "none",
                       fontWeight: 600,
                       borderRadius: 2,
-                      borderColor:
-                        theme.palette.mode === "dark"
-                          ? alpha("#4bbebe", 0.3)
-                          : alpha("#1a5757", 0.25),
-                      color:
-                        theme.palette.mode === "dark" ? "#88cfcf" : "#205a5a",
+                      borderColor: alpha(theme.palette.primary.main, 0.28),
+                      color: theme.palette.primary.main,
                       "&:hover": {
-                        borderColor:
-                          theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
-                        background:
-                          theme.palette.mode === "dark"
-                            ? alpha("#4bbebe", 0.08)
-                            : alpha("#1a5757", 0.05),
+                        borderColor: theme.palette.primary.main,
+                        background: alpha(theme.palette.primary.main, 0.06),
                       },
                     }}
                   >
@@ -810,17 +747,9 @@ const TemplatesGallery: React.FC = () => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      background:
-                        theme.palette.mode === "dark"
-                          ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.2)}, ${alpha("#4bbebe", 0.06)})`
-                          : `linear-gradient(135deg, ${alpha("#1a5757", 0.12)}, ${alpha("#1a5757", 0.03)})`,
-                      border: `1px solid ${
-                        theme.palette.mode === "dark"
-                          ? alpha("#4bbebe", 0.25)
-                          : alpha("#1a5757", 0.15)
-                      }`,
-                      color:
-                        theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
+                      background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)}, ${alpha(theme.palette.primary.main, 0.05)})`,
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                      color: theme.palette.primary.main,
                       fontSize: "2rem",
                     }}
                   >
@@ -880,15 +809,8 @@ const TemplatesGallery: React.FC = () => {
                           p: 2.5,
                           borderRadius: 3,
                           textAlign: "left",
-                          border: `1px solid ${
-                            theme.palette.mode === "dark"
-                              ? alpha("#4bbebe", 0.15)
-                              : alpha("#1a5757", 0.1)
-                          }`,
-                          background:
-                            theme.palette.mode === "dark"
-                              ? alpha("#4bbebe", 0.04)
-                              : alpha("#1a5757", 0.03),
+                          border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+                          background: alpha(theme.palette.primary.main, 0.04),
                           position: "relative",
                           overflow: "hidden",
                         }}
@@ -902,10 +824,7 @@ const TemplatesGallery: React.FC = () => {
                             fontWeight: 900,
                             fontSize: "2.4rem",
                             lineHeight: 1,
-                            color:
-                              theme.palette.mode === "dark"
-                                ? alpha("#4bbebe", 0.1)
-                                : alpha("#1a5757", 0.07),
+                            color: alpha(theme.palette.primary.main, 0.08),
                             userSelect: "none",
                           }}
                         >
@@ -921,14 +840,8 @@ const TemplatesGallery: React.FC = () => {
                             alignItems: "center",
                             justifyContent: "center",
                             mb: 1.5,
-                            background:
-                              theme.palette.mode === "dark"
-                                ? alpha("#4bbebe", 0.12)
-                                : alpha("#1a5757", 0.07),
-                            color:
-                              theme.palette.mode === "dark"
-                                ? "#7dd3d3"
-                                : "#1a5757",
+                            background: alpha(theme.palette.primary.main, 0.1),
+                            color: theme.palette.primary.main,
                             fontSize: "0.9rem",
                           }}
                         >
@@ -966,22 +879,11 @@ const TemplatesGallery: React.FC = () => {
                       px: 5,
                       py: 1.5,
                       fontSize: "1rem",
-                      background:
-                        theme.palette.mode === "dark"
-                          ? `linear-gradient(135deg, #4bbebe 0%, #7dd3d3 100%)`
-                          : `linear-gradient(135deg, #1a5757 0%, #3da9a9 100%)`,
-                      boxShadow: `0 8px 32px ${
-                        theme.palette.mode === "dark"
-                          ? alpha("#4bbebe", 0.35)
-                          : alpha("#1a5757", 0.3)
-                      }`,
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                      boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.35)}`,
                       "&:hover": {
                         transform: "translateY(-2px)",
-                        boxShadow: `0 12px 40px ${
-                          theme.palette.mode === "dark"
-                            ? alpha("#4bbebe", 0.5)
-                            : alpha("#1a5757", 0.4)
-                        }`,
+                        boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.5)}`,
                       },
                       transition: "all 0.25s ease",
                     }}

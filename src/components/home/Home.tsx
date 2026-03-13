@@ -191,10 +191,7 @@ const Home: React.FC = () => {
                     theme.palette.mode === "dark"
                       ? alpha("#fff", 0.07)
                       : alpha("#fff", 1),
-                  boxShadow:
-                    theme.palette.mode === "dark"
-                      ? "0 0 0 3px rgba(136, 207, 207, 0.12)"
-                      : "0 0 0 3px rgba(32, 90, 90, 0.1)",
+                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
                 },
               },
             }}
@@ -227,12 +224,9 @@ const Home: React.FC = () => {
                 fontWeight: 600,
                 px: 0.5,
                 letterSpacing: "0.01em",
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha("#4bbebe", 0.15)
-                    : alpha("#1a5757", 0.08),
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
-                border: `1px solid ${theme.palette.mode === "dark" ? alpha("#4bbebe", 0.25) : alpha("#1a5757", 0.15)}`,
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             />
             <Chip
@@ -245,12 +239,9 @@ const Home: React.FC = () => {
                 fontWeight: 600,
                 px: 0.5,
                 letterSpacing: "0.01em",
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha("#4bbebe", 0.15)
-                    : alpha("#1a5757", 0.08),
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
-                border: `1px solid ${theme.palette.mode === "dark" ? alpha("#4bbebe", 0.25) : alpha("#1a5757", 0.15)}`,
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             />
           </Box>
@@ -282,12 +273,9 @@ const Home: React.FC = () => {
                 width: 42,
                 height: 42,
                 borderRadius: 2,
-                background:
-                  theme.palette.mode === "dark"
-                    ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.2)}, ${alpha("#4bbebe", 0.08)})`
-                    : `linear-gradient(135deg, ${alpha("#1a5757", 0.12)}, ${alpha("#1a5757", 0.04)})`,
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
-                border: `1px solid ${theme.palette.mode === "dark" ? alpha("#4bbebe", 0.25) : alpha("#1a5757", 0.15)}`,
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             >
               <FontAwesomeIcon icon="sitemap" style={{ fontSize: "1rem" }} />
@@ -353,20 +341,11 @@ const Home: React.FC = () => {
                   onClick={() => navigateOrchestrator("new")}
                   sx={{
                     border: "2px dashed",
-                    borderColor:
-                      theme.palette.mode === "dark"
-                        ? "rgba(136, 207, 207, 0.3)"
-                        : "rgba(32, 90, 90, 0.2)",
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
                     backgroundColor: "transparent !important",
                     "&:hover": {
-                      borderColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(136, 207, 207, 0.6)"
-                          : "rgba(32, 90, 90, 0.4)",
-                      backgroundColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(136, 207, 207, 0.05) !important"
-                          : "rgba(32, 90, 90, 0.02) !important",
+                      borderColor: alpha(theme.palette.primary.main, 0.6),
+                      backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
                     },
                   }}
                 >
@@ -375,8 +354,7 @@ const Home: React.FC = () => {
                       icon="plus"
                       size="3x"
                       style={{
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
+                        color: theme.palette.primary.main,
                         opacity: 0.7,
                       }}
                     />
@@ -428,14 +406,8 @@ const Home: React.FC = () => {
                             alignItems: "center",
                             justifyContent: "center",
                             fontSize: "2.5rem",
-                            color:
-                              theme.palette.mode === "dark"
-                                ? "rgba(136, 207, 207, 0.5)"
-                                : "rgba(32, 90, 90, 0.4)",
-                            backgroundColor:
-                              theme.palette.mode === "dark"
-                                ? "rgba(136, 207, 207, 0.05)"
-                                : "rgba(32, 90, 90, 0.03)",
+                            color: alpha(theme.palette.primary.main, 0.5),
+                            backgroundColor: alpha(theme.palette.primary.main, 0.04),
                           }}
                         >
                           <FontAwesomeIcon icon="sitemap" />
@@ -528,24 +500,20 @@ const Home: React.FC = () => {
                                 }}
                                 sx={{
                                   color: orchestrator.templateId
-                                    ? (theme.palette.mode === "dark"
-                                        ? "#7dd3d3"
-                                        : "#1a5757")
+                                    ? theme.palette.primary.main
                                     : "text.secondary",
                                   fontSize: "0.8rem",
                                   p: 0.5,
                                   borderRadius: 1.5,
                                   opacity: orchestrator.templateId ? 1 : 0.55,
+                                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
                                   transition: "all 0.2s ease",
                                   "&:hover": {
                                     opacity: 1,
-                                    backgroundColor:
-                                      theme.palette.mode === "dark"
-                                        ? alpha("#4bbebe", 0.12)
-                                        : alpha("#1a5757", 0.08),
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.2),
                                   },
                                   "&:focus-visible": {
-                                    outline: `2px solid ${theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757"}`,
+                                    outline: `2px solid ${theme.palette.primary.main}`,
                                     outlineOffset: 2,
                                   },
                                 }}
@@ -625,8 +593,7 @@ const Home: React.FC = () => {
                       style={{
                         opacity: 0.25,
                         marginBottom: "16px",
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
+                        color: theme.palette.primary.main,
                       }}
                     />
                     <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
@@ -673,12 +640,9 @@ const Home: React.FC = () => {
                 width: 42,
                 height: 42,
                 borderRadius: 2,
-                background:
-                  theme.palette.mode === "dark"
-                    ? `linear-gradient(135deg, ${alpha("#4bbebe", 0.2)}, ${alpha("#4bbebe", 0.08)})`
-                    : `linear-gradient(135deg, ${alpha("#1a5757", 0.12)}, ${alpha("#1a5757", 0.04)})`,
-                color: theme.palette.mode === "dark" ? "#7dd3d3" : "#1a5757",
-                border: `1px solid ${theme.palette.mode === "dark" ? alpha("#4bbebe", 0.25) : alpha("#1a5757", 0.15)}`,
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             >
               <FontAwesomeIcon icon="cube" style={{ fontSize: "1rem" }} />
@@ -745,20 +709,11 @@ const Home: React.FC = () => {
                   onClick={() => navigateResource(undefined)}
                   sx={{
                     border: "2px dashed",
-                    borderColor:
-                      theme.palette.mode === "dark"
-                        ? "rgba(136, 207, 207, 0.3)"
-                        : "rgba(32, 90, 90, 0.2)",
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
                     backgroundColor: "transparent !important",
                     "&:hover": {
-                      borderColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(136, 207, 207, 0.6)"
-                          : "rgba(32, 90, 90, 0.4)",
-                      backgroundColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(136, 207, 207, 0.05) !important"
-                          : "rgba(32, 90, 90, 0.02) !important",
+                      borderColor: alpha(theme.palette.primary.main, 0.6),
+                      backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
                     },
                   }}
                 >
@@ -767,8 +722,7 @@ const Home: React.FC = () => {
                       icon="plus"
                       size="3x"
                       style={{
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
+                        color: theme.palette.primary.main,
                         opacity: 0.7,
                       }}
                     />
@@ -889,8 +843,7 @@ const Home: React.FC = () => {
                       style={{
                         opacity: 0.25,
                         marginBottom: "16px",
-                        color:
-                          theme.palette.mode === "dark" ? "#88cfcf" : "#4bbebe",
+                        color: theme.palette.primary.main,
                       }}
                     />
                     <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
