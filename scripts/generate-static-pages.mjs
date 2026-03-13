@@ -153,7 +153,7 @@ async function main() {
     const id = doc.id || doc._id;
     if (!id) continue;
 
-    const title = `${doc.name || "Template"} | Orchestrator`;
+    const title = `${doc.templateName || "Template"} | Orchestrator`;
     const rawDesc =
       doc.description ||
       `A ${(doc.cloud || "cloud").toUpperCase()} infrastructure template on Orchestrator.`;
