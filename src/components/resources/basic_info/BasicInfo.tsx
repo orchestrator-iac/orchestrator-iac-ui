@@ -30,6 +30,7 @@ import ModificationHistory from "../modification/ModificationHistoryTimeline";
 const BasicInfo: React.FC = () => {
   const { control, formState, setValue, watch } = useFormContext();
   const modifiedHistory = watch("modifiedHistory");
+  const formCloudProvider = watch("cloudProvider");
   const { errors } = formState as any;
 
   const [showHistory, setShowHistory] = useState(false);
@@ -39,15 +40,18 @@ const BasicInfo: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const dispatch = useDispatch<any>();
-  const { icons, loading, page, hasMore } = useSelector(
+  const { icons, loading, page, hasMore, error } = useSelector(
     (state: any) => state.icons,
   );
 
   // Open popup and load first page
   const handleOpen = () => {
+    setSearchQuery("");
     setOpen(true);
     dispatch(resetIcons());
-    dispatch(fetchIcons({ page: 1, pageSize: 20 }));
+    if (formCloudProvider) {
+      dispatch(fetchIcons({ page: 1, pageSize: 20, cloudType: formCloudProvider }));
+    }
   };
 
   const handleClose = () => setOpen(false);
@@ -55,7 +59,7 @@ const BasicInfo: React.FC = () => {
   // Search icons
   const handleSearch = () => {
     dispatch(resetIcons());
-    dispatch(fetchIcons({ query: searchQuery, page: 1, pageSize: 20 }));
+    dispatch(fetchIcons({ query: searchQuery, page: 1, pageSize: 20, cloudType: formCloudProvider || undefined }));
   };
 
   // Infinite scroll handler
@@ -67,10 +71,10 @@ const BasicInfo: React.FC = () => {
         !loading &&
         hasMore
       ) {
-        dispatch(fetchIcons({ query: searchQuery, page, pageSize: 20 }));
+        dispatch(fetchIcons({ query: searchQuery, page, pageSize: 20, cloudType: formCloudProvider || undefined }));
       }
     },
-    [dispatch, loading, hasMore, page, searchQuery],
+    [dispatch, loading, hasMore, page, searchQuery, formCloudProvider],
   );
 
   const handleSelectIcon = (icon: any) => {
@@ -376,6 +380,7 @@ const BasicInfo: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            disabled={!formCloudProvider}
             sx={{
               mb: 2,
               "& .MuiOutlinedInput-root": {
@@ -384,80 +389,108 @@ const BasicInfo: React.FC = () => {
             }}
           />
 
-          <Grid container spacing={2}>
-            {icons.map((icon: any) => (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon.url}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: 3,
-                    },
-                  }}
-                >
-                  <CardActionArea onClick={() => handleSelectIcon(icon)}>
-                    <CardMedia
-                      component="img"
-                      height="120"
-                      image={icon.url}
-                      alt={icon.name}
-                    />
-                    <CardContent>
-                      <Tooltip title={icon.name}>
-                        <Typography
-                          variant="body2"
-                          color="text.primary"
-                          sx={{
-                            textTransform: "capitalize",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {icon.name}
-                        </Typography>
-                      </Tooltip>
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mb: 1 }}>
+              {error}
+            </Typography>
+          )}
 
-                      <Tooltip
-                        title={[
-                          icon.type?.toUpperCase(),
-                          icon.cloudType?.toUpperCase(),
-                        ]
-                          .filter(Boolean)
-                          .join(" | ")}
-                      >
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            fontSize: 10,
-                            textTransform: "capitalize",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {[
-                            icon.type?.toUpperCase(),
-                            icon.cloudType?.toUpperCase(),
-                          ]
-                            .filter(Boolean)
-                            .join(" | ")}
-                        </Typography>
-                      </Tooltip>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
+          {formCloudProvider ? (
+            <>
+              <Grid container spacing={2}>
+                {icons.map((icon: any) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon.url}>
+                    <Card
+                      sx={{
+                        borderRadius: 2,
+                        transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                        "&:hover": {
+                          transform: "translateY(-4px)",
+                          boxShadow: 3,
+                        },
+                      }}
+                    >
+                      <CardActionArea onClick={() => handleSelectIcon(icon)}>
+                        <CardMedia
+                          component="img"
+                          height="120"
+                          image={icon.url}
+                          alt={icon.name}
+                        />
+                        <CardContent>
+                          <Tooltip title={icon.name}>
+                            <Typography
+                              variant="body2"
+                              color="text.primary"
+                              sx={{
+                                textTransform: "capitalize",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {icon.name}
+                            </Typography>
+                          </Tooltip>
+
+                          <Tooltip
+                            title={[
+                              icon.type?.toUpperCase(),
+                              icon.cloudType?.toUpperCase(),
+                            ]
+                              .filter(Boolean)
+                              .join(" | ")}
+                          >
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{
+                                fontSize: 10,
+                                textTransform: "capitalize",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {[
+                                icon.type?.toUpperCase(),
+                                icon.cloudType?.toUpperCase(),
+                              ]
+                                .filter(Boolean)
+                                .join(" | ")}
+                            </Typography>
+                          </Tooltip>
+                        </CardContent>
+                      </CardActionArea>
+                    </Card>
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
 
-          {loading && (
-            <Grid container justifyContent="center" sx={{ mt: 2 }}>
-              <CircularProgress size={24} />
-            </Grid>
+              {loading && (
+                <Grid container justifyContent="center" sx={{ mt: 2 }}>
+                  <CircularProgress size={24} />
+                </Grid>
+              )}
+
+              {!loading && !error && icons.length === 0 && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ textAlign: "center", mt: 4 }}
+                >
+                  No icons found for this provider.
+                </Typography>
+              )}
+            </>
+          ) : (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ textAlign: "center", mt: 4 }}
+            >
+              Please select a Cloud Provider in the form first.
+            </Typography>
           )}
         </DialogContent>
       </Dialog>
