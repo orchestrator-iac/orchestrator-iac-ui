@@ -28,6 +28,8 @@ export interface UserProfile {
 export interface AuthContextType {
   token: string | null;
   user: UserProfile | null;
+  /** True while the initial silent refresh is in-flight on page load. */
+  isInitializing: boolean;
   login: (token: string) => void;
   logout: () => void;
   refreshProfile: () => Promise<void>;
