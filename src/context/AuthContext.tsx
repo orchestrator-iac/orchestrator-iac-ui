@@ -19,6 +19,9 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
     tokenManager.getAccessToken(),
   );
   const [user, setUser] = useState<UserProfile | null>(null);
+  // True while the silent refresh on page-load is in-flight.
+  // ProtectedRoute must not redirect until this is false.
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const refreshProfile = async () => {
     try {
@@ -30,7 +33,9 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
     }
   };
 
-  // On mount attempt to seed in-memory access token from refresh cookie
+  // On mount attempt to seed in-memory access token from refresh cookie.
+  // isInitializing stays true until this settles so ProtectedRoute won't
+  // redirect to /login before we've had a chance to restore the session.
   useEffect(() => {
     (async () => {
       try {
@@ -42,6 +47,8 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
       } catch (err) {
         // no-op if refresh fails (user not authenticated)
         console.debug("No refresh token available or refresh failed", err);
+      } finally {
+        setIsInitializing(false);
       }
     })();
   }, []);
@@ -108,8 +115,8 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   };
 
   const contextValue = useMemo(
-    () => ({ token, user, login, logout, refreshProfile, googleLogin }),
-    [token, user],
+    () => ({ token, user, isInitializing, login, logout, refreshProfile, googleLogin }),
+    [token, user, isInitializing],
   );
 
   return (
