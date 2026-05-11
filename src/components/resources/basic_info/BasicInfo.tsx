@@ -20,12 +20,132 @@ import {
   Typography,
   Tooltip,
   Box,
+  Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { Controller, useFormContext } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchIcons, resetIcons } from "../../../store/iconsSlice";
 import ModificationHistory from "../modification/ModificationHistoryTimeline";
+
+/** Normalize url field: always returns [{url, iconKind}] */
+function getVariants(icon: any): { url: string; iconKind: string }[] {
+  if (Array.isArray(icon.url)) return icon.url;
+  if (typeof icon.url === "string") return [{ url: icon.url, iconKind: icon.iconKind ?? "unknown" }];
+  return [];
+}
+
+/** Card with optional carousel for icons that have multiple URL variants */
+const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ icon, onSelect }) => {
+  const variants = getVariants(icon);
+  const [idx, setIdx] = useState(0);
+  const current = variants[idx] ?? { url: "", iconKind: "" };
+  const multi = variants.length > 1;
+
+  const prev = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => (i - 1 + variants.length) % variants.length); };
+  const next = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => (i + 1) % variants.length); };
+
+  return (
+    <Card
+      sx={{
+        borderRadius: 2,
+        transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "&:hover": { transform: "translateY(-4px)", boxShadow: 3 },
+      }}
+    >
+      <CardActionArea onClick={() => onSelect(current.url)}>
+        {/* Image area with prev/next arrows */}
+        <Box sx={{ position: "relative" }}>
+          <CardMedia
+            component="img"
+            height="120"
+            image={current.url}
+            alt={icon.name}
+          />
+          {multi && (
+            <>
+              <IconButton
+                size="small"
+                onClick={prev}
+                sx={{
+                  position: "absolute", left: 2, top: "50%",
+                  transform: "translateY(-50%)",
+                  bgcolor: "rgba(255,255,255,0.75)",
+                  p: 0.25,
+                  "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
+                }}
+              >
+                <ArrowBackIosNewIcon sx={{ fontSize: 12 }} />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={next}
+                sx={{
+                  position: "absolute", right: 2, top: "50%",
+                  transform: "translateY(-50%)",
+                  bgcolor: "rgba(255,255,255,0.75)",
+                  p: 0.25,
+                  "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
+                }}
+              >
+                <ArrowForwardIosIcon sx={{ fontSize: 12 }} />
+              </IconButton>
+              {/* Dot indicators */}
+              <Box sx={{ position: "absolute", bottom: 4, width: "100%", display: "flex", justifyContent: "center", gap: 0.5 }}>
+                {variants.map((v, i) => (
+                  <Box
+                    key={v.url}
+                    sx={{
+                      width: 5, height: 5, borderRadius: "50%",
+                      bgcolor: i === idx ? "primary.main" : "grey.400",
+                    }}
+                  />
+                ))}
+              </Box>
+            </>
+          )}
+        </Box>
+
+        <CardContent sx={{ pb: "8px !important" }}>
+          <Tooltip title={icon.name}>
+            <Typography
+              variant="body2"
+              color="text.primary"
+              sx={{ textTransform: "capitalize", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+            >
+              {icon.name}
+            </Typography>
+          </Tooltip>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5, flexWrap: "wrap" }}>
+            {icon.type && (
+              <Tooltip title={icon.type.toUpperCase()}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: 10, textTransform: "capitalize", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 1 }}
+                >
+                  {icon.type.toUpperCase()}
+                </Typography>
+              </Tooltip>
+            )}
+            {multi && current.iconKind && current.iconKind !== "unknown" && (
+              <Chip
+                label={current.iconKind}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontSize: 9, height: 16, flexShrink: 0 }}
+              />
+            )}
+          </Box>
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
+};
 
 const BasicInfo: React.FC = () => {
   const { control, formState, setValue, watch } = useFormContext();
@@ -77,8 +197,8 @@ const BasicInfo: React.FC = () => {
     [dispatch, loading, hasMore, page, searchQuery, formCloudProvider],
   );
 
-  const handleSelectIcon = (icon: any) => {
-    setValue("resourceIcon", { id: icon._id, url: icon.url });
+  const handleSelectIcon = (icon: any, url: string) => {
+    setValue("resourceIcon", { id: icon._id, url });
     setOpen(false);
   };
 
@@ -399,70 +519,8 @@ const BasicInfo: React.FC = () => {
             <>
               <Grid container spacing={2}>
                 {icons.map((icon: any) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon.url}>
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: 3,
-                        },
-                      }}
-                    >
-                      <CardActionArea onClick={() => handleSelectIcon(icon)}>
-                        <CardMedia
-                          component="img"
-                          height="120"
-                          image={icon.url}
-                          alt={icon.name}
-                        />
-                        <CardContent>
-                          <Tooltip title={icon.name}>
-                            <Typography
-                              variant="body2"
-                              color="text.primary"
-                              sx={{
-                                textTransform: "capitalize",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {icon.name}
-                            </Typography>
-                          </Tooltip>
-
-                          <Tooltip
-                            title={[
-                              icon.type?.toUpperCase(),
-                              icon.cloudType?.toUpperCase(),
-                            ]
-                              .filter(Boolean)
-                              .join(" | ")}
-                          >
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{
-                                fontSize: 10,
-                                textTransform: "capitalize",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {[
-                                icon.type?.toUpperCase(),
-                                icon.cloudType?.toUpperCase(),
-                              ]
-                                .filter(Boolean)
-                                .join(" | ")}
-                            </Typography>
-                          </Tooltip>
-                        </CardContent>
-                      </CardActionArea>
-                    </Card>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon._id ?? icon.url}>
+                    <IconCard icon={icon} onSelect={(url) => handleSelectIcon(icon, url)} />
                   </Grid>
                 ))}
               </Grid>
