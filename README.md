@@ -72,7 +72,7 @@ Instead of writing Terraform manually, users fill out a **form/UI** → the syst
 **Step 2 – Orchestration**
 
 - Input sent to **FastAPI backend**.
-- Backend stores request in **MongoDB** (config, user metadata).
+- Backend stores requests in **DynamoDB** (primary); MongoDB-related code is retained only as a backup for future use.
 - Orchestrator generates Terraform code based on schema + templates.
 
 **Step 3 – Validation**
@@ -91,18 +91,18 @@ Instead of writing Terraform manually, users fill out a **form/UI** → the syst
 ## 3. Architecture Diagram (simplified)
 
 ```
-+------------------+         +-----------------+         +------------------+
-|   React Frontend | <-----> | FastAPI Backend | <-----> |   MongoDB Atlas  |
-+------------------+         +-----------------+         +------------------+
-        |                            |                            |
-        v                            v                            v
++------------------+         +-----------------+         +-------------------------+
+|   React Frontend | <-----> | FastAPI Backend | <-----> |   DynamoDB (primary)    |
++------------------+         +-----------------+         +-------------------------+
+     |                            |                            |
+     v                            v                            v
    User Input                  Template Engine             Config Storage
  (Forms / Editor)            (Terraform Generator)        (Users, Projects)
-        |
-        v
+     |
+     v
    Validation & Feedback
-        |
-        v
+     |
+     v
  Future: Git / CI/CD / Cloud
 ```
 
@@ -125,10 +125,9 @@ Instead of writing Terraform manually, users fill out a **form/UI** → the syst
   - Converts user schema → Terraform HCL.
   - Manages versioning.
 
-### **Database (MongoDB Atlas)**
+### **Database (DynamoDB primary; MongoDB retained as backup)**
 
-- Stores projects, templates, and user configs.
-- Provides history/audit trail.
+- Stores projects, templates, and user configs in DynamoDB (primary). MongoDB-related code and scripts remain in the repository but are not used by default; they are kept as a backup for potential future needs.
 
 ### **Terraform Engine**
 
@@ -143,7 +142,7 @@ Instead of writing Terraform manually, users fill out a **form/UI** → the syst
 - Schema-driven form builder.
 - Terraform template generation.
 - Error feedback in UI.
-- Project storage in MongoDB.
+- Project storage in DynamoDB (primary). MongoDB-related code is retained in the repository as a backup and is not actively used by default.
 
 ---
 
@@ -177,7 +176,7 @@ Instead of writing Terraform manually, users fill out a **form/UI** → the syst
 1. **User logs in** → sees dashboard.
 2. **Fills form** (e.g., VPC with 2 public & 2 private subnets).
 3. **Frontend sends config** → Backend via API.
-4. **Backend generates Terraform code** → stores config in MongoDB.
+4. **Backend generates Terraform code** → stores config in DynamoDB (primary).
 5. **User reviews/edits code** in UI editor.
 6. **Validation runs** → errors shown in UI.
 7. **Future:** User clicks “Deploy” → Code pushed to Git → CI/CD runs `terraform apply`.
