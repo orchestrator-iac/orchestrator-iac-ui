@@ -12,10 +12,28 @@ import {
 import { LoginSchema, RegisterSchema } from "../types/auth-schema";
 import apiService from "./apiService";
 
+// Safe base64 encoder for Unicode strings (avoids deprecated `unescape`).
+const base64Encode = (s: string): string => {
+  try {
+    return btoa(
+      encodeURIComponent(s).replace(/%([0-9A-F]{2})/g, (_match, p1) =>
+        String.fromCodePoint(Number.parseInt(p1, 16)),
+      ),
+    );
+  } catch {
+    return btoa(s);
+  }
+};
+
 export const loginUser = async (login: Login) => {
   try {
     LoginSchema.parse(login);
-    const res = await apiService.post("/user/login", login);
+    const payload = { email: login.email, password: base64Encode(login.password) };
+    const res = await apiService.post(
+      "/user/login",
+      payload,
+      { headers: { "X-Password-Encoding": "base64" } },
+    );
     return res.access_token;
   } catch (error: any) {
     if (error instanceof ZodError) {
@@ -53,7 +71,8 @@ export const loginUser = async (login: Login) => {
 export const registerUser = async (register: Register) => {
   try {
     RegisterSchema.parse(register);
-    await apiService.post("/user/register", register);
+    const payload = { ...register, password: base64Encode(register.password) };
+    await apiService.post("/user/register", payload, { headers: { "X-Password-Encoding": "base64" } });
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(error.message);
@@ -75,8 +94,9 @@ export const uploadProfileImage = async (formData: ImageUpdate) => {
 export const updatePassword = async (
   data: UpdatePasswordRequest,
 ): Promise<UpdatePasswordResponse> => {
-  const response = await apiService.post("/user/update-password", data);
-  return response.data;
+  const payload = { ...data, newPassword: base64Encode(data.newPassword) };
+  const response = await apiService.post("/user/update-password", payload, { headers: { "X-Password-Encoding": "base64" } });
+  return response as UpdatePasswordResponse;
 };
 
 export const refreshAccessToken = async (): Promise<string> => {
@@ -85,7 +105,7 @@ export const refreshAccessToken = async (): Promise<string> => {
     {},
     { withCredentials: true, headers: { "Content-Type": "application/json" } },
   );
-  return res.data.access_token as string;
+  return res.access_token as string;
 };
 
 export const loginWithGoogle = async (credential: string): Promise<string> => {

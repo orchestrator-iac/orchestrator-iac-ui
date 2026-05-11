@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { refreshAccessToken } from "./auth";
+import tokenManager from "./tokenManager";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -22,7 +23,7 @@ const onRefreshed = (token: string) =>
 // Request interceptor (e.g., for adding Authorization headers)
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = tokenManager.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -45,7 +46,7 @@ apiClient.interceptors.response.use(
           isRefreshing = true;
           refreshPromise = refreshAccessToken()
             .then((newToken) => {
-              localStorage.setItem("token", newToken);
+              tokenManager.setAccessToken(newToken);
               onRefreshed(newToken);
               return newToken;
             })
@@ -61,12 +62,12 @@ apiClient.interceptors.response.use(
         return apiClient(original); // retry
       } catch (e) {
         // refresh failed -> clear and bubble up
-        localStorage.removeItem("token");
-        return Promise.reject(e);
+        tokenManager.setAccessToken(null);
+        throw e;
       }
     }
 
-    return Promise.reject(error);
+    throw error;
   },
 );
 

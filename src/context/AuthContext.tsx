@@ -9,13 +9,14 @@ import {
 import { jwtDecode } from "jwt-decode";
 
 import { getProfile, refreshAccessToken } from "../services/auth";
+import tokenManager from "../services/tokenManager";
 import { AuthContextType, UserProfile } from "../types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   const [token, setToken] = useState<string | null>(
-    localStorage.getItem("token"),
+    tokenManager.getAccessToken(),
   );
   const [user, setUser] = useState<UserProfile | null>(null);
 
@@ -28,6 +29,22 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
       logout();
     }
   };
+
+  // On mount attempt to seed in-memory access token from refresh cookie
+  useEffect(() => {
+    (async () => {
+      try {
+        const newTok = await refreshAccessToken();
+        if (newTok) {
+          tokenManager.setAccessToken(newTok);
+          setToken(newTok);
+        }
+      } catch (err) {
+        // no-op if refresh fails (user not authenticated)
+        console.debug("No refresh token available or refresh failed", err);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -47,7 +64,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
       // Proactive refresh ~2 minutes before expiry
       const msToExpiry = decoded.exp * 1000 - Date.now();
       const refreshIn = Math.max(msToExpiry - 2 * 60 * 1000, 0);
-      refreshTimer = window.setTimeout(async () => {
+      refreshTimer = globalThis.setTimeout(async () => {
         try {
           const newTok = await refreshAccessToken();
           login(newTok);
@@ -64,17 +81,17 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
     }
 
     return () => {
-      if (refreshTimer) window.clearTimeout(refreshTimer);
+      if (refreshTimer) globalThis.clearTimeout(refreshTimer);
     };
   }, [token]);
 
   const login = (newToken: string) => {
-    localStorage.setItem("token", newToken);
+    tokenManager.setAccessToken(newToken);
     setToken(newToken);
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    tokenManager.setAccessToken(null);
     setToken(null);
     setUser(null);
   };
