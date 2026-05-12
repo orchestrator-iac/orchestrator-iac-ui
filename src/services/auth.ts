@@ -1,5 +1,6 @@
 // services/auth.ts
 import { ZodError, z } from "zod";
+import axios from "axios";
 
 import {
   ImageUpdate,
@@ -100,12 +101,19 @@ export const updatePassword = async (
 };
 
 export const refreshAccessToken = async (): Promise<string> => {
-  const res = await apiService.post(
-    "/user/refresh",
-    {},
-    { withCredentials: true, headers: { "Content-Type": "application/json" } },
-  );
-  return res.access_token as string;
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/user/refresh`,
+      {},
+      { withCredentials: true, headers: { "Content-Type": "application/json" } },
+    );
+    return res.data?.access_token as string;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const e = new Error(err?.message || "Refresh failed");
+    (e as any).status = status;
+    throw e;
+  }
 };
 
 export const loginWithGoogle = async (credential: string): Promise<string> => {
