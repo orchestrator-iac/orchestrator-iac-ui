@@ -44,8 +44,8 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
   const current = variants[idx] ?? { url: "", iconKind: "" };
   const multi = variants.length > 1;
 
-  const prev = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => (i - 1 + variants.length) % variants.length); };
-  const next = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => (i + 1) % variants.length); };
+  const prev = (e: any) => { e.stopPropagation(); setIdx((i: number) => (i - 1 + variants.length) % variants.length); };
+  const next = (e: any) => { e.stopPropagation(); setIdx((i: number) => (i + 1) % variants.length); };
 
   return (
     <Card
@@ -67,8 +67,17 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
           {multi && (
             <>
               <IconButton
+                component="span"
+                role="button"
+                tabIndex={0}
                 size="small"
-                onClick={prev}
+                onClick={(e) => { e.stopPropagation(); prev(e); }}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    prev(e as any);
+                  }
+                }}
                 sx={{
                   position: "absolute", left: 2, top: "50%",
                   transform: "translateY(-50%)",
@@ -76,12 +85,22 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
                   p: 0.25,
                   "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
                 }}
+                aria-label="previous-variant"
               >
                 <ArrowBackIosNewIcon sx={{ fontSize: 12 }} />
               </IconButton>
               <IconButton
+                component="span"
+                role="button"
+                tabIndex={0}
                 size="small"
-                onClick={next}
+                onClick={(e) => { e.stopPropagation(); next(e); }}
+                onKeyDown={(e: React.KeyboardEvent) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    next(e as any);
+                  }
+                }}
                 sx={{
                   position: "absolute", right: 2, top: "50%",
                   transform: "translateY(-50%)",
@@ -89,6 +108,7 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
                   p: 0.25,
                   "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
                 }}
+                aria-label="next-variant"
               >
                 <ArrowForwardIosIcon sx={{ fontSize: 12 }} />
               </IconButton>
