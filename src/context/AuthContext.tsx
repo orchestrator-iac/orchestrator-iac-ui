@@ -39,14 +39,45 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   useEffect(() => {
     (async () => {
       try {
+        // If we're already on the login page, skip the silent refresh.
+        if (
+          globalThis.window !== undefined &&
+          globalThis.location.pathname === "/login"
+        ) {
+          setIsInitializing(false);
+          return;
+        }
+
         const newTok = await refreshAccessToken();
         if (newTok) {
           tokenManager.setAccessToken(newTok);
           setToken(newTok);
         }
       } catch (err) {
-        // no-op if refresh fails (user not authenticated)
+        // Clear state and redirect to login if silent refresh fails
         console.debug("No refresh token available or refresh failed", err);
+        try {
+          tokenManager.clearAccessToken();
+        } catch (e) {
+          console.debug("AuthContext: failed to clear access token", e);
+        }
+        setToken(null);
+        setUser(null);
+        try {
+          if (
+            globalThis.window !== undefined &&
+            globalThis.location.pathname !== "/login"
+          ) {
+            try {
+              localStorage.setItem("loggedOutAt", String(Date.now()));
+            } catch {
+              globalThis.location.href = "/login";
+            }
+            globalThis.location.href = "/login";
+          }
+        } catch (e) {
+          console.debug("AuthContext: failed to redirect to /login", e);
+        }
       } finally {
         setIsInitializing(false);
       }
@@ -115,7 +146,15 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   };
 
   const contextValue = useMemo(
-    () => ({ token, user, isInitializing, login, logout, refreshProfile, googleLogin }),
+    () => ({
+      token,
+      user,
+      isInitializing,
+      login,
+      logout,
+      refreshProfile,
+      googleLogin,
+    }),
     [token, user, isInitializing],
   );
 

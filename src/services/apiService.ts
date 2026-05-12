@@ -61,8 +61,28 @@ apiClient.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(original); // retry
       } catch (e) {
-        // refresh failed -> clear and bubble up
+        // refresh failed -> clear token and force login (avoid reload loop)
         tokenManager.setAccessToken(null);
+        try {
+          if (globalThis.window !== undefined) {
+            try {
+              localStorage.setItem("loggedOutAt", String(Date.now()));
+            } catch {
+              globalThis.location.href = "/login";
+            }
+            if (globalThis.location.pathname !== "/login") {
+              console.debug(
+                "apiService: refresh failed, redirecting to /login",
+              );
+              globalThis.location.href = "/login";
+            }
+          }
+        } catch (err) {
+          console.debug(
+            "apiService: failed to redirect after refresh failure",
+            err,
+          );
+        }
         throw e;
       }
     }
