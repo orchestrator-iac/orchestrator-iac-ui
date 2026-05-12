@@ -30,22 +30,43 @@ import PublishTemplateDialog from "../orchestrator/publish-template/PublishTempl
 
 import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
+import awsLogoLight from "./../../assets/aws_logo_light.svg";
+import awsLogoDark from "./../../assets/aws_logo_dark.svg";
 import azLogo from "./../../assets/az_logo.svg";
 import gcpLogo from "./../../assets/gcp_logo.svg";
 
-const logoMap: Record<string, string> = {
-  aws: awsLogo,
-  azure: azLogo,
-  gcp: gcpLogo,
+const logoMap: Record<
+  string,
+  { light: string; dark: string; default: string }
+> = {
+  aws: {
+    light: awsLogoLight,
+    dark: awsLogoDark,
+    default: awsLogo,
+  },
+  azure: {
+    light: azLogo,
+    dark: azLogo,
+    default: azLogo,
+  },
+  gcp: {
+    light: gcpLogo,
+    dark: gcpLogo,
+    default: gcpLogo,
+  },
 };
 
 interface CardLogoProps {
   cloudType: string;
   className?: string;
+  mode: "light" | "dark";
 }
 
-const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className }) => {
-  const logoSrc = logoMap[cloudType];
+const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className, mode }) => {
+  const logoSrc =
+    logoMap[cloudType]?.[mode] ||
+    logoMap[cloudType]?.default ||
+    awsLogo;
   return <img src={logoSrc} alt={`${cloudType} logo`} className={className} />;
 };
 
@@ -170,7 +191,6 @@ const Home: React.FC = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             variant="outlined"
             size="small"
-            inputProps={{ "aria-label": "Search orchestrators and resources" }}
             sx={{
               flex: { xs: "1", md: "0 1 420px" },
               "& .MuiOutlinedInput-root": {
@@ -196,6 +216,9 @@ const Home: React.FC = () => {
               },
             }}
             slotProps={{
+              htmlInput: {
+                "aria-label": "Search orchestrators and resources",
+              },
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
@@ -231,7 +254,11 @@ const Home: React.FC = () => {
             />
             <Chip
               icon={
-                <FontAwesomeIcon icon="cube" aria-hidden="true" style={{ fontSize: "0.85rem" }} />
+                <FontAwesomeIcon
+                  icon="cube"
+                  aria-hidden="true"
+                  style={{ fontSize: "0.85rem" }}
+                />
               }
               label={`${filteredResources.length} Resources`}
               size="small"
@@ -249,7 +276,11 @@ const Home: React.FC = () => {
       </Fade>
       {/* ===== ORCHESTRATORS ===== */}
       <Fade in={showContent} timeout={800}>
-        <Box component="section" aria-labelledby="orchestrators-heading" sx={{ mb: 3 }}>
+        <Box
+          component="section"
+          aria-labelledby="orchestrators-heading"
+          sx={{ mb: 3 }}
+        >
           <Typography
             id="orchestrators-heading"
             variant="h4"
@@ -388,6 +419,7 @@ const Home: React.FC = () => {
                       <CardLogo
                         cloudType={orchestrator.templateInfo?.cloud || "aws"}
                         className={styles.cloudTypeLogo}
+                        mode={theme.palette.mode}
                       />
                       {orchestrator.previewImageUrl ? (
                         <img
@@ -407,7 +439,10 @@ const Home: React.FC = () => {
                             justifyContent: "center",
                             fontSize: "2.5rem",
                             color: alpha(theme.palette.primary.main, 0.5),
-                            backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.04,
+                            ),
                           }}
                         >
                           <FontAwesomeIcon icon="sitemap" />
@@ -440,40 +475,46 @@ const Home: React.FC = () => {
                         {orchestrator.templateInfo?.description ||
                           "No description"}
                       </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box
+                          component="code"
+                          sx={{
+                            fontSize: "0.8rem",
+                            color: "text.secondary",
+                            backgroundColor:
+                              theme.palette.mode === "dark"
+                                ? "rgba(255, 255, 255, 0.05)"
+                                : "rgba(0, 0, 0, 0.04)",
+                            px: 1.5,
+                            py: 0.75,
+                            borderRadius: 1,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <FontAwesomeIcon
+                            icon="circle-nodes"
+                            style={{ fontSize: "0.75rem" }}
+                          />
+                          {orchestrator.nodeCount} nodes •{" "}
+                          {orchestrator.edgeCount} connections
+                        </Box>
                         <Box
                           sx={{
                             display: "flex",
-                            gap: 1,
+                            gap: 0.5,
                             alignItems: "center",
-                            flexWrap: "wrap",
-                            justifyContent: "space-between",
                           }}
                         >
-                          <Box
-                            component="code"
-                            sx={{
-                              fontSize: "0.8rem",
-                              color: "text.secondary",
-                              backgroundColor:
-                                theme.palette.mode === "dark"
-                                  ? "rgba(255, 255, 255, 0.05)"
-                                  : "rgba(0, 0, 0, 0.04)",
-                              px: 1.5,
-                              py: 0.75,
-                              borderRadius: 1,
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                            }}
-                          >
-                            <FontAwesomeIcon
-                              icon="circle-nodes"
-                              style={{ fontSize: "0.75rem" }}
-                            />
-                            {orchestrator.nodeCount} nodes •{" "}
-                            {orchestrator.edgeCount} connections
-                          </Box>
-                          <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
                           <Tooltip
                             title={
                               orchestrator.templateId
@@ -506,11 +547,17 @@ const Home: React.FC = () => {
                                   p: 0.5,
                                   borderRadius: 1.5,
                                   opacity: orchestrator.templateId ? 1 : 0.55,
-                                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                                  backgroundColor: alpha(
+                                    theme.palette.primary.main,
+                                    0.1,
+                                  ),
                                   transition: "all 0.2s ease",
                                   "&:hover": {
                                     opacity: 1,
-                                    backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                                    backgroundColor: alpha(
+                                      theme.palette.primary.main,
+                                      0.2,
+                                    ),
                                   },
                                   "&:focus-visible": {
                                     outline: `2px solid ${theme.palette.primary.main}`,
@@ -539,7 +586,9 @@ const Home: React.FC = () => {
                                     e.stopPropagation();
                                     setUnpublishTarget({
                                       templateId: orchestrator.templateId!,
-                                      name: orchestrator.templateInfo?.templateName || "this template",
+                                      name:
+                                        orchestrator.templateInfo
+                                          ?.templateName || "this template",
                                     });
                                   }}
                                   sx={{
@@ -549,17 +598,31 @@ const Home: React.FC = () => {
                                     borderRadius: 1.5,
                                     opacity: 0.5,
                                     transition: "all 0.2s ease",
-                                    "&:hover": { opacity: 1, color: "error.main", backgroundColor: alpha(theme.palette.error.main, 0.08) },
-                                    "&:focus-visible": { outline: "2px solid", outlineColor: "error.main", outlineOffset: 2 },
+                                    "&:hover": {
+                                      opacity: 1,
+                                      color: "error.main",
+                                      backgroundColor: alpha(
+                                        theme.palette.error.main,
+                                        0.08,
+                                      ),
+                                    },
+                                    "&:focus-visible": {
+                                      outline: "2px solid",
+                                      outlineColor: "error.main",
+                                      outlineOffset: 2,
+                                    },
                                   }}
                                 >
-                                  <FontAwesomeIcon aria-hidden="true" icon="eye-slash" />
+                                  <FontAwesomeIcon
+                                    aria-hidden="true"
+                                    icon="eye-slash"
+                                  />
                                 </IconButton>
                               </span>
                             </Tooltip>
                           )}
-                          </Box>
                         </Box>
+                      </Box>
                     </Box>
                   </Fade>
                 </Grid>
@@ -601,7 +664,10 @@ const Home: React.FC = () => {
                         ? "No orchestrators found"
                         : "No orchestrators yet"}
                     </Typography>
-                    <Typography variant="body2" sx={{ maxWidth: 360, mx: "auto", lineHeight: 1.6 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
+                    >
                       {searchQuery
                         ? "Try adjusting your search query"
                         : 'Click "New Orchestrator" to create your first infrastructure workflow!'}
@@ -616,7 +682,11 @@ const Home: React.FC = () => {
 
       {/* ===== RESOURCES ===== */}
       <Fade in={showContent} timeout={1000}>
-        <Box component="section" aria-labelledby="resources-heading" sx={{ mb: 3, mt: 7 }}>
+        <Box
+          component="section"
+          aria-labelledby="resources-heading"
+          sx={{ mb: 3, mt: 7 }}
+        >
           <Typography
             id="resources-heading"
             variant="h4"
@@ -755,6 +825,7 @@ const Home: React.FC = () => {
                     <CardLogo
                       cloudType={resource.cloudProvider}
                       className={styles.cloudTypeLogo}
+                      mode={theme.palette.mode}
                     />
                     <img
                       src={resource?.resourceIcon?.url}
@@ -849,7 +920,10 @@ const Home: React.FC = () => {
                     <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
                       {searchQuery ? "No resources found" : "No resources yet"}
                     </Typography>
-                    <Typography variant="body2" sx={{ maxWidth: 340, mx: "auto", lineHeight: 1.6 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ maxWidth: 340, mx: "auto", lineHeight: 1.6 }}
+                    >
                       {searchQuery
                         ? "Try adjusting your search query"
                         : 'Click "New Resource" to add your first cloud resource!'}
@@ -886,8 +960,9 @@ const Home: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            This will remove <strong>{unpublishTarget?.name}</strong> from the public gallery.
-            Your orchestrator won't be affected — you can re-publish it any time.
+            This will remove <strong>{unpublishTarget?.name}</strong> from the
+            public gallery. Your orchestrator won't be affected — you can
+            re-publish it any time.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
@@ -905,9 +980,15 @@ const Home: React.FC = () => {
             onClick={handleUnpublishConfirm}
             disabled={unpublishLoading}
             startIcon={
-              unpublishLoading
-                ? <FontAwesomeIcon icon="spinner" spin style={{ fontSize: "0.75rem" }} />
-                : <FontAwesomeIcon icon="trash" style={{ fontSize: "0.75rem" }} />
+              unpublishLoading ? (
+                <FontAwesomeIcon
+                  icon="spinner"
+                  spin
+                  style={{ fontSize: "0.75rem" }}
+                />
+              ) : (
+                <FontAwesomeIcon icon="trash" style={{ fontSize: "0.75rem" }} />
+              )
             }
             sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
           >
