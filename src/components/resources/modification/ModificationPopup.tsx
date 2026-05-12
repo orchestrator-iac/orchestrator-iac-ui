@@ -48,7 +48,7 @@ const ModificationPopup: React.FC<ModificationPopupProps> = ({
           onChange={(e) => setDescription(e.target.value)}
         />
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ padding: "8px 24px" }}>
         <Button onClick={handleClose} color="secondary" variant="outlined">
           Cancel
         </Button>
