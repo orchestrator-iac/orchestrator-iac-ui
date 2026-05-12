@@ -93,7 +93,7 @@ export const LinkRuleSchema = z.object({
   cardinality: z.union([z.number(), z.string()]).optional(),
 
   /** output name from source module (e.g., 'vpc_id' becomes 'module.vpc_instance.vpc_id') */
-  outputRef: z.string().optional().nullable(),
+  outputRef: z.union([z.string(), z.record(z.string(), z.string())]).optional().nullable(),
 
   /** anything you want stamped onto the edge data */
   edgeData: z.record(z.string(), z.any()).optional(),
