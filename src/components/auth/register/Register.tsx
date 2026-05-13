@@ -18,7 +18,7 @@ import NightSky from "../../shared/night-sky/NightSky";
 
 import { useNavigate } from "react-router-dom";
 
-const roles = [
+const jobFunctions = [
   "Developer",
   "DevOps Engineer",
   "Cloud Architect",
@@ -34,7 +34,7 @@ const Register: React.FC = () => {
     lastName: "",
     email: "",
     company: "",
-    role: "",
+    job_role: "",
     password: "",
     confirmPassword: "",
   });
@@ -61,7 +61,7 @@ const Register: React.FC = () => {
         lastName: form.lastName,
         email: form.email,
         company: form.company,
-        role: form.role,
+        job_role: form.job_role,
         password: form.password,
       });
       navigate("/register-success");
@@ -138,15 +138,14 @@ const Register: React.FC = () => {
               <TextField
                 fullWidth
                 select
-                label="Current Role"
-                name="role"
-                value={form.role}
+                label="Job Role"
+                name="job_role"
+                value={form.job_role}
                 onChange={handleChange}
-                required
               >
-                {roles.map((role) => (
-                  <MenuItem key={role} value={role}>
-                    {role}
+                {jobFunctions.map((jf) => (
+                  <MenuItem key={jf} value={jf}>
+                    {jf}
                   </MenuItem>
                 ))}
               </TextField>

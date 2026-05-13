@@ -14,15 +14,51 @@ import { AuthContextType, UserProfile } from "../types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+interface JwtUserClaims {
+  sub: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  company?: string;
+  job_role?: string;
+  imageUrl?: string;
+  themePreference?: string;
+  perms?: string[];
+  exp: number;
+}
+
+function userFromToken(token: string): UserProfile | null {
+  try {
+    const c = jwtDecode<JwtUserClaims>(token);
+    return {
+      email:              c.email ?? c.sub,
+      firstName:          c.firstName ?? "",
+      lastName:           c.lastName ?? "",
+      company:            c.company,
+      job_role:           c.job_role,
+      imageUrl:           c.imageUrl,
+      themePreference:    c.themePreference as UserProfile["themePreference"],
+      assignedPermissions: c.perms ?? [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   const [token, setToken] = useState<string | null>(
     tokenManager.getAccessToken(),
   );
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    const t = tokenManager.getAccessToken();
+    return t ? userFromToken(t) : null;
+  });
   // True while the silent refresh on page-load is in-flight.
   // ProtectedRoute must not redirect until this is false.
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Keep profile in sync with latest server data (called after profile edits,
+  // image uploads, etc. — NOT on every page load).
   const refreshProfile = async () => {
     try {
       const u = await getProfile();
@@ -99,6 +135,9 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
         return;
       }
 
+      // Populate user directly from token — no extra API call needed.
+      setUser(userFromToken(token));
+
       // Proactive refresh ~2 minutes before expiry
       const msToExpiry = decoded.exp * 1000 - Date.now();
       const refreshIn = Math.max(msToExpiry - 2 * 60 * 1000, 0);
@@ -111,8 +150,6 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
           logout();
         }
       }, refreshIn);
-
-      refreshProfile();
     } catch (err) {
       console.error("Failed to decode token:", err);
       logout();
@@ -145,6 +182,13 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
     }
   };
 
+  const hasPermission = (permission: string): boolean => {
+    const perms = user?.assignedPermissions ?? [];
+    // Admin is a master role — grants all permissions.
+    if (perms.includes("admin")) return true;
+    return perms.includes(permission);
+  };
+
   const contextValue = useMemo(
     () => ({
       token,
@@ -154,6 +198,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
       logout,
       refreshProfile,
       googleLogin,
+      hasPermission,
     }),
     [token, user, isInitializing],
   );

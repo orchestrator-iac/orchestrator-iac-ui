@@ -27,6 +27,7 @@ import { fetchResources } from "../../store/resourcesSlice";
 import { fetchOrchestrators } from "../../store/orchestratorsSlice";
 import { templateService } from "../../services/templateService";
 import PublishTemplateDialog from "../orchestrator/publish-template/PublishTemplateDialog";
+import { useAuth } from "../../context/AuthContext";
 
 import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
@@ -74,6 +75,11 @@ const Home: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const { hasPermission } = useAuth();
+  const canViewOrchestrators = hasPermission("view-orchestrators");
+  const canViewResources = hasPermission("view-resources");
+  const canCreateOrchestrators = hasPermission("create-orchestrators");
+  const canCreateResources = hasPermission("create-resources");
   const [searchQuery, setSearchQuery] = useState("");
   const [showContent, setShowContent] = useState(false);
   const [publishTarget, setPublishTarget] = useState<{
@@ -95,9 +101,9 @@ const Home: React.FC = () => {
   );
 
   useEffect(() => {
-    if (resourcesStatus === "idle") dispatch(fetchResources());
-    if (orchestratorsStatus === "idle") dispatch(fetchOrchestrators({}));
-  }, [dispatch, resourcesStatus, orchestratorsStatus]);
+    if (resourcesStatus === "idle" && canViewResources) dispatch(fetchResources());
+    if (orchestratorsStatus === "idle" && canViewOrchestrators) dispatch(fetchOrchestrators({}));
+  }, [dispatch, resourcesStatus, orchestratorsStatus, canViewResources, canViewOrchestrators]);
 
   useEffect(() => {
     document.body.dataset.theme = theme.palette.mode;
@@ -233,6 +239,7 @@ const Home: React.FC = () => {
             }}
           />
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            {canViewOrchestrators && (
             <Chip
               icon={
                 <FontAwesomeIcon
@@ -252,6 +259,8 @@ const Home: React.FC = () => {
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             />
+            )}
+            {canViewResources && (
             <Chip
               icon={
                 <FontAwesomeIcon
@@ -271,10 +280,12 @@ const Home: React.FC = () => {
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               }}
             />
+            )}
           </Box>
         </Box>
       </Fade>
       {/* ===== ORCHESTRATORS ===== */}
+      {canViewOrchestrators && <>
       <Fade in={showContent} timeout={800}>
         <Box
           component="section"
@@ -365,6 +376,7 @@ const Home: React.FC = () => {
           ))
         ) : (
           <>
+            {canCreateOrchestrators && (
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} display="flex">
               <Fade in={showContent} timeout={1000}>
                 <Box
@@ -403,6 +415,7 @@ const Home: React.FC = () => {
                 </Box>
               </Fade>
             </Grid>
+            )}
 
             {filteredOrchestrators && filteredOrchestrators.length > 0 ? (
               filteredOrchestrators.map((orchestrator, index) => (
@@ -680,7 +693,11 @@ const Home: React.FC = () => {
         )}
       </Grid>
 
+      </> }
+
       {/* ===== RESOURCES ===== */}
+      {canViewResources && (
+      <>
       <Fade in={showContent} timeout={1000}>
         <Box
           component="section"
@@ -772,6 +789,7 @@ const Home: React.FC = () => {
           ))
         ) : (
           <>
+            {canCreateResources && (
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} display="flex">
               <Fade in={showContent} timeout={1200}>
                 <Box
@@ -810,6 +828,7 @@ const Home: React.FC = () => {
                 </Box>
               </Fade>
             </Grid>
+            )}
 
             {filteredResources.map((resource, index) => (
               <Grid
@@ -932,9 +951,11 @@ const Home: React.FC = () => {
                 </Fade>
               </Grid>
             )}
-          </>
+          </>  
         )}
       </Grid>
+      </>
+      )}
 
       {/* Publish as Template dialog */}
       {publishTarget && (

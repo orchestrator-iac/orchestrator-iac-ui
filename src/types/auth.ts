@@ -5,7 +5,7 @@ export interface Register {
   lastName: string;
   email: string;
   company?: string;
-  role: string;
+  job_role?: string;
   password: string;
 }
 
@@ -19,10 +19,16 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   email: string;
-  role: string;
+  role?: string;
+  /** Job role declared by the user — analytics only, never used for authorization. */
+  job_role?: string;
   company?: string;
   imageUrl?: string;
   themePreference?: ThemeMode;
+  /** Permissions assigned by an admin — used for all access control decisions. */
+  assignedPermissions?: string[];
+  /** Permissions the user has requested (analytics / admin review only). */
+  requestedPermissions?: string[];
 }
 
 export interface AuthContextType {
@@ -34,6 +40,8 @@ export interface AuthContextType {
   logout: () => void;
   refreshProfile: () => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  /** Returns true when the current user holds the given permission. */
+  hasPermission: (permission: string) => boolean;
 }
 
 export interface ImageUpdate {
