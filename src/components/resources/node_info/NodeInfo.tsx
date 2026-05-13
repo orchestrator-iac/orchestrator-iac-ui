@@ -14,7 +14,6 @@ interface FormData {
   cloudProvider: string;
   resourceName: string;
   terraformCorePath: string;
-  terraformTemplatePath: string;
 }
 
 interface NodeInfoProps {

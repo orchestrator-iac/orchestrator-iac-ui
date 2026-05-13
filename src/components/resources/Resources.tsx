@@ -89,7 +89,6 @@ const Resources: React.FC = () => {
       resourceVersion: "",
       resourceDescription: "",
       terraformCorePath: "",
-      terraformTemplatePath: "",
       resourceIcon: {
         id: "",
         url: "",
@@ -128,7 +127,6 @@ const Resources: React.FC = () => {
           url: "",
         },
         terraformCorePath: resourceData.terraformCorePath || "",
-        terraformTemplatePath: resourceData.terraformTemplatePath || "",
         modifiedHistory: resourceData.modifiedHistory || [],
       });
 

@@ -328,7 +328,7 @@ const BasicInfo: React.FC = () => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 5 }}>
+            <Grid size={{ xs: 12, md: 9 }}>
               <Controller
                 name="terraformCorePath"
                 control={control}
@@ -351,32 +351,7 @@ const BasicInfo: React.FC = () => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 5 }}>
-              <Controller
-                name="terraformTemplatePath"
-                control={control}
-                rules={{ required: "Terraform template path is required." }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Terraform Template Path"
-                    fullWidth
-                    required
-                    error={!!errors?.terraformTemplatePath}
-                    helperText={
-                      errors?.terraformTemplatePath?.message as string
-                    }
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 2 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Controller
                 name="resourceIcon"
                 control={control}

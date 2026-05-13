@@ -18,7 +18,7 @@ import { uploadProfileImage } from "../../../services/auth";
 import { UserProfile } from "../../../types/auth";
 import apiService from "../../../services/apiService";
 
-const roles = [
+const jobFunctions = [
   "Developer",
   "DevOps Engineer",
   "Cloud Architect",
@@ -51,7 +51,7 @@ const Profile: React.FC = () => {
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
         email: user.email ?? "",
-        role: user.role ?? "",
+        job_role: user.job_role ?? "",
         company: user.company ?? "",
         imageUrl: user.imageUrl ?? "",
         themePreference: user.themePreference ?? "system",
@@ -80,16 +80,16 @@ const Profile: React.FC = () => {
     if (!profile) return;
 
     // Validate required fields
-    const requiredFields: (keyof UserProfile)[] = [
+    const requiredFields: Array<"firstName" | "lastName" | "email"> = [
       "firstName",
       "lastName",
       "email",
-      "role",
     ];
     const newErrors: { [key: string]: string } = {};
 
     for (const field of requiredFields) {
-      if (!profile[field]?.trim()) {
+      const value = profile[field];
+      if (typeof value !== "string" || !value.trim()) {
         newErrors[field] = `${field} is required`;
       }
     }
@@ -265,18 +265,15 @@ const Profile: React.FC = () => {
           <TextField
             fullWidth
             select
-            label="Role"
-            name="role"
-            value={profile.role}
+              label="Job Role"
+            name="job_role"
+            value={profile.job_role ?? ""}
             onChange={handleChange}
             margin="normal"
-            required
-            error={!!errors.role}
-            helperText={errors.role}
           >
-            {roles.map((role) => (
-              <MenuItem key={role} value={role}>
-                {role}
+            {jobFunctions.map((jf) => (
+              <MenuItem key={jf} value={jf}>
+                {jf}
               </MenuItem>
             ))}
           </TextField>
