@@ -47,7 +47,6 @@ import {
   SiElasticsearch,
   SiRedis,
   SiPostgresql,
-  SiMongodb,
   SiApachekafka,
   SiNginx,
   SiAwslambda,
@@ -821,13 +820,6 @@ const LandingPage: React.FC = () => {
           duration={27}
           x="8%"
           y="82%"
-        />
-        <FloatingIcon
-          icon={<SiMongodb size={54} />}
-          delay={5}
-          duration={29}
-          x="28%"
-          y="85%"
         />
         <FloatingIcon
           icon={<CodeIcon />}

@@ -33,6 +33,7 @@ import Chatbot from "./components/chatbot/Chatbot";
 import LandingPage from "./components/landing/LandingPage";
 import TemplatesGallery from "./components/templates/TemplatesGallery";
 import TemplateDetail from "./components/templates/TemplateDetail";
+import ResourcesGallery from "./components/resources/ResourcesGallery";
 
 // Add FontAwesome icon packs
 library.add(fab, fas);
@@ -69,6 +70,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="resources"
+                  element={
+                    <ProtectedRoute>
+                      <ResourcesGallery />
                     </ProtectedRoute>
                   }
                 />
