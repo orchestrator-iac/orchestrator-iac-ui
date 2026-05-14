@@ -23,7 +23,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../store";
 
-import { fetchResources } from "../../store/resourcesSlice";
 import { fetchOrchestrators } from "../../store/orchestratorsSlice";
 import { templateService } from "../../services/templateService";
 import apiService from "../../services/apiService";
@@ -66,9 +65,7 @@ interface CardLogoProps {
 
 const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className, mode }) => {
   const logoSrc =
-    logoMap[cloudType]?.[mode] ||
-    logoMap[cloudType]?.default ||
-    awsLogo;
+    logoMap[cloudType]?.[mode] || logoMap[cloudType]?.default || awsLogo;
   return <img src={logoSrc} alt={`${cloudType} logo`} className={className} />;
 };
 
@@ -80,7 +77,6 @@ const Home: React.FC = () => {
   const canViewOrchestrators = hasPermission("view-orchestrators");
   const canViewResources = hasPermission("view-resources");
   const canCreateOrchestrators = hasPermission("create-orchestrators");
-  const canCreateResources = hasPermission("create-resources");
   const [searchQuery, setSearchQuery] = useState("");
   const [showContent, setShowContent] = useState(false);
   const [publishTarget, setPublishTarget] = useState<{
@@ -97,17 +93,14 @@ const Home: React.FC = () => {
   const [topResources, setTopResources] = useState<any[]>([]);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
-  const { data: resources, status: resourcesStatus } = useSelector(
-    (state: RootState) => state.resources,
-  );
   const { data: orchestrators, status: orchestratorsStatus } = useSelector(
     (state: RootState) => state.orchestrators,
   );
 
   useEffect(() => {
-    if (resourcesStatus === "idle" && canViewResources) dispatch(fetchResources());
-    if (orchestratorsStatus === "idle" && canViewOrchestrators) dispatch(fetchOrchestrators({}));
-  }, [dispatch, resourcesStatus, orchestratorsStatus, canViewResources, canViewOrchestrators]);
+    if (orchestratorsStatus === "idle" && canViewOrchestrators)
+      dispatch(fetchOrchestrators({}));
+  }, [dispatch, orchestratorsStatus, canViewOrchestrators]);
 
   useEffect(() => {
     document.body.dataset.theme = theme.palette.mode;
@@ -126,11 +119,17 @@ const Home: React.FC = () => {
       setLoadingInsights(true);
       try {
         if (canViewOrchestrators) {
-          const tplResp = await templateService.listTemplates({ page: 1, size: 10, sort: "popularity" });
+          const tplResp = await templateService.listTemplates({
+            page: 1,
+            size: 10,
+            sort: "popularity",
+          });
           if (mounted) setTopTemplates(tplResp.templates || []);
         }
         if (canViewResources) {
-          const res = await apiService.get(`/orchestrators/analytics/top-resources?size=10`);
+          const res = await apiService.get(
+            `/orchestrators/analytics/top-resources?size=10`,
+          );
           if (mounted) setTopResources(res || []);
         }
       } catch (err) {
@@ -164,22 +163,6 @@ const Home: React.FC = () => {
     );
   }, [orchestrators, searchQuery]);
 
-  const filteredResources = useMemo(() => {
-    if (!resources) return [];
-    if (!searchQuery) return resources;
-    return resources.filter(
-      (r) =>
-        r.resourceName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.resourceDescription
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()),
-    );
-  }, [resources, searchQuery]);
-
-  const navigateResource = (resourceId: string | undefined) => {
-    navigate(`/resources/${resourceId ?? "new"}`);
-  };
-
   const navigateOrchestrator = (orchestratorId: string | undefined) => {
     navigate(`/orchestrator/${orchestratorId ?? "new"}?template_type=custom`);
   };
@@ -198,8 +181,7 @@ const Home: React.FC = () => {
     }
   };
 
-  const isLoading =
-    resourcesStatus === "loading" || orchestratorsStatus === "loading";
+  const isLoading = orchestratorsStatus === "loading";
 
   return (
     <Box
@@ -214,7 +196,7 @@ const Home: React.FC = () => {
       <Fade in={showContent} timeout={600}>
         <Box
           component="search"
-          aria-label="Search orchestrators and resources"
+          aria-label="Search orchestrators"
           sx={{
             mb: 4,
             display: "flex",
@@ -225,7 +207,7 @@ const Home: React.FC = () => {
           }}
         >
           <TextField
-            placeholder="Search orchestrators and resources…"
+            placeholder="Search orchestrators…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             variant="outlined"
@@ -256,7 +238,7 @@ const Home: React.FC = () => {
             }}
             slotProps={{
               htmlInput: {
-                "aria-label": "Search orchestrators and resources",
+                "aria-label": "Search orchestrators",
               },
               input: {
                 startAdornment: (
@@ -273,46 +255,48 @@ const Home: React.FC = () => {
           />
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
             {canViewOrchestrators && (
-            <Chip
-              icon={
-                <FontAwesomeIcon
-                  icon="sitemap"
-                  aria-hidden="true"
-                  style={{ fontSize: "0.85rem" }}
-                />
-              }
-              label={`${filteredOrchestrators.length} Orchestrators`}
-              size="small"
-              sx={{
-                fontWeight: 600,
-                px: 0.5,
-                letterSpacing: "0.01em",
-                backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                color: theme.palette.primary.main,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              }}
-            />
+              <Chip
+                icon={
+                  <FontAwesomeIcon
+                    icon="sitemap"
+                    aria-hidden="true"
+                    style={{ fontSize: "0.85rem" }}
+                  />
+                }
+                label={`${filteredOrchestrators.length} Orchestrators`}
+                size="small"
+                sx={{
+                  fontWeight: 600,
+                  px: 0.5,
+                  letterSpacing: "0.01em",
+                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                  color: theme.palette.primary.main,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                }}
+              />
             )}
             {canViewResources && (
-            <Chip
-              icon={
-                <FontAwesomeIcon
-                  icon="cube"
-                  aria-hidden="true"
-                  style={{ fontSize: "0.85rem" }}
-                />
-              }
-              label={`${filteredResources.length} Resources`}
-              size="small"
-              sx={{
-                fontWeight: 600,
-                px: 0.5,
-                letterSpacing: "0.01em",
-                backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                color: theme.palette.primary.main,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              }}
-            />
+              <Chip
+                icon={
+                  <FontAwesomeIcon
+                    icon="cube"
+                    aria-hidden="true"
+                    style={{ fontSize: "0.85rem" }}
+                  />
+                }
+                label="Resources"
+                size="small"
+                onClick={() => navigate("/resources")}
+                sx={{
+                  fontWeight: 600,
+                  px: 0.5,
+                  letterSpacing: "0.01em",
+                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                  color: theme.palette.primary.main,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  cursor: "pointer",
+                }}
+              />
             )}
           </Box>
         </Box>
@@ -320,748 +304,552 @@ const Home: React.FC = () => {
 
       {/* ===== INSIGHTS (Top Templates / Top Resources) ===== */}
       {(canViewOrchestrators || canViewResources) && (
-      <Fade in={showContent} timeout={700}>
-        <Box component="section" sx={{ mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-            Insights
-          </Typography>
-          <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
-            <Grid>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                Top Templates
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
-                {loadingInsights ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <Box key={`tmpl-skel-${i}`} sx={{ width: 200, p: 1 }}>
-                      <Skeleton variant="rectangular" height={110} />
-                      <Skeleton variant="text" />
-                    </Box>
-                  ))
-                ) : (
-                  topTemplates.map((t) => (
-                    <Box
-                      key={t.id}
-                      sx={{ width: 200, p: 1, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
-                    >
-                      <img src={t.previewImageUrl} alt={t.templateName} style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 6 }} />
-                      <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
-                        {t.templateName}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        {t.analytics?.usageCount || t.analytics?.viewCount || 0} uses
-                      </Typography>
-                    </Box>
-                  ))
-                )}
-              </Box>
+        <Fade in={showContent} timeout={700}>
+          <Box component="section" sx={{ mb: 3 }}>
+            <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
+              <Grid>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                  Top Templates
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
+                  {loadingInsights
+                    ? Array.from({ length: 5 }).map((_, i) => (
+                        <Box key={`tmpl-skel-${i}`} sx={{ width: 250, p: 1 }}>
+                          <Skeleton variant="rectangular" height={150} />
+                          <Skeleton variant="text" />
+                          <Skeleton variant="text" />
+                        </Box>
+                      ))
+                    : topTemplates.map((t) => (
+                        <Box
+                          key={t.id}
+                          sx={{
+                            width: 250,
+                            p: 1,
+                            borderRadius: 2,
+                            border: "1px solid",
+                            borderColor: "divider",
+                          }}
+                        >
+                          <img
+                            src={t.previewImageUrl}
+                            alt={t.templateName}
+                            style={{
+                              width: "100%",
+                              height: 150,
+                              objectFit: "cover",
+                              borderRadius: 6,
+                            }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{ mt: 1, fontWeight: 600 }}
+                          >
+                            {t.templateName}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            {t.analytics?.usageCount ||
+                              t.analytics?.viewCount ||
+                              0}{" "}
+                            uses
+                          </Typography>
+                        </Box>
+                      ))}
+                </Box>
+              </Grid>
+              <Grid>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                  Top Resources
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
+                  {loadingInsights
+                    ? Array.from({ length: 5 }).map((_, i) => (
+                        <Box key={`res-skel-${i}`} sx={{ width: 250, p: 1 }}>
+                          <Skeleton variant="rectangular" height={150} />
+                          <Skeleton variant="text" />
+                          <Skeleton variant="text" />
+                        </Box>
+                      ))
+                    : topResources.map((r) => (
+                        <Box
+                          key={r.resourceId}
+                          sx={{
+                            width: 250,
+                            p: 1,
+                            borderRadius: 2,
+                            border: "1px solid",
+                            borderColor: "divider",
+                          }}
+                        >
+                          {r.resourceIcon?.url ? (
+                            <img
+                              src={r.resourceIcon.url}
+                              alt={r.resourceName || r.resourceId}
+                              style={{
+                                width: "100%",
+                                height: 150,
+                                objectFit: "cover",
+                                borderRadius: 6,
+                              }}
+                            />
+                          ) : (
+                            <Box
+                              sx={{
+                                width: "100%",
+                                height: 150,
+                                backgroundColor: "divider",
+                                borderRadius: 1,
+                              }}
+                            />
+                          )}
+                          <Typography
+                            variant="body2"
+                            sx={{ mt: 1, fontWeight: 600 }}
+                          >
+                            {r.resourceName || r.resourceId}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            {r.count} uses
+                          </Typography>
+                        </Box>
+                      ))}
+                </Box>
+              </Grid>
             </Grid>
-            <Grid>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                Top Resources
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
-                {loadingInsights ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <Box key={`res-skel-${i}`} sx={{ width: 200, p: 1 }}>
-                      <Skeleton variant="rectangular" height={110} />
-                      <Skeleton variant="text" />
-                    </Box>
-                  ))
-                ) : (
-                  topResources.map((r) => (
-                    <Box key={r.resourceId} sx={{ width: 200, p: 1, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
-                      {r.resourceIcon?.url ? (
-                        <img src={r.resourceIcon.url} alt={r.resourceName || r.resourceId} style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 6 }} />
-                      ) : (
-                        <Box sx={{ width: "100%", height: 110, backgroundColor: "divider", borderRadius: 1 }} />
-                      )}
-                      <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
-                        {r.resourceName || r.resourceId}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        {r.count} uses
-                      </Typography>
-                    </Box>
-                  ))
-                )}
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </Fade>
+          </Box>
+        </Fade>
       )}
+
       {/* ===== ORCHESTRATORS ===== */}
-      {canViewOrchestrators && <>
-      <Fade in={showContent} timeout={800}>
-        <Box
-          component="section"
-          aria-labelledby="orchestrators-heading"
-          sx={{ mb: 3 }}
-        >
-          <Typography
-            id="orchestrators-heading"
-            variant="h4"
-            className={styles.wrapperHeader}
-            sx={{
-              fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
-              fontWeight: 700,
-              letterSpacing: "-0.025em",
-              mb: 0.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-            }}
-          >
+      {canViewOrchestrators && (
+        <>
+          <Fade in={showContent} timeout={800}>
             <Box
-              aria-hidden="true"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 42,
-                height: 42,
-                borderRadius: 2,
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
-                color: theme.palette.primary.main,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              }}
+              component="section"
+              aria-labelledby="orchestrators-heading"
+              sx={{ mb: 3 }}
             >
-              <FontAwesomeIcon icon="sitemap" style={{ fontSize: "1rem" }} />
-            </Box>
-            Orchestrators
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.925rem",
-              ml: 7.25,
-              letterSpacing: "0.01em",
-            }}
-          >
-            Manage your infrastructure orchestration workflows
-          </Typography>
-        </Box>
-      </Fade>
-      <Grid
-        container
-        columns={{ xs: 4, sm: 8, md: 12 }}
-        spacing={{ xs: 2, sm: 2.5, md: 3 }}
-        alignItems="stretch"
-      >
-        {isLoading ? (
-          // Loading Skeletons
-          Array.from({ length: 4 }).map((_, index) => (
-            <Grid
-              key={`skeleton-orch-${index}`}
-              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
-              display="flex"
-            >
-              <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
-                <Skeleton
-                  variant="rectangular"
-                  height={160}
-                  sx={{ borderRadius: 2, mb: 2 }}
-                />
-                <Skeleton
-                  variant="text"
-                  width="70%"
-                  height={32}
-                  sx={{ mb: 1 }}
-                />
-                <Skeleton variant="text" width="100%" height={20} />
-                <Skeleton
-                  variant="text"
-                  width="90%"
-                  height={20}
-                  sx={{ mb: 1.5 }}
-                />
-                <Skeleton variant="rounded" width={150} height={28} />
-              </Box>
-            </Grid>
-          ))
-        ) : (
-          <>
-            {canCreateOrchestrators && (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} display="flex">
-              <Fade in={showContent} timeout={1000}>
+              <Typography
+                id="orchestrators-heading"
+                variant="h4"
+                className={styles.wrapperHeader}
+                sx={{
+                  fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
+                  fontWeight: 700,
+                  letterSpacing: "-0.025em",
+                  mb: 0.5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                }}
+              >
                 <Box
-                  className={styles.card}
-                  onClick={() => navigateOrchestrator("new")}
+                  aria-hidden="true"
                   sx={{
-                    border: "2px dashed",
-                    borderColor: alpha(theme.palette.primary.main, 0.3),
-                    backgroundColor: "transparent !important",
-                    "&:hover": {
-                      borderColor: alpha(theme.palette.primary.main, 0.6),
-                      backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
-                    },
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 42,
+                    height: 42,
+                    borderRadius: 2,
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
+                    color: theme.palette.primary.main,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                   }}
                 >
-                  <div className={styles.cardBlank}>
-                    <FontAwesomeIcon
-                      icon="plus"
-                      size="3x"
-                      style={{
-                        color: theme.palette.primary.main,
-                        opacity: 0.7,
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        mt: 2,
-                        fontWeight: 500,
-                        color: "text.secondary",
-                        fontSize: "0.95rem",
-                      }}
-                    >
-                      New Orchestrator
-                    </Typography>
-                  </div>
+                  <FontAwesomeIcon
+                    icon="sitemap"
+                    style={{ fontSize: "1rem" }}
+                  />
                 </Box>
-              </Fade>
-            </Grid>
-            )}
-
-            {filteredOrchestrators && filteredOrchestrators.length > 0 ? (
-              filteredOrchestrators.map((orchestrator, index) => (
+                Orchestrators
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.925rem",
+                  ml: 7.25,
+                  letterSpacing: "0.01em",
+                }}
+              >
+                Manage your infrastructure orchestration workflows
+              </Typography>
+            </Box>
+          </Fade>
+          <Grid
+            container
+            columns={{ xs: 4, sm: 8, md: 12 }}
+            spacing={{ xs: 2, sm: 2.5, md: 3 }}
+            alignItems="stretch"
+          >
+            {isLoading ? (
+              // Loading Skeletons
+              Array.from({ length: 4 }).map((_, index) => (
                 <Grid
-                  key={orchestrator._id}
+                  key={`skeleton-orch-${index}`}
                   size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
                   display="flex"
                 >
-                  <Fade in={showContent} timeout={1000 + index * 100}>
-                    <Box
-                      className={styles.card}
-                      onClick={() => navigateOrchestrator(orchestrator._id)}
-                    >
-                      <CardLogo
-                        cloudType={orchestrator.templateInfo?.cloud || "aws"}
-                        className={styles.cloudTypeLogo}
-                        mode={theme.palette.mode}
-                      />
-                      {orchestrator.previewImageUrl ? (
-                        <img
-                          src={orchestrator.previewImageUrl}
-                          alt={
-                            orchestrator.templateInfo?.templateName ||
-                            "Orchestrator"
-                          }
-                          className={styles.orchestratorCardImage}
-                        />
-                      ) : (
-                        <Box
-                          className={styles.orchestratorCardImage}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "2.5rem",
-                            color: alpha(theme.palette.primary.main, 0.5),
-                            backgroundColor: alpha(
-                              theme.palette.primary.main,
-                              0.04,
-                            ),
-                          }}
-                        >
-                          <FontAwesomeIcon icon="sitemap" />
-                        </Box>
-                      )}
-                      <Typography
-                        variant="h6"
-                        className={styles.cardTitle}
-                        sx={{
-                          fontWeight: 600,
-                          fontSize: "1.1rem",
-                          mt: 1.5,
-                          mb: 0.75,
-                        }}
-                      >
-                        <Link
-                          to={`/orchestrator/${orchestrator._id}`}
-                          style={{ textDecoration: "none", color: "inherit" }}
-                          aria-label={`View orchestrator ${orchestrator.templateInfo?.templateName || "Orchestrator"}`}
-                        >
-                          {orchestrator.templateInfo?.templateName ||
-                            "Unnamed Orchestrator"}
-                        </Link>
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        className={styles.cardDescription}
-                        sx={{ mb: 1.5, lineHeight: 1.5 }}
-                      >
-                        {orchestrator.templateInfo?.description ||
-                          "No description"}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Box
-                          component="code"
-                          sx={{
-                            fontSize: "0.8rem",
-                            color: "text.secondary",
-                            backgroundColor:
-                              theme.palette.mode === "dark"
-                                ? "rgba(255, 255, 255, 0.05)"
-                                : "rgba(0, 0, 0, 0.04)",
-                            px: 1.5,
-                            py: 0.75,
-                            borderRadius: 1,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <FontAwesomeIcon
-                            icon="circle-nodes"
-                            style={{ fontSize: "0.75rem" }}
-                          />
-                          {orchestrator.nodeCount} nodes •{" "}
-                          {orchestrator.edgeCount} connections
-                        </Box>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            gap: 0.5,
-                            alignItems: "center",
-                          }}
-                        >
-                          <Tooltip
-                            title={
-                              orchestrator.templateId
-                                ? "Manage Template"
-                                : "Publish as Template"
-                            }
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                aria-label={
-                                  orchestrator.templateId
-                                    ? `Manage template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`
-                                    : `Publish ${orchestrator.templateInfo?.templateName || "orchestrator"} as template`
-                                }
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setPublishTarget({
-                                    orchestratorId: orchestrator._id || "",
-                                    orchestratorName:
-                                      orchestrator.templateInfo?.templateName,
-                                    templateId: orchestrator.templateId,
-                                  });
-                                }}
-                                sx={{
-                                  color: orchestrator.templateId
-                                    ? theme.palette.primary.main
-                                    : "text.secondary",
-                                  fontSize: "0.8rem",
-                                  p: 0.5,
-                                  borderRadius: 1.5,
-                                  opacity: orchestrator.templateId ? 1 : 0.55,
-                                  backgroundColor: alpha(
-                                    theme.palette.primary.main,
-                                    0.1,
-                                  ),
-                                  transition: "all 0.2s ease",
-                                  "&:hover": {
-                                    opacity: 1,
-                                    backgroundColor: alpha(
-                                      theme.palette.primary.main,
-                                      0.2,
-                                    ),
-                                  },
-                                  "&:focus-visible": {
-                                    outline: `2px solid ${theme.palette.primary.main}`,
-                                    outlineOffset: 2,
-                                  },
-                                }}
-                              >
-                                <FontAwesomeIcon
-                                  aria-hidden="true"
-                                  icon={
-                                    orchestrator.templateId
-                                      ? "pen"
-                                      : "layer-group"
-                                  }
-                                />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                          {orchestrator.templateId && (
-                            <Tooltip title="Unpublish Template">
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  aria-label={`Unpublish template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setUnpublishTarget({
-                                      templateId: orchestrator.templateId!,
-                                      name:
-                                        orchestrator.templateInfo
-                                          ?.templateName || "this template",
-                                    });
-                                  }}
-                                  sx={{
-                                    color: "text.secondary",
-                                    fontSize: "0.8rem",
-                                    p: 0.5,
-                                    borderRadius: 1.5,
-                                    opacity: 0.5,
-                                    transition: "all 0.2s ease",
-                                    "&:hover": {
-                                      opacity: 1,
-                                      color: "error.main",
-                                      backgroundColor: alpha(
-                                        theme.palette.error.main,
-                                        0.08,
-                                      ),
-                                    },
-                                    "&:focus-visible": {
-                                      outline: "2px solid",
-                                      outlineColor: "error.main",
-                                      outlineOffset: 2,
-                                    },
-                                  }}
-                                >
-                                  <FontAwesomeIcon
-                                    aria-hidden="true"
-                                    icon="eye-slash"
-                                  />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Fade>
+                  <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
+                    <Skeleton
+                      variant="rectangular"
+                      height={160}
+                      sx={{ borderRadius: 2, mb: 2 }}
+                    />
+                    <Skeleton
+                      variant="text"
+                      width="70%"
+                      height={32}
+                      sx={{ mb: 1 }}
+                    />
+                    <Skeleton variant="text" width="100%" height={20} />
+                    <Skeleton
+                      variant="text"
+                      width="90%"
+                      height={20}
+                      sx={{ mb: 1.5 }}
+                    />
+                    <Skeleton variant="rounded" width={150} height={28} />
+                  </Box>
                 </Grid>
               ))
             ) : (
-              <Grid size={12}>
-                <Fade in={showContent} timeout={1200}>
-                  <Box
-                    role="status"
-                    aria-live="polite"
-                    sx={{
-                      p: { xs: 5, sm: 7 },
-                      textAlign: "center",
-                      color: "text.secondary",
-                      backgroundColor:
-                        theme.palette.mode === "dark"
-                          ? alpha("#fff", 0.02)
-                          : alpha("#000", 0.02),
-                      borderRadius: 3,
-                      border: "1px dashed",
-                      borderColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(255, 255, 255, 0.1)"
-                          : "rgba(0, 0, 0, 0.1)",
-                    }}
-                  >
-                    <FontAwesomeIcon
-                      icon="sitemap"
-                      size="3x"
-                      aria-hidden="true"
-                      style={{
-                        opacity: 0.25,
-                        marginBottom: "16px",
-                        color: theme.palette.primary.main,
-                      }}
-                    />
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                      {searchQuery
-                        ? "No orchestrators found"
-                        : "No orchestrators yet"}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
-                    >
-                      {searchQuery
-                        ? "Try adjusting your search query"
-                        : 'Click "New Orchestrator" to create your first infrastructure workflow!'}
-                    </Typography>
-                  </Box>
-                </Fade>
-              </Grid>
-            )}
-          </>
-        )}
-      </Grid>
-
-      </> }
-
-      {/* ===== RESOURCES ===== */}
-      {canViewResources && (
-      <>
-      <Fade in={showContent} timeout={1000}>
-        <Box
-          component="section"
-          aria-labelledby="resources-heading"
-          sx={{ mb: 3, mt: 7 }}
-        >
-          <Typography
-            id="resources-heading"
-            variant="h4"
-            className={styles.wrapperHeader}
-            sx={{
-              fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
-              fontWeight: 700,
-              letterSpacing: "-0.025em",
-              mb: 0.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-            }}
-          >
-            <Box
-              aria-hidden="true"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 42,
-                height: 42,
-                borderRadius: 2,
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
-                color: theme.palette.primary.main,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              }}
-            >
-              <FontAwesomeIcon icon="cube" style={{ fontSize: "1rem" }} />
-            </Box>
-            Resources
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.925rem",
-              ml: 7.25,
-              letterSpacing: "0.01em",
-            }}
-          >
-            Cloud resources and templates for your projects
-          </Typography>
-        </Box>
-      </Fade>
-      <Grid
-        container
-        columns={{ xs: 4, sm: 8, md: 12 }}
-        spacing={{ xs: 2, sm: 2.5, md: 3 }}
-        alignItems="stretch"
-        sx={{ pb: 4 }}
-      >
-        {isLoading ? (
-          // Loading Skeletons
-          Array.from({ length: 6 }).map((_, index) => (
-            <Grid
-              key={`skeleton-res-${index}`}
-              size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
-              display="flex"
-            >
-              <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
-                <Skeleton
-                  variant="rectangular"
-                  height={180}
-                  sx={{ borderRadius: 2, mb: 2 }}
-                />
-                <Skeleton
-                  variant="text"
-                  width="80%"
-                  height={28}
-                  sx={{ mb: 1 }}
-                />
-                <Skeleton variant="text" width="100%" height={18} />
-                <Skeleton
-                  variant="text"
-                  width="60%"
-                  height={18}
-                  sx={{ mb: 1.5 }}
-                />
-                <Skeleton variant="rounded" width={100} height={24} />
-              </Box>
-            </Grid>
-          ))
-        ) : (
-          <>
-            {canCreateResources && (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} display="flex">
-              <Fade in={showContent} timeout={1200}>
-                <Box
-                  className={styles.card}
-                  onClick={() => navigateResource(undefined)}
-                  sx={{
-                    border: "2px dashed",
-                    borderColor: alpha(theme.palette.primary.main, 0.3),
-                    backgroundColor: "transparent !important",
-                    "&:hover": {
-                      borderColor: alpha(theme.palette.primary.main, 0.6),
-                      backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
-                    },
-                  }}
-                >
-                  <div className={styles.cardBlank}>
-                    <FontAwesomeIcon
-                      icon="plus"
-                      size="3x"
-                      style={{
-                        color: theme.palette.primary.main,
-                        opacity: 0.7,
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        mt: 2,
-                        fontWeight: 500,
-                        color: "text.secondary",
-                        fontSize: "0.95rem",
-                      }}
-                    >
-                      New Resource
-                    </Typography>
-                  </div>
-                </Box>
-              </Fade>
-            </Grid>
-            )}
-
-            {filteredResources.map((resource, index) => (
-              <Grid
-                key={resource._id}
-                size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
-                display="flex"
-              >
-                <Fade in={showContent} timeout={1200 + index * 80}>
-                  <Box
-                    className={styles.card}
-                    onClick={() => navigateResource(resource._id)}
-                  >
-                    <CardLogo
-                      cloudType={resource.cloudProvider}
-                      className={styles.cloudTypeLogo}
-                      mode={theme.palette.mode}
-                    />
-                    <img
-                      src={resource?.resourceIcon?.url}
-                      alt={resource.resourceName}
-                      className={styles.cardImage}
-                    />
-                    <Typography
-                      variant="h6"
-                      className={styles.cardTitle}
-                      sx={{
-                        fontWeight: 600,
-                        fontSize: "1rem",
-                        mt: 1.5,
-                        mb: 0.75,
-                      }}
-                    >
-                      <Link
-                        to={`/resources/${resource._id}`}
-                        style={{ textDecoration: "none", color: "inherit" }}
-                        aria-label={`View details for ${resource.resourceName}`}
+              <>
+                {canCreateOrchestrators && (
+                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} display="flex">
+                    <Fade in={showContent} timeout={1000}>
+                      <Box
+                        className={styles.card}
+                        onClick={() => navigateOrchestrator("new")}
+                        sx={{
+                          border: "2px dashed",
+                          borderColor: alpha(theme.palette.primary.main, 0.3),
+                          backgroundColor: "transparent !important",
+                          "&:hover": {
+                            borderColor: alpha(theme.palette.primary.main, 0.6),
+                            backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
+                          },
+                        }}
                       >
-                        {resource.resourceName}
-                      </Link>
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      className={styles.cardDescription}
-                      sx={{ mb: 1.5, lineHeight: 1.5 }}
-                    >
-                      {resource.resourceDescription}
-                    </Typography>
-                    <Box
-                      component="code"
-                      sx={{
-                        fontSize: "0.8rem",
-                        color: "text.secondary",
-                        backgroundColor:
-                          theme.palette.mode === "dark"
-                            ? "rgba(255, 255, 255, 0.05)"
-                            : "rgba(0, 0, 0, 0.04)",
-                        px: 1.5,
-                        py: 0.75,
-                        borderRadius: 1,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 0.5,
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        icon="tag"
-                        style={{ fontSize: "0.7rem" }}
-                      />
-                      v{resource.resourceVersion}
-                    </Box>
-                  </Box>
-                </Fade>
-              </Grid>
-            ))}
+                        <div className={styles.cardBlank}>
+                          <FontAwesomeIcon
+                            icon="plus"
+                            size="3x"
+                            style={{
+                              color: theme.palette.primary.main,
+                              opacity: 0.7,
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              mt: 2,
+                              fontWeight: 500,
+                              color: "text.secondary",
+                              fontSize: "0.95rem",
+                            }}
+                          >
+                            New Orchestrator
+                          </Typography>
+                        </div>
+                      </Box>
+                    </Fade>
+                  </Grid>
+                )}
 
-            {filteredResources.length === 0 && (
-              <Grid size={12}>
-                <Fade in={showContent} timeout={1400}>
-                  <Box
-                    role="status"
-                    aria-live="polite"
-                    sx={{
-                      p: { xs: 5, sm: 7 },
-                      textAlign: "center",
-                      color: "text.secondary",
-                      backgroundColor:
-                        theme.palette.mode === "dark"
-                          ? alpha("#fff", 0.02)
-                          : alpha("#000", 0.02),
-                      borderRadius: 3,
-                      border: "1px dashed",
-                      borderColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(255, 255, 255, 0.1)"
-                          : "rgba(0, 0, 0, 0.1)",
-                    }}
-                  >
-                    <FontAwesomeIcon
-                      icon="cube"
-                      size="3x"
-                      aria-hidden="true"
-                      style={{
-                        opacity: 0.25,
-                        marginBottom: "16px",
-                        color: theme.palette.primary.main,
-                      }}
-                    />
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                      {searchQuery ? "No resources found" : "No resources yet"}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ maxWidth: 340, mx: "auto", lineHeight: 1.6 }}
+                {filteredOrchestrators && filteredOrchestrators.length > 0 ? (
+                  filteredOrchestrators.map((orchestrator, index) => (
+                    <Grid
+                      key={orchestrator._id}
+                      size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+                      display="flex"
                     >
-                      {searchQuery
-                        ? "Try adjusting your search query"
-                        : 'Click "New Resource" to add your first cloud resource!'}
-                    </Typography>
-                  </Box>
-                </Fade>
-              </Grid>
+                      <Fade in={showContent} timeout={1000 + index * 100}>
+                        <Box
+                          className={styles.card}
+                          onClick={() => navigateOrchestrator(orchestrator._id)}
+                        >
+                          <CardLogo
+                            cloudType={
+                              orchestrator.templateInfo?.cloud || "aws"
+                            }
+                            className={styles.cloudTypeLogo}
+                            mode={theme.palette.mode}
+                          />
+                          {orchestrator.previewImageUrl ? (
+                            <img
+                              src={orchestrator.previewImageUrl}
+                              alt={
+                                orchestrator.templateInfo?.templateName ||
+                                "Orchestrator"
+                              }
+                              className={styles.orchestratorCardImage}
+                            />
+                          ) : (
+                            <Box
+                              className={styles.orchestratorCardImage}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "2.5rem",
+                                color: alpha(theme.palette.primary.main, 0.5),
+                                backgroundColor: alpha(
+                                  theme.palette.primary.main,
+                                  0.04,
+                                ),
+                              }}
+                            >
+                              <FontAwesomeIcon icon="sitemap" />
+                            </Box>
+                          )}
+                          <Typography
+                            variant="h6"
+                            className={styles.cardTitle}
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: "1.1rem",
+                              mt: 1.5,
+                              mb: 0.75,
+                            }}
+                          >
+                            <Link
+                              to={`/orchestrator/${orchestrator._id}`}
+                              style={{
+                                textDecoration: "none",
+                                color: "inherit",
+                              }}
+                              aria-label={`View orchestrator ${orchestrator.templateInfo?.templateName || "Orchestrator"}`}
+                            >
+                              {orchestrator.templateInfo?.templateName ||
+                                "Unnamed Orchestrator"}
+                            </Link>
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            className={styles.cardDescription}
+                            sx={{ mb: 1.5, lineHeight: 1.5 }}
+                          >
+                            {orchestrator.templateInfo?.description ||
+                              "No description"}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: 1,
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Box
+                              component="code"
+                              sx={{
+                                fontSize: "0.8rem",
+                                color: "text.secondary",
+                                backgroundColor:
+                                  theme.palette.mode === "dark"
+                                    ? "rgba(255, 255, 255, 0.05)"
+                                    : "rgba(0, 0, 0, 0.04)",
+                                px: 1.5,
+                                py: 0.75,
+                                borderRadius: 1,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <FontAwesomeIcon
+                                icon="circle-nodes"
+                                style={{ fontSize: "0.75rem" }}
+                              />
+                              {orchestrator.nodeCount} nodes •{" "}
+                              {orchestrator.edgeCount} connections
+                            </Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                gap: 0.5,
+                                alignItems: "center",
+                              }}
+                            >
+                              <Tooltip
+                                title={
+                                  orchestrator.templateId
+                                    ? "Manage Template"
+                                    : "Publish as Template"
+                                }
+                              >
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    aria-label={
+                                      orchestrator.templateId
+                                        ? `Manage template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`
+                                        : `Publish ${orchestrator.templateInfo?.templateName || "orchestrator"} as template`
+                                    }
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPublishTarget({
+                                        orchestratorId: orchestrator._id || "",
+                                        orchestratorName:
+                                          orchestrator.templateInfo
+                                            ?.templateName,
+                                        templateId: orchestrator.templateId,
+                                      });
+                                    }}
+                                    sx={{
+                                      color: orchestrator.templateId
+                                        ? theme.palette.primary.main
+                                        : "text.secondary",
+                                      fontSize: "0.8rem",
+                                      p: 0.5,
+                                      borderRadius: 1.5,
+                                      opacity: orchestrator.templateId
+                                        ? 1
+                                        : 0.55,
+                                      backgroundColor: alpha(
+                                        theme.palette.primary.main,
+                                        0.1,
+                                      ),
+                                      transition: "all 0.2s ease",
+                                      "&:hover": {
+                                        opacity: 1,
+                                        backgroundColor: alpha(
+                                          theme.palette.primary.main,
+                                          0.2,
+                                        ),
+                                      },
+                                      "&:focus-visible": {
+                                        outline: `2px solid ${theme.palette.primary.main}`,
+                                        outlineOffset: 2,
+                                      },
+                                    }}
+                                  >
+                                    <FontAwesomeIcon
+                                      aria-hidden="true"
+                                      icon={
+                                        orchestrator.templateId
+                                          ? "pen"
+                                          : "layer-group"
+                                      }
+                                    />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                              {orchestrator.templateId && (
+                                <Tooltip title="Unpublish Template">
+                                  <span>
+                                    <IconButton
+                                      size="small"
+                                      aria-label={`Unpublish template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setUnpublishTarget({
+                                          templateId: orchestrator.templateId!,
+                                          name:
+                                            orchestrator.templateInfo
+                                              ?.templateName || "this template",
+                                        });
+                                      }}
+                                      sx={{
+                                        color: "text.secondary",
+                                        fontSize: "0.8rem",
+                                        p: 0.5,
+                                        borderRadius: 1.5,
+                                        opacity: 0.5,
+                                        transition: "all 0.2s ease",
+                                        "&:hover": {
+                                          opacity: 1,
+                                          color: "error.main",
+                                          backgroundColor: alpha(
+                                            theme.palette.error.main,
+                                            0.08,
+                                          ),
+                                        },
+                                        "&:focus-visible": {
+                                          outline: "2px solid",
+                                          outlineColor: "error.main",
+                                          outlineOffset: 2,
+                                        },
+                                      }}
+                                    >
+                                      <FontAwesomeIcon
+                                        aria-hidden="true"
+                                        icon="eye-slash"
+                                      />
+                                    </IconButton>
+                                  </span>
+                                </Tooltip>
+                              )}
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Fade>
+                    </Grid>
+                  ))
+                ) : (
+                  <Grid size={12}>
+                    <Fade in={showContent} timeout={1200}>
+                      <Box
+                        role="status"
+                        aria-live="polite"
+                        sx={{
+                          p: { xs: 5, sm: 7 },
+                          textAlign: "center",
+                          color: "text.secondary",
+                          backgroundColor:
+                            theme.palette.mode === "dark"
+                              ? alpha("#fff", 0.02)
+                              : alpha("#000", 0.02),
+                          borderRadius: 3,
+                          border: "1px dashed",
+                          borderColor:
+                            theme.palette.mode === "dark"
+                              ? "rgba(255, 255, 255, 0.1)"
+                              : "rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
+                        <FontAwesomeIcon
+                          icon="sitemap"
+                          size="3x"
+                          aria-hidden="true"
+                          style={{
+                            opacity: 0.25,
+                            marginBottom: "16px",
+                            color: theme.palette.primary.main,
+                          }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{ mb: 1, fontWeight: 600 }}
+                        >
+                          {searchQuery
+                            ? "No orchestrators found"
+                            : "No orchestrators yet"}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
+                        >
+                          {searchQuery
+                            ? "Try adjusting your search query"
+                            : 'Click "New Orchestrator" to create your first infrastructure workflow!'}
+                        </Typography>
+                      </Box>
+                    </Fade>
+                  </Grid>
+                )}
+              </>
             )}
-          </>  
-        )}
-      </Grid>
-      </>
+          </Grid>
+        </>
       )}
 
       {/* Publish as Template dialog */}
