@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -93,6 +93,14 @@ const Home: React.FC = () => {
   const [topResources, setTopResources] = useState<any[]>([]);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
+  // Carousel refs / state for INSIGHTS lists (templates + resources)
+  const templatesRef = useRef<HTMLDivElement | null>(null);
+  const resourcesRef = useRef<HTMLDivElement | null>(null);
+  const [tmplCanLeft, setTmplCanLeft] = useState(false);
+  const [tmplCanRight, setTmplCanRight] = useState(false);
+  const [resCanLeft, setResCanLeft] = useState(false);
+  const [resCanRight, setResCanRight] = useState(false);
+
   const { data: orchestrators, status: orchestratorsStatus } = useSelector(
     (state: RootState) => state.orchestrators,
   );
@@ -147,6 +155,60 @@ const Home: React.FC = () => {
       mounted = false;
     };
   }, [canViewOrchestrators, canViewResources]);
+
+  // Watch templates scroll state
+  useEffect(() => {
+    const el = templatesRef.current;
+    if (!el) {
+      setTmplCanLeft(false);
+      setTmplCanRight(false);
+      return;
+    }
+    const update = () => {
+      setTmplCanLeft(el.scrollLeft > 0);
+      setTmplCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    };
+    update();
+    el.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [topTemplates, loadingInsights]);
+
+  // Watch resources scroll state
+  useEffect(() => {
+    const el = resourcesRef.current;
+    if (!el) {
+      setResCanLeft(false);
+      setResCanRight(false);
+      return;
+    }
+    const update = () => {
+      setResCanLeft(el.scrollLeft > 0);
+      setResCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    };
+    update();
+    el.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [topResources, loadingInsights]);
+
+  const scrollTemplatesByPage = (dir: number) => {
+    const el = templatesRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
+  };
+
+  const scrollResourcesByPage = (dir: number) => {
+    const el = resourcesRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
+  };
 
   // Filter function
   const filteredOrchestrators = useMemo(() => {
@@ -304,146 +366,310 @@ const Home: React.FC = () => {
 
       {/* ===== INSIGHTS (Top Templates / Top Resources) ===== */}
       {(canViewOrchestrators || canViewResources) &&
-        (loadingInsights || topTemplates.length > 0 || topResources.length > 0) && (
-        <Fade in={showContent} timeout={700}>
-          <Box component="section" sx={{ mb: 3 }}>
-            <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
-              {(loadingInsights || topTemplates.length > 0) && (
-              <Grid>
-                <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                  Top Templates
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
-                  {loadingInsights
-                    ? Array.from({ length: 5 }).map((_, i) => (
-                        <Box key={`tmpl-skel-${i}`} sx={{ width: 250, p: 1 }}>
-                          <Skeleton variant="rectangular" height={150} />
-                          <Skeleton variant="text" />
-                          <Skeleton variant="text" />
-                        </Box>
-                      ))
-                    : topTemplates.map((t) => (
-                        <Box
-                          key={t.id}
-                          onClick={() => navigate(`/templates/${t.id}`)}
+        (loadingInsights ||
+          topTemplates.length > 0 ||
+          topResources.length > 0) && (
+          <Fade in={showContent} timeout={700}>
+            <Box component="section" sx={{ mb: 3 }}>
+              <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
+                {(loadingInsights || topTemplates.length > 0) && (
+                  <Grid>
+                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                      Top Templates
+                    </Typography>
+                    <Box sx={{ position: "relative" }}>
+                      {!loadingInsights && topTemplates.length > 4 && (
+                        <IconButton
+                          aria-label="Previous templates"
+                          size="small"
+                          onClick={() => scrollTemplatesByPage(-1)}
+                          disabled={!tmplCanLeft}
                           sx={{
-                            width: 250,
-                            p: 1,
-                            borderRadius: 2,
-                            border: "1px solid",
-                            borderColor: "divider",
-                            cursor: "pointer",
-                            transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+                            position: "absolute",
+                            left: 6,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            zIndex: 10,
+                            boxShadow: 1,
+                            p: 0.6,
+                            height: 50,
+                            width: 50,
+                            opacity: 0.9,
+                            backgroundColor: theme.palette.background.paper,
                             "&:hover": {
-                              borderColor: "primary.main",
-                              boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                              opacity: 1,
+                              backgroundColor: theme.palette.background.paper,
                             },
                           }}
                         >
-                          <img
-                            src={t.previewImageUrl}
-                            alt={t.templateName}
-                            style={{
-                              width: "100%",
-                              height: 150,
-                              objectFit: "cover",
-                              borderRadius: 6,
-                            }}
+                          <FontAwesomeIcon
+                            icon="chevron-left"
+                            style={{ fontSize: "1.5rem" }}
                           />
-                          <Typography
-                            variant="body2"
-                            sx={{ mt: 1, fontWeight: 600 }}
-                          >
-                            {t.templateName}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "text.secondary" }}
-                          >
-                            {t.analytics?.usageCount ||
-                              t.analytics?.viewCount ||
-                              0}{" "}
-                            uses
-                          </Typography>
-                        </Box>
-                      ))}
-                </Box>
-              </Grid>
-              )}
-              {(loadingInsights || topResources.length > 0) && (
-              <Grid>
-                <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                  Top Resources
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
-                  {loadingInsights
-                    ? Array.from({ length: 5 }).map((_, i) => (
-                        <Box key={`res-skel-${i}`} sx={{ width: 250, p: 1 }}>
-                          <Skeleton variant="rectangular" height={150} />
-                          <Skeleton variant="text" />
-                          <Skeleton variant="text" />
-                        </Box>
-                      ))
-                    : topResources.map((r) => (
-                        <Box
-                          key={r.resourceId}
-                          onClick={() => navigate(`/resources/${r._id || r.resourceId}`)}
+                        </IconButton>
+                      )}
+                      {!loadingInsights && topTemplates.length > 4 && (
+                        <IconButton
+                          aria-label="Next templates"
+                          size="small"
+                          onClick={() => scrollTemplatesByPage(1)}
+                          disabled={!tmplCanRight}
                           sx={{
-                            width: 250,
-                            p: 1,
-                            borderRadius: 2,
-                            border: "1px solid",
-                            borderColor: "divider",
-                            cursor: "pointer",
-                            transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+                            position: "absolute",
+                            right: 6,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            zIndex: 10,
+                            boxShadow: 1,
+                            p: 0.6,
+                            height: 50,
+                            width: 50,
+                            opacity: 0.9,
+                            backgroundColor: theme.palette.background.paper,
                             "&:hover": {
-                              borderColor: "primary.main",
-                              boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                              opacity: 1,
+                              backgroundColor: theme.palette.background.paper,
                             },
                           }}
                         >
-                          {r.resourceIcon?.url ? (
-                            <img
-                              src={r.resourceIcon.url}
-                              alt={r.resourceName || r.resourceId}
-                              style={{
-                                width: "100%",
-                                height: 150,
-                                objectFit: "cover",
-                                borderRadius: 6,
-                              }}
-                            />
-                          ) : (
-                            <Box
-                              sx={{
-                                width: "100%",
-                                height: 150,
-                                backgroundColor: "divider",
-                                borderRadius: 1,
-                              }}
-                            />
-                          )}
-                          <Typography
-                            variant="body2"
-                            sx={{ mt: 1, fontWeight: 600 }}
-                          >
-                            {r.resourceName || r.resourceId}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "text.secondary" }}
-                          >
-                            {r.count} uses
-                          </Typography>
-                        </Box>
-                      ))}
-                </Box>
+                          <FontAwesomeIcon
+                            icon="chevron-right"
+                            style={{ fontSize: "1.5rem" }}
+                          />
+                        </IconButton>
+                      )}
+
+                      <Box
+                        ref={templatesRef}
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          overflowX: "auto",
+                          scrollBehavior: "smooth",
+                          pb: 0.5,
+                          "&::-webkit-scrollbar": { display: "none" },
+                          msOverflowStyle: "none",
+                          scrollbarWidth: "none",
+                        }}
+                      >
+                        {loadingInsights
+                          ? Array.from({ length: 5 }).map((_, i) => (
+                              <Box
+                                key={`tmpl-skel-${i}`}
+                                sx={{ width: 250, p: 1 }}
+                              >
+                                <Skeleton variant="rectangular" height={150} />
+                                <Skeleton variant="text" />
+                                <Skeleton variant="text" />
+                              </Box>
+                            ))
+                          : topTemplates.map((t) => (
+                              <Box
+                                key={t.id}
+                                onClick={() => navigate(`/templates/${t.id}`)}
+                                sx={{
+                                  minWidth: 250,
+                                  p: 1,
+                                  borderRadius: 2,
+                                  border: "1px solid",
+                                  borderColor: "divider",
+                                  cursor: "pointer",
+                                  transition:
+                                    "box-shadow 0.2s ease, border-color 0.2s ease",
+                                  "&:hover": {
+                                    borderColor: "primary.main",
+                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                  },
+                                }}
+                              >
+                                <img
+                                  src={t.previewImageUrl}
+                                  alt={t.templateName}
+                                  style={{
+                                    width: "100%",
+                                    height: 150,
+                                    objectFit: "cover",
+                                    borderRadius: 6,
+                                  }}
+                                />
+                                <Typography
+                                  variant="body2"
+                                  sx={{ mt: 1, fontWeight: 600 }}
+                                >
+                                  {t.templateName}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: "text.secondary" }}
+                                >
+                                  {t.analytics?.usageCount ||
+                                    t.analytics?.viewCount ||
+                                    0}{" "}
+                                  uses
+                                </Typography>
+                              </Box>
+                            ))}
+                      </Box>
+                    </Box>
+                  </Grid>
+                )}
+                {(loadingInsights || topResources.length > 6) && (
+                  <Grid>
+                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                      Top Resources
+                    </Typography>
+                    <Box sx={{ position: "relative" }}>
+                      {!loadingInsights && topResources.length > 0 && (
+                        <IconButton
+                          aria-label="Previous resources"
+                          size="small"
+                          onClick={() => scrollResourcesByPage(-1)}
+                          disabled={!resCanLeft}
+                          sx={{
+                            position: "absolute",
+                            left: 6,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            zIndex: 10,
+                            boxShadow: 1,
+                            p: 0.6,
+                            height: 50,
+                            width: 50,
+                            opacity: 0.9,
+                            backgroundColor: theme.palette.background.paper,
+                            "&:hover": {
+                              opacity: 1,
+                              backgroundColor: theme.palette.background.paper,
+                            },
+                          }}
+                        >
+                          <FontAwesomeIcon
+                            icon="chevron-left"
+                            style={{ fontSize: "1.5rem" }}
+                          />
+                        </IconButton>
+                      )}
+                      {!loadingInsights && topResources.length > 6 && (
+                        <IconButton
+                          aria-label="Next resources"
+                          size="small"
+                          onClick={() => scrollResourcesByPage(1)}
+                          disabled={!resCanRight}
+                          sx={{
+                            position: "absolute",
+                            right: 6,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            zIndex: 10,
+                            boxShadow: 1,
+                            p: 0.6,
+                            height: 50,
+                            width: 50,
+                            opacity: 0.9,
+                            backgroundColor: theme.palette.background.paper,
+                            "&:hover": {
+                              opacity: 1,
+                              backgroundColor: theme.palette.background.paper,
+                            },
+                          }}
+                        >
+                          <FontAwesomeIcon
+                            icon="chevron-right"
+                            style={{ fontSize: "1.5rem" }}
+                          />
+                        </IconButton>
+                      )}
+
+                      <Box
+                        ref={resourcesRef}
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          overflowX: "auto",
+                          scrollBehavior: "smooth",
+                          pb: 0.5,
+                          "&::-webkit-scrollbar": { display: "none" },
+                          msOverflowStyle: "none",
+                          scrollbarWidth: "none",
+                        }}
+                      >
+                        {loadingInsights
+                          ? Array.from({ length: 5 }).map((_, i) => (
+                              <Box
+                                key={`res-skel-${i}`}
+                                sx={{ width: 250, p: 1 }}
+                              >
+                                <Skeleton variant="rectangular" height={150} />
+                                <Skeleton variant="text" />
+                                <Skeleton variant="text" />
+                              </Box>
+                            ))
+                          : topResources.map((r) => (
+                              <Box
+                                key={r.resourceId}
+                                onClick={() =>
+                                  navigate(
+                                    `/resources/${r._id || r.resourceId}`,
+                                  )
+                                }
+                                sx={{
+                                  minWidth: 200,
+                                  p: 1,
+                                  borderRadius: 2,
+                                  border: "1px solid",
+                                  borderColor: "divider",
+                                  cursor: "pointer",
+                                  transition:
+                                    "box-shadow 0.2s ease, border-color 0.2s ease",
+                                  "&:hover": {
+                                    borderColor: "primary.main",
+                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                  },
+                                }}
+                              >
+                                {r.resourceIcon?.url ? (
+                                  <img
+                                    src={r.resourceIcon.url}
+                                    alt={r.resourceName || r.resourceId}
+                                    style={{
+                                      width: "100%",
+                                      height: 150,
+                                      objectFit: "cover",
+                                      borderRadius: 6,
+                                    }}
+                                  />
+                                ) : (
+                                  <Box
+                                    sx={{
+                                      width: "100%",
+                                      height: 150,
+                                      backgroundColor: "divider",
+                                      borderRadius: 1,
+                                    }}
+                                  />
+                                )}
+                                <Typography
+                                  variant="body2"
+                                  sx={{ mt: 1, fontWeight: 600 }}
+                                >
+                                  {r.resourceName || r.resourceId}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: "text.secondary" }}
+                                >
+                                  {r.count} uses
+                                </Typography>
+                              </Box>
+                            ))}
+                      </Box>
+                    </Box>
+                  </Grid>
+                )}
               </Grid>
-              )}
-            </Grid>
-          </Box>
-        </Fade>
-      )}
+            </Box>
+          </Fade>
+        )}
 
       {/* ===== ORCHESTRATORS ===== */}
       {canViewOrchestrators && (
