@@ -26,6 +26,7 @@ import { RootState, AppDispatch } from "../../store";
 import { fetchResources } from "../../store/resourcesSlice";
 import { fetchOrchestrators } from "../../store/orchestratorsSlice";
 import { templateService } from "../../services/templateService";
+import apiService from "../../services/apiService";
 import PublishTemplateDialog from "../orchestrator/publish-template/PublishTemplateDialog";
 import { useAuth } from "../../context/AuthContext";
 
@@ -92,6 +93,9 @@ const Home: React.FC = () => {
     name: string;
   } | null>(null);
   const [unpublishLoading, setUnpublishLoading] = useState(false);
+  const [topTemplates, setTopTemplates] = useState<any[]>([]);
+  const [topResources, setTopResources] = useState<any[]>([]);
+  const [loadingInsights, setLoadingInsights] = useState(false);
 
   const { data: resources, status: resourcesStatus } = useSelector(
     (state: RootState) => state.resources,
@@ -115,6 +119,35 @@ const Home: React.FC = () => {
     const timer = setTimeout(() => setShowContent(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadInsights = async () => {
+      setLoadingInsights(true);
+      try {
+        if (canViewOrchestrators) {
+          const tplResp = await templateService.listTemplates({ page: 1, size: 10, sort: "popularity" });
+          if (mounted) setTopTemplates(tplResp.templates || []);
+        }
+        if (canViewResources) {
+          const res = await apiService.get(`/orchestrators/analytics/top-resources?size=10`);
+          if (mounted) setTopResources(res || []);
+        }
+      } catch (err) {
+        console.error("Failed to load insights:", err);
+      } finally {
+        if (mounted) setLoadingInsights(false);
+      }
+    };
+
+    if (canViewOrchestrators || canViewResources) {
+      loadInsights();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [canViewOrchestrators, canViewResources]);
 
   // Filter function
   const filteredOrchestrators = useMemo(() => {
@@ -284,6 +317,80 @@ const Home: React.FC = () => {
           </Box>
         </Box>
       </Fade>
+
+      {/* ===== INSIGHTS (Top Templates / Top Resources) ===== */}
+      {(canViewOrchestrators || canViewResources) && (
+      <Fade in={showContent} timeout={700}>
+        <Box component="section" sx={{ mb: 3 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+            Insights
+          </Typography>
+          <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
+            <Grid>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Top Templates
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
+                {loadingInsights ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <Box key={`tmpl-skel-${i}`} sx={{ width: 200, p: 1 }}>
+                      <Skeleton variant="rectangular" height={110} />
+                      <Skeleton variant="text" />
+                    </Box>
+                  ))
+                ) : (
+                  topTemplates.map((t) => (
+                    <Box
+                      key={t.id}
+                      sx={{ width: 200, p: 1, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+                    >
+                      <img src={t.previewImageUrl} alt={t.templateName} style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 6 }} />
+                      <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
+                        {t.templateName}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        {t.analytics?.usageCount || t.analytics?.viewCount || 0} uses
+                      </Typography>
+                    </Box>
+                  ))
+                )}
+              </Box>
+            </Grid>
+            <Grid>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Top Resources
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
+                {loadingInsights ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <Box key={`res-skel-${i}`} sx={{ width: 200, p: 1 }}>
+                      <Skeleton variant="rectangular" height={110} />
+                      <Skeleton variant="text" />
+                    </Box>
+                  ))
+                ) : (
+                  topResources.map((r) => (
+                    <Box key={r.resourceId} sx={{ width: 200, p: 1, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+                      {r.resourceIcon?.url ? (
+                        <img src={r.resourceIcon.url} alt={r.resourceName || r.resourceId} style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 6 }} />
+                      ) : (
+                        <Box sx={{ width: "100%", height: 110, backgroundColor: "divider", borderRadius: 1 }} />
+                      )}
+                      <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
+                        {r.resourceName || r.resourceId}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        {r.count} uses
+                      </Typography>
+                    </Box>
+                  ))
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </Fade>
+      )}
       {/* ===== ORCHESTRATORS ===== */}
       {canViewOrchestrators && <>
       <Fade in={showContent} timeout={800}>
