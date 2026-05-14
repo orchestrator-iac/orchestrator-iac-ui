@@ -303,10 +303,12 @@ const Home: React.FC = () => {
       </Fade>
 
       {/* ===== INSIGHTS (Top Templates / Top Resources) ===== */}
-      {(canViewOrchestrators || canViewResources) && (
+      {(canViewOrchestrators || canViewResources) &&
+        (loadingInsights || topTemplates.length > 0 || topResources.length > 0) && (
         <Fade in={showContent} timeout={700}>
           <Box component="section" sx={{ mb: 3 }}>
             <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
+              {(loadingInsights || topTemplates.length > 0) && (
               <Grid>
                 <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                   Top Templates
@@ -323,12 +325,19 @@ const Home: React.FC = () => {
                     : topTemplates.map((t) => (
                         <Box
                           key={t.id}
+                          onClick={() => navigate(`/templates/${t.id}`)}
                           sx={{
                             width: 250,
                             p: 1,
                             borderRadius: 2,
                             border: "1px solid",
                             borderColor: "divider",
+                            cursor: "pointer",
+                            transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+                            "&:hover": {
+                              borderColor: "primary.main",
+                              boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                            },
                           }}
                         >
                           <img
@@ -360,6 +369,8 @@ const Home: React.FC = () => {
                       ))}
                 </Box>
               </Grid>
+              )}
+              {(loadingInsights || topResources.length > 0) && (
               <Grid>
                 <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                   Top Resources
@@ -376,12 +387,19 @@ const Home: React.FC = () => {
                     : topResources.map((r) => (
                         <Box
                           key={r.resourceId}
+                          onClick={() => navigate(`/resources/${r._id || r.resourceId}`)}
                           sx={{
                             width: 250,
                             p: 1,
                             borderRadius: 2,
                             border: "1px solid",
                             borderColor: "divider",
+                            cursor: "pointer",
+                            transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+                            "&:hover": {
+                              borderColor: "primary.main",
+                              boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                            },
                           }}
                         >
                           {r.resourceIcon?.url ? (
@@ -421,6 +439,7 @@ const Home: React.FC = () => {
                       ))}
                 </Box>
               </Grid>
+              )}
             </Grid>
           </Box>
         </Fade>
