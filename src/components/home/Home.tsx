@@ -76,6 +76,7 @@ const Home: React.FC = () => {
   const { hasPermission } = useAuth();
   const canViewOrchestrators = hasPermission("view-orchestrators");
   const canViewResources = hasPermission("view-resources");
+  const canViewTemplates = hasPermission("view-templates");
   const canCreateOrchestrators = hasPermission("create-orchestrators");
   const [searchQuery, setSearchQuery] = useState("");
   const [showContent, setShowContent] = useState(false);
@@ -334,6 +335,29 @@ const Home: React.FC = () => {
                   backgroundColor: alpha(theme.palette.primary.main, 0.12),
                   color: theme.palette.primary.main,
                   border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                }}
+              />
+            )}
+            {canViewTemplates && (
+              <Chip
+                icon={
+                  <FontAwesomeIcon
+                    icon="layer-group"
+                    aria-hidden="true"
+                    style={{ fontSize: "0.85rem" }}
+                  />
+                }
+                label="Templates"
+                size="small"
+                onClick={() => navigate("/templates")}
+                sx={{
+                  fontWeight: 600,
+                  px: 0.5,
+                  letterSpacing: "0.01em",
+                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                  color: theme.palette.primary.main,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  cursor: "pointer",
                 }}
               />
             )}
