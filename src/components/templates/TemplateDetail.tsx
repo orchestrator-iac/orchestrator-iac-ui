@@ -748,12 +748,12 @@ const TemplateDetail: React.FC = () => {
                     ? alpha(theme.palette.primary.main, 0.18)
                     : alpha(theme.palette.primary.main, 0.75),
                 backdropFilter: "blur(12px)",
-                color: "#fff",
+                color: theme.palette.common.white,
                 border: "1px solid",
                 borderColor:
                   theme.palette.mode === "dark"
                     ? alpha(theme.palette.primary.main, 0.4)
-                    : "rgba(255,255,255,0.25)",
+                    : alpha(theme.palette.common.white, 0.25),
                 boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
                 transition: "all 0.2s ease",
                 "&:hover": {
@@ -803,7 +803,7 @@ const TemplateDetail: React.FC = () => {
             background:
               theme.palette.mode === "dark"
                 ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, rgba(0,0,0,0) 60%)`
-                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.025)} 0%, rgba(255,255,255,0) 60%)`,
+                  : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.025)} 0%, ${alpha(theme.palette.common.white, 0)} 60%)`,
             border: "1.5px solid",
             borderColor: alpha(
               theme.palette.primary.main,

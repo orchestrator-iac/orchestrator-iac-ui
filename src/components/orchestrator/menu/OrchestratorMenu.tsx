@@ -11,6 +11,7 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  useTheme,
 } from "@mui/material";
 import { Node, Edge } from "@xyflow/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -52,6 +53,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   onArchitectureModeChange,
   templateId,
 }) => {
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -110,7 +112,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         fileName: orchestratorName
           ? `${orchestratorName}.png`
           : "orchestrator.png",
-        backgroundColor: "#ffffff",
+        backgroundColor: theme.palette.common.white,
       });
     } catch (error) {
       console.error("Failed to download orchestrator image", error);

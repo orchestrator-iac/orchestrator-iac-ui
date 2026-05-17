@@ -64,8 +64,8 @@ const Header: React.FC = () => {
         borderBottom: "1px solid",
         borderColor:
           theme.palette.mode === "dark"
-            ? "rgba(255, 255, 255, 0.08)"
-            : "rgba(0, 0, 0, 0.06)",
+            ? alpha(theme.palette.common.white, 0.08)
+            : alpha(theme.palette.common.black, 0.06),
       }}
     >
       <Toolbar
@@ -129,8 +129,7 @@ const Header: React.FC = () => {
                     borderRadius: "50%",
                     padding: "2px",
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    WebkitMask:
-                      "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                      WebkitMask: `linear-gradient(${theme.palette.common.white} 0 0) content-box, linear-gradient(${theme.palette.common.white} 0 0)`,
                     WebkitMaskComposite: "xor",
                     maskComposite: "exclude",
                     opacity: 0,

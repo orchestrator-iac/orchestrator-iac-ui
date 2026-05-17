@@ -281,20 +281,20 @@ const Home: React.FC = () => {
                 borderRadius: 3,
                 backgroundColor:
                   theme.palette.mode === "dark"
-                    ? alpha("#fff", 0.03)
-                    : alpha("#000", 0.02),
+                    ? alpha(theme.palette.common.white, 0.03)
+                    : alpha(theme.palette.common.black, 0.02),
                 transition: "all 0.2s ease",
                 "&:hover": {
                   backgroundColor:
                     theme.palette.mode === "dark"
-                      ? alpha("#fff", 0.05)
-                      : alpha("#000", 0.04),
+                      ? alpha(theme.palette.common.white, 0.05)
+                      : alpha(theme.palette.common.black, 0.04),
                 },
                 "&.Mui-focused": {
                   backgroundColor:
                     theme.palette.mode === "dark"
-                      ? alpha("#fff", 0.07)
-                      : alpha("#fff", 1),
+                      ? alpha(theme.palette.common.white, 0.07)
+                      : theme.palette.common.white,
                   boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
                 },
               },
@@ -1075,8 +1075,8 @@ const Home: React.FC = () => {
                           color: "text.secondary",
                           backgroundColor:
                             theme.palette.mode === "dark"
-                              ? alpha("#fff", 0.02)
-                              : alpha("#000", 0.02),
+                              ? alpha(theme.palette.common.white, 0.02)
+                              : alpha(theme.palette.common.black, 0.02),
                           borderRadius: 3,
                           border: "1px dashed",
                           borderColor:

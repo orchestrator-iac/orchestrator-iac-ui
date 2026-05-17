@@ -407,20 +407,20 @@ const TemplatesGallery: React.FC = () => {
                 borderRadius: 3,
                 backgroundColor:
                   theme.palette.mode === "dark"
-                    ? alpha("#fff", 0.03)
-                    : alpha("#000", 0.02),
+                    ? alpha(theme.palette.common.white, 0.03)
+                    : alpha(theme.palette.common.black, 0.02),
                 transition: "all 0.2s ease",
                 "&:hover": {
                   backgroundColor:
                     theme.palette.mode === "dark"
-                      ? alpha("#fff", 0.05)
-                      : alpha("#000", 0.04),
+                      ? alpha(theme.palette.common.white, 0.05)
+                      : alpha(theme.palette.common.black, 0.04),
                 },
                 "&.Mui-focused": {
                   backgroundColor:
                     theme.palette.mode === "dark"
-                      ? alpha("#fff", 0.07)
-                      : alpha("#fff", 1),
+                      ? alpha(theme.palette.common.white, 0.07)
+                      : theme.palette.common.white,
                   boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
                 },
               },
@@ -454,8 +454,8 @@ const TemplatesGallery: React.FC = () => {
                 borderRadius: "10px !important",
                 borderColor:
                   theme.palette.mode === "dark"
-                    ? "rgba(255,255,255,0.1)"
-                    : "rgba(0,0,0,0.12)",
+                    ? alpha(theme.palette.common.white, 0.1)
+                    : alpha(theme.palette.common.black, 0.12),
                 transition: "all 0.2s ease",
                 "&:focus-visible": {
                   outline: `2px solid ${theme.palette.primary.main}`,
@@ -520,14 +520,14 @@ const TemplatesGallery: React.FC = () => {
                   flexDirection: "column",
                   backgroundColor:
                     theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.03)"
-                      : "#fff",
+                      ? alpha(theme.palette.common.white, 0.03)
+                      : theme.palette.common.white,
                   boxShadow:
                     "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
                   border: `1px solid ${
                     theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.06)"
-                      : "rgba(0,0,0,0.06)"
+                      ? alpha(theme.palette.common.white, 0.06)
+                      : alpha(theme.palette.common.black, 0.06)
                   }`,
                   animation: `sk-rise 0.5s ease ${i * 70}ms both`,
                   "@keyframes sk-rise": {
@@ -623,8 +623,8 @@ const TemplatesGallery: React.FC = () => {
                     border: "1px dashed",
                     borderColor:
                       theme.palette.mode === "dark"
-                        ? "rgba(255,255,255,0.1)"
-                        : "rgba(0,0,0,0.1)",
+                        ? alpha(theme.palette.common.white, 0.1)
+                        : alpha(theme.palette.common.black, 0.1),
                   }}
                 >
                   <Box
@@ -937,14 +937,14 @@ const TemplatesGallery: React.FC = () => {
                   flexDirection: "column",
                   backgroundColor:
                     theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.03)"
-                      : "#fff",
+                      ? alpha(theme.palette.common.white, 0.03)
+                      : theme.palette.common.white,
                   boxShadow:
                     "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
                   border: `1px solid ${
                     theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.06)"
-                      : "rgba(0,0,0,0.06)"
+                      ? alpha(theme.palette.common.white, 0.06)
+                      : alpha(theme.palette.common.black, 0.06)
                   }`,
                   animation: `sk-rise 0.4s ease ${i * 60}ms both`,
                 }}

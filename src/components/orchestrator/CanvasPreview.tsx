@@ -103,8 +103,8 @@ const CanvasPreviewInner: React.FC<InnerProps> = ({ rawNodes, rawEdges, height }
           borderColor: "divider",
           backgroundColor:
             theme.palette.mode === "dark"
-              ? alpha("#fff", 0.02)
-              : alpha("#000", 0.015),
+              ? alpha(theme.palette.common.white, 0.02)
+              : alpha(theme.palette.common.black, 0.015),
         }}
       >
         <Typography variant="body2" sx={{ color: "text.secondary", opacity: 0.5 }}>

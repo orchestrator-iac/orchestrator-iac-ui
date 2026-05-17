@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Box,
   Snackbar,
+  useTheme,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import { Node, Edge } from "@xyflow/react";
@@ -44,6 +45,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
   onSaveSuccess,
 }) => {
   const { user } = useAuth();
+  const theme = useTheme();
   const [templateName, setTemplateName] = useState(
     templateInfo?.templateName || "",
   );
@@ -84,7 +86,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
       let imageDataUrl: string | undefined;
       try {
         imageDataUrl = await generateFlowImage({
-          backgroundColor: "#ffffff",
+          backgroundColor: theme.palette.common.white,
           quality: 0.85,
           pixelRatio: 1.5,
         });
