@@ -17,11 +17,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useThemeContext } from "../theme/useThemeContext";
 import { useAuth } from "../../../context/AuthContext";
 import styles from "./Header.module.css";
-import PillToggle from "./PillToggle";
+import MinimalThemeToggle from "../theme/MinimalThemeToggle";
 
 const Header: React.FC = () => {
   const theme = useTheme();
-  const { mode, setMode } = useThemeContext();
+  const { mode } = useThemeContext();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const hasImage = user?.imageUrl && user?.imageUrl !== "";
@@ -103,7 +103,7 @@ const Header: React.FC = () => {
         </Typography>
 
         <div className={styles.controls}>
-          <PillToggle mode={mode} setMode={setMode} />
+          <MinimalThemeToggle />
           {user && (
             <>
               <IconButton
