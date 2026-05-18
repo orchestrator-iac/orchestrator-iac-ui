@@ -7,6 +7,7 @@ import resourcesReducer from "./resourcesSlice";
 import usersReducer from "./usersSlice";
 import orchestratorsReducer from "./orchestratorsSlice";
 import templatesReducer from "./templatesSlice";
+import chatReducer from "./chatSlice";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     users: usersReducer,
     orchestrators: orchestratorsReducer,
     templates: templatesReducer,
+    chat: chatReducer,
   },
 });
 
