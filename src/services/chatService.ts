@@ -21,7 +21,7 @@ export const chatService = {
     apiService.get(`${BASE}/sessions/${id}`),
 
   sendMessage: (id: string, message: string): Promise<ChatSendResponse> =>
-    apiService.post(`${BASE}/sessions/${id}/message`, { message }),
+    apiService.post(`${BASE}/sessions/${id}/message`, { message }, { timeout: 200_000 }),
 
   closeSession: (id: string): Promise<void> =>
     apiService.delete(`${BASE}/sessions/${id}`),

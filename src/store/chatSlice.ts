@@ -101,6 +101,10 @@ const chatSlice = createSlice({
     setActiveSessionId(state, action: PayloadAction<string | null>) {
       state.activeSessionId = action.payload;
     },
+    setActiveSessionOrchestrator(state, action: PayloadAction<string | null>) {
+      if (!state.activeSession) return;
+      state.activeSession.orchestratorId = action.payload ?? undefined;
+    },
     clearActiveSession(state) {
       state.activeSession = null;
       state.activeSessionId = null;
@@ -196,7 +200,12 @@ const chatSlice = createSlice({
   },
 });
 
-export const { setActiveSessionId, clearActiveSession, clearSendError, appendLocalMessage } =
-  chatSlice.actions;
+export const {
+  setActiveSessionId,
+  setActiveSessionOrchestrator,
+  clearActiveSession,
+  clearSendError,
+  appendLocalMessage,
+} = chatSlice.actions;
 
 export default chatSlice.reducer;

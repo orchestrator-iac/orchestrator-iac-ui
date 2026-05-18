@@ -369,7 +369,132 @@ const OrchestratorReactFlow: React.FC = () => {
   useEffect(() => {
     if (!template_id || !template_type) return;
     else if (template_id === "new") {
-      setInitOpen(true);
+      // Check for prefill payload placed by Maestro (via sessionStorage)
+      const prefillRaw = sessionStorage.getItem("maestro_prefill");
+      if (prefillRaw) {
+        try {
+          const prefill = JSON.parse(prefillRaw);
+          sessionStorage.removeItem("maestro_prefill");
+
+          const appliedTemplateInfo = {
+            templateName: prefill.templateInfo?.templateName || "",
+            description: prefill.templateInfo?.description || "",
+            cloud: prefill.templateInfo?.cloud,
+            region: prefill.templateInfo?.region || "",
+          };
+
+          setTemplateInfo(appliedTemplateInfo);
+          setInitOpen(false);
+
+          // Fetch the full resource template for each prefill node.
+          // Use the same id.split("-")[0] convention as the saved-orchestrator path:
+          // node.id = `${mongodb_catalog_id}-${uuid}`, split gives the catalog _id.
+          const fetchPromises = (prefill.nodes || []).map((dbNode: any) =>
+            dispatch(fetchResourceById(dbNode.id.split("-")[0])),
+          );
+
+          Promise.all(fetchPromises).then((results) => {
+            const resourceNodes: Node[] = [];
+
+            for (let i = 0; i < results.length; i++) {
+              const resultAction = results[i];
+              const dbNode = (prefill.nodes || [])[i];
+
+              let reconstructedNode: Node;
+
+              if (fetchResourceById.fulfilled.match(resultAction)) {
+                // We have the full resource template — build a proper node identical to the saved-orchestrator path
+                const resourceData = resultAction.payload;
+                reconstructedNode = {
+                  id: dbNode.id,
+                  type: "customNode",
+                  position: dbNode.position || { x: 0, y: 0 },
+                  data: {
+                    ...resourceData?.data?.resourceNode?.data,
+                    values: dbNode.values || {},
+                    __nodeType: dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+                    __resourceId: dbNode.resourceId,
+                    isExpanded: dbNode.isExpanded ?? true,
+                    friendlyId: dbNode.friendlyId,
+                    header: {
+                      ...resourceData?.data?.resourceNode?.data?.header,
+                      icon: resourceData?.data?.resourceIcon?.url,
+                    },
+                    templateInfo: appliedTemplateInfo,
+                    userInfo: user,
+                  },
+                };
+              } else {
+                // Fallback — resource not in catalog, render minimal node so the user can still see it
+                reconstructedNode = {
+                  id: dbNode.id,
+                  type: "customNode",
+                  position: dbNode.position || { x: 0, y: 0 },
+                  data: {
+                    values: dbNode.values || {},
+                    __nodeType: dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+                    __resourceId: dbNode.resourceId,
+                    isExpanded: dbNode.isExpanded ?? true,
+                    friendlyId: dbNode.friendlyId,
+                    header: {
+                      label: dbNode.resourceName || dbNode.__nodeType || dbNode.resourceId,
+                      icon: dbNode.previewIcon,
+                    },
+                    handles: [],
+                    links: [],
+                    templateInfo: appliedTemplateInfo,
+                    userInfo: user,
+                  },
+                };
+              }
+
+              resourceNodes.push(reconstructedNode);
+              setNodes((nds) => {
+                const exists = nds.some((n) => n.id === reconstructedNode.id);
+                return exists ? nds : nds.concat(reconstructedNode);
+              });
+            }
+
+            // Reconstruct edges using the same rule-lookup as the saved orchestrator path
+            for (const dbEdge of prefill.edges || []) {
+              const source = resourceNodes.find((n) => n.id === dbEdge.source);
+              const target = resourceNodes.find((n) => n.id === dbEdge.target);
+              if (!source || !target) continue;
+
+              const sourceType = (source.data as any)?.__nodeType ?? source.type;
+              const rules = (target.data as any)?.links ?? [];
+              const rule = rules.find(
+                (r: any) => Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType),
+              );
+
+              const newEdge: Edge = {
+                id: rule
+                  ? `${source.id}->${target.id}:${rule.bind}`
+                  : (dbEdge.id || `${source.id}->${target.id}`),
+                source: source.id,
+                target: target.id,
+                type: "animatedGradient",
+                data: rule
+                  ? { ...(rule.edgeData ?? { kind: rule.bind }), animated: rule.edgeData?.animated ?? true }
+                  : { kind: "depends_on", animated: true },
+                markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+              };
+
+              setEdges((eds) => addEdge(newEdge, eds));
+            }
+
+            // Auto-layout after all nodes are placed
+            setTimeout(() => {
+              getLayoutElements({ "elk.algorithm": "layered", "elk.direction": "RIGHT" });
+            }, 150);
+          });
+        } catch (err) {
+          console.error("Failed to apply Maestro prefill:", err);
+          setInitOpen(true);
+        }
+      } else {
+        setInitOpen(true);
+      }
     } else {
       setInitOpen(false);
       // Find orchestrator data from Redux store
@@ -467,6 +592,7 @@ const OrchestratorReactFlow: React.FC = () => {
     setNodes,
     setEdges,
     getLayoutElements,
+    user,
   ]);
 
   // Drag edge → update target form (values[bind]) + enforce rules

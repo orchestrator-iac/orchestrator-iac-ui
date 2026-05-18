@@ -69,7 +69,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
           Infrastructure Plan
         </Typography>
         <Typography variant="caption" color="primary.contrastText" sx={{ opacity: 0.85 }}>
-          {plan.resources.length} resource{plan.resources.length !== 1 ? "s" : ""}
+          {plan.resources.length} resource{plan.resources.length === 1 ? "" : "s"}
           {plan.estimatedMonthlyUSD != null &&
             ` · ~$${plan.estimatedMonthlyUSD.toFixed(0)}/mo`}
         </Typography>

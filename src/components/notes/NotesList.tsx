@@ -133,23 +133,25 @@ const NotesList: React.FC = () => {
               placeholder="Search notes..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery && (
-                  <InputAdornment position="end">
-                    <Button
-                      size="small"
-                      onClick={clearSearch}
-                      sx={{ minWidth: "auto", p: 0.5 }}
-                    >
-                      <ClearIcon fontSize="small" />
-                    </Button>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery ? (
+                    <InputAdornment position="end">
+                      <Button
+                        size="small"
+                        onClick={clearSearch}
+                        sx={{ minWidth: "auto", p: 0.5 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </Button>
+                    </InputAdornment>
+                  ) : null,
+                },
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
