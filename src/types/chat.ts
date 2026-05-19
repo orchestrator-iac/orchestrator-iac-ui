@@ -18,6 +18,7 @@ export interface PlanResource {
 }
 
 export interface PlanSchema {
+  templateName?: string;
   resources: PlanResource[];
   summary: string;
   securityNotes: SecurityNote[];

@@ -95,8 +95,10 @@ const Chatbot: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
   const pendingMessageRef = useRef<string | null>(null);
+  // Set to true when the user explicitly clicks "New chat" so the session-load
+  // effect creates a fresh session instead of reloading the latest one.
+  const wantsNewSessionRef = useRef(false);
 
   // ── Load resource catalog once (needed by handleImplement) ────────────────
   useEffect(() => {
@@ -110,17 +112,18 @@ const Chatbot: React.FC = () => {
     if (!openChat || activeSession || activeSessionStatus === "loading") return;
 
     if (sessionsStatus === "idle") {
-      // Step 1: fetch the sessions list
       dispatch(fetchSessions());
     } else if (sessionsStatus === "succeeded") {
-      // Step 2: load the most-recent session, or start a new one
-      if (sessions.length > 0) {
+      if (wantsNewSessionRef.current) {
+        // User clicked "New chat" — always create a fresh session
+        wantsNewSessionRef.current = false;
+        dispatch(createSession(undefined));
+      } else if (sessions.length > 0) {
         dispatch(fetchSession(sessions[0].id));
       } else {
         dispatch(createSession(undefined));
       }
     }
-    // While sessionsStatus === "loading", just wait — effect re-fires when it settles
   }, [openChat, activeSession, activeSessionStatus, sessions, sessionsStatus, dispatch]);
 
   // ── Send any pending message once the session becomes available ────────────
@@ -270,7 +273,7 @@ const Chatbot: React.FC = () => {
       });
 
       const templateInfo = {
-        templateName: `Maestro plan ${new Date().toISOString()}`,
+        templateName: plan.templateName?.trim() || plan.summary?.split(".")[0]?.trim() || "Maestro Infrastructure Plan",
         description: plan.summary,
         cloud: plan.resources[0]?.cloudProvider ?? undefined,
       };
@@ -388,6 +391,7 @@ const Chatbot: React.FC = () => {
                 size="small"
                 color="inherit"
                 onClick={() => {
+                  wantsNewSessionRef.current = true;
                   setShowHistory(false);
                   dispatch(clearActiveSession());
                 }}
