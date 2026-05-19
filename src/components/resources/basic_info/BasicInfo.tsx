@@ -21,6 +21,8 @@ import {
   Tooltip,
   Box,
   Chip,
+  useTheme,
+  alpha,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
@@ -43,6 +45,7 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
   const [idx, setIdx] = useState(0);
   const current = variants[idx] ?? { url: "", iconKind: "" };
   const multi = variants.length > 1;
+  const theme = useTheme();
 
   const prev = (e: any) => { e.stopPropagation(); setIdx((i: number) => (i - 1 + variants.length) % variants.length); };
   const next = (e: any) => { e.stopPropagation(); setIdx((i: number) => (i + 1) % variants.length); };
@@ -81,9 +84,9 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
                 sx={{
                   position: "absolute", left: 2, top: "50%",
                   transform: "translateY(-50%)",
-                  bgcolor: "rgba(255,255,255,0.75)",
+                  bgcolor: alpha(theme.palette.common.white, 0.75),
                   p: 0.25,
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
+                  "&:hover": { bgcolor: alpha(theme.palette.common.white, 0.95) },
                 }}
                 aria-label="previous-variant"
               >
@@ -104,9 +107,9 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
                 sx={{
                   position: "absolute", right: 2, top: "50%",
                   transform: "translateY(-50%)",
-                  bgcolor: "rgba(255,255,255,0.75)",
+                  bgcolor: alpha(theme.palette.common.white, 0.75),
                   p: 0.25,
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
+                  "&:hover": { bgcolor: alpha(theme.palette.common.white, 0.95) },
                 }}
                 aria-label="next-variant"
               >
@@ -169,6 +172,7 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
 
 const BasicInfo: React.FC = () => {
   const { control, formState, setValue, watch } = useFormContext();
+  const theme = useTheme();
   const modifiedHistory = watch("modifiedHistory");
   const formCloudProvider = watch("cloudProvider");
   const { errors } = formState as any;
@@ -388,7 +392,7 @@ const BasicInfo: React.FC = () => {
                             objectFit: "contain",
                             borderRadius: 1,
                             border: "1px solid #ddd",
-                            backgroundColor: "#fff",
+                            backgroundColor: theme.palette.common.white,
                           }}
                         />
                       )}

@@ -95,7 +95,7 @@ const Login: React.FC = () => {
               ? alpha(theme.palette.background.paper, 0.85)
               : alpha(theme.palette.background.paper, 0.96),
             backdropFilter: "blur(24px)",
-            border: `1px solid ${isDark ? alpha("#fff", 0.1) : alpha("#000", 0.07)}`,
+            border: `1px solid ${isDark ? alpha(theme.palette.common.white, 0.1) : alpha(theme.palette.common.black, 0.07)}`,
             boxShadow: isDark
               ? `0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px ${alpha(tealMain, 0.15)}`
               : "0 32px 80px rgba(0,0,0,0.12)",
@@ -127,7 +127,7 @@ const Login: React.FC = () => {
                 }}
                 aria-hidden="true"
               >
-                <FontAwesomeIcon icon="lock" style={{ color: "#fff", fontSize: "1.25rem" }} />
+                <FontAwesomeIcon icon="lock" style={{ color: theme.palette.common.white, fontSize: "1.25rem" }} />
               </Box>
               <Typography
                 variant="h5"
@@ -267,7 +267,7 @@ const Login: React.FC = () => {
                   },
                   "&:active": { transform: "translateY(0)" },
                   "&.Mui-disabled": {
-                    background: isDark ? alpha("#fff", 0.08) : alpha("#000", 0.06),
+                    background: isDark ? alpha(theme.palette.common.white, 0.08) : alpha(theme.palette.common.black, 0.06),
                     boxShadow: "none",
                   },
                   transition: "all 0.25s ease",

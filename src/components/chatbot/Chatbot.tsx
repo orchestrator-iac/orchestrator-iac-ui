@@ -1,224 +1,625 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { useNavigate } from "react-router-dom";
 import {
+  Avatar,
   Box,
-  IconButton,
-  Paper,
-  Typography,
-  Button,
-  TextField,
+  CircularProgress,
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
+  DialogTitle,
+  Divider,
+  IconButton,
+  InputAdornment,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Paper,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+  Snackbar,
+  Alert,
 } from "@mui/material";
+import AddCommentIcon from "@mui/icons-material/AddComment";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChatIcon from "@mui/icons-material/Chat";
 import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
-import NotesList from "@/components/notes/NotesList";
+import HistoryIcon from "@mui/icons-material/History";
+import SendIcon from "@mui/icons-material/Send";
 
-// Floating button + compact chat panel + separate notes modal
+import NotesList from "@/components/notes/NotesList";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  appendLocalMessage,
+  clearActiveSession,
+  clearSendError,
+  createSession,
+  fetchSession,
+  fetchSessions,
+  sendMessage,
+} from "@/store/chatSlice";
+import { fetchResources } from "@/store/resourcesSlice";
+import MessageBubble from "./MessageBubble";
+import DiffAlert from "./DiffAlert";
+
+// ── Typing indicator ───────────────────────────────────────────────────────────
+
+const TypingIndicator: React.FC = () => (
+  <Box display="flex" alignItems="center" gap={0.5} px={2} py={0.75}>
+    <Avatar sx={{ width: 24, height: 24, bgcolor: "primary.dark", fontSize: "0.6rem" }}>M</Avatar>
+    <Stack direction="row" spacing={0.4} ml={0.5}>
+      {[0, 1, 2].map((i) => (
+        <Box
+          key={i}
+          sx={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            bgcolor: "primary.main",
+            animation: "bounce 1.2s infinite",
+            animationDelay: `${i * 0.2}s`,
+            "@keyframes bounce": {
+              "0%, 80%, 100%": { transform: "scale(0.6)" },
+              "40%": { transform: "scale(1)" },
+            },
+          }}
+        />
+      ))}
+    </Stack>
+  </Box>
+);
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 const Chatbot: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { activeSession, activeSessionStatus, isSending, sendError, sessions, sessionsStatus } = useAppSelector((s) => s.chat);
+  const { data: resourceCatalog, status: catalogStatus } = useAppSelector((s) => s.resources);
+
   const [openChat, setOpenChat] = useState(false);
-  const [messages, setMessages] = useState<
-    { id: string; role: "user" | "assistant"; content: string }[]
-  >([]);
   const [input, setInput] = useState("");
   const [notesOpen, setNotesOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [dismissedDiff, setDismissedDiff] = useState<string | null>(null);
+  const [isImplementing, setIsImplementing] = useState(false);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastSeverity, setToastSeverity] = useState<"success" | "info" | "warning" | "error">("info");
 
-  const toggleChat = () => setOpenChat((o) => !o);
-  const openNotes = () => setNotesOpen(true);
-  const closeNotes = () => setNotesOpen(false);
+  const isCreatingSession = activeSessionStatus === "loading" && !activeSession;
 
-  const addMessage = (role: "user" | "assistant", content: string) => {
-    setMessages((m) => [...m, { id: crypto.randomUUID(), role, content }]);
-  };
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const pendingMessageRef = useRef<string | null>(null);
+  // Set to true when the user explicitly clicks "New chat" so the session-load
+  // effect creates a fresh session instead of reloading the latest one.
+  const wantsNewSessionRef = useRef(false);
 
-  const interpret = (text: string) => {
-    const lower = text.toLowerCase();
-    const noteIntent = /(note|memo|sticky)/;
-    const createIntent = /(create|add|new|make)/;
-    const showIntent = /(show|list|display|open|view)/;
-
-    if (
-      noteIntent.test(lower) &&
-      (createIntent.test(lower) || showIntent.test(lower))
-    ) {
-      addMessage("assistant", "Opening notes workspace for you.");
-      setNotesOpen(true);
-      return;
+  // ── Load resource catalog once (needed by handleImplement) ────────────────
+  useEffect(() => {
+    if (catalogStatus === "idle") {
+      dispatch(fetchResources());
     }
-    if (noteIntent.test(lower)) {
-      addMessage(
-        "assistant",
-        'Ask me to create or show notes. Example: "show my notes".',
+  }, [catalogStatus, dispatch]);
+
+  // ── On open: load latest existing session, or create a new one ────────────────
+  useEffect(() => {
+    if (!openChat || activeSession || activeSessionStatus === "loading") return;
+
+    if (sessionsStatus === "idle") {
+      dispatch(fetchSessions());
+    } else if (sessionsStatus === "succeeded") {
+      if (wantsNewSessionRef.current) {
+        // User clicked "New chat" — always create a fresh session
+        wantsNewSessionRef.current = false;
+        dispatch(createSession(undefined));
+      } else if (sessions.length > 0) {
+        dispatch(fetchSession(sessions[0].id));
+      } else {
+        dispatch(createSession(undefined));
+      }
+    }
+  }, [openChat, activeSession, activeSessionStatus, sessions, sessionsStatus, dispatch]);
+
+  // ── Send any pending message once the session becomes available ────────────
+  useEffect(() => {
+    if (activeSession && pendingMessageRef.current) {
+      const pending = pendingMessageRef.current;
+      pendingMessageRef.current = null;
+      dispatch(
+        appendLocalMessage({
+          role: "user",
+          content: pending,
+          timestamp: new Date().toISOString(),
+          messageType: "text",
+        }),
       );
+      dispatch(sendMessage({ sessionId: activeSession.id, message: pending }));
+    }
+  }, [activeSession, dispatch]);
+
+  // ── Scroll to bottom whenever messages change ──────────────────────────────
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [activeSession?.messages.length, isSending]);
+
+  // ── Focus input when chat opens ────────────────────────────────────────────
+  useEffect(() => {
+    if (openChat) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [openChat]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+
+  const handleSend = () => {
+    const trimmed = input.trim();
+    if (!trimmed || isSending) return;
+    setInput("");
+    // Session still being created — stash the message and send once ready
+    if (!activeSession) {
+      pendingMessageRef.current = trimmed;
       return;
     }
-    addMessage(
-      "assistant",
-      'I currently only help with notes. Try: "create a new note".',
+    // Optimistically show user message before the round-trip
+    dispatch(
+      appendLocalMessage({
+        role: "user",
+        content: trimmed,
+        timestamp: new Date().toISOString(),
+        messageType: "text",
+      }),
     );
+    dispatch(sendMessage({ sessionId: activeSession.id, message: trimmed }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
-    addMessage("user", trimmed);
-    interpret(trimmed);
-    setInput("");
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
+
+  const showToast = (msg: string, severity: "success" | "info" | "warning" | "error" = "info") => {
+    setToastMessage(msg);
+    setToastSeverity(severity);
+    setToastOpen(true);
+  };
+
+  const handleToastClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === "clickaway") return;
+    setToastOpen(false);
+  };
+
+  const handleImplement = async (sessionId: string) => {
+    if (activeSession?.id !== sessionId) return;
+
+    const plan =
+      activeSession.currentPlan ||
+      activeSession.messages.slice().reverse().find((m) => m.messageType === "plan")?.plan;
+
+    if (!plan) {
+      // No plan available
+      showToast("No Maestro plan found to implement.", "warning");
+      return;
+    }
+
+    setIsImplementing(true);
+    try {
+      const normalize = (s: string) =>
+        s.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+
+      // Build a lookup: normalized resourceId -> catalog entry
+      const catalogLookup = new Map<string, any>();
+      for (const entry of resourceCatalog) {
+        // Key by the type string (resourceId field, e.g. "vpc", "nat_gateway")
+        const key = normalize(entry.resourceId || entry.resourceName || "");
+        catalogLookup.set(key, entry);
+      }
+
+      // Build nodes using the exact same convention as onDrop:
+      //   - node.id = `${mongodb_id}-${uuidv4()}` so saved orchestrators load correctly
+      //   - resourceId = type string (e.g. "vpc") stored in DB and used as __nodeType
+      //   - __nodeType = type string (what all rules/links use)
+      const nodes = plan.resources.map((res, idx) => {
+        const type = normalize(res.resourceType || `resource${idx}`);
+        const catalogEntry = catalogLookup.get(type);
+        // MongoDB _id used as node ID prefix — identical to onDrop convention
+        const mongoId = catalogEntry?._id ?? type;
+        const id = `${mongoId}-${uuidv4()}`;
+        // resourceId stored in DB = canonical type string (not MongoDB _id)
+        const resourceId = catalogEntry?.resourceId ?? type;
+        const friendlyId = `${type}-${String(idx + 1).padStart(4, "0")}`;
+        return {
+          id,
+          resourceId,         // canonical type string ("vpc") — used as __nodeType on load
+          position: { x: idx * 220, y: 0 },
+          values: res.config || {},
+          __nodeType: resourceId,   // same type string, consistent with onDrop
+          friendlyId,
+          isExpanded: true,
+          // Kept for fallback rendering only — not used by fetchResourceById
+          previewIcon: catalogEntry?.resourceIcon?.url ?? undefined,
+          resourceName: catalogEntry?.resourceName ?? type,
+        };
+      });
+      // Build edge lookup keyed by __nodeType (the type string, e.g. "vpc")
+      const lookup = new Map<string, string>();
+      nodes.forEach((n) => lookup.set(n.__nodeType, n.id));
+
+      // Edge direction convention (matches the existing Orchestrator edge rules):
+      //   source = the PROVIDER (the dependency)
+      //   target = the CONSUMER (the resource that needs the dependency)
+      // So if nat_gateway.dependencies = ["subnet"], edge = source:subnet → target:nat_gateway
+      const edges: any[] = [];
+      plan.resources.forEach((res, idx) => {
+        const consumerId = nodes[idx].id;  // the resource that has dependencies
+        (res.dependencies || []).forEach((dep) => {
+          const depKey = normalize(dep);
+          const providerId = lookup.get(depKey); // the resource being depended on
+          if (providerId && providerId !== consumerId) {
+            edges.push({
+              id: `${providerId}->${consumerId}`,
+              source: providerId, // provider (e.g., vpc)
+              target: consumerId, // consumer (e.g., subnet)
+            });
+          }
+        });
+      });
+
+      const templateInfo = {
+        templateName: plan.templateName?.trim() || plan.summary?.split(".")[0]?.trim() || "Maestro Infrastructure Plan",
+        description: plan.summary,
+        cloud: plan.resources[0]?.cloudProvider ?? undefined,
+      };
+
+      const saveReq = {
+        templateInfo,
+        nodes,
+        edges,
+        metadata: { createdAt: new Date(), updatedAt: new Date(), version: "1.0" },
+      };
+
+      // Prefill the Orchestrator editor: store in sessionStorage and navigate in-place.
+      // Chatbot is rendered outside <Routes> so the conversation stays visible.
+      try {
+        sessionStorage.setItem("maestro_prefill", JSON.stringify(saveReq));
+        navigate("/orchestrator/new?template_type=custom");
+      } catch (e) {
+        console.error("Failed to open orchestrator editor:", e);
+        showToast("Failed to open orchestrator editor", "error");
+      }
+    } catch (err) {
+      console.error("Failed to create orchestrator:", err);
+      showToast(
+        "Failed to create orchestrator: " + (err instanceof Error ? err.message : String(err)),
+        "error",
+      );
+    } finally {
+      setIsImplementing(false);
+    }
+  };
+
+  // ── Diff alert — show the latest diff message not yet dismissed ────────────
+  const lastDiffMsg = activeSession?.messages
+    .slice()
+    .reverse()
+    .find((m) => m.messageType === "diff");
+
+  const showDiffAlert =
+    lastDiffMsg &&
+    lastDiffMsg.content !== dismissedDiff &&
+    !isSending;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* Floating Launcher */}
+      {/* Floating launcher */}
       <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1300 }}>
-        <IconButton
-          color="primary"
-          onClick={toggleChat}
-          size="large"
-          sx={{ bgcolor: "background.paper", boxShadow: 3 }}
-        >
-          {openChat ? <CloseIcon /> : <ChatIcon />}
-        </IconButton>
+        <Tooltip title={openChat ? "Close Maestro" : "Open Maestro"}>
+          <IconButton
+            color="primary"
+            onClick={() => setOpenChat((o) => !o)}
+            size="large"
+            sx={{
+              bgcolor: "background.paper",
+              boxShadow: 4,
+              "&:hover": { boxShadow: 6 },
+            }}
+          >
+            {openChat ? <CloseIcon /> : <ChatIcon />}
+          </IconButton>
+        </Tooltip>
       </Box>
 
-      {/* Compact Chat Panel */}
+      {/* Chat panel */}
       {openChat && (
         <Paper
-          elevation={6}
+          elevation={8}
           sx={{
             position: "fixed",
             bottom: 90,
             right: 24,
-            width: 360,
-            height: 420,
+            width: 420,
+            height: 520,
             display: "flex",
             flexDirection: "column",
             borderRadius: 3,
             overflow: "hidden",
-            zIndex: 1300,
+            zIndex: 1299,
           }}
         >
+          {/* ── Header ── */}
           <Box
             sx={{
-              p: 1.5,
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              px: 2,
+              py: 1.25,
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
-              borderBottom: "1px solid",
-              borderColor: "divider",
+              gap: 1,
             }}
           >
-            <Typography variant="subtitle2" fontWeight={600}>
-              Assistant
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1 }}>
+            <Avatar
+              sx={{
+                width: 30,
+                height: 30,
+                bgcolor: "primary.dark",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+              }}
+            >
+              M
+            </Avatar>
+            <Box flex={1}>
+              <Typography variant="subtitle2" fontWeight={700} lineHeight={1.2}>
+                Maestro
+              </Typography>
+              <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                Infrastructure planning assistant
+              </Typography>
+            </Box>
+            <Tooltip title="New chat">
               <IconButton
                 size="small"
-                onClick={openNotes}
-                color="primary"
-                sx={{ bgcolor: "action.hover" }}
-                title="Open Notes"
+                color="inherit"
+                onClick={() => {
+                  wantsNewSessionRef.current = true;
+                  setShowHistory(false);
+                  dispatch(clearActiveSession());
+                }}
+              >
+                <AddCommentIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={showHistory ? "Back to chat" : "Chat history"}>
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={() => {
+                  if (!showHistory && sessionsStatus !== "loading") {
+                    dispatch(fetchSessions());
+                  }
+                  setShowHistory((v) => !v);
+                }}
+              >
+                {showHistory ? <ArrowBackIcon fontSize="small" /> : <HistoryIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Notes">
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={() => setNotesOpen(true)}
               >
                 <DescriptionIcon fontSize="small" />
               </IconButton>
-              <IconButton size="small" onClick={toggleChat}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              flex: 1,
-              overflowY: "auto",
-              p: 1.5,
-              display: "flex",
-              flexDirection: "column",
-              gap: 1,
-            }}
-          >
-            {messages.length === 0 && (
-              <Typography variant="body2" color="text.secondary">
-                Type: "show my notes" or "create a new note".
-              </Typography>
-            )}
-            {messages.map((m) => (
-              <Box
-                key={m.id}
-                sx={{
-                  alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                  maxWidth: "85%",
-                  bgcolor:
-                    m.role === "user" ? "primary.main" : "background.default",
-                  color:
-                    m.role === "user" ? "primary.contrastText" : "text.primary",
-                  px: 1.25,
-                  py: 0.75,
-                  borderRadius: 2,
-                  boxShadow: 1,
-                  fontSize: 13,
-                  lineHeight: 1.4,
-                }}
-              >
-                {m.content}
-              </Box>
-            ))}
-          </Box>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{
-              p: 1,
-              borderTop: "1px solid",
-              borderColor: "divider",
-              display: "flex",
-              gap: 1,
-            }}
-          >
-            <TextField
+            </Tooltip>
+            <IconButton
               size="small"
+              color="inherit"
+              onClick={() => setOpenChat(false)}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Divider />
+
+          {/* ── Diff alert ── */}
+          {showDiffAlert && lastDiffMsg && (
+            <DiffAlert
+              summary={lastDiffMsg.content}
+              onDismiss={() => setDismissedDiff(lastDiffMsg.content)}
+            />
+          )}
+
+          {/* ── Session history panel ── */}
+          {showHistory ? (
+            <Box flex={1} overflow="auto">
+              <Box px={2} py={1.5}>
+                <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+                  Previous conversations
+                </Typography>
+              </Box>
+              <Divider />
+              {sessionsStatus === "loading" && (
+                <Box display="flex" justifyContent="center" pt={4}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+              {sessionsStatus === "succeeded" && sessions.length === 0 && (
+                <Box textAlign="center" px={3} mt={4}>
+                  <Typography variant="body2" color="text.secondary">
+                    No previous conversations.
+                  </Typography>
+                </Box>
+              )}
+              {sessionsStatus === "succeeded" && sessions.length > 0 && (
+                <List dense disablePadding>
+                  {sessions.map((s) => {
+                    const isActive = activeSession?.id === s.id;
+                    const label =
+                      s.title?.trim() ||
+                      `Chat — ${new Date(s.updatedAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}`;
+                    const sub = `${s.messageCount} message${s.messageCount === 1 ? "" : "s"} · ${new Date(s.updatedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`;
+                    return (
+                      <ListItem key={s.id} disablePadding divider>
+                        <ListItemButton
+                          selected={isActive}
+                          onClick={() => {
+                            if (!isActive) {
+                              dispatch(fetchSession(s.id));
+                            }
+                            setShowHistory(false);
+                          }}
+                        >
+                          <ListItemText
+                            primary={label}
+                            secondary={sub}
+                            slotProps={{
+                              primary: { variant: "body2", fontWeight: isActive ? 700 : 400, noWrap: true },
+                              secondary: { variant: "caption" },
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              )}
+            </Box>
+          ) : (
+          /* ── Message list ── */
+          <Box
+            flex={1}
+            overflow="auto"
+            py={1}
+          >
+            {(!activeSession || activeSession.messages.length === 0) &&
+              !isSending && (
+                <Box textAlign="center" px={3} mt={3}>
+                  <Typography variant="body2" color="text.secondary">
+                    Hi! I'm <strong>Maestro</strong>. Describe the cloud
+                    infrastructure you'd like to build and I'll create a plan
+                    for you.
+                  </Typography>
+                </Box>
+              )}
+
+            {activeSession?.messages.map((msg, idx) => (
+              <MessageBubble
+                key={idx}
+                message={msg}
+                sessionId={activeSession.id}
+                onImplement={handleImplement}
+                isImplementing={isImplementing}
+              />
+            ))}
+
+            {isSending && <TypingIndicator />}
+
+            {sendError && (
+              <Box px={2} py={0.5}>
+                <Typography
+                  variant="caption"
+                  color="error"
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => dispatch(clearSendError())}
+                >
+                  ⚠ {sendError} (click to dismiss)
+                </Typography>
+              </Box>
+            )}
+
+            <div ref={messagesEndRef} />
+          </Box>
+          )}
+
+          <Divider />
+
+          {/* ── Input bar (hidden when browsing history) ── */}
+          {showHistory ? null :
+          <Box sx={{ px: 1.5, py: 1, bgcolor: "background.paper" }}>
+            <TextField
+              inputRef={inputRef}
               fullWidth
+              multiline
+              maxRows={3}
+              size="small"
+              placeholder="Ask Maestro to plan your infrastructure…"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Message..."
+              onKeyDown={handleKeyDown}
+              disabled={isSending}
+              slotProps={{
+                input: {
+                  sx: { borderRadius: 3 },
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={handleSend}
+                        disabled={!input.trim() || isSending || isCreatingSession}
+                      >
+                        {isSending ? (
+                          <CircularProgress size={18} />
+                        ) : (
+                          <SendIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
-            <Button
-              type="submit"
-              variant="contained"
-              size="small"
-              disabled={!input.trim()}
-            >
-              Send
-            </Button>
           </Box>
+          }
         </Paper>
       )}
 
-      {/* Notes Modal */}
-      <Dialog open={notesOpen} onClose={closeNotes} maxWidth="lg" fullWidth>
-        <DialogTitle
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="subtitle1" fontWeight={600}>
-            Your Notes
-          </Typography>
-          <IconButton onClick={closeNotes} size="small">
-            <CloseIcon fontSize="small" />
+      {/* Notes modal — preserved for backward compatibility */}
+      <Dialog
+        open={notesOpen}
+        onClose={() => setNotesOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Notes
+          <IconButton
+            onClick={() => setNotesOpen(false)}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ p: 2 }}>
+        <DialogContent dividers>
           <NotesList />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeNotes}>Close</Button>
-        </DialogActions>
       </Dialog>
+        <Snackbar
+          open={toastOpen}
+          autoHideDuration={6000}
+          onClose={handleToastClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert onClose={handleToastClose} severity={toastSeverity} sx={{ width: "100%" }}>
+            {toastMessage}
+          </Alert>
+        </Snackbar>
     </>
   );
 };

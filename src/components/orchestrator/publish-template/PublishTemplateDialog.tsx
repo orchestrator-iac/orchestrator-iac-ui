@@ -297,7 +297,7 @@ const PublishTemplateDialog: React.FC<PublishTemplateDialogProps> = ({
               textTransform: "none",
               fontWeight: 700,
               backgroundColor: theme.palette.primary.main,
-              color: "#fff",
+              color: theme.palette.common.white,
               "&:hover": {
                 backgroundColor: theme.palette.primary.dark,
               },

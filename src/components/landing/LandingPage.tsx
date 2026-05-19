@@ -141,7 +141,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
             ? theme.palette.primary.main
             : alpha(theme.palette.primary.main, 0.12),
           border: `2px solid ${isHovered ? "transparent" : alpha(theme.palette.primary.main, 0.3)}`,
-          color: isHovered ? "#fff" : theme.palette.primary.main,
+          color: isHovered ? theme.palette.common.white : theme.palette.primary.main,
           transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           transform: isHovered ? "scale(1.15)" : "scale(1)",
         }}
@@ -902,7 +902,7 @@ const LandingPage: React.FC = () => {
                         left: "-100%",
                         width: "55%",
                         height: "100%",
-                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent)",
+                        background: `linear-gradient(90deg, transparent, ${alpha(theme.palette.common.white, 0.22)}, transparent)`,
                         animation: "badge-shimmer 3.5s ease-in-out infinite",
                         "@keyframes badge-shimmer": {
                           "0%": { left: "-100%" },
