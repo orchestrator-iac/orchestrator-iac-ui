@@ -240,8 +240,7 @@ const TemplatesGallery: React.FC = () => {
               letterSpacing: "0.01em",
             }}
           >
-            Ready-made infrastructure blueprints. Fork any template to start
-            building.
+            Ready-made infrastructure blueprints. Fork any template to start building.
           </Typography>
         </Box>
       </Fade>

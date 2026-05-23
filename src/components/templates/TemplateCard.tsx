@@ -6,13 +6,30 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { TemplateListItem } from "../../types/template";
 import styles from "./Templates.module.css";
 import awsLogo from "../../assets/aws_logo.svg";
+import awsLogoLight from "./../../assets/aws_logo_light.svg";
+import awsLogoDark from "./../../assets/aws_logo_dark.svg";
 import azLogo from "../../assets/az_logo.svg";
 import gcpLogo from "../../assets/gcp_logo.svg";
 
-const logoMap: Record<string, string> = {
-  aws: awsLogo,
-  azure: azLogo,
-  gcp: gcpLogo,
+const logoMap: Record<
+  string,
+  { light: string; dark: string; default: string }
+> = {
+  aws: {
+    light: awsLogoLight,
+    dark: awsLogoDark,
+    default: awsLogo,
+  },
+  azure: {
+    light: azLogo,
+    dark: azLogo,
+    default: azLogo,
+  },
+  gcp: {
+    light: gcpLogo,
+    dark: gcpLogo,
+    default: gcpLogo,
+  },
 };
 
 interface TemplateCardProps {
@@ -22,7 +39,8 @@ interface TemplateCardProps {
 const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const logoSrc = logoMap[template.cloud || "aws"];
+  const logoSrc =
+    logoMap[template?.cloud ?? 'aws']?.[theme.palette.mode] || logoMap[template?.cloud ?? 'aws']?.default || awsLogo;
 
   const handleClick = () => {
     navigate(`/templates/${template.id}`);
