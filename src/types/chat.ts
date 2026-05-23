@@ -36,6 +36,7 @@ export interface ChatMessage {
 export interface ChatSessionListItem {
   id: string;
   title?: string;
+  preview?: string;
   status: SessionStatus;
   orchestratorId?: string;
   messageCount: number;

@@ -92,6 +92,19 @@ export const sendMessage = createAsyncThunk(
   },
 );
 
+export const deleteSession = createAsyncThunk(
+  "chat/deleteSession",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await chatService.closeSession(id);
+      return id;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete session";
+      return rejectWithValue(msg);
+    }
+  },
+);
+
 // ── Slice ──────────────────────────────────────────────────────────────────────
 
 const chatSlice = createSlice({
@@ -197,6 +210,17 @@ const chatSlice = createSlice({
         state.isSending = false;
         state.sendError = action.payload as string;
       });
+
+    // deleteSession
+    builder.addCase(deleteSession.fulfilled, (state, action) => {
+      const id = action.payload as string;
+      state.sessions = state.sessions.filter((s) => s.id !== id);
+      if (state.activeSession?.id === id) {
+        state.activeSession = null;
+        state.activeSessionId = null;
+        state.activeSessionStatus = "idle";
+      }
+    });
   },
 });
 
