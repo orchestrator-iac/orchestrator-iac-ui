@@ -79,11 +79,11 @@ export const fetchSession = createAsyncThunk(
 export const sendMessage = createAsyncThunk(
   "chat/sendMessage",
   async (
-    { sessionId, message }: { sessionId: string; message: string },
+    { sessionId, message, pageContext }: { sessionId: string; message: string; pageContext?: any },
     { rejectWithValue },
   ) => {
     try {
-      return await chatService.sendMessage(sessionId, message);
+      return await chatService.sendMessage(sessionId, message, pageContext);
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Failed to send message";
