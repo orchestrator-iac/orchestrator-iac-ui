@@ -24,14 +24,44 @@ import { templateService } from "../../services/templateService";
 import { TemplateDetail as ITemplateDetail } from "../../types/template";
 import styles from "./Templates.module.css";
 import awsLogo from "../../assets/aws_logo.svg";
+import awsLogoLight from "./../../assets/aws_logo_light.svg";
+import awsLogoDark from "./../../assets/aws_logo_dark.svg";
 import azLogo from "../../assets/az_logo.svg";
 import gcpLogo from "../../assets/gcp_logo.svg";
 import PublishTemplateDialog from "../orchestrator/publish-template/PublishTemplateDialog";
 
-const logoMap: Record<string, string> = {
-  aws: awsLogo,
-  azure: azLogo,
-  gcp: gcpLogo,
+
+const logoMap: Record<
+  string,
+  { light: string; dark: string; default: string }
+> = {
+  aws: {
+    light: awsLogoLight,
+    dark: awsLogoDark,
+    default: awsLogo,
+  },
+  azure: {
+    light: azLogo,
+    dark: azLogo,
+    default: azLogo,
+  },
+  gcp: {
+    light: gcpLogo,
+    dark: gcpLogo,
+    default: gcpLogo,
+  },
+};
+
+interface CardLogoProps {
+  cloudType: string;
+  className?: string;
+  mode: "light" | "dark";
+}
+
+const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className, mode }) => {
+  const logoSrc =
+    logoMap[cloudType]?.[mode] || logoMap[cloudType]?.default || awsLogo;
+  return <img src={logoSrc} alt={`${cloudType} logo`} className={className} />;
 };
 
 const TemplateDetail: React.FC = () => {
@@ -191,7 +221,6 @@ const TemplateDetail: React.FC = () => {
     user._id &&
     user._id === template.userId
   );
-  const logoSrc = template ? logoMap[template.cloud || ""] : null;
   let likeTooltip: string;
   if (user) {
     likeTooltip = liked ? "Unlike" : "Like this template";
@@ -324,30 +353,8 @@ const TemplateDetail: React.FC = () => {
               }}
             >
               {template.cloud &&
-                (logoSrc ? (
-                  <img
-                    src={logoSrc}
-                    alt={template.cloud}
-                    style={{
-                      width: 28,
-                      height: 20,
-                      objectFit: "contain",
-                      display: "block",
-                    }}
-                  />
-                ) : (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                      color: "text.secondary",
-                    }}
-                  >
-                    {template.cloud}
-                  </Typography>
-                ))}
+                <CardLogo cloudType={template.cloud} mode={theme.palette.mode} className={styles.cloudLogo} />
+              }
               {template.cloud && (
                 <Box component="span" sx={{ color: "text.disabled" }}>
                   .

@@ -6,6 +6,7 @@ import {
   Box,
   CircularProgress,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -22,6 +23,7 @@ import {
   Typography,
   Snackbar,
   Alert,
+  Button,
 } from "@mui/material";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -30,6 +32,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
 import HistoryIcon from "@mui/icons-material/History";
 import SendIcon from "@mui/icons-material/Send";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import NotesList from "@/components/notes/NotesList";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -40,6 +43,7 @@ import {
   createSession,
   fetchSession,
   fetchSessions,
+  deleteSession,
   sendMessage,
 } from "@/store/chatSlice";
 import { fetchResources } from "@/store/resourcesSlice";
@@ -50,7 +54,16 @@ import DiffAlert from "./DiffAlert";
 
 const TypingIndicator: React.FC = () => (
   <Box display="flex" alignItems="center" gap={0.5} px={2} py={0.75}>
-    <Avatar sx={{ width: 24, height: 24, bgcolor: "primary.dark", fontSize: "0.6rem" }}>M</Avatar>
+    <Avatar
+      sx={{
+        width: 24,
+        height: 24,
+        bgcolor: "primary.dark",
+        fontSize: "0.6rem",
+      }}
+    >
+      M
+    </Avatar>
     <Stack direction="row" spacing={0.4} ml={0.5}>
       {[0, 1, 2].map((i) => (
         <Box
@@ -78,8 +91,17 @@ const TypingIndicator: React.FC = () => (
 const Chatbot: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { activeSession, activeSessionStatus, isSending, sendError, sessions, sessionsStatus } = useAppSelector((s) => s.chat);
-  const { data: resourceCatalog, status: catalogStatus } = useAppSelector((s) => s.resources);
+  const {
+    activeSession,
+    activeSessionStatus,
+    isSending,
+    sendError,
+    sessions,
+    sessionsStatus,
+  } = useAppSelector((s) => s.chat);
+  const { data: resourceCatalog, status: catalogStatus } = useAppSelector(
+    (s) => s.resources,
+  );
 
   const [openChat, setOpenChat] = useState(false);
   const [input, setInput] = useState("");
@@ -87,9 +109,19 @@ const Chatbot: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [dismissedDiff, setDismissedDiff] = useState<string | null>(null);
   const [isImplementing, setIsImplementing] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
+    null,
+  );
+  const [deletingSessionLabel, setDeletingSessionLabel] = useState<
+    string | null
+  >(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastSeverity, setToastSeverity] = useState<"success" | "info" | "warning" | "error">("info");
+  const [toastSeverity, setToastSeverity] = useState<
+    "success" | "info" | "warning" | "error"
+  >("info");
 
   const isCreatingSession = activeSessionStatus === "loading" && !activeSession;
 
@@ -124,7 +156,14 @@ const Chatbot: React.FC = () => {
         dispatch(createSession(undefined));
       }
     }
-  }, [openChat, activeSession, activeSessionStatus, sessions, sessionsStatus, dispatch]);
+  }, [
+    openChat,
+    activeSession,
+    activeSessionStatus,
+    sessions,
+    sessionsStatus,
+    dispatch,
+  ]);
 
   // ── Send any pending message once the session becomes available ────────────
   useEffect(() => {
@@ -185,13 +224,19 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  const showToast = (msg: string, severity: "success" | "info" | "warning" | "error" = "info") => {
+  const showToast = (
+    msg: string,
+    severity: "success" | "info" | "warning" | "error" = "info",
+  ) => {
     setToastMessage(msg);
     setToastSeverity(severity);
     setToastOpen(true);
   };
 
-  const handleToastClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleToastClose = (
+    _?: React.SyntheticEvent | Event,
+    reason?: string,
+  ) => {
     if (reason === "clickaway") return;
     setToastOpen(false);
   };
@@ -201,7 +246,10 @@ const Chatbot: React.FC = () => {
 
     const plan =
       activeSession.currentPlan ||
-      activeSession.messages.slice().reverse().find((m) => m.messageType === "plan")?.plan;
+      activeSession.messages
+        .slice()
+        .reverse()
+        .find((m) => m.messageType === "plan")?.plan;
 
     if (!plan) {
       // No plan available
@@ -237,10 +285,10 @@ const Chatbot: React.FC = () => {
         const friendlyId = `${type}-${String(idx + 1).padStart(4, "0")}`;
         return {
           id,
-          resourceId,         // canonical type string ("vpc") — used as __nodeType on load
+          resourceId, // canonical type string ("vpc") — used as __nodeType on load
           position: { x: idx * 220, y: 0 },
           values: res.config || {},
-          __nodeType: resourceId,   // same type string, consistent with onDrop
+          __nodeType: resourceId, // same type string, consistent with onDrop
           friendlyId,
           isExpanded: true,
           // Kept for fallback rendering only — not used by fetchResourceById
@@ -258,7 +306,7 @@ const Chatbot: React.FC = () => {
       // So if nat_gateway.dependencies = ["subnet"], edge = source:subnet → target:nat_gateway
       const edges: any[] = [];
       plan.resources.forEach((res, idx) => {
-        const consumerId = nodes[idx].id;  // the resource that has dependencies
+        const consumerId = nodes[idx].id; // the resource that has dependencies
         (res.dependencies || []).forEach((dep) => {
           const depKey = normalize(dep);
           const providerId = lookup.get(depKey); // the resource being depended on
@@ -273,7 +321,10 @@ const Chatbot: React.FC = () => {
       });
 
       const templateInfo = {
-        templateName: plan.templateName?.trim() || plan.summary?.split(".")[0]?.trim() || "Maestro Infrastructure Plan",
+        templateName:
+          plan.templateName?.trim() ||
+          plan.summary?.split(".")[0]?.trim() ||
+          "Maestro Infrastructure Plan",
         description: plan.summary,
         cloud: plan.resources[0]?.cloudProvider ?? undefined,
       };
@@ -282,7 +333,11 @@ const Chatbot: React.FC = () => {
         templateInfo,
         nodes,
         edges,
-        metadata: { createdAt: new Date(), updatedAt: new Date(), version: "1.0" },
+        metadata: {
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          version: "1.0",
+        },
       };
 
       // Prefill the Orchestrator editor: store in sessionStorage and navigate in-place.
@@ -297,11 +352,46 @@ const Chatbot: React.FC = () => {
     } catch (err) {
       console.error("Failed to create orchestrator:", err);
       showToast(
-        "Failed to create orchestrator: " + (err instanceof Error ? err.message : String(err)),
+        "Failed to create orchestrator: " +
+          (err instanceof Error ? err.message : String(err)),
         "error",
       );
     } finally {
       setIsImplementing(false);
+    }
+  };
+
+  const openDeleteDialog = (
+    e: React.MouseEvent,
+    sessionId: string,
+    label?: string,
+  ) => {
+    e.stopPropagation();
+    setDeletingSessionId(sessionId);
+    setDeletingSessionLabel(label ?? null);
+    setDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setDeletingSessionId(null);
+    setDeletingSessionLabel(null);
+    setIsDeleting(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingSessionId) return;
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteSession(deletingSessionId)).unwrap();
+      if (activeSession?.id === deletingSessionId) {
+        dispatch(clearActiveSession());
+      }
+      showToast("Conversation deleted", "success");
+      closeDeleteDialog();
+    } catch (err) {
+      showToast("Failed to delete conversation", "error");
+      setIsDeleting(false);
     }
   };
 
@@ -312,9 +402,7 @@ const Chatbot: React.FC = () => {
     .find((m) => m.messageType === "diff");
 
   const showDiffAlert =
-    lastDiffMsg &&
-    lastDiffMsg.content !== dismissedDiff &&
-    !isSending;
+    lastDiffMsg && lastDiffMsg.content !== dismissedDiff && !isSending;
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -410,7 +498,11 @@ const Chatbot: React.FC = () => {
                   setShowHistory((v) => !v);
                 }}
               >
-                {showHistory ? <ArrowBackIcon fontSize="small" /> : <HistoryIcon fontSize="small" />}
+                {showHistory ? (
+                  <ArrowBackIcon fontSize="small" />
+                ) : (
+                  <HistoryIcon fontSize="small" />
+                )}
               </IconButton>
             </Tooltip>
             <Tooltip title="Notes">
@@ -445,7 +537,11 @@ const Chatbot: React.FC = () => {
           {showHistory ? (
             <Box flex={1} overflow="auto">
               <Box px={2} py={1.5}>
-                <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+                <Typography
+                  variant="subtitle2"
+                  fontWeight={700}
+                  color="text.secondary"
+                >
                   Previous conversations
                 </Typography>
               </Box>
@@ -466,16 +562,48 @@ const Chatbot: React.FC = () => {
                 <List dense disablePadding>
                   {sessions.map((s) => {
                     const isActive = activeSession?.id === s.id;
+                    const updated = new Date(s.updatedAt);
+                    const dateLabel = updated.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    });
+                    const timeLabel = updated.toLocaleTimeString(undefined, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
                     const label =
                       s.title?.trim() ||
-                      `Chat — ${new Date(s.updatedAt).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}`;
-                    const sub = `${s.messageCount} message${s.messageCount === 1 ? "" : "s"} · ${new Date(s.updatedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`;
+                      s.preview?.trim() ||
+                      `Chat — ${dateLabel}`;
+                    const secondaryNode = (
+                      <>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          component="div"
+                        >
+                          {`${s.messageCount} message${s.messageCount === 1 ? "" : "s"}`}{" "}
+                          · {dateLabel} at {timeLabel}
+                        </Typography>
+                      </>
+                    );
                     return (
-                      <ListItem key={s.id} disablePadding divider>
+                      <ListItem
+                        key={s.id}
+                        disablePadding
+                        divider
+                        secondaryAction={
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            onClick={(e) => openDeleteDialog(e, s.id, label)}
+                            aria-label="Delete conversation"
+                          >
+                            <DeleteIcon fontSize="small" color="error" />
+                          </IconButton>
+                        }
+                      >
                         <ListItemButton
                           selected={isActive}
                           onClick={() => {
@@ -487,10 +615,11 @@ const Chatbot: React.FC = () => {
                         >
                           <ListItemText
                             primary={label}
-                            secondary={sub}
-                            slotProps={{
-                              primary: { variant: "body2", fontWeight: isActive ? 700 : 400, noWrap: true },
-                              secondary: { variant: "caption" },
+                            secondary={secondaryNode}
+                            primaryTypographyProps={{
+                              variant: "body2",
+                              fontWeight: isActive ? 700 : 400,
+                              noWrap: true,
                             }}
                           />
                         </ListItemButton>
@@ -501,92 +630,90 @@ const Chatbot: React.FC = () => {
               )}
             </Box>
           ) : (
-          /* ── Message list ── */
-          <Box
-            flex={1}
-            overflow="auto"
-            py={1}
-          >
-            {(!activeSession || activeSession.messages.length === 0) &&
-              !isSending && (
-                <Box textAlign="center" px={3} mt={3}>
-                  <Typography variant="body2" color="text.secondary">
-                    Hi! I'm <strong>Maestro</strong>. Describe the cloud
-                    infrastructure you'd like to build and I'll create a plan
-                    for you.
+            /* ── Message list ── */
+            <Box flex={1} overflow="auto" py={1}>
+              {(!activeSession || activeSession.messages.length === 0) &&
+                !isSending && (
+                  <Box textAlign="center" px={3} mt={3}>
+                    <Typography variant="body2" color="text.secondary">
+                      Hi! I'm <strong>Maestro</strong>. Describe the cloud
+                      infrastructure you'd like to build and I'll create a plan
+                      for you.
+                    </Typography>
+                  </Box>
+                )}
+
+              {activeSession?.messages.map((msg, idx) => (
+                <MessageBubble
+                  key={idx}
+                  message={msg}
+                  sessionId={activeSession.id}
+                  onImplement={handleImplement}
+                  isImplementing={isImplementing}
+                />
+              ))}
+
+              {isSending && <TypingIndicator />}
+
+              {sendError && (
+                <Box px={2} py={0.5}>
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => dispatch(clearSendError())}
+                  >
+                    ⚠ {sendError} (click to dismiss)
                   </Typography>
                 </Box>
               )}
 
-            {activeSession?.messages.map((msg, idx) => (
-              <MessageBubble
-                key={idx}
-                message={msg}
-                sessionId={activeSession.id}
-                onImplement={handleImplement}
-                isImplementing={isImplementing}
-              />
-            ))}
-
-            {isSending && <TypingIndicator />}
-
-            {sendError && (
-              <Box px={2} py={0.5}>
-                <Typography
-                  variant="caption"
-                  color="error"
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => dispatch(clearSendError())}
-                >
-                  ⚠ {sendError} (click to dismiss)
-                </Typography>
-              </Box>
-            )}
-
-            <div ref={messagesEndRef} />
-          </Box>
+              <div ref={messagesEndRef} />
+            </Box>
           )}
 
           <Divider />
 
           {/* ── Input bar (hidden when browsing history) ── */}
-          {showHistory ? null :
-          <Box sx={{ px: 1.5, py: 1, bgcolor: "background.paper" }}>
-            <TextField
-              inputRef={inputRef}
-              fullWidth
-              multiline
-              maxRows={3}
-              size="small"
-              placeholder="Ask Maestro to plan your infrastructure…"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSending}
-              slotProps={{
-                input: {
-                  sx: { borderRadius: 3 },
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={handleSend}
-                        disabled={!input.trim() || isSending || isCreatingSession}
-                      >
-                        {isSending ? (
-                          <CircularProgress size={18} />
-                        ) : (
-                          <SendIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </Box>
-          }
+          {showHistory ? null : (
+            <Box sx={{ px: 1.5, py: 1, bgcolor: "background.paper" }}>
+              <TextField
+                inputRef={inputRef}
+                fullWidth
+                multiline
+                maxRows={3}
+                size="small"
+                placeholder="Ask Maestro to plan your infrastructure…"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isSending}
+                slotProps={{
+                  input: {
+                    sx: { borderRadius: 3 },
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={handleSend}
+                          disabled={
+                            !input.trim() || isSending || isCreatingSession
+                          }
+                        >
+                          {isSending ? (
+                            <CircularProgress size={18} />
+                          ) : (
+                            <SendIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Box>
+          )}
         </Paper>
       )}
 
@@ -610,16 +737,60 @@ const Chatbot: React.FC = () => {
           <NotesList />
         </DialogContent>
       </Dialog>
-        <Snackbar
-          open={toastOpen}
-          autoHideDuration={6000}
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={closeDeleteDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Delete conversation</DialogTitle>
+        <DialogContent dividers>
+          <Typography>
+            Are you sure you want to delete this conversation? It will be
+            removed from your chat history.
+          </Typography>
+          {deletingSessionLabel && (
+            <Box mt={1}>
+              <Typography variant="body2" color="text.primary" noWrap>
+                {deletingSessionLabel}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteDialog} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={confirmDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <CircularProgress size={18} color="inherit" />
+            ) : (
+              "Delete"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={6000}
+        onClose={handleToastClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
           onClose={handleToastClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          severity={toastSeverity}
+          sx={{ width: "100%" }}
         >
-          <Alert onClose={handleToastClose} severity={toastSeverity} sx={{ width: "100%" }}>
-            {toastMessage}
-          </Alert>
-        </Snackbar>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
