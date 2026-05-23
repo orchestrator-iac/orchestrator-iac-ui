@@ -33,6 +33,16 @@ export interface ChatMessage {
   plan?: PlanSchema;
 }
 
+export interface PageContext {
+  route?: string;
+  title?: string;
+  orchestratorId?: string;
+  selectedResourceId?: string;
+  pageSummary?: string;
+  // free-form metadata (should be sanitized before sending)
+  metadata?: Record<string, unknown>;
+}
+
 export interface ChatSessionListItem {
   id: string;
   title?: string;

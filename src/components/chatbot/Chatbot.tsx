@@ -49,6 +49,7 @@ import {
 import { fetchResources } from "@/store/resourcesSlice";
 import MessageBubble from "./MessageBubble";
 import DiffAlert from "./DiffAlert";
+import usePageContext from "@/hooks/usePageContext";
 
 // ── Typing indicator ───────────────────────────────────────────────────────────
 
@@ -123,6 +124,8 @@ const Chatbot: React.FC = () => {
     "success" | "info" | "warning" | "error"
   >("info");
 
+  const pageContext = usePageContext();
+
   const isCreatingSession = activeSessionStatus === "loading" && !activeSession;
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -178,7 +181,9 @@ const Chatbot: React.FC = () => {
           messageType: "text",
         }),
       );
-      dispatch(sendMessage({ sessionId: activeSession.id, message: pending }));
+      dispatch(
+        sendMessage({ sessionId: activeSession.id, message: pending, pageContext: pageContext }),
+      );
     }
   }, [activeSession, dispatch]);
 
@@ -214,7 +219,9 @@ const Chatbot: React.FC = () => {
         messageType: "text",
       }),
     );
-    dispatch(sendMessage({ sessionId: activeSession.id, message: trimmed }));
+    dispatch(
+      sendMessage({ sessionId: activeSession.id, message: trimmed, pageContext: pageContext }),
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -390,6 +397,7 @@ const Chatbot: React.FC = () => {
       showToast("Conversation deleted", "success");
       closeDeleteDialog();
     } catch (err) {
+      console.error("Failed to delete conversation:", err);
       showToast("Failed to delete conversation", "error");
       setIsDeleting(false);
     }
@@ -514,6 +522,7 @@ const Chatbot: React.FC = () => {
                 <DescriptionIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+            
             <IconButton
               size="small"
               color="inherit"
@@ -577,16 +586,14 @@ const Chatbot: React.FC = () => {
                       s.preview?.trim() ||
                       `Chat — ${dateLabel}`;
                     const secondaryNode = (
-                      <>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          component="div"
-                        >
-                          {`${s.messageCount} message${s.messageCount === 1 ? "" : "s"}`}{" "}
-                          · {dateLabel} at {timeLabel}
-                        </Typography>
-                      </>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        component="div"
+                      >
+                        {`${s.messageCount} message${s.messageCount === 1 ? "" : "s"}`}{" "}
+                        · {dateLabel} at {timeLabel}
+                      </Typography>
                     );
                     return (
                       <ListItem
@@ -614,13 +621,12 @@ const Chatbot: React.FC = () => {
                           }}
                         >
                           <ListItemText
-                            primary={label}
+                            primary={
+                              <Typography variant="body2" fontWeight={isActive ? 700 : 400} noWrap>
+                                {label}
+                              </Typography>
+                            }
                             secondary={secondaryNode}
-                            primaryTypographyProps={{
-                              variant: "body2",
-                              fontWeight: isActive ? 700 : 400,
-                              noWrap: true,
-                            }}
                           />
                         </ListItemButton>
                       </ListItem>
@@ -645,7 +651,7 @@ const Chatbot: React.FC = () => {
 
               {activeSession?.messages.map((msg, idx) => (
                 <MessageBubble
-                  key={idx}
+                  key={`${msg.timestamp}-${idx}`}
                   message={msg}
                   sessionId={activeSession.id}
                   onImplement={handleImplement}
