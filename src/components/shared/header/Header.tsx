@@ -129,7 +129,7 @@ const Header: React.FC = () => {
                     borderRadius: "50%",
                     padding: "2px",
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                      WebkitMask: `linear-gradient(${theme.palette.common.white} 0 0) content-box, linear-gradient(${theme.palette.common.white} 0 0)`,
+                    WebkitMask: `linear-gradient(${theme.palette.common.white} 0 0) content-box, linear-gradient(${theme.palette.common.white} 0 0)`,
                     WebkitMaskComposite: "xor",
                     maskComposite: "exclude",
                     opacity: 0,
