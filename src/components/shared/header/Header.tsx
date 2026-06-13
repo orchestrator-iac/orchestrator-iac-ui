@@ -74,7 +74,7 @@ const Header: React.FC = () => {
       >
         <Typography
           component={Link}
-          to="/home"
+          to={user ? "/home" : "/"}
           className={styles.logo}
           sx={{
             fontSize: "1.35rem",

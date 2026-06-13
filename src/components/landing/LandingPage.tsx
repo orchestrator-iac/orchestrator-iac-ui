@@ -1,1866 +1,2950 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Container,
-  Typography,
   Button,
-  Grid,
-  useTheme,
-  alpha,
-  Stack,
   Chip,
-  Card,
-  CardContent,
+  Container,
+  Grid,
+  Stack,
+  Typography,
+  alpha,
+  useTheme,
 } from "@mui/material";
 import {
-  CloudQueue as CloudIcon,
   AccountTree as DiagramIcon,
+  Checklist as ChecklistIcon,
+  CloudQueue as CloudIcon,
   Code as CodeIcon,
-  Architecture as ArchitectureIcon,
-  AutoFixHigh as AutoFixIcon,
-  Download as DownloadIcon,
-  Visibility as VisibilityIcon,
-  Link as LinkIcon,
-  Settings as SettingsIcon,
-  PlayArrow as PlayIcon,
-  Security as SecurityIcon,
-  Bolt as BoltIcon,
-  TrendingUp as TrendingUpIcon,
-  Storage as StorageIcon,
   Dns as DnsIcon,
-  NetworkCheck as NetworkIcon,
-  Memory as MemoryIcon,
-  DeveloperBoard as ServerIcon,
-  DataObject as DataIcon,
-  Shield as ShieldIcon,
+  Download as DownloadIcon,
+  Hub as HubIcon,
+  Inventory2 as TemplateIcon,
+  OpenInNew as OpenIcon,
+  PlayArrow as PlayIcon,
+  Rule as RuleIcon,
+  SettingsEthernet as ConnectIcon,
+  ShieldOutlined as ShieldIcon,
+  Storage as StorageIcon,
+  Terminal as TerminalIcon,
+  VerifiedUser as VerifiedIcon,
+  VpnLock as NetworkIcon,
 } from "@mui/icons-material";
-import { FaAws, FaDocker, FaJenkins } from "react-icons/fa";
-import {
-  SiGooglecloud,
-  SiAmazonec2,
-  SiKubernetes,
-  SiTerraform,
-  SiAnsible,
-  SiPrometheus,
-  SiGrafana,
-  SiElasticsearch,
-  SiRedis,
-  SiPostgresql,
-  SiApachekafka,
-  SiNginx,
-  SiAwslambda,
-  SiAwsamplify,
-  SiAwselasticloadbalancing,
-} from "react-icons/si";
-import { VscAzure, VscAzureDevops } from "react-icons/vsc";
 
-interface FloatingIconProps {
+const SITE_URL = "https://orchestrator.next-zen.dev";
+
+interface ProductNode {
   icon: React.ReactNode;
-  delay: number;
-  duration: number;
+  label: string;
+  meta: string;
   x: string;
   y: string;
 }
 
-const FloatingIcon: React.FC<FloatingIconProps> = ({
-  icon,
-  delay,
-  duration,
-  x,
-  y,
-}) => {
+interface ProductLoopItem {
+  step: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  highlights: string[];
+  visual: "templates" | "canvas" | "validation" | "terraform";
+}
+
+interface CapabilityItem {
+  icon: React.ReactNode;
+  label: string;
+  title: string;
+  description: string;
+}
+
+interface TemplateItem {
+  name: string;
+  detail: string;
+  cloud: string;
+  nodes: string;
+  status: string;
+}
+
+interface ArtifactItem {
+  label: string;
+  title: string;
+  description: string;
+}
+
+const templateRows: TemplateItem[] = [
+  {
+    name: "AWS VPC Landing Zone",
+    detail: "Networking, subnets, NAT, routing",
+    cloud: "AWS",
+    nodes: "12 nodes",
+    status: "Ready to fork",
+  },
+  {
+    name: "Kubernetes Platform Base",
+    detail: "Cluster, node groups, IAM, observability",
+    cloud: "AWS",
+    nodes: "18 nodes",
+    status: "Popular pattern",
+  },
+  {
+    name: "Azure App Baseline",
+    detail: "VNet, app service, storage, private endpoints",
+    cloud: "Azure",
+    nodes: "14 nodes",
+    status: "Review ready",
+  },
+];
+
+const architectureNodes: ProductNode[] = [
+  {
+    icon: <NetworkIcon fontSize="small" />,
+    label: "VPC",
+    meta: "10.0.0.0/16",
+    x: "9%",
+    y: "18%",
+  },
+  {
+    icon: <DnsIcon fontSize="small" />,
+    label: "Public subnet",
+    meta: "2 zones",
+    x: "36%",
+    y: "10%",
+  },
+  {
+    icon: <StorageIcon fontSize="small" />,
+    label: "RDS",
+    meta: "private",
+    x: "60%",
+    y: "30%",
+  },
+  {
+    icon: <HubIcon fontSize="small" />,
+    label: "Gateway",
+    meta: "egress",
+    x: "30%",
+    y: "54%",
+  },
+  {
+    icon: <VerifiedIcon fontSize="small" />,
+    label: "Policy",
+    meta: "validated",
+    x: "67%",
+    y: "67%",
+  },
+];
+
+const terraformLines = [
+  'module "network" {',
+  '  source = "./modules/vpc"',
+  '  cidr   = "10.0.0.0/16"',
+  "}",
+  "",
+  'module "database" {',
+  '  source     = "./modules/rds"',
+  "  subnet_ids = module.network.private_subnets",
+  "}",
+];
+
+const productLoop: ProductLoopItem[] = [
+  {
+    step: "01",
+    icon: <TemplateIcon />,
+    title: "Choose the closest blueprint",
+    description:
+      "Start with a published landing-zone pattern instead of a blank Terraform folder.",
+    highlights: ["AWS and Azure patterns", "Forkable starting point"],
+    visual: "templates",
+  },
+  {
+    step: "02",
+    icon: <DiagramIcon />,
+    title: "Fork it into the canvas",
+    description:
+      "Move from gallery to editable architecture, keeping relationships visible as nodes change.",
+    highlights: ["Relationships stay visible", "Nodes become editable"],
+    visual: "canvas",
+  },
+  {
+    step: "03",
+    icon: <ChecklistIcon />,
+    title: "Configure with guardrails",
+    description:
+      "Collect provider-specific inputs in forms and flag missing configuration before export.",
+    highlights: ["Schema-backed forms", "Warnings before export"],
+    visual: "validation",
+  },
+  {
+    step: "04",
+    icon: <TerminalIcon />,
+    title: "Generate reviewable IaC",
+    description:
+      "Produce Terraform artifacts that can be downloaded, reviewed, and moved into your delivery flow.",
+    highlights: ["Module output preview", "Bundle ready for review"],
+    visual: "terraform",
+  },
+];
+
+const artifactItems: ArtifactItem[] = [
+  {
+    label: "Canvas",
+    title: "Architecture as a working model",
+    description:
+      "Nodes, edges, cloud metadata, and resource settings stay connected as the design evolves.",
+  },
+  {
+    label: "Validation",
+    title: "Configuration issues surfaced early",
+    description:
+      "Schema-backed fields make incomplete values obvious before they become Terraform problems.",
+  },
+  {
+    label: "Export",
+    title: "Terraform packaged for review",
+    description:
+      "The output is meant for your team process: inspect, commit, and run through existing checks.",
+  },
+];
+
+const capabilityItems: CapabilityItem[] = [
+  {
+    icon: <TemplateIcon />,
+    label: "Reusable",
+    title: "Template gallery",
+    description:
+      "Publish orchestrators as reusable blueprints and let teams fork proven patterns.",
+  },
+  {
+    icon: <ConnectIcon />,
+    label: "Visual",
+    title: "Connected resource graph",
+    description:
+      "See networks, gateways, databases, policies, and dependencies in one architecture surface.",
+  },
+  {
+    icon: <RuleIcon />,
+    label: "Structured",
+    title: "Schema-backed forms",
+    description:
+      "Replace scattered variables with guided resource configuration and validation feedback.",
+  },
+  {
+    icon: <CloudIcon />,
+    label: "Cloud aware",
+    title: "AWS, Azure, and GCP context",
+    description:
+      "Keep provider-specific resources organized while preserving one consistent workflow.",
+  },
+  {
+    icon: <ShieldIcon />,
+    label: "Reviewable",
+    title: "Validation-first output",
+    description:
+      "Expose warnings and missing configuration before generated code reaches a pipeline.",
+  },
+  {
+    icon: <DownloadIcon />,
+    label: "Portable",
+    title: "Terraform bundle export",
+    description:
+      "Download generated infrastructure code without locking teams into an opaque deployment path.",
+  },
+];
+
+const capabilitySignals = [
+  "Template-first infrastructure",
+  "Reusable landing-zone blueprints",
+  "Visual resource relationships",
+  "Schema-backed configuration",
+  "AWS, Azure, and GCP context",
+  "Validation before export",
+  "Reviewable Terraform output",
+  "Forkable architecture models",
+  "Cloud-aware orchestration",
+  "Connected infrastructure graphs",
+  "Structured forms for resources",
+  "Portable IaC bundles",
+];
+
+const setHeadAttribute = (
+  selector: string,
+  tagName: "meta" | "link",
+  seedAttributes: Record<string, string>,
+  attribute: string,
+  value: string,
+) => {
+  let element = document.querySelector<HTMLMetaElement | HTMLLinkElement>(
+    selector,
+  );
+
+  if (!element) {
+    element = document.createElement(tagName) as
+      | HTMLMetaElement
+      | HTMLLinkElement;
+    Object.entries(seedAttributes).forEach(([name, seedValue]) => {
+      element?.setAttribute(name, seedValue);
+    });
+    document.head.appendChild(element);
+  }
+
+  element.setAttribute(attribute, value);
+};
+
+const SurfaceBox: React.FC<{
+  children: React.ReactNode;
+  sx?: object;
+}> = ({ children, sx }) => {
   const theme = useTheme();
+
+  return (
+    <Box
+      sx={{
+        borderRadius: 1,
+        border: `1px solid ${alpha(
+          theme.palette.mode === "dark"
+            ? theme.palette.common.white
+            : theme.palette.common.black,
+          theme.palette.mode === "dark" ? 0.12 : 0.08,
+        )}`,
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? alpha(theme.palette.background.paper, 0.82)
+            : alpha(theme.palette.common.white, 0.9),
+        boxShadow:
+          theme.palette.mode === "dark"
+            ? `0 18px 50px ${alpha(theme.palette.common.black, 0.22)}`
+            : `0 18px 50px ${alpha(theme.palette.common.black, 0.08)}`,
+        ...sx,
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
+
+const SectionIntro: React.FC<{
+  label: string;
+  title: string;
+  description: string;
+  align?: "left" | "center";
+}> = ({ label, title, description, align = "left" }) => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      sx={{
+        width: { xs: "100%", sm: "auto" },
+        maxWidth: { xs: "100%", sm: 760 },
+        mx: align === "center" ? "auto" : 0,
+        textAlign: align,
+        minWidth: 0,
+      }}
+    >
+      <Typography
+        variant="overline"
+        sx={{
+          color: theme.palette.primary.main,
+          fontWeight: 800,
+          letterSpacing: "0.14em",
+          lineHeight: 1.6,
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="h2"
+        sx={{
+          mt: 1,
+          color: "text.primary",
+          fontSize: { xs: "1.88rem", sm: "2.45rem", md: "3.2rem" },
+          fontWeight: 850,
+          letterSpacing: 0,
+          lineHeight: 1.02,
+        }}
+      >
+        {title}
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          mt: 2,
+          color: "text.secondary",
+          fontSize: { xs: "1rem", md: "1.08rem" },
+          lineHeight: 1.8,
+        }}
+      >
+        {description}
+      </Typography>
+    </Box>
+  );
+};
+
+const ProductNodeCard: React.FC<ProductNode> = ({ icon, label, meta, x, y }) => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      sx={{
+        position: "absolute",
+        left: x,
+        top: y,
+        width: { xs: 128, md: 150 },
+        minHeight: 68,
+        p: 1.5,
+        borderRadius: 1,
+        border: `1px solid ${alpha(theme.palette.primary.main, 0.28)}`,
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? alpha(theme.palette.background.paper, 0.94)
+            : alpha(theme.palette.common.white, 0.96),
+        boxShadow: `0 10px 30px ${alpha(theme.palette.common.black, 0.1)}`,
+      }}
+    >
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Box
+          sx={{
+            width: 28,
+            height: 28,
+            borderRadius: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: theme.palette.primary.main,
+            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+          }}
+        >
+          {icon}
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              color: "text.primary",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {label}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: "0.68rem",
+              color: "text.secondary",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {meta}
+          </Typography>
+        </Box>
+      </Stack>
+    </Box>
+  );
+};
+
+const HeroProductScene: React.FC = () => {
+  const theme = useTheme();
+  const gridLine =
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.06)
+      : alpha(theme.palette.common.black, 0.06);
+
   return (
     <Box
       aria-hidden="true"
       sx={{
         position: "absolute",
-        left: x,
-        top: y,
-        opacity: theme.palette.mode === "dark" ? 0.14 : 0.25,
-        fontSize: "64px",
-        color: theme.palette.primary.main,
-        animation: `float ${duration}s ease-in-out infinite`,
-        animationDelay: `${delay}s`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        "@keyframes float": {
-          "0%, 100%": {
-            transform: "translateY(0px) rotate(0deg)",
-          },
-          "50%": {
-            transform: "translateY(-10px) rotate(5deg)",
-          },
-        },
-      }}
-    >
-      {icon}
-    </Box>
-  );
-};
-
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}
-
-const FeatureCard: React.FC<FeatureCardProps> = ({
-  icon,
-  title,
-  description,
-}) => {
-  const theme = useTheme();
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <Box
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      sx={{
-        p: 3,
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        textAlign: "center",
+        inset: 0,
+        display: { xs: "none", sm: "block" },
+        overflow: "hidden",
+        pointerEvents: "none",
       }}
     >
       <Box
         sx={{
-          width: 72,
-          height: 72,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: "20px",
-          mb: 2,
-          background: isHovered
-            ? theme.palette.primary.main
-            : alpha(theme.palette.primary.main, 0.12),
-          border: `2px solid ${isHovered ? "transparent" : alpha(theme.palette.primary.main, 0.3)}`,
-          color: isHovered ? theme.palette.common.white : theme.palette.primary.main,
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          transform: isHovered ? "scale(1.15)" : "scale(1)",
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `linear-gradient(${gridLine} 1px, transparent 1px), linear-gradient(90deg, ${gridLine} 1px, transparent 1px)`,
+          backgroundSize: "56px 56px",
+          maskImage:
+            "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
+          opacity: theme.palette.mode === "dark" ? 0.62 : 0.7,
         }}
-      >
-        {icon}
-      </Box>
-      <Typography
-        variant="h6"
-        sx={{
-          fontWeight: 600,
-          mb: 1,
-          color: theme.palette.text.primary,
-          fontSize: "1.1rem",
-        }}
-      >
-        {title}
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{
-          color: theme.palette.text.secondary,
-          lineHeight: 1.7,
-          fontSize: "0.95rem",
-        }}
-      >
-        {description}
-      </Typography>
-    </Box>
-  );
-};
-
-interface PathCardProps {
-  emoji: string;
-  title: string;
-  description: string;
-  action: string;
-  onClick: () => void;
-}
-
-const PathCard: React.FC<PathCardProps> = ({
-  emoji,
-  title,
-  description,
-  action,
-  onClick,
-}) => {
-  const theme = useTheme();
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <Box
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      aria-label={title}
-      sx={{
-        p: 4,
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        borderRadius: 3,
-        background:
-          theme.palette.mode === "dark"
-            ? alpha(theme.palette.background.paper, 0.4)
-            : alpha(theme.palette.background.paper, 0.8),
-        backdropFilter: "blur(20px)",
-        border: `2px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.3 : 0.15)}`,
-        cursor: "pointer",
-        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-        transform: isHovered ? "translateY(-8px)" : "translateY(0)",
-        boxShadow: isHovered
-          ? `0 16px 48px ${alpha(theme.palette.primary.main, 0.4)}`
-          : `0 2px 12px ${alpha(theme.palette.common.black, 0.08)}`,
-        "&:hover": {
-          border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
-        },
-      }}
-    >
-      <Typography sx={{ fontSize: "64px", mb: 2, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))" }}>{emoji}</Typography>
-      <Typography
-        variant="h5"
-        sx={{
-          fontWeight: 700,
-          mb: 2,
-          color: theme.palette.text.primary,
-        }}
-      >
-        {title}
-      </Typography>
-      <Typography
-        variant="body1"
-        sx={{
-          color: theme.palette.text.secondary,
-          mb: 3,
-          lineHeight: 1.8,
-        }}
-      >
-        {description}
-      </Typography>
+      />
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          color: theme.palette.primary.main,
-          fontWeight: 600,
-          fontSize: "0.95rem",
-          transition: "gap 0.3s ease",
+          position: "absolute",
+          inset: 0,
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
+                  theme.palette.background.default,
+                  0.92,
+                )} 32%, ${alpha(theme.palette.background.default, 0.3)} 100%)`
+              : `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
+                  theme.palette.background.default,
+                  0.94,
+                )} 34%, ${alpha(theme.palette.background.default, 0.36)} 100%)`,
+        }}
+      />
+
+      <Box
+        sx={{
+          position: "absolute",
+          width: { xs: 720, md: 980 },
+          height: { xs: 560, md: 650 },
+          right: { xs: -430, sm: -360, md: -220, lg: -80, xl: 10 },
+          top: { xs: 120, md: 26 },
+          opacity: { xs: 0.26, sm: 0.38, md: 0.72 },
         }}
       >
-        {action}
-        <Box
-          component="span"
+        <SurfaceBox
           sx={{
-            display: "inline-block",
-            transition: "transform 0.3s ease",
-            transform: isHovered ? "translateX(4px)" : "translateX(0)",
+            position: "absolute",
+            inset: { xs: "42px 0 auto auto", md: "40px 0 auto auto" },
+            width: { xs: 590, md: 760 },
+            height: { xs: 390, md: 470 },
+            overflow: "hidden",
           }}
         >
-          →
-        </Box>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            sx={{
+              px: 2,
+              py: 1.4,
+              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+            }}
+          >
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: "#ef4444",
+              }}
+            />
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: "#f59e0b",
+              }}
+            />
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: "#22c55e",
+              }}
+            />
+            <Typography
+              sx={{
+                ml: 1.5,
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                color: "text.secondary",
+              }}
+            >
+              Orchestrator canvas
+            </Typography>
+          </Stack>
+
+          <Box
+            sx={{
+              position: "relative",
+              height: "calc(100% - 45px)",
+              backgroundImage: `linear-gradient(${gridLine} 1px, transparent 1px), linear-gradient(90deg, ${gridLine} 1px, transparent 1px)`,
+              backgroundSize: "34px 34px",
+            }}
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                left: "19%",
+                top: "28%",
+                width: "53%",
+                height: "38%",
+                borderTop: `2px solid ${alpha(theme.palette.primary.main, 0.34)}`,
+                borderRight: `2px solid ${alpha(theme.palette.primary.main, 0.22)}`,
+                transform: "skewY(-9deg)",
+              }}
+            />
+            <Box
+              sx={{
+                position: "absolute",
+                left: "18%",
+                top: "44%",
+                width: "58%",
+                borderTop: `2px solid ${alpha("#64748b", 0.4)}`,
+                transform: "rotate(14deg)",
+              }}
+            />
+            {architectureNodes.map((node) => (
+              <ProductNodeCard key={node.label} {...node} />
+            ))}
+          </Box>
+        </SurfaceBox>
+
+        <SurfaceBox
+          sx={{
+            position: "absolute",
+            left: { xs: 42, md: 0 },
+            top: { xs: 0, md: 68 },
+            width: { xs: 235, md: 260 },
+            p: 1.5,
+          }}
+        >
+          <Typography
+            sx={{
+              mb: 1.25,
+              fontSize: "0.76rem",
+              fontWeight: 800,
+              color: "text.primary",
+            }}
+          >
+            Template gallery
+          </Typography>
+          <Stack spacing={1}>
+            {templateRows.slice(0, 2).map((template) => (
+              <Box
+                key={template.name}
+                sx={{
+                  p: 1.2,
+                  borderRadius: 1,
+                  border: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <TemplateIcon
+                    sx={{ color: theme.palette.primary.main, fontSize: 18 }}
+                  />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        color: "text.primary",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {template.name}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "0.66rem",
+                        color: "text.secondary",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {template.nodes} - {template.cloud}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        </SurfaceBox>
+
+        <SurfaceBox
+          sx={{
+            position: "absolute",
+            right: { xs: 22, md: 8 },
+            bottom: { xs: 18, md: 0 },
+            width: { xs: 335, md: 390 },
+            overflow: "hidden",
+          }}
+        >
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{
+              px: 1.6,
+              py: 1.2,
+              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CodeIcon
+                sx={{ color: theme.palette.primary.main, fontSize: 18 }}
+              />
+              <Typography
+                sx={{
+                  fontSize: "0.76rem",
+                  color: "text.primary",
+                  fontWeight: 800,
+                }}
+              >
+                Generated Terraform
+              </Typography>
+            </Stack>
+            <Chip
+              label="Valid"
+              size="small"
+              sx={{
+                height: 22,
+                borderRadius: 1,
+                fontSize: "0.66rem",
+                fontWeight: 700,
+                color: "#15803d",
+                backgroundColor: alpha("#22c55e", 0.12),
+              }}
+            />
+          </Stack>
+          <Box
+            component="pre"
+            sx={{
+              m: 0,
+              p: 1.8,
+              fontSize: "0.72rem",
+              lineHeight: 1.65,
+              color:
+                theme.palette.mode === "dark"
+                  ? alpha(theme.palette.common.white, 0.84)
+                  : "#334155",
+              whiteSpace: "pre-wrap",
+              fontFamily:
+                'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+            }}
+          >
+            {terraformLines.join("\n")}
+          </Box>
+        </SurfaceBox>
       </Box>
     </Box>
   );
 };
 
-interface TestimonialProps {
-  quote: string;
-  author: string;
-  role: string;
-}
-
-const Testimonial: React.FC<TestimonialProps> = ({ quote, author, role }) => {
+const MobileProductPreview: React.FC = () => {
   const theme = useTheme();
+
+  return (
+    <SurfaceBox
+      sx={{
+        display: { xs: "block", sm: "none" },
+        mt: 4,
+        width: "100%",
+        maxWidth: 358,
+        overflow: "hidden",
+        boxShadow: `0 12px 36px ${alpha(theme.palette.common.black, 0.18)}`,
+      }}
+    >
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{
+          px: 1.6,
+          py: 1.2,
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+        }}
+      >
+        <Stack direction="row" spacing={1} alignItems="center">
+          <TemplateIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+          <Typography sx={{ fontSize: "0.78rem", fontWeight: 850 }}>
+            Template to Terraform
+          </Typography>
+        </Stack>
+        <Chip
+          label="Valid"
+          size="small"
+          sx={{
+            height: 22,
+            borderRadius: 1,
+            fontSize: "0.66rem",
+            fontWeight: 800,
+            color: "#15803d",
+            backgroundColor: alpha("#22c55e", 0.12),
+          }}
+        />
+      </Stack>
+      <Box sx={{ p: 1.6 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: 1,
+            mb: 1.5,
+          }}
+        >
+          {["Template", "Canvas", "Code"].map((label, index) => (
+            <Box
+              key={label}
+              sx={{
+                p: 1,
+                minWidth: 0,
+                minHeight: 58,
+                overflow: "hidden",
+                borderRadius: 1,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                backgroundColor: alpha(
+                  theme.palette.primary.main,
+                  index === 1 ? 0.11 : 0.06,
+                ),
+              }}
+            >
+              <Typography
+                sx={{
+                  color: "text.primary",
+                  fontSize: "0.72rem",
+                  fontWeight: 850,
+                  lineHeight: 1.2,
+                }}
+              >
+                {label}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 0.4,
+                  color: "text.secondary",
+                  fontSize: "0.64rem",
+                  lineHeight: 1.25,
+                }}
+              >
+                {index === 0 ? "AWS VPC" : index === 1 ? "5 nodes" : "tf plan"}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+        <Box
+          component="pre"
+          sx={{
+            m: 0,
+            p: 1.25,
+            borderRadius: 1,
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? alpha(theme.palette.common.black, 0.22)
+                : alpha("#0f172a", 0.04),
+            color:
+              theme.palette.mode === "dark"
+                ? alpha(theme.palette.common.white, 0.84)
+                : "#334155",
+            whiteSpace: "pre-wrap",
+            fontSize: "0.64rem",
+            lineHeight: 1.55,
+            fontFamily:
+              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+          }}
+        >
+          {terraformLines.slice(0, 4).join("\n")}
+        </Box>
+      </Box>
+    </SurfaceBox>
+  );
+};
+
+const ProductLoopMockup: React.FC<{
+  visual: ProductLoopItem["visual"];
+  reverseLayout?: boolean;
+}> = ({ visual, reverseLayout = false }) => {
+  const theme = useTheme();
+
+  const renderMainContent = () => {
+    if (visual === "templates") {
+      return (
+        <Stack spacing={1.15} sx={{ p: { xs: 1.6, sm: 2 } }}>
+          {templateRows.map((template, index) => (
+            <Box
+              key={template.name}
+              sx={{
+                p: 1.25,
+                borderRadius: 1,
+                border: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
+                backgroundColor: alpha(
+                  theme.palette.primary.main,
+                  index === 0 ? 0.09 : 0.04,
+                ),
+              }}
+            >
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                spacing={1.5}
+                alignItems="flex-start"
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      color: "text.primary",
+                      fontSize: "0.82rem",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {template.name}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 0.45,
+                      color: "text.secondary",
+                      fontSize: "0.7rem",
+                      lineHeight: 1.5,
+                    }}
+                    >
+                      {template.detail}
+                    </Typography>
+                  </Box>
+                  <Chip
+                  label={template.cloud}
+                  size="small"
+                  sx={{
+                    height: 24,
+                    borderRadius: 1,
+                    fontWeight: 800,
+                    color: theme.palette.primary.main,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                  }}
+                />
+              </Stack>
+            </Box>
+          ))}
+          <Box
+            sx={{
+              p: 1.2,
+              borderRadius: 1,
+              border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? alpha(theme.palette.common.white, 0.025)
+                  : alpha(theme.palette.primary.main, 0.035),
+            }}
+          >
+            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+              {["3 starter patterns", "Multi-cloud cues", "Ready to fork"].map(
+                (item) => (
+                  <Chip
+                    key={item}
+                    label={item}
+                    size="small"
+                    sx={{
+                      height: 24,
+                      borderRadius: 1,
+                      fontWeight: 800,
+                      color: "text.primary",
+                      backgroundColor:
+                        theme.palette.mode === "dark"
+                          ? alpha(theme.palette.common.white, 0.04)
+                          : alpha(theme.palette.common.white, 0.66),
+                      border: `1px solid ${alpha(theme.palette.divider, 0.48)}`,
+                    }}
+                  />
+                ),
+              )}
+            </Stack>
+          </Box>
+        </Stack>
+      );
+    }
+
+    if (visual === "canvas") {
+      return (
+        <Box
+          sx={{
+            position: "relative",
+            height: "100%",
+            minHeight: 290,
+            backgroundImage: `linear-gradient(${alpha(theme.palette.divider, 0.26)} 1px, transparent 1px), linear-gradient(90deg, ${alpha(theme.palette.divider, 0.26)} 1px, transparent 1px)`,
+            backgroundSize: "30px 30px",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              left: "20%",
+              top: "26%",
+              width: "48%",
+              height: "34%",
+              borderTop: `2px solid ${alpha(theme.palette.primary.main, 0.34)}`,
+              borderRight: `2px solid ${alpha(theme.palette.primary.main, 0.24)}`,
+              transform: "skewY(-10deg)",
+            }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              left: "16%",
+              top: "52%",
+              width: "56%",
+              borderTop: `2px solid ${alpha("#64748b", 0.34)}`,
+              transform: "rotate(14deg)",
+            }}
+          />
+          {architectureNodes.map((node) => (
+            <ProductNodeCard key={node.label} {...node} />
+          ))}
+        </Box>
+      );
+    }
+
+    if (visual === "validation") {
+      return (
+        <Stack spacing={1.1} sx={{ p: { xs: 1.6, sm: 2 } }}>
+          <Stack spacing={0.7}>
+            {[
+              ["CIDR block", "10.0.0.0/16", "Complete"],
+              ["Availability zones", "2 selected", "Complete"],
+              ["NAT strategy", "Missing", "Required"],
+            ].map(([label, value, state]) => (
+              <Box
+                key={label}
+                sx={{
+                  p: 1.15,
+                  borderRadius: 1,
+                  border: `1px solid ${alpha(theme.palette.divider, 0.56)}`,
+                  backgroundColor:
+                    state === "Required"
+                      ? alpha("#f59e0b", 0.08)
+                      : alpha(theme.palette.primary.main, 0.04),
+                }}
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  spacing={1}
+                >
+                  <Box>
+                    <Typography
+                      sx={{
+                        color: "text.primary",
+                        fontSize: "0.8rem",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {label}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        mt: 0.3,
+                        color: "text.secondary",
+                        fontSize: "0.7rem",
+                      }}
+                    >
+                      {value}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={state}
+                    size="small"
+                    sx={{
+                      height: 23,
+                      borderRadius: 1,
+                      fontWeight: 800,
+                      color:
+                        state === "Required"
+                          ? "#b45309"
+                          : theme.palette.primary.main,
+                      backgroundColor:
+                        state === "Required"
+                          ? alpha("#f59e0b", 0.14)
+                          : alpha(theme.palette.primary.main, 0.1),
+                    }}
+                  />
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+          <Box
+            sx={{
+              p: 1.25,
+              borderRadius: 1,
+              border: `1px dashed ${alpha(theme.palette.primary.main, 0.32)}`,
+              backgroundColor: alpha(theme.palette.primary.main, 0.05),
+            }}
+          >
+            <Typography
+              sx={{
+                color: "text.primary",
+                fontSize: "0.78rem",
+                fontWeight: 800,
+              }}
+            >
+              Validation summary
+            </Typography>
+            <Typography
+              sx={{
+                mt: 0.45,
+                color: "text.secondary",
+                fontSize: "0.7rem",
+                lineHeight: 1.55,
+              }}
+            >
+              Two inputs are valid. One required network decision still needs
+              confirmation before code generation.
+            </Typography>
+            <Box
+              sx={{
+                mt: 1,
+                width: "100%",
+                height: 6,
+                borderRadius: 999,
+                backgroundColor: alpha(theme.palette.divider, 0.48),
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  width: "72%",
+                  height: "100%",
+                  borderRadius: 999,
+                  background: `linear-gradient(90deg, ${alpha(
+                    theme.palette.primary.main,
+                    0.95,
+                  )}, ${alpha("#f59e0b", 0.82)})`,
+                }}
+              />
+            </Box>
+          </Box>
+        </Stack>
+      );
+    }
+
+    return (
+      <Box
+        sx={{
+          height: "100%",
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "0.95fr 1.05fr" },
+        }}
+      >
+        <Box
+          component="pre"
+          sx={{
+            m: 0,
+            p: { xs: 1.6, sm: 2 },
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? alpha(theme.palette.common.black, 0.18)
+                : alpha("#0f172a", 0.035),
+            color:
+              theme.palette.mode === "dark"
+                ? alpha(theme.palette.common.white, 0.84)
+                : "#334155",
+            whiteSpace: "pre-wrap",
+            fontSize: "0.72rem",
+            lineHeight: 1.7,
+            fontFamily:
+              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+          }}
+        >
+          {terraformLines.join("\n")}
+        </Box>
+        <Stack spacing={1} sx={{ p: { xs: 1.6, sm: 2 } }}>
+          {[
+            ["Bundle", "network.tf, outputs.tf, variables.tf"],
+            ["Status", "Validated and packaged for review"],
+            ["Next step", "Download and commit to your workflow"],
+          ].map(([label, value]) => (
+            <Box
+              key={label}
+              sx={{
+                p: 1.1,
+                borderRadius: 1,
+                border: `1px solid ${alpha(theme.palette.divider, 0.56)}`,
+                backgroundColor: alpha(theme.palette.primary.main, 0.04),
+              }}
+            >
+              <Typography
+                sx={{
+                  color: theme.palette.primary.main,
+                  fontSize: "0.68rem",
+                  fontWeight: 850,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                {label}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: 0.45,
+                  color: "text.primary",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  lineHeight: 1.5,
+                }}
+              >
+                {value}
+              </Typography>
+            </Box>
+          ))}
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+            {["zip bundle", "module outputs", "review ready"].map((item) => (
+              <Chip
+                key={item}
+                label={item}
+                size="small"
+                sx={{
+                  height: 24,
+                  borderRadius: 1,
+                  fontWeight: 800,
+                  color: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                }}
+              />
+            ))}
+          </Stack>
+        </Stack>
+      </Box>
+    );
+  };
+
   return (
     <Box
       sx={{
-        p: 4,
-        borderRadius: 3,
-        background: alpha(theme.palette.background.paper, 0.6),
-        backdropFilter: "blur(16px)",
-        border: `2px solid ${alpha(theme.palette.divider, 0.2)}`,
-        borderLeft: `4px solid ${theme.palette.primary.main}`,
-        boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.1)}`,
-        height: "100%",
+        position: "relative",
+        width: "100%",
+        maxWidth: { xs: 520, md: 540 },
+        mx: "auto",
+        pt: { xs: 2.2, md: 2.6 },
+        pb: { xs: 1, md: 1.4 },
       }}
     >
-      <Typography
+      <Box
         sx={{
-          fontSize: "56px",
-          fontWeight: 900,
-          color: theme.palette.primary.main,
-          mb: -1,
-          lineHeight: 1,
-          opacity: 0.7,
+          position: "absolute",
+          inset: reverseLayout
+            ? { xs: "0 14px 22px 42px", md: "10px 18px 30px 74px" }
+            : { xs: "0 42px 22px 14px", md: "10px 74px 30px 18px" },
+          borderRadius: 1,
+          background:
+            visual === "canvas"
+              ? `radial-gradient(circle at ${reverseLayout ? "30%" : "70%"} 30%, ${alpha(
+                  theme.palette.primary.main,
+                  0.2,
+                )} 0%, transparent 56%)`
+              : `radial-gradient(circle at ${reverseLayout ? "35%" : "65%"} 35%, ${alpha(
+                  theme.palette.primary.main,
+                  0.14,
+                )} 0%, transparent 58%)`,
+          filter: "blur(16px)",
+          opacity: theme.palette.mode === "dark" ? 0.7 : 0.85,
+        }}
+      />
+      <SurfaceBox
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          overflow: "hidden",
+          boxShadow:
+            theme.palette.mode === "dark"
+              ? `0 18px 48px ${alpha(theme.palette.common.black, 0.28)}`
+              : `0 18px 48px ${alpha(theme.palette.common.black, 0.09)}`,
         }}
       >
-        "
-      </Typography>
-      <Typography
-        variant="body1"
-        sx={{
-          color: theme.palette.text.secondary,
-          mb: 3,
-          lineHeight: 1.8,
-          fontStyle: "italic",
-        }}
-      >
-        {quote}
-      </Typography>
-      <Box>
-        <Typography
-          variant="subtitle2"
-          sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{
+            px: 2,
+            py: 1.25,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
+          }}
         >
-          {author}
-        </Typography>
-        <Typography
-          variant="caption"
-          sx={{ color: theme.palette.text.secondary }}
+          <Box sx={{ display: "flex", gap: 0.8 }}>
+            {["#ef4444", "#f59e0b", "#22c55e"].map((color) => (
+              <Box
+                key={color}
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  backgroundColor: color,
+                }}
+              />
+            ))}
+          </Box>
+          <Typography
+            sx={{
+              ml: 0.8,
+              color: "text.secondary",
+              fontSize: "0.76rem",
+              fontWeight: 800,
+            }}
+          >
+            {visual === "templates"
+              ? "Template gallery"
+              : visual === "canvas"
+                ? "Editable architecture"
+                : visual === "validation"
+                  ? "Configuration review"
+                  : "Terraform bundle"}
+          </Typography>
+        </Stack>
+        <Box
+          sx={{
+            minHeight: {
+              xs: visual === "canvas" ? 276 : visual === "terraform" ? 250 : "auto",
+              md: visual === "canvas" ? 316 : visual === "terraform" ? 292 : "auto",
+            },
+          }}
         >
-          {role}
-        </Typography>
-      </Box>
+          {renderMainContent()}
+        </Box>
+      </SurfaceBox>
     </Box>
   );
 };
 
-const useInView = (threshold = 0.12) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          observer.disconnect();
-        }
-      },
-      { threshold }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-  return { ref, inView };
+const ProductLoopSection: React.FC = () => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      component="section"
+      aria-labelledby="product-loop-heading"
+      sx={{
+        py: { xs: 9, md: 13 },
+        background:
+          theme.palette.mode === "dark"
+            ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.02)} 0%, transparent 100%)`
+            : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.035)} 0%, transparent 100%)`,
+      }}
+    >
+      <Container maxWidth="lg">
+        <Box sx={{ mb: { xs: 4.5, md: 6.5 } }}>
+          <SectionIntro
+            label="Product loop"
+            title="A landing zone workflow that reads like the product itself."
+            description="The loop now follows one clear motion: browse a blueprint, fork it into the architecture canvas, tighten configuration with guardrails, and export Terraform when the model is ready."
+          />
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ mt: 3, flexWrap: "wrap", gap: 1 }}
+          >
+            {["Templates", "Canvas", "Validation", "Terraform"].map((item) => (
+              <Chip
+                key={item}
+                label={item}
+                size="small"
+                sx={{
+                  borderRadius: 1,
+                  fontWeight: 700,
+                  color: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.09),
+                }}
+              />
+            ))}
+          </Stack>
+        </Box>
+
+        <Stack spacing={{ xs: 3, md: 3.5 }}>
+          {productLoop.map((item, index) => {
+            const reverseLayout = index % 2 === 1;
+
+            return (
+              <SurfaceBox
+                key={item.step}
+                sx={{
+                  p: { xs: 2, sm: 2.5, md: 2.75 },
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.background.paper, 0.72)
+                      : alpha(theme.palette.common.white, 0.92),
+                }}
+              >
+                <Grid
+                  container
+                  spacing={{ xs: 2.5, md: 4.5 }}
+                  alignItems="center"
+                >
+                  <Grid
+                    size={{ xs: 12, md: 6 }}
+                    sx={{ order: { xs: 1, md: reverseLayout ? 2 : 1 } }}
+                  >
+                    <Box
+                      sx={{
+                        width: "100%",
+                        maxWidth: 500,
+                        mx: reverseLayout ? { md: "auto" } : 0,
+                      }}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={1.2}
+                        alignItems="center"
+                        sx={{ mb: 1.8 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: theme.palette.primary.main,
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.1,
+                            ),
+                          }}
+                        >
+                          {item.icon}
+                        </Box>
+                        <Typography
+                          sx={{
+                            color: theme.palette.primary.main,
+                            fontSize: "0.76rem",
+                            fontWeight: 850,
+                            letterSpacing: "0.12em",
+                          }}
+                        >
+                          STEP {item.step}
+                        </Typography>
+                      </Stack>
+                      <Typography
+                        variant="h3"
+                        sx={{
+                          color: "text.primary",
+                          fontSize: { xs: "1.5rem", sm: "1.85rem", md: "2.08rem" },
+                          fontWeight: 850,
+                          lineHeight: 1.1,
+                          letterSpacing: 0,
+                        }}
+                      >
+                        {item.title}
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          mt: 1.35,
+                          color: "text.secondary",
+                          fontSize: { xs: "0.98rem", md: "1.02rem" },
+                          lineHeight: 1.72,
+                          maxWidth: 470,
+                        }}
+                      >
+                        {item.description}
+                      </Typography>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ mt: 2.5, flexWrap: "wrap", gap: 1 }}
+                      >
+                        {item.highlights.map((highlight) => (
+                          <Chip
+                            key={highlight}
+                            label={highlight}
+                            size="small"
+                            sx={{
+                              height: 28,
+                              borderRadius: 1,
+                              fontWeight: 800,
+                              color: "text.primary",
+                              backgroundColor:
+                                theme.palette.mode === "dark"
+                                  ? alpha(theme.palette.common.white, 0.04)
+                                  : alpha(theme.palette.primary.main, 0.06),
+                              border: `1px solid ${alpha(
+                                theme.palette.divider,
+                                0.58,
+                              )}`,
+                            }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  </Grid>
+                  <Grid
+                    size={{ xs: 12, md: 6 }}
+                    sx={{ order: { xs: 2, md: reverseLayout ? 1 : 2 } }}
+                  >
+                    <ProductLoopMockup
+                      visual={item.visual}
+                      reverseLayout={reverseLayout}
+                    />
+                  </Grid>
+                </Grid>
+              </SurfaceBox>
+            );
+          })}
+        </Stack>
+      </Container>
+    </Box>
+  );
+};
+
+const CapabilitySignalRail: React.FC<{
+  items: string[];
+  reverse?: boolean;
+}> = ({ items, reverse = false }) => {
+  const theme = useTheme();
+  const loopItems = [...items, ...items, ...items];
+
+  return (
+    <Box
+      sx={{
+        position: "relative",
+        overflow: "hidden",
+        py: 0.6,
+        "&::before, &::after": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          width: { xs: 34, md: 72 },
+          zIndex: 2,
+          pointerEvents: "none",
+        },
+        "&::before": {
+          left: 0,
+          background: `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
+            theme.palette.background.default,
+            0,
+          )} 100%)`,
+        },
+        "&::after": {
+          right: 0,
+          background: `linear-gradient(270deg, ${theme.palette.background.default} 0%, ${alpha(
+            theme.palette.background.default,
+            0,
+          )} 100%)`,
+        },
+      }}
+    >
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          width: "max-content",
+          willChange: "transform",
+          animation: `${reverse ? "capabilityMarqueeReverse" : "capabilityMarquee"} ${reverse ? 52 : 48}s linear infinite`,
+          "@keyframes capabilityMarquee": {
+            from: { transform: "translateX(-33.333%)" },
+            to: { transform: "translateX(-66.666%)" },
+          },
+          "@keyframes capabilityMarqueeReverse": {
+            from: { transform: "translateX(-66.666%)" },
+            to: { transform: "translateX(-33.333%)" },
+          },
+        }}
+      >
+        {loopItems.map((item, index) => (
+          <Chip
+            key={`${item}-${index}`}
+            label={item}
+            size="small"
+            sx={{
+              flexShrink: 0,
+              height: 30,
+              borderRadius: 1,
+              fontWeight: 800,
+              color: "text.primary",
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? alpha(theme.palette.common.white, 0.05)
+                  : alpha(theme.palette.primary.main, 0.08),
+              border: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
+              whiteSpace: "nowrap",
+              "& .MuiChip-label": {
+                px: 1.3,
+              },
+            }}
+          />
+        ))}
+      </Stack>
+    </Box>
+  );
+};
+
+const ArtifactSection: React.FC = () => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      component="section"
+      aria-labelledby="artifact-heading"
+      sx={{
+        py: { xs: 9, md: 13 },
+        borderTop: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? alpha(theme.palette.common.white, 0.025)
+            : alpha(theme.palette.common.white, 0.38),
+      }}
+    >
+      <Container maxWidth="lg">
+        <Grid container spacing={{ xs: 5, md: 8 }} alignItems="center">
+          <Grid size={{ xs: 12, md: 5 }}>
+            <SectionIntro
+              label="What changes"
+              title="The architecture is no longer separate from the code."
+              description="Orchestrator makes the useful artifact visible at each step: a template, a canvas model, validation state, and Terraform output."
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 7 }}>
+            <SurfaceBox sx={{ overflow: "hidden" }}>
+              <Box
+                sx={{
+                  px: { xs: 2, sm: 2.5 },
+                  py: 1.5,
+                  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 2,
+                }}
+              >
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <TerminalIcon
+                    sx={{ color: theme.palette.primary.main, fontSize: 20 }}
+                  />
+                  <Typography sx={{ fontWeight: 800, color: "text.primary" }}>
+                    Terraform preview
+                  </Typography>
+                </Stack>
+                <Chip
+                  label="Generated"
+                  size="small"
+                  sx={{
+                    borderRadius: 1,
+                    fontWeight: 700,
+                    color: theme.palette.primary.main,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  }}
+                />
+              </Box>
+              <Grid container>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box
+                    component="pre"
+                    sx={{
+                      m: 0,
+                      p: { xs: 2, sm: 2.5 },
+                      minHeight: "100%",
+                      backgroundColor:
+                        theme.palette.mode === "dark"
+                          ? alpha(theme.palette.common.black, 0.22)
+                          : alpha("#0f172a", 0.035),
+                      color:
+                        theme.palette.mode === "dark"
+                          ? alpha(theme.palette.common.white, 0.86)
+                          : "#334155",
+                      whiteSpace: "pre-wrap",
+                      fontSize: "0.8rem",
+                      lineHeight: 1.75,
+                      fontFamily:
+                        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                    }}
+                  >
+                    {terraformLines.join("\n")}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Stack sx={{ p: { xs: 2, sm: 2.5 } }} spacing={2.4}>
+                    {artifactItems.map((item) => (
+                      <Box key={item.label}>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          sx={{ mb: 0.8 }}
+                        >
+                          <Typography
+                            sx={{
+                              width: 72,
+                              fontSize: "0.72rem",
+                              fontWeight: 850,
+                              color: theme.palette.primary.main,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.08em",
+                            }}
+                          >
+                            {item.label}
+                          </Typography>
+                          <Box
+                            sx={{
+                              height: 1,
+                              flex: 1,
+                              backgroundColor: alpha(
+                                theme.palette.divider,
+                                0.72,
+                              ),
+                            }}
+                          />
+                        </Stack>
+                        <Typography
+                          sx={{
+                            color: "text.primary",
+                            fontWeight: 800,
+                            mb: 0.5,
+                          }}
+                        >
+                          {item.title}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.secondary", lineHeight: 1.65 }}
+                        >
+                          {item.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Grid>
+              </Grid>
+            </SurfaceBox>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
+};
+
+const TemplateShowcaseSection: React.FC<{
+  onBrowseTemplates: () => void;
+}> = ({ onBrowseTemplates }) => {
+  const theme = useTheme();
+  const primaryTemplate = templateRows[0];
+  const secondaryTemplates = templateRows.slice(1);
+
+  return (
+    <Box
+      component="section"
+      aria-labelledby="templates-heading"
+      sx={{
+        py: { xs: 9, md: 13 },
+        background:
+          theme.palette.mode === "dark"
+            ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.018)} 0%, transparent 100%)`
+            : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.028)} 0%, transparent 100%)`,
+      }}
+    >
+      <Container maxWidth="lg">
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", md: "flex-end" }}
+          spacing={3}
+          sx={{ mb: { xs: 4, md: 6 } }}
+        >
+          <SectionIntro
+            label="Templates"
+            title="A catalog that feels inspectable, not decorative."
+            description="The page now treats templates as the product's front door. Each pattern hints at cloud, scope, and readiness before users open the full gallery."
+          />
+          <Button
+            variant="contained"
+            onClick={onBrowseTemplates}
+            endIcon={<OpenIcon />}
+            sx={{
+              borderRadius: 1,
+              px: 2.5,
+              py: 1.2,
+              textTransform: "none",
+              fontWeight: 800,
+              boxShadow: "none",
+              "&:hover": { boxShadow: "none" },
+            }}
+          >
+            Browse Templates
+          </Button>
+        </Stack>
+
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2,
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "1.18fr 0.82fr 0.82fr",
+            },
+            gridTemplateRows: {
+              md: "repeat(3, minmax(160px, auto))",
+            },
+          }}
+        >
+          <SurfaceBox
+            sx={{
+              p: { xs: 2.2, md: 2.5 },
+              gridColumn: { md: "1 / 2" },
+              gridRow: { md: "1 / 4" },
+              display: "flex",
+              flexDirection: "column",
+              minHeight: { xs: "auto", md: 560 },
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="flex-start"
+              spacing={2}
+              sx={{ mb: 2.2 }}
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    color: theme.palette.primary.main,
+                    fontWeight: 850,
+                    fontSize: "0.76rem",
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  FEATURED BLUEPRINT
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.8,
+                    color: "text.primary",
+                    fontSize: { xs: "1.45rem", md: "1.8rem" },
+                    fontWeight: 850,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {primaryTemplate.name}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.9,
+                    color: "text.secondary",
+                    maxWidth: 520,
+                    lineHeight: 1.72,
+                  }}
+                >
+                  {primaryTemplate.detail}. This is the kind of starting point
+                  teams can inspect before they ever fork into the canvas.
+                </Typography>
+              </Box>
+              <Chip
+                label={primaryTemplate.status}
+                size="small"
+                sx={{
+                  borderRadius: 1,
+                  fontWeight: 800,
+                  color: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                }}
+              />
+            </Stack>
+
+            <Box
+              sx={{
+                position: "relative",
+                flex: 1,
+                minHeight: 300,
+                overflow: "hidden",
+                borderRadius: 1,
+                border: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+                background:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.common.white, 0.02)
+                    : alpha(theme.palette.common.white, 0.68),
+              }}
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage: `linear-gradient(${alpha(theme.palette.divider, 0.24)} 1px, transparent 1px), linear-gradient(90deg, ${alpha(theme.palette.divider, 0.24)} 1px, transparent 1px)`,
+                  backgroundSize: "28px 28px",
+                }}
+              />
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: "12%",
+                  top: "22%",
+                  width: "56%",
+                  height: "34%",
+                  borderTop: `2px solid ${alpha(theme.palette.primary.main, 0.28)}`,
+                  borderRight: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  transform: "skewY(-9deg)",
+                }}
+              />
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: "18%",
+                  top: "58%",
+                  width: "54%",
+                  borderTop: `2px solid ${alpha("#64748b", 0.28)}`,
+                  transform: "rotate(12deg)",
+                }}
+              />
+              {architectureNodes.map((node) => (
+                <Box
+                  key={`template-showcase-${node.label}`}
+                  sx={{
+                    position: "absolute",
+                    left: node.x,
+                    top: node.y,
+                    width: { xs: 126, md: 144 },
+                    p: 1.35,
+                    borderRadius: 1,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.26)}`,
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? alpha(theme.palette.background.paper, 0.95)
+                        : alpha(theme.palette.common.white, 0.96),
+                    boxShadow: `0 10px 28px ${alpha(theme.palette.common.black, 0.08)}`,
+                  }}
+                >
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: theme.palette.primary.main,
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      }}
+                    >
+                      {node.icon}
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography
+                        sx={{
+                          color: "text.primary",
+                          fontSize: "0.74rem",
+                          fontWeight: 800,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {node.label}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: "0.66rem",
+                        }}
+                      >
+                        {node.meta}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+              ))}
+              <Box
+                sx={{
+                  position: "absolute",
+                  right: { xs: 14, md: 18 },
+                  bottom: { xs: 14, md: 18 },
+                  width: { xs: 236, md: 258 },
+                  borderRadius: 1,
+                  overflow: "hidden",
+                  border: `1px solid ${alpha(theme.palette.divider, 0.62)}`,
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.background.paper, 0.95)
+                      : alpha(theme.palette.common.white, 0.96),
+                }}
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{
+                    px: 1.4,
+                    py: 1,
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: "text.primary",
+                      fontSize: "0.74rem",
+                      fontWeight: 800,
+                    }}
+                  >
+                    Terraform preview
+                  </Typography>
+                  <Chip
+                    label="Ready"
+                    size="small"
+                    sx={{
+                      height: 22,
+                      borderRadius: 1,
+                      fontWeight: 800,
+                      color: theme.palette.primary.main,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    }}
+                  />
+                </Stack>
+                <Box
+                  component="pre"
+                  sx={{
+                    m: 0,
+                    p: 1.4,
+                    whiteSpace: "pre-wrap",
+                    color:
+                      theme.palette.mode === "dark"
+                        ? alpha(theme.palette.common.white, 0.84)
+                        : "#334155",
+                    fontSize: "0.68rem",
+                    lineHeight: 1.65,
+                    fontFamily:
+                      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? alpha(theme.palette.common.black, 0.16)
+                        : alpha("#0f172a", 0.04),
+                  }}
+                >
+                  {terraformLines.slice(0, 4).join("\n")}
+                </Box>
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                mt: 2.1,
+                display: "grid",
+                gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)" },
+                gap: 1.1,
+              }}
+            >
+              {[
+                ["Cloud", primaryTemplate.cloud],
+                ["Nodes", primaryTemplate.nodes],
+                ["Surface", "Canvas + forms"],
+                ["Export", "Terraform"],
+              ].map(([label, value]) => (
+                <Box
+                  key={label}
+                  sx={{
+                    p: 1.1,
+                    borderRadius: 1,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: theme.palette.primary.main,
+                      fontSize: "0.66rem",
+                      fontWeight: 850,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {label}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 0.45,
+                      color: "text.primary",
+                      fontWeight: 800,
+                      fontSize: "0.84rem",
+                    }}
+                  >
+                    {value}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </SurfaceBox>
+
+          <SurfaceBox
+            sx={{
+              p: { xs: 2.1, md: 2.3 },
+              gridColumn: { md: "2 / 3" },
+              gridRow: { md: "1 / 2" },
+            }}
+          >
+            <Typography
+              sx={{
+                color: theme.palette.primary.main,
+                fontWeight: 850,
+                fontSize: "0.74rem",
+                letterSpacing: "0.1em",
+              }}
+            >
+              GALLERY SIGNALS
+            </Typography>
+            <Typography
+              sx={{
+                mt: 0.8,
+                color: "text.primary",
+                fontSize: { xs: "1.15rem", md: "1.24rem" },
+                fontWeight: 850,
+                lineHeight: 1.16,
+              }}
+            >
+              Templates should communicate architecture, not just names.
+            </Typography>
+            <Typography
+              sx={{
+                mt: 1,
+                color: "text.secondary",
+                lineHeight: 1.68,
+              }}
+            >
+              Users should be able to spot cloud, scope, readiness, and likely
+              output before opening the full gallery.
+            </Typography>
+          </SurfaceBox>
+
+          <SurfaceBox
+            sx={{
+              p: { xs: 2.1, md: 2.3 },
+              gridColumn: { md: "3 / 4" },
+              gridRow: { md: "1 / 2" },
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Typography
+              sx={{
+                color: theme.palette.primary.main,
+                fontWeight: 850,
+                fontSize: "0.74rem",
+                letterSpacing: "0.1em",
+              }}
+            >
+              COVERAGE
+            </Typography>
+            <Stack spacing={1} sx={{ mt: 1.2 }}>
+              {[
+                ["AWS", "networking, platform, data"],
+                ["Azure", "app baseline and private endpoints"],
+                ["Terraform", "reviewable bundle output"],
+              ].map(([label, value]) => (
+                <Box
+                  key={label}
+                  sx={{
+                    p: 1.05,
+                    borderRadius: 1,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.56)}`,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: "text.primary",
+                      fontWeight: 800,
+                      fontSize: "0.82rem",
+                    }}
+                  >
+                    {label}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 0.35,
+                      color: "text.secondary",
+                      fontSize: "0.73rem",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {value}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </SurfaceBox>
+
+          <SurfaceBox
+            sx={{
+              p: { xs: 2.1, md: 2.3 },
+              gridColumn: { md: "2 / 4" },
+              gridRow: { md: "2 / 3" },
+            }}
+          >
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              spacing={2}
+              sx={{ mb: 1.8 }}
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    color: theme.palette.primary.main,
+                    fontWeight: 850,
+                    fontSize: "0.74rem",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  SECONDARY PATTERNS
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.8,
+                    color: "text.primary",
+                    fontSize: { xs: "1.15rem", md: "1.24rem" },
+                    fontWeight: 850,
+                    lineHeight: 1.16,
+                  }}
+                >
+                  A catalog that feels inspectable, not decorative.
+                </Typography>
+              </Box>
+              <Chip
+                label={`${templateRows.length} public starters`}
+                size="small"
+                sx={{
+                  alignSelf: { xs: "flex-start", sm: "center" },
+                  borderRadius: 1,
+                  fontWeight: 800,
+                  color: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                }}
+              />
+            </Stack>
+            <Grid container spacing={1.3}>
+              {secondaryTemplates.map((template) => (
+                <Grid key={template.name} size={{ xs: 12, sm: 6 }}>
+                  <Box
+                    sx={{
+                      p: 1.3,
+                      borderRadius: 1,
+                      border: `1px solid ${alpha(theme.palette.divider, 0.56)}`,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      spacing={1}
+                      alignItems="flex-start"
+                    >
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography
+                          sx={{
+                            color: "text.primary",
+                            fontWeight: 800,
+                            fontSize: "0.86rem",
+                          }}
+                        >
+                          {template.name}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            mt: 0.45,
+                            color: "text.secondary",
+                            fontSize: "0.73rem",
+                            lineHeight: 1.55,
+                          }}
+                        >
+                          {template.detail}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label={template.cloud}
+                        size="small"
+                        sx={{
+                          height: 22,
+                          borderRadius: 1,
+                          fontWeight: 800,
+                          color: theme.palette.primary.main,
+                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        }}
+                      />
+                    </Stack>
+                    <Box
+                      sx={{
+                      mt: 1.2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      }}
+                    >
+                      <Typography
+                      sx={{
+                        color: theme.palette.text.secondary,
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {template.status}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: "text.primary",
+                        fontSize: "0.7rem",
+                        fontWeight: 800,
+                      }}
+                      >
+                        {template.nodes}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </SurfaceBox>
+
+          <SurfaceBox
+            sx={{
+              p: { xs: 2.1, md: 2.3 },
+              gridColumn: { md: "2 / 4" },
+              gridRow: { md: "3 / 4" },
+            }}
+          >
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              alignItems={{ xs: "flex-start", sm: "flex-start" }}
+              spacing={2}
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    color: theme.palette.primary.main,
+                    fontWeight: 850,
+                    fontSize: "0.74rem",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  BEFORE YOU FORK
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.8,
+                    color: "text.primary",
+                    fontSize: { xs: "1.15rem", md: "1.24rem" },
+                    fontWeight: 850,
+                    lineHeight: 1.16,
+                  }}
+                >
+                  The public gallery should answer the first evaluation pass.
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 1,
+                    color: "text.secondary",
+                    lineHeight: 1.68,
+                    maxWidth: 520,
+                  }}
+                >
+                  Show the pattern, the cloud context, the likely architecture
+                  surface, and the Terraform outcome before the user commits to
+                  editing.
+                </Typography>
+              </Box>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{
+                  flexWrap: "wrap",
+                  gap: 1,
+                  maxWidth: { xs: "100%", sm: 240 },
+                  justifyContent: { xs: "flex-start", sm: "flex-end" },
+                  alignSelf: { xs: "flex-start", sm: "flex-start" },
+                  mt: { xs: 0.5, sm: 0.2 },
+                }}
+              >
+                {["cloud", "nodes", "relationships", "output"].map((label) => (
+                  <Chip
+                    key={label}
+                    label={label}
+                    size="small"
+                    sx={{
+                      height: 24,
+                      borderRadius: 1,
+                      fontWeight: 800,
+                      color: "text.primary",
+                      backgroundColor:
+                        theme.palette.mode === "dark"
+                          ? alpha(theme.palette.common.white, 0.04)
+                          : alpha(theme.palette.primary.main, 0.06),
+                      border: `1px solid ${alpha(theme.palette.divider, 0.52)}`,
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Stack>
+          </SurfaceBox>
+        </Box>
+      </Container>
+    </Box>
+  );
+};
+
+const CapabilityMatrixSection: React.FC = () => {
+  const theme = useTheme();
+  const signalRows = [
+    capabilitySignals,
+    [...capabilitySignals.slice(4), ...capabilitySignals.slice(0, 4)],
+    [...capabilitySignals.slice(8), ...capabilitySignals.slice(0, 8)],
+  ];
+
+  return (
+    <Box
+      component="section"
+      aria-labelledby="capabilities-heading"
+      sx={{
+        py: { xs: 9, md: 13 },
+        borderTop: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+        background:
+          theme.palette.mode === "dark"
+            ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.018)} 0%, transparent 100%)`
+            : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, transparent 100%)`,
+      }}
+    >
+      <Container maxWidth="lg">
+        <Box sx={{ maxWidth: 980, mx: "auto", textAlign: "center" }}>
+          <Typography
+            variant="overline"
+            sx={{
+              color: theme.palette.primary.main,
+              fontWeight: 850,
+              letterSpacing: "0.14em",
+              lineHeight: 1.6,
+            }}
+          >
+            Capabilities
+          </Typography>
+          <Typography
+            id="capabilities-heading"
+            variant="h2"
+            sx={{
+              mt: 1.2,
+              color: "text.primary",
+              fontSize: { xs: "2.2rem", sm: "3.1rem", md: "4.2rem" },
+              fontWeight: 850,
+              letterSpacing: 0,
+              lineHeight: 0.98,
+              maxWidth: 860,
+              mx: "auto",
+            }}
+          >
+            Remove Orchestration Guesswork.
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              mt: 2.2,
+              maxWidth: 760,
+              mx: "auto",
+              color: "text.secondary",
+              fontSize: { xs: "1rem", md: "1.08rem" },
+              lineHeight: 1.75,
+            }}
+          >
+            Show the core value clearly: reusable templates, visible resource
+            relationships, structured configuration, validation before export,
+            and Terraform output that is ready for review.
+          </Typography>
+        </Box>
+        <Box sx={{ mt: { xs: 4, md: 5 }, display: "grid", gap: 1 }}>
+          {signalRows.map((row, index) => (
+            <CapabilitySignalRail
+              key={index}
+              items={row}
+              reverse={index % 2 === 1}
+            />
+          ))}
+        </Box>
+        <Box
+          sx={{
+            mt: { xs: 4, md: 6 },
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", xl: "repeat(3, 1fr)" },
+            gap: { xs: 1.5, md: 0 },
+            borderTop: { md: `1px solid ${alpha(theme.palette.divider, 0.68)}` },
+            borderLeft: { md: `1px solid ${alpha(theme.palette.divider, 0.68)}` },
+          }}
+        >
+          {capabilityItems.map((item) => (
+            <Box
+              key={item.title}
+              sx={{
+                position: "relative",
+                p: { xs: 2.1, sm: 2.3, md: 2.55 },
+                minHeight: { xs: "auto", md: 220 },
+                borderRight: { md: `1px solid ${alpha(theme.palette.divider, 0.68)}` },
+                borderBottom: { md: `1px solid ${alpha(theme.palette.divider, 0.68)}` },
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.background.paper, 0.68)
+                    : alpha(theme.palette.common.white, 0.88),
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              <Stack
+                direction="row"
+                spacing={1.5}
+                alignItems="flex-start"
+                sx={{ height: "100%" }}
+              >
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    color: theme.palette.primary.main,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  }}
+                >
+                  {item.icon}
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: theme.palette.primary.main,
+                      fontWeight: 850,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      mt: 0.45,
+                      mb: 0.65,
+                      color: "text.primary",
+                      fontSize: { xs: "1.16rem", md: "1.22rem" },
+                      fontWeight: 850,
+                      letterSpacing: 0,
+                      lineHeight: 1.18,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      lineHeight: 1.72,
+                      fontSize: "0.95rem",
+                    }}
+                  >
+                    {item.description}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          ))}
+        </Box>
+      </Container>
+    </Box>
+  );
+};
+
+const FinalCta: React.FC<{
+  onBrowseTemplates: () => void;
+  onStartDesigning: () => void;
+}> = ({ onBrowseTemplates, onStartDesigning }) => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      component="section"
+      aria-labelledby="final-cta-heading"
+      sx={{
+        py: { xs: 8, md: 11 },
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? alpha(theme.palette.common.white, 0.03)
+            : alpha(theme.palette.common.black, 0.035),
+        borderTop: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+      }}
+    >
+      <Container maxWidth="lg">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) auto" },
+            gap: { xs: 3, md: 5 },
+            alignItems: "center",
+          }}
+        >
+          <Box>
+            <Typography
+              id="final-cta-heading"
+              variant="h2"
+              sx={{
+                color: "text.primary",
+                fontSize: { xs: "2rem", md: "3rem" },
+                fontWeight: 850,
+                letterSpacing: 0,
+                lineHeight: 1.06,
+              }}
+            >
+              Start with a blueprint. Leave with Terraform.
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                mt: 2,
+                maxWidth: 660,
+                color: "text.secondary",
+                lineHeight: 1.75,
+                fontSize: { xs: "1rem", md: "1.08rem" },
+              }}
+            >
+              Browse public templates first, then open the canvas when you are
+              ready to make the infrastructure model your own.
+            </Typography>
+          </Box>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={onBrowseTemplates}
+              endIcon={<OpenIcon />}
+              sx={{
+                borderRadius: 1,
+                px: 3,
+                py: 1.35,
+                textTransform: "none",
+                fontWeight: 850,
+                boxShadow: "none",
+                "&:hover": { boxShadow: "none" },
+              }}
+            >
+              Browse Templates
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={onStartDesigning}
+              startIcon={<DiagramIcon />}
+              sx={{
+                borderRadius: 1,
+                px: 3,
+                py: 1.35,
+                textTransform: "none",
+                fontWeight: 850,
+                color: "text.primary",
+                borderColor: alpha(theme.palette.primary.main, 0.38),
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.common.white, 0.02)
+                    : alpha(theme.palette.common.white, 0.48),
+                "&:hover": {
+                  borderColor: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                },
+              }}
+            >
+              Open Canvas
+            </Button>
+          </Stack>
+        </Box>
+      </Container>
+    </Box>
+  );
 };
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const previousTitle = document.title;
+    const title = "Orchestrator | Reusable Terraform Templates";
+    const description =
+      "Browse reusable cloud infrastructure templates, shape them visually, and generate Terraform with Orchestrator.";
+    const url = `${SITE_URL}/`;
+
+    document.title = title;
+    setHeadAttribute(
+      'meta[name="description"]',
+      "meta",
+      { name: "description" },
+      "content",
+      description,
+    );
+    setHeadAttribute(
+      'meta[name="robots"]',
+      "meta",
+      { name: "robots" },
+      "content",
+      "index, follow",
+    );
+    setHeadAttribute(
+      'meta[property="og:title"]',
+      "meta",
+      { property: "og:title" },
+      "content",
+      title,
+    );
+    setHeadAttribute(
+      'meta[property="og:description"]',
+      "meta",
+      { property: "og:description" },
+      "content",
+      description,
+    );
+    setHeadAttribute(
+      'meta[property="og:url"]',
+      "meta",
+      { property: "og:url" },
+      "content",
+      url,
+    );
+    setHeadAttribute(
+      'meta[property="og:type"]',
+      "meta",
+      { property: "og:type" },
+      "content",
+      "website",
+    );
+    setHeadAttribute(
+      'link[rel="canonical"]',
+      "link",
+      { rel: "canonical" },
+      "href",
+      url,
+    );
+
+    return () => {
+      document.title = previousTitle;
+    };
   }, []);
 
-  const workflowView = useInView();
-  const useCasesView = useInView();
-  const pathsView = useInView();
-  const featuresView = useInView();
-  const testimonialsView = useInView();
-
-  const features = [
-    {
-      icon: <DiagramIcon />,
-      title: "Visual Architecture Design",
-      description:
-        "Drag-and-drop interface to design cloud infrastructure with 75+ AWS, Azure, and GCP components",
-    },
-    {
-      icon: <LinkIcon />,
-      title: "Smart Resource Linking",
-      description:
-        "Automatically link resources with intelligent connections and output references between modules",
-    },
-    {
-      icon: <CodeIcon />,
-      title: "Terraform Code Generation",
-      description:
-        "Generate production-ready Terraform IaC code directly from your visual designs in seconds",
-    },
-    {
-      icon: <DownloadIcon />,
-      title: "Export & Deploy",
-      description:
-        "Download complete Terraform bundles with proper module structure ready for deployment",
-    },
-    {
-      icon: <VisibilityIcon />,
-      title: "Real-time Preview",
-      description:
-        "See your infrastructure architecture in real-time as you build with instant visual feedback",
-    },
-    {
-      icon: <SettingsIcon />,
-      title: "Dynamic Configuration",
-      description:
-        "Configure resource properties with dynamic forms and validation for each cloud service",
-    },
-  ];
-
-  const paths = [
-    {
-      emoji: "🎨",
-      title: "Design Canvas",
-      description:
-        "Start from scratch with our visual canvas. Drag resources, connect them, configure properties, and watch your infrastructure come to life",
-      action: "Open Canvas",
-      onClick: () => navigate("/home"),
-    },
-    {
-      emoji: "📦",
-      title: "Browse Templates",
-      description:
-        "Explore pre-built infrastructure templates for common patterns like VPC setups, EKS clusters, or multi-tier applications",
-      action: "View Templates",
-      onClick: () => navigate("/home"),
-    },
-    {
-      emoji: "⚡",
-      title: "Quick Deploy",
-      description:
-        "Choose a template, customize it to your needs, generate Terraform code, and deploy to your cloud provider instantly",
-      action: "Get Started",
-      onClick: () => navigate("/register"),
-    },
-  ];
-
-  const testimonials = [
-    {
-      quote:
-        "Finally, a tool that bridges the gap between visual design and infrastructure as code. Our team's productivity has doubled.",
-      author: "Alex Thompson",
-      role: "DevOps Lead, TechStart Inc",
-    },
-    {
-      quote:
-        "The visual canvas makes it so easy to plan complex architectures. Exporting to Terraform saves us hours of manual coding.",
-      author: "Maria Garcia",
-      role: "Cloud Architect, Enterprise Solutions",
-    },
-    {
-      quote:
-        "Perfect for teaching IaC concepts. Students can see the infrastructure visually while learning Terraform best practices.",
-      author: "Dr. James Wilson",
-      role: "Professor, Cloud Computing Lab",
-    },
-  ];
-
-  const useCases = [
-    {
-      icon: <CloudIcon sx={{ fontSize: 40 }} />,
-      title: "Multi-Cloud Infrastructure",
-      description:
-        "Design and deploy infrastructure across AWS, Azure, and GCP with seamless cross-cloud resource linking",
-      examples: ["VPC Setup", "EKS Cluster", "Load Balancing"],
-    },
-    {
-      icon: <ArchitectureIcon sx={{ fontSize: 40 }} />,
-      title: "Complex Architectures",
-      description:
-        "Build sophisticated multi-tier applications with microservices, serverless functions, and managed databases",
-      examples: ["API Gateway", "Lambda Functions", "RDS Instances"],
-    },
-    {
-      icon: <AutoFixIcon sx={{ fontSize: 40 }} />,
-      title: "Automated Workflows",
-      description:
-        "Streamline your DevOps with CI/CD pipelines, auto-scaling policies, and comprehensive monitoring",
-      examples: ["Auto Scaling", "CloudWatch", "SNS Alerts"],
-    },
-  ];
-
-  const workflow = [
-    {
-      number: "01",
-      title: "Design Visually",
-      description:
-        "Drag and drop cloud resources onto the canvas. Connect them to define relationships.",
-      icon: <DiagramIcon sx={{ fontSize: 40 }} />,
-    },
-    {
-      number: "02",
-      title: "Configure Properties",
-      description:
-        "Set resource properties, tags, and configurations using intuitive forms.",
-      icon: <SettingsIcon sx={{ fontSize: 40 }} />,
-    },
-    {
-      number: "03",
-      title: "Generate Code",
-      description:
-        "Click generate to create production-ready Terraform code with proper module structure.",
-      icon: <CodeIcon sx={{ fontSize: 40 }} />,
-    },
-    {
-      number: "04",
-      title: "Deploy",
-      description:
-        "Download the Terraform bundle and deploy to your cloud provider using terraform apply.",
-      icon: <PlayIcon sx={{ fontSize: 40 }} />,
-    },
-  ];
+  const goToTemplates = () => navigate("/templates");
+  const goToCanvas = () => navigate("/home");
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        position: "relative",
-        overflow: "hidden",
-        background: theme.palette.background.default,
+        maxWidth: "100vw",
+        overflowX: "clip",
+        boxSizing: "border-box",
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+        "& *, & *::before, & *::after": {
+          boxSizing: "border-box",
+        },
+        "& .MuiContainer-root": {
+          boxSizing: "border-box",
+          "@media (max-width: 599.95px)": {
+            width: "100%",
+            maxWidth: "100%",
+            marginLeft: 0,
+            marginRight: 0,
+            paddingLeft: "16px",
+            paddingRight: "16px",
+          },
+        },
       }}
     >
-      {/* Enhanced Hero Background Section with Gradient Mesh */}
       <Box
+        component="section"
+        aria-labelledby="landing-hero-title"
         sx={{
           position: "relative",
+          minHeight: {
+            xs: "auto",
+            md: "min(820px, calc(100vh - 120px))",
+          },
+          display: "flex",
+          alignItems: "center",
           overflow: "hidden",
-          background:
-            theme.palette.mode === "dark"
-              ? `
-              radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 50%),
-              radial-gradient(circle at 80% 40%, ${alpha(theme.palette.secondary.main, 0.12)} 0%, transparent 50%),
-              radial-gradient(circle at 40% 80%, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 50%),
-              linear-gradient(135deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.primary.main, 0.03)} 50%, ${theme.palette.background.default} 100%)
-            `
-              : `
-              radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.08)} 0%, transparent 50%),
-              radial-gradient(circle at 80% 40%, ${alpha(theme.palette.secondary.main, 0.06)} 0%, transparent 50%),
-              radial-gradient(circle at 40% 80%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
-              linear-gradient(135deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.primary.main, 0.02)} 50%, ${theme.palette.background.default} 100%)
-            `,
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundImage:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(${alpha(theme.palette.divider, 0.06)} 1px, transparent 1px),
-                 linear-gradient(90deg, ${alpha(theme.palette.divider, 0.06)} 1px, transparent 1px)`
-                : `linear-gradient(${alpha(theme.palette.divider, 0.08)} 1px, transparent 1px),
-                 linear-gradient(90deg, ${alpha(theme.palette.divider, 0.08)} 1px, transparent 1px)`,
-            backgroundSize: "50px 50px",
-            opacity: 0.5,
-            pointerEvents: "none",
-          },
-          "&::after": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(180deg, transparent 0%, ${alpha(theme.palette.background.default, 0.4)} 70%, ${theme.palette.background.default} 100%)`
-                : `linear-gradient(180deg, transparent 0%, ${alpha(theme.palette.background.default, 0.6)} 70%, ${theme.palette.background.default} 100%)`,
-            pointerEvents: "none",
-          },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+          py: { xs: 5.5, md: 8 },
         }}
       >
-        {/* Animated Gradient Orbs */}
-        <Box
+        <HeroProductScene />
+
+        <Container
+          maxWidth={false}
           sx={{
-            position: "absolute",
-            top: "10%",
-            left: "10%",
-            width: "600px",
-            height: "600px",
-            borderRadius: "50%",
-            background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.3)} 0%, transparent 70%)`,
-            filter: "blur(60px)",
-            opacity: theme.palette.mode === "dark" ? 0.9 : 0.65,
-            animation: "float-slow 20s ease-in-out infinite",
-            "@keyframes float-slow": {
-              "0%, 100%": { transform: "translate(0, 0) scale(1)" },
-              "33%": { transform: "translate(30px, -30px) scale(1.1)" },
-              "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
-            },
+            position: "relative",
+            zIndex: 1,
+            px: { xs: 2, sm: 3, md: 6, lg: 8, xl: 10 },
           }}
-        />
-        <Box
-          sx={{
-            position: "absolute",
-            top: "20%",
-            right: "10%",
-            width: "500px",
-            height: "500px",
-            borderRadius: "50%",
-            background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.25)} 0%, transparent 70%)`,
-            filter: "blur(60px)",
-            opacity: theme.palette.mode === "dark" ? 0.8 : 0.55,
-            animation: "float-slow 25s ease-in-out infinite reverse",
-          }}
-        />
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: "10%",
-            left: "40%",
-            width: "400px",
-            height: "400px",
-            borderRadius: "50%",
-            background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 70%)`,
-            filter: "blur(50px)",
-            opacity: theme.palette.mode === "dark" ? 0.4 : 0.25,
-            animation: "float-slow 18s ease-in-out infinite",
-          }}
-        />
-
-        {/* Floating background icons - Cloud Providers & DevOps Tools */}
-        {/* Top Row - Evenly Distributed */}
-        <FloatingIcon
-          icon={<SiAmazonec2 size={70} />}
-          delay={0}
-          duration={20}
-          x="8%"
-          y="5%"
-        />
-        <FloatingIcon
-          icon={<VscAzure size={65} />}
-          delay={2}
-          duration={22}
-          x="28%"
-          y="8%"
-        />
-        <FloatingIcon
-          icon={<SiGooglecloud size={65} />}
-          delay={4}
-          duration={24}
-          x="45%"
-          y="4%"
-        />
-        <FloatingIcon
-          icon={<FaAws size={65} />}
-          delay={6}
-          duration={26}
-          x="65%"
-          y="7%"
-        />
-        <FloatingIcon
-          icon={<FaDocker size={62} />}
-          delay={8}
-          duration={28}
-          x="85%"
-          y="9%"
-        />
-
-        {/* Second Row */}
-        <FloatingIcon
-          icon={<SiKubernetes size={60} />}
-          delay={1}
-          duration={23}
-          x="5%"
-          y="22%"
-        />
-        <FloatingIcon
-          icon={<SecurityIcon />}
-          delay={3}
-          duration={25}
-          x="20%"
-          y="25%"
-        />
-        <FloatingIcon
-          icon={<SiTerraform size={58} />}
-          delay={5}
-          duration={27}
-          x="38%"
-          y="23%"
-        />
-        <FloatingIcon
-          icon={<SiAwselasticloadbalancing size={56} />}
-          delay={7}
-          duration={29}
-          x="58%"
-          y="24%"
-        />
-        <FloatingIcon
-          icon={<DnsIcon />}
-          delay={9}
-          duration={21}
-          x="78%"
-          y="26%"
-        />
-        <FloatingIcon
-          icon={<VscAzureDevops size={54} />}
-          delay={11}
-          duration={30}
-          x="92%"
-          y="22%"
-        />
-
-        {/* Third Row */}
-        <FloatingIcon
-          icon={<SiNginx size={52} />}
-          delay={2}
-          duration={26}
-          x="10%"
-          y="38%"
-        />
-        <FloatingIcon
-          icon={<SiApachekafka size={50} />}
-          delay={4}
-          duration={28}
-          x="30%"
-          y="40%"
-        />
-        <FloatingIcon
-          icon={<ServerIcon />}
-          delay={6}
-          duration={24}
-          x="50%"
-          y="39%"
-        />
-        <FloatingIcon
-          icon={<SiAwsamplify size={48} />}
-          delay={8}
-          duration={22}
-          x="70%"
-          y="41%"
-        />
-        <FloatingIcon
-          icon={<NetworkIcon />}
-          delay={10}
-          duration={25}
-          x="88%"
-          y="38%"
-        />
-
-        {/* Fourth Row */}
-        <FloatingIcon
-          icon={<SiAnsible size={56} />}
-          delay={1.5}
-          duration={27}
-          x="6%"
-          y="52%"
-        />
-        <FloatingIcon
-          icon={<StorageIcon />}
-          delay={3.5}
-          duration={29}
-          x="24%"
-          y="55%"
-        />
-        <FloatingIcon
-          icon={<DiagramIcon />}
-          delay={5.5}
-          duration={31}
-          x="42%"
-          y="53%"
-        />
-        <FloatingIcon
-          icon={<SiAwslambda size={54} />}
-          delay={7.5}
-          duration={23}
-          x="60%"
-          y="54%"
-        />
-        <FloatingIcon
-          icon={<MemoryIcon />}
-          delay={9.5}
-          duration={26}
-          x="80%"
-          y="56%"
-        />
-
-        {/* Fifth Row */}
-        <FloatingIcon
-          icon={<FaJenkins size={52} />}
-          delay={2.5}
-          duration={28}
-          x="12%"
-          y="68%"
-        />
-        <FloatingIcon
-          icon={<DataIcon />}
-          delay={4.5}
-          duration={24}
-          x="32%"
-          y="70%"
-        />
-        <FloatingIcon
-          icon={<SiPrometheus size={50} />}
-          delay={6.5}
-          duration={30}
-          x="52%"
-          y="69%"
-        />
-        <FloatingIcon
-          icon={<ShieldIcon />}
-          delay={8.5}
-          duration={22}
-          x="72%"
-          y="71%"
-        />
-        <FloatingIcon
-          icon={<SiGrafana size={48} />}
-          delay={10.5}
-          duration={25}
-          x="90%"
-          y="68%"
-        />
-
-        {/* Bottom Row */}
-        <FloatingIcon
-          icon={<SiPostgresql size={56} />}
-          delay={3}
-          duration={27}
-          x="8%"
-          y="82%"
-        />
-        <FloatingIcon
-          icon={<CodeIcon />}
-          delay={7}
-          duration={23}
-          x="48%"
-          y="83%"
-        />
-        <FloatingIcon
-          icon={<SiRedis size={52} />}
-          delay={9}
-          duration={26}
-          x="68%"
-          y="86%"
-        />
-        <FloatingIcon
-          icon={<SiElasticsearch size={50} />}
-          delay={11}
-          duration={28}
-          x="88%"
-          y="84%"
-        />
-
-        {/* Hero Section - Enhanced Modern Design */}
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+        >
           <Box
             sx={{
-              minHeight: { md: "95vh" },
-              py: { xs: 4, md: 5 },
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              width: "100%",
+              maxWidth: { xs: 358, sm: 620, md: 640, lg: 680 },
+              minWidth: 0,
             }}
           >
-            <Box sx={{ textAlign: "center", maxWidth: 1000, mx: "auto" }}>
-              <Box
+            <Chip
+              icon={<TemplateIcon />}
+              label="Template-first infrastructure as code"
+              sx={{
+                mb: 3,
+                borderRadius: 1,
+                height: 34,
+                px: 0.5,
+                fontWeight: 800,
+                color: theme.palette.primary.main,
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                "& .MuiChip-icon": {
+                  color: theme.palette.primary.main,
+                },
+              }}
+            />
+            <Typography
+              id="landing-hero-title"
+              variant="h1"
+              sx={{
+                color: "text.primary",
+                fontSize: { xs: "2.55rem", sm: "4.2rem", md: "5.6rem" },
+                fontWeight: 850,
+                lineHeight: 0.96,
+                letterSpacing: 0,
+                maxWidth: 720,
+              }}
+            >
+              Orchestrator
+            </Typography>
+            <Typography
+              variant="h2"
+              sx={{
+                mt: 2,
+                mb: 2.5,
+                maxWidth: 640,
+                color: "text.primary",
+                fontSize: { xs: "1.43rem", sm: "2.25rem", md: "3rem" },
+                fontWeight: 750,
+                lineHeight: 1.12,
+                letterSpacing: 0,
+              }}
+            >
+              Reusable cloud templates that become Terraform.
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                maxWidth: 650,
+                color: "text.secondary",
+                fontSize: { xs: "1.02rem", md: "1.15rem" },
+                lineHeight: 1.8,
+              }}
+            >
+              Browse infrastructure patterns, fork them into a visual canvas,
+              configure cloud resources with structured forms, and export the
+              generated Terraform for review.
+            </Typography>
+
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.5}
+              sx={{ mt: 4, mb: 4, width: { xs: "100%", sm: "auto" } }}
+            >
+              <Button
+                variant="contained"
+                size="large"
+                onClick={goToTemplates}
+                endIcon={<OpenIcon />}
+                aria-label="Browse infrastructure templates"
                 sx={{
-                  opacity: mounted ? 1 : 0,
-                  transform: mounted ? "translateY(0)" : "translateY(30px)",
-                  transition: "all 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                  alignSelf: { xs: "stretch", sm: "flex-start" },
+                  width: { xs: "100%", sm: "auto" },
+                  borderRadius: 1,
+                  px: 3,
+                  py: 1.35,
+                  textTransform: "none",
+                  fontWeight: 850,
+                  boxShadow: "none",
+                  "&:hover": {
+                    boxShadow: "none",
+                  },
                 }}
               >
-                {/* Delightful Badge — animated gradient border + shimmer sweep */}
-                <Box
-                  sx={{
-                    position: "relative",
-                    display: "inline-flex",
-                    mb: 5,
-                    borderRadius: 50,
-                    p: "2px",
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
-                    backgroundSize: "200% 200%",
-                    animation: "badge-border 4s ease infinite",
-                    boxShadow: `0 0 32px ${alpha(theme.palette.primary.main, 0.45)}, 0 0 64px ${alpha(theme.palette.primary.main, 0.2)}`,
-                    "@keyframes badge-border": {
-                      "0%, 100%": { backgroundPosition: "0% 50%" },
-                      "50%": { backgroundPosition: "100% 50%" },
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 1.5,
-                      px: 3,
-                      py: 1.25,
-                      borderRadius: 50,
-                      background:
-                        theme.palette.mode === "dark"
-                          ? alpha(theme.palette.background.default, 0.92)
-                          : alpha(theme.palette.background.paper, 0.95),
-                      backdropFilter: "blur(20px)",
-                      position: "relative",
-                      overflow: "hidden",
-                      "&::after": {
-                        content: '""',
-                        position: "absolute",
-                        top: 0,
-                        left: "-100%",
-                        width: "55%",
-                        height: "100%",
-                        background: `linear-gradient(90deg, transparent, ${alpha(theme.palette.common.white, 0.22)}, transparent)`,
-                        animation: "badge-shimmer 3.5s ease-in-out infinite",
-                        "@keyframes badge-shimmer": {
-                          "0%": { left: "-100%" },
-                          "55%, 100%": { left: "210%" },
-                        },
-                      },
-                    }}
-                  >
-                    <ArchitectureIcon
-                      sx={{
-                        fontSize: 22,
-                        color: theme.palette.primary.main,
-                        filter: `drop-shadow(0 0 6px ${alpha(theme.palette.primary.main, 0.9)})`,
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: "0.95rem",
-                        fontWeight: 700,
-                        color: theme.palette.text.primary,
-                        letterSpacing: "0.01em",
-                      }}
-                    >
-                      Production-Ready Infrastructure as Code
-                    </Typography>
-                  </Box>
-                </Box>
+                Browse Templates
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={goToCanvas}
+                startIcon={<PlayIcon />}
+                aria-label="Start designing infrastructure"
+                sx={{
+                  alignSelf: { xs: "stretch", sm: "flex-start" },
+                  width: { xs: "100%", sm: "auto" },
+                  borderRadius: 1,
+                  px: 3,
+                  py: 1.35,
+                  textTransform: "none",
+                  fontWeight: 850,
+                  borderColor: alpha(theme.palette.primary.main, 0.38),
+                  color: "text.primary",
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.common.white, 0.02)
+                      : alpha(theme.palette.common.white, 0.52),
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                }}
+              >
+                Start Designing
+              </Button>
+            </Stack>
 
-                {/* Enhanced Main Heading with Better Gradient */}
-                <Typography
-                  variant="h1"
-                  sx={{
-                    fontSize: {
-                      xs: "3.5rem",
-                      sm: "5rem",
-                      md: "6.5rem",
-                      lg: "6.5rem",
-                    },
-                    fontWeight: 900,
-                    lineHeight: 1,
-                    mb: 4,
-                    letterSpacing: "-0.06em",
-                  }}
-                >
-                  <Box
-                    component="span"
-                    sx={{
-                      display: "block",
-                      background:
-                        theme.palette.mode === "dark"
-                          ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 50%, ${theme.palette.primary.main} 100%)`
-                          : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                      backgroundSize: "200% auto",
-                      backgroundClip: "text",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      animation: "gradient-shift 6s ease infinite",
-                      "@keyframes gradient-shift": {
-                        "0%, 100%": { backgroundPosition: "0% 50%" },
-                        "50%": { backgroundPosition: "100% 50%" },
-                      },
-                    }}
-                  >
-                    Design Cloud
-                  </Box>
-                  <Box
-                    component="span"
-                    sx={{
-                      display: "block",
-                      color: theme.palette.text.primary,
-                      mt: 1,
-                      position: "relative",
-                      "&::after": {
-                        content: '""',
-                        position: "absolute",
-                        bottom: -14,
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        width: "40%",
-                        height: 5,
-                        borderRadius: 3,
-                        background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main}, transparent)`,
-                        boxShadow: `0 0 24px ${alpha(theme.palette.primary.main, 0.8)}, 0 0 48px ${alpha(theme.palette.primary.main, 0.4)}`,
-                        animation: "heading-glow-line 3s ease-in-out infinite",
-                        "@keyframes heading-glow-line": {
-                          "0%, 100%": { opacity: 0.6, width: "35%" },
-                          "50%": { opacity: 1, width: "58%" },
-                        },
-                      },
-                    }}
-                  >
-                    Infrastructure
-                  </Box>
-                </Typography>
-
-                {/* Delightful tagline — individually lit words */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: { xs: 2, sm: 3 },
-                    mt: 3,
-                    mb: 5,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Typography
-                    component="span"
-                    sx={{
-                      fontSize: { xs: "0.9rem", sm: "1rem", md: "1.15rem" },
-                      fontWeight: 800,
-                      color: theme.palette.primary.main,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      textShadow: `0 0 28px ${alpha(theme.palette.primary.main, 0.7)}`,
-                    }}
-                  >
-                    Visually
-                  </Typography>
-                  <Box
-                    component="span"
-                    sx={{
-                      color: alpha(theme.palette.primary.main, 0.45),
-                      fontSize: "1.1rem",
-                      lineHeight: 1,
-                      userSelect: "none",
-                    }}
-                  >
-                    ✦
-                  </Box>
-                  <Typography
-                    component="span"
-                    sx={{
-                      fontSize: { xs: "0.9rem", sm: "1rem", md: "1.15rem" },
-                      fontWeight: 800,
-                      color: theme.palette.secondary.main,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      textShadow: `0 0 28px ${alpha(theme.palette.secondary.main, 0.7)}`,
-                    }}
-                  >
-                    Effortlessly
-                  </Typography>
-                  <Box
-                    component="span"
-                    sx={{
-                      color: alpha(theme.palette.primary.main, 0.45),
-                      fontSize: "1.1rem",
-                      lineHeight: 1,
-                      userSelect: "none",
-                    }}
-                  >
-                    ✦
-                  </Box>
-                  <Typography
-                    component="span"
-                    sx={{
-                      fontSize: { xs: "0.9rem", sm: "1rem", md: "1.15rem" },
-                      fontWeight: 800,
-                      color: theme.palette.primary.light,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      textShadow: `0 0 28px ${alpha(theme.palette.primary.main, 0.6)}`,
-                    }}
-                  >
-                    Instantly
-                  </Typography>
-                </Box>
-
-                {/* Enhanced Description */}
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontSize: { xs: "1.15rem", md: "1.4rem" },
-                    color: theme.palette.text.secondary,
-                    lineHeight: 1.8,
-                    mb: 6,
-                    maxWidth: 800,
-                    mx: "auto",
-                    fontWeight: 400,
-                  }}
-                >
-                  Design with{" "}
-                  <Box
-                    component="span"
-                    sx={{ fontWeight: 700, color: theme.palette.primary.main }}
-                  >
-                    75+ cloud resources
-                  </Box>{" "}
-                  across AWS, Azure & GCP. Generate{" "}
-                  <Box
-                    component="span"
-                    sx={{
-                      fontWeight: 700,
-                      color: theme.palette.secondary.main,
-                    }}
-                  >
-                    production-ready Terraform
-                  </Box>{" "}
-                  code instantly.
-                </Typography>
-
-                {/* Enhanced CTA Buttons */}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={{ xs: 1, sm: 2 }}
+              sx={{
+                color: "text.secondary",
+                flexWrap: "wrap",
+                maxWidth: "100%",
+              }}
+            >
+              {[
+                "Public template gallery",
+                "Visual architecture canvas",
+                "Terraform bundle export",
+              ].map((label) => (
                 <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={3}
-                  sx={{ mb: 8, justifyContent: "center" }}
+                  key={label}
+                  direction="row"
+                  spacing={0.8}
+                  alignItems="center"
                 >
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={() => navigate("/home")}
-                    aria-label="Start Building Free — open the design canvas"
-                    startIcon={<DiagramIcon aria-hidden="true" />}
-                    sx={{
-                      px: 5,
-                      py: 1.75,
-                      fontSize: "1rem",
-                      fontWeight: 600,
-                      borderRadius: 2,
-                      textTransform: "none",
-                      background: theme.palette.primary.main,
-                      color: theme.palette.primary.contrastText,
-                      boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
-                      "&:hover": {
-                        background: theme.palette.primary.dark,
-                        boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
-                        transform: "translateY(-1px)",
-                      },
-                      "&:active": {
-                        transform: "scale(0.98)",
-                      },
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    Start Building Free
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    aria-label="Watch a product demo"
-                    startIcon={<PlayIcon aria-hidden="true" />}
-                    sx={{
-                      px: 5,
-                      py: 1.75,
-                      fontSize: "1rem",
-                      fontWeight: 600,
-                      borderRadius: 2,
-                      textTransform: "none",
-                      color: theme.palette.text.primary,
-                      borderColor: alpha(theme.palette.primary.main, 0.3),
-                      borderWidth: 2,
-                      background: alpha(theme.palette.background.paper, 0.5),
-                      backdropFilter: "blur(10px)",
-                      "&:hover": {
-                        background: alpha(theme.palette.primary.main, 0.1),
-                        borderColor: theme.palette.primary.main,
-                        borderWidth: 2,
-                        transform: "translateY(-2px)",
-                        boxShadow: `0 8px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
-                      },
-                      transition: "all 0.3s ease",
-                    }}
-                  >
-                    Watch Demo
-                  </Button>
-                </Stack>
-
-                {/* Enhanced Stats with Icons */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: { xs: 3, md: 6 },
-                    flexWrap: "wrap",
-                    pt: 4,
-                    borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                  }}
-                >
-                  {[
-                    {
-                      value: "75+",
-                      label: "Cloud Resources",
-                      icon: <CloudIcon sx={{ fontSize: 28 }} />,
-                    },
-                    {
-                      value: "1000+",
-                      label: "Active Users",
-                      icon: <TrendingUpIcon sx={{ fontSize: 28 }} />,
-                    },
-                    {
-                      value: "<5min",
-                      label: "Setup Time",
-                      icon: <BoltIcon sx={{ fontSize: 28 }} />,
-                    },
-                  ].map((stat, idx) => (
-                    <Box
-                      key={idx}
-                      aria-label={`${stat.value} ${stat.label}`}
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: 1,
-                        px: 4,
-                        py: 3,
-                        borderRadius: 3,
-                        background:
-                          theme.palette.mode === "dark"
-                            ? alpha(theme.palette.background.paper, 0.55)
-                            : alpha(theme.palette.background.paper, 0.85),
-                        backdropFilter: "blur(16px)",
-                        boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, 0.28)}, 0 8px 32px ${alpha(theme.palette.primary.main, 0.12)}`,
-                        transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-                        "&:hover": {
-                          background: alpha(theme.palette.primary.main, 0.08),
-                          boxShadow: `0 0 0 2px ${theme.palette.primary.main}, 0 16px 48px ${alpha(theme.palette.primary.main, 0.35)}`,
-                          transform: "translateY(-10px)",
-                        },
-                      }}
-                    >
-                      <Box sx={{ color: theme.palette.primary.main }} aria-hidden="true">
-                        {stat.icon}
-                      </Box>
-                      <Typography
-                        sx={{
-                          fontSize: "3.5rem",
-                          fontWeight: 900,
-                          color: theme.palette.primary.main,
-                          lineHeight: 1,
-                          letterSpacing: "-0.03em",
-                        }}
-                      >
-                        {stat.value}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "0.9rem",
-                          color: theme.palette.text.secondary,
-                          fontWeight: 600,
-                          textAlign: "center",
-                        }}
-                      >
-                        {stat.label}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-
-                {/* Trusted By Section */}
-                <Box sx={{ mt: 8 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: alpha(theme.palette.text.secondary, 0.65),
-                      fontSize: "0.8rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.15em",
-                      textTransform: "uppercase",
-                      mb: 3,
-                      display: "block",
-                    }}
-                  >
-                    Trusted by DevOps Teams Worldwide
+                  <VerifiedIcon
+                    sx={{ color: theme.palette.primary.main, fontSize: 18 }}
+                  />
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {label}
                   </Typography>
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    sx={{
-                      justifyContent: "center",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    {[
-                      { icon: <FaAws size={36} />, label: "AWS" },
-                      { icon: <VscAzure size={32} />, label: "Azure" },
-                      { icon: <SiGooglecloud size={34} />, label: "GCP" },
-                    ].map(({ icon, label }) => (
-                      <Box
-                        key={label}
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          gap: 0.75,
-                          px: 3,
-                          py: 1.5,
-                          borderRadius: 2,
-                          background: alpha(theme.palette.background.paper, 0.5),
-                          border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
-                          backdropFilter: "blur(8px)",
-                          color: alpha(theme.palette.text.primary, 0.45),
-                          transition: "all 0.3s ease",
-                          "&:hover": {
-                            color: theme.palette.primary.main,
-                            border: `1px solid ${alpha(theme.palette.primary.main, 0.4)}`,
-                            background: alpha(theme.palette.primary.main, 0.05),
-                            transform: "translateY(-3px)",
-                            boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.25)}`,
-                          },
-                        }}
-                      >
-                        {icon}
-                        <Typography
-                          sx={{
-                            fontSize: "0.62rem",
-                            fontWeight: 700,
-                            letterSpacing: "0.12em",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {label}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-                </Box>
-              </Box>
-            </Box>
+                </Stack>
+              ))}
+            </Stack>
+            <MobileProductPreview />
           </Box>
         </Container>
-
-        {/* Decorative Wave Separator */}
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: -2,
-            left: 0,
-            width: "100%",
-            overflow: "hidden",
-            lineHeight: 0,
-            transform: "rotate(180deg)",
-          }}
-        >
-          <svg
-            viewBox="0 0 1200 120"
-            preserveAspectRatio="none"
-            style={{
-              position: "relative",
-              display: "block",
-              width: "calc(100% + 1.3px)",
-              height: "80px",
-            }}
-          >
-            <path
-              d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
-              fill={theme.palette.background.default}
-            />
-          </svg>
-        </Box>
       </Box>
 
-      {/* Main Content Area with Different Background */}
+      <Box component="main">
+        <ProductLoopSection />
+        <ArtifactSection />
+        <TemplateShowcaseSection onBrowseTemplates={goToTemplates} />
+        <CapabilityMatrixSection />
+        <FinalCta
+          onBrowseTemplates={goToTemplates}
+          onStartDesigning={goToCanvas}
+        />
+      </Box>
+
       <Box
+        component="footer"
         sx={{
-          background: theme.palette.background.default,
-          position: "relative",
-          zIndex: 1,
+          py: 4,
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
         }}
       >
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
-          {/* How It Works Section */}
-          <Box component="section" aria-labelledby="how-it-works-heading" sx={{ py: { xs: 6, md: 10 } }}>
-            <Typography
-              id="how-it-works-heading"
-              variant="h2"
-              sx={{
-                textAlign: "center",
-                fontWeight: 900,
-                fontSize: { xs: "2.4rem", md: "3.2rem" },
-                mb: 2,
-                color: theme.palette.text.primary,
-              }}
-            >
-              How It Works
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: "center",
-                color: theme.palette.text.secondary,
-                mb: 6,
-                maxWidth: 600,
-                mx: "auto",
-                fontSize: "1.1rem",
-              }}
-            >
-              From design to deployment in four simple steps
-            </Typography>
-
-            <Grid container spacing={4} ref={workflowView.ref}>
-              {workflow.map((step, index) => (
-                <Grid
-                  size={{ xs: 12, sm: 6, md: 3 }}
-                  key={index}
-                  sx={{
-                    opacity: workflowView.inView ? 1 : 0,
-                    transform: workflowView.inView ? "none" : "translateY(28px)",
-                    transition: `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`,
-                  }}
-                >
-                  <Card
-                    sx={{
-                      height: "100%",
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      background:
-                        theme.palette.mode === "dark"
-                          ? alpha(theme.palette.background.paper, 0.6)
-                          : alpha(theme.palette.background.paper, 0.9),
-                      backdropFilter: "blur(20px)",
-                      border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.25 : 0.15)}`,
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-12px)",
-                        boxShadow: `0 20px 56px ${alpha(theme.palette.primary.main, 0.35)}`,
-                        border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
-                      },
-                    }}
-                  >
-                    <CardContent
-                      sx={{ p: 4, textAlign: "center", flexGrow: 1 }}
-                    >
-                      <Typography
-                        variant="h3"
-                        sx={{
-                          fontWeight: 900,
-                          mb: 2,
-                          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                          backgroundClip: "text",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                        }}
-                      >
-                        {step.number}
-                      </Typography>
-                      <Box
-                        sx={{
-                          width: 96,
-                          height: 96,
-                          borderRadius: "50%",
-                          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.secondary.main, 0.3)})`,
-                          border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                          color: theme.palette.primary.main,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          mx: "auto",
-                          mb: 3,
-                        }}
-                      >
-                        {step.icon}
-                      </Box>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 600,
-                          mb: 2,
-                        }}
-                      >
-                        {step.title}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: alpha(theme.palette.text.primary, 0.7),
-                        }}
-                      >
-                        {step.description}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {/* Use Cases Section */}
-          <Box component="section" aria-labelledby="use-cases-heading" sx={{ py: { xs: 6, md: 10 } }}>
-            <Typography
-              id="use-cases-heading"
-              variant="h2"
-              sx={{
-                textAlign: "center",
-                fontWeight: 900,
-                fontSize: { xs: "2.4rem", md: "3.2rem" },
-                mb: 2,
-                color: theme.palette.text.primary,
-              }}
-            >
-              Perfect For
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: "center",
-                color: theme.palette.text.secondary,
-                mb: 6,
-                maxWidth: 600,
-                mx: "auto",
-                fontSize: "1.1rem",
-              }}
-            >
-              Whether you're a startup or enterprise, we've got you covered
-            </Typography>
-
-            <Grid container spacing={4} ref={useCasesView.ref}>
-              {useCases.map((useCase, index) => (
-                <Grid
-                  size={{ xs: 12, md: 4 }}
-                  key={index}
-                  sx={{
-                    opacity: useCasesView.inView ? 1 : 0,
-                    transform: useCasesView.inView ? "none" : "translateY(28px)",
-                    transition: `opacity 0.5s ease ${index * 0.12}s, transform 0.5s ease ${index * 0.12}s`,
-                  }}
-                >
-                  <Card
-                    sx={{
-                      height: "100%",
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      background:
-                        theme.palette.mode === "dark"
-                          ? alpha(theme.palette.background.paper, 0.6)
-                          : alpha(theme.palette.background.paper, 0.9),
-                      backdropFilter: "blur(20px)",
-                      border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.25 : 0.15)}`,
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-12px)",
-                        boxShadow: `0 20px 56px ${alpha(theme.palette.primary.main, 0.35)}`,
-                        border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
-                      },
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        p: 4,
-                        flexGrow: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 76,
-                          height: 76,
-                          borderRadius: 3,
-                          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.secondary.main, 0.3)})`,
-                          border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                          color: theme.palette.primary.main,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          mb: 3,
-                        }}
-                      >
-                        {useCase.icon}
-                      </Box>
-                      <Typography
-                        variant="h5"
-                        sx={{
-                          fontWeight: 600,
-                          mb: 2,
-                        }}
-                      >
-                        {useCase.title}
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          color: alpha(theme.palette.text.primary, 0.7),
-                          mb: 3,
-                        }}
-                      >
-                        {useCase.description}
-                      </Typography>
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                        {useCase.examples.map((example, idx) => (
-                          <Chip
-                            key={idx}
-                            label={example}
-                            size="small"
-                            sx={{
-                              background: alpha(theme.palette.primary.main, 0.1),
-                              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                              color: theme.palette.primary.main,
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {/* Choose Your Path Section */}
-          <Box component="section" aria-labelledby="choose-path-heading" sx={{ py: { xs: 6, md: 10 } }}>
-            <Typography
-              id="choose-path-heading"
-              variant="h2"
-              sx={{
-                textAlign: "center",
-                fontWeight: 900,
-                fontSize: { xs: "2.4rem", md: "3.2rem" },
-                mb: 2,
-                color: theme.palette.text.primary,
-              }}
-            >
-              Choose Your Path
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: "center",
-                color: theme.palette.text.secondary,
-                mb: 6,
-                maxWidth: 600,
-                mx: "auto",
-                fontSize: "1.1rem",
-              }}
-            >
-              Whether you're learning, building, or teaching — we've got you
-              covered
-            </Typography>
-
-            <Grid container spacing={4} ref={pathsView.ref}>
-              {paths.map((path, index) => (
-                <Grid
-                  size={{ xs: 12, md: 4 }}
-                  key={index}
-                  sx={{
-                    opacity: pathsView.inView ? 1 : 0,
-                    transform: pathsView.inView ? "none" : "translateY(28px)",
-                    transition: `opacity 0.5s ease ${index * 0.12}s, transform 0.5s ease ${index * 0.12}s`,
-                  }}
-                >
-                  <Box sx={{ height: "100%", py: 1 }}>
-                    <PathCard {...path} />
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {/* Powerful Features Section */}
-          <Box component="section" aria-labelledby="features-heading" sx={{ py: { xs: 6, md: 10 } }}>
-            <Typography
-              id="features-heading"
-              variant="h2"
-              sx={{
-                textAlign: "center",
-                fontWeight: 900,
-                fontSize: { xs: "2.4rem", md: "3.2rem" },
-                mb: 2,
-                color: theme.palette.text.primary,
-              }}
-            >
-              Powerful Features
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: "center",
-                color: theme.palette.text.secondary,
-                mb: 6,
-                maxWidth: 600,
-                mx: "auto",
-                fontSize: "1.1rem",
-              }}
-            >
-              Everything you need to design, document, and share system
-              architectures
-            </Typography>
-
-            <Grid container spacing={4} ref={featuresView.ref}>
-              {features.map((feature, index) => (
-                <Grid
-                  size={{ xs: 12, sm: 6, md: 4 }}
-                  key={index}
-                  sx={{
-                    opacity: featuresView.inView ? 1 : 0,
-                    transform: featuresView.inView ? "none" : "translateY(28px)",
-                    transition: `opacity 0.5s ease ${index * 0.08}s, transform 0.5s ease ${index * 0.08}s`,
-                  }}
-                >
-                  <Card
-                    sx={{
-                      height: "100%",
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      background:
-                        theme.palette.mode === "dark"
-                          ? alpha(theme.palette.background.paper, 0.6)
-                          : alpha(theme.palette.background.paper, 0.9),
-                      backdropFilter: "blur(20px)",
-                      border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.25 : 0.15)}`,
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "translateY(-12px)",
-                        boxShadow: `0 20px 56px ${alpha(theme.palette.primary.main, 0.35)}`,
-                        border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
-                      },
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        flexGrow: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        p: "0 !important",
-                      }}
-                    >
-                      <FeatureCard {...feature} />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {/* Testimonials Section */}
-          <Box component="section" aria-labelledby="testimonials-heading" sx={{ py: { xs: 6, md: 10 } }}>
-            <Typography
-              id="testimonials-heading"
-              variant="h2"
-              sx={{
-                textAlign: "center",
-                fontWeight: 900,
-                fontSize: { xs: "2.4rem", md: "3.2rem" },
-                mb: 2,
-                color: theme.palette.text.primary,
-              }}
-            >
-              Loved by Cloud Teams Worldwide
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: "center",
-                color: theme.palette.text.secondary,
-                mb: 6,
-                maxWidth: 600,
-                mx: "auto",
-                fontSize: "1.1rem",
-              }}
-            >
-              Join thousands who trust our platform for their cloud
-              infrastructure needs
-            </Typography>
-
-            <Grid container spacing={4} ref={testimonialsView.ref}>
-              {testimonials.map((testimonial, index) => (
-                <Grid
-                  size={{ xs: 12, md: 4 }}
-                  key={index}
-                  sx={{
-                    opacity: testimonialsView.inView ? 1 : 0,
-                    transform: testimonialsView.inView ? "none" : "translateY(28px)",
-                    transition: `opacity 0.5s ease ${index * 0.15}s, transform 0.5s ease ${index * 0.15}s`,
-                  }}
-                >
-                  <Testimonial {...testimonial} />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-
-          {/* Final CTA */}
-          <Box
-            component="section"
-            aria-labelledby="final-cta-heading"
-            sx={{
-              py: { xs: 8, md: 12 },
-              textAlign: "center",
-            }}
-          >
-            <Typography
-              id="final-cta-heading"
-              variant="h2"
-              sx={{
-                fontWeight: 900,
-                fontSize: { xs: "2.6rem", md: "3.5rem" },
-                mb: 2,
-                color: theme.palette.text.primary,
-              }}
-            >
-              Ready to Start Designing?
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                color: theme.palette.text.secondary,
-                mb: 4,
-                maxWidth: 600,
-                mx: "auto",
-                fontWeight: 400,
-                lineHeight: 1.7,
-              }}
-            >
-              Join thousands of developers and architects who trust our platform
-              for their cloud infrastructure needs
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate("/home")}
-              aria-label="Launch free canvas — start designing your infrastructure"
-              sx={{
-                px: 8,
-                py: 2.5,
-                fontSize: "1.3rem",
-                fontWeight: 700,
-                borderRadius: 3,
-                textTransform: "none",
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.45)}`,
-                "&:hover": {
-                  boxShadow: `0 20px 60px ${alpha(theme.palette.primary.main, 0.6)}`,
-                  transform: "translateY(-4px) scale(1.02)",
-                },
-                transition: "all 0.3s ease",
-              }}
-            >
-              Launch Free Canvas
-            </Button>
-          </Box>
+        <Container maxWidth="lg">
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            2026 Orchestrator. Cloud templates, visual design, Terraform export.
+          </Typography>
         </Container>
-
-        {/* Footer */}
-        <Box
-          sx={{
-            borderTop: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.2 : 0.1)}`,
-            py: 4,
-            textAlign: "center",
-            background:
-              theme.palette.mode === "dark"
-                ? alpha(theme.palette.background.paper, 0.3)
-                : "transparent",
-          }}
-        >
-          <Container maxWidth="lg">
-            <Typography
-              variant="body2"
-              sx={{ color: theme.palette.text.secondary }}
-            >
-              © 2026 Cloud Orchestrator. Built with ❤️ for cloud architects
-            </Typography>
-          </Container>
-        </Box>
       </Box>
     </Box>
   );
