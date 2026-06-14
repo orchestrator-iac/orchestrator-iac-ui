@@ -342,7 +342,7 @@ const SectionIntro: React.FC<{
       <Typography
         variant="overline"
         sx={{
-          color: theme.palette.primary.main,
+          color: theme.palette.secondary.main,
           fontWeight: 800,
           letterSpacing: "0.14em",
           lineHeight: 1.6,
@@ -378,7 +378,13 @@ const SectionIntro: React.FC<{
   );
 };
 
-const ProductNodeCard: React.FC<ProductNode> = ({ icon, label, meta, x, y }) => {
+const ProductNodeCard: React.FC<ProductNode> = ({
+  icon,
+  label,
+  meta,
+  x,
+  y,
+}) => {
   const theme = useTheme();
 
   return (
@@ -391,7 +397,7 @@ const ProductNodeCard: React.FC<ProductNode> = ({ icon, label, meta, x, y }) => 
         minHeight: 68,
         p: 1.5,
         borderRadius: 1,
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.28)}`,
+        border: `1px solid ${alpha(theme.palette.secondary.main, 0.3)}`,
         backgroundColor:
           theme.palette.mode === "dark"
             ? alpha(theme.palette.background.paper, 0.94)
@@ -408,8 +414,8 @@ const ProductNodeCard: React.FC<ProductNode> = ({ icon, label, meta, x, y }) => 
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: theme.palette.primary.main,
-            backgroundColor: alpha(theme.palette.primary.main, 0.1),
+            color: theme.palette.secondary.main,
+            backgroundColor: alpha(theme.palette.tertiary.main, 0.26),
           }}
         >
           {icon}
@@ -570,8 +576,8 @@ const HeroProductScene: React.FC = () => {
                 top: "28%",
                 width: "53%",
                 height: "38%",
-                borderTop: `2px solid ${alpha(theme.palette.primary.main, 0.34)}`,
-                borderRight: `2px solid ${alpha(theme.palette.primary.main, 0.22)}`,
+                borderTop: `2px solid ${alpha(theme.palette.secondary.main, 0.34)}`,
+                borderRight: `2px solid ${alpha(theme.palette.secondary.main, 0.22)}`,
                 transform: "skewY(-9deg)",
               }}
             />
@@ -618,12 +624,12 @@ const HeroProductScene: React.FC = () => {
                   p: 1.2,
                   borderRadius: 1,
                   border: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.18),
                 }}
               >
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <TemplateIcon
-                    sx={{ color: theme.palette.primary.main, fontSize: 18 }}
+                    sx={{ color: theme.palette.secondary.main, fontSize: 18 }}
                   />
                   <Box sx={{ minWidth: 0 }}>
                     <Typography
@@ -677,7 +683,7 @@ const HeroProductScene: React.FC = () => {
           >
             <Stack direction="row" spacing={1} alignItems="center">
               <CodeIcon
-                sx={{ color: theme.palette.primary.main, fontSize: 18 }}
+                sx={{ color: theme.palette.secondary.main, fontSize: 18 }}
               />
               <Typography
                 sx={{
@@ -751,7 +757,9 @@ const MobileProductPreview: React.FC = () => {
         }}
       >
         <Stack direction="row" spacing={1} alignItems="center">
-          <TemplateIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+          <TemplateIcon
+            sx={{ color: theme.palette.secondary.main, fontSize: 18 }}
+          />
           <Typography sx={{ fontSize: "0.78rem", fontWeight: 850 }}>
             Template to Terraform
           </Typography>
@@ -787,10 +795,10 @@ const MobileProductPreview: React.FC = () => {
                 minHeight: 58,
                 overflow: "hidden",
                 borderRadius: 1,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                border: `1px solid ${alpha(theme.palette.secondary.main, 0.24)}`,
                 backgroundColor: alpha(
-                  theme.palette.primary.main,
-                  index === 1 ? 0.11 : 0.06,
+                  theme.palette.tertiary.main,
+                  index === 1 ? 0.3 : 0.2,
                 ),
               }}
             >
@@ -863,8 +871,8 @@ const ProductLoopMockup: React.FC<{
                 borderRadius: 1,
                 border: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
                 backgroundColor: alpha(
-                  theme.palette.primary.main,
-                  index === 0 ? 0.09 : 0.04,
+                  theme.palette.tertiary.main,
+                  index === 0 ? 0.28 : 0.18,
                 ),
               }}
             >
@@ -891,19 +899,20 @@ const ProductLoopMockup: React.FC<{
                       fontSize: "0.7rem",
                       lineHeight: 1.5,
                     }}
-                    >
-                      {template.detail}
-                    </Typography>
-                  </Box>
-                  <Chip
+                  >
+                    {template.detail}
+                  </Typography>
+                </Box>
+                <Chip
                   label={template.cloud}
                   size="small"
                   sx={{
                     height: 24,
                     borderRadius: 1,
                     fontWeight: 800,
-                    color: theme.palette.primary.main,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                    color: theme.palette.secondary.main,
+                    backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                    border: `1px solid ${alpha(theme.palette.tertiary.main, 0.46)}`,
                   }}
                 />
               </Stack>
@@ -916,11 +925,15 @@ const ProductLoopMockup: React.FC<{
               border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
               backgroundColor:
                 theme.palette.mode === "dark"
-                  ? alpha(theme.palette.common.white, 0.025)
-                  : alpha(theme.palette.primary.main, 0.035),
+                  ? alpha(theme.palette.tertiary.main, 0.18)
+                  : alpha(theme.palette.tertiary.main, 0.14),
             }}
           >
-            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ flexWrap: "wrap", gap: 1, justifyContent: "center" }}
+            >
               {["3 starter patterns", "Multi-cloud cues", "Ready to fork"].map(
                 (item) => (
                   <Chip
@@ -965,8 +978,8 @@ const ProductLoopMockup: React.FC<{
               top: "26%",
               width: "48%",
               height: "34%",
-              borderTop: `2px solid ${alpha(theme.palette.primary.main, 0.34)}`,
-              borderRight: `2px solid ${alpha(theme.palette.primary.main, 0.24)}`,
+              borderTop: `2px solid ${alpha(theme.palette.secondary.main, 0.34)}`,
+              borderRight: `2px solid ${alpha(theme.palette.secondary.main, 0.24)}`,
               transform: "skewY(-10deg)",
             }}
           />
@@ -1005,7 +1018,7 @@ const ProductLoopMockup: React.FC<{
                   backgroundColor:
                     state === "Required"
                       ? alpha("#f59e0b", 0.08)
-                      : alpha(theme.palette.primary.main, 0.04),
+                      : alpha(theme.palette.tertiary.main, 0.18),
                 }}
               >
                 <Stack
@@ -1044,11 +1057,11 @@ const ProductLoopMockup: React.FC<{
                       color:
                         state === "Required"
                           ? "#b45309"
-                          : theme.palette.primary.main,
+                          : theme.palette.secondary.main,
                       backgroundColor:
                         state === "Required"
                           ? alpha("#f59e0b", 0.14)
-                          : alpha(theme.palette.primary.main, 0.1),
+                          : alpha(theme.palette.tertiary.main, 0.24),
                     }}
                   />
                 </Stack>
@@ -1059,8 +1072,8 @@ const ProductLoopMockup: React.FC<{
             sx={{
               p: 1.25,
               borderRadius: 1,
-              border: `1px dashed ${alpha(theme.palette.primary.main, 0.32)}`,
-              backgroundColor: alpha(theme.palette.primary.main, 0.05),
+              border: `1px dashed ${alpha(theme.palette.secondary.main, 0.34)}`,
+              backgroundColor: alpha(theme.palette.tertiary.main, 0.18),
             }}
           >
             <Typography
@@ -1099,7 +1112,7 @@ const ProductLoopMockup: React.FC<{
                   height: "100%",
                   borderRadius: 999,
                   background: `linear-gradient(90deg, ${alpha(
-                    theme.palette.primary.main,
+                    theme.palette.secondary.main,
                     0.95,
                   )}, ${alpha("#f59e0b", 0.82)})`,
                 }}
@@ -1152,12 +1165,12 @@ const ProductLoopMockup: React.FC<{
                 p: 1.1,
                 borderRadius: 1,
                 border: `1px solid ${alpha(theme.palette.divider, 0.56)}`,
-                backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                backgroundColor: alpha(theme.palette.tertiary.main, 0.18),
               }}
             >
               <Typography
                 sx={{
-                  color: theme.palette.primary.main,
+                  color: theme.palette.secondary.main,
                   fontSize: "0.68rem",
                   fontWeight: 850,
                   textTransform: "uppercase",
@@ -1180,7 +1193,7 @@ const ProductLoopMockup: React.FC<{
             </Box>
           ))}
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
-            {["zip bundle", "module outputs", "review ready"].map((item) => (
+            {["ZIP Bundle", "Module Outputs", "Review Ready"].map((item) => (
               <Chip
                 key={item}
                 label={item}
@@ -1189,8 +1202,9 @@ const ProductLoopMockup: React.FC<{
                   height: 24,
                   borderRadius: 1,
                   fontWeight: 800,
-                  color: theme.palette.primary.main,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.secondary.main,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.42)}`,
                 }}
               />
             ))}
@@ -1221,11 +1235,11 @@ const ProductLoopMockup: React.FC<{
           background:
             visual === "canvas"
               ? `radial-gradient(circle at ${reverseLayout ? "30%" : "70%"} 30%, ${alpha(
-                  theme.palette.primary.main,
+                  theme.palette.secondary.main,
                   0.2,
                 )} 0%, transparent 56%)`
               : `radial-gradient(circle at ${reverseLayout ? "35%" : "65%"} 35%, ${alpha(
-                  theme.palette.primary.main,
+                  theme.palette.tertiary.main,
                   0.14,
                 )} 0%, transparent 58%)`,
           filter: "blur(16px)",
@@ -1286,8 +1300,18 @@ const ProductLoopMockup: React.FC<{
         <Box
           sx={{
             minHeight: {
-              xs: visual === "canvas" ? 276 : visual === "terraform" ? 250 : "auto",
-              md: visual === "canvas" ? 316 : visual === "terraform" ? 292 : "auto",
+              xs:
+                visual === "canvas"
+                  ? 276
+                  : visual === "terraform"
+                    ? 250
+                    : "auto",
+              md:
+                visual === "canvas"
+                  ? 316
+                  : visual === "terraform"
+                    ? 292
+                    : "auto",
             },
           }}
         >
@@ -1310,7 +1334,7 @@ const ProductLoopSection: React.FC = () => {
         background:
           theme.palette.mode === "dark"
             ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.02)} 0%, transparent 100%)`
-            : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.035)} 0%, transparent 100%)`,
+            : `linear-gradient(180deg, ${alpha(theme.palette.tertiary.main, 0.22)} 0%, transparent 100%)`,
       }}
     >
       <Container maxWidth="lg">
@@ -1333,8 +1357,9 @@ const ProductLoopSection: React.FC = () => {
                 sx={{
                   borderRadius: 1,
                   fontWeight: 700,
-                  color: theme.palette.primary.main,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.09),
+                  color: theme.palette.secondary.main,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.28),
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.46)}`,
                 }}
               />
             ))}
@@ -1386,10 +1411,10 @@ const ProductLoopSection: React.FC = () => {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            color: theme.palette.primary.main,
+                            color: theme.palette.secondary.main,
                             backgroundColor: alpha(
-                              theme.palette.primary.main,
-                              0.1,
+                              theme.palette.tertiary.main,
+                              0.28,
                             ),
                           }}
                         >
@@ -1397,7 +1422,7 @@ const ProductLoopSection: React.FC = () => {
                         </Box>
                         <Typography
                           sx={{
-                            color: theme.palette.primary.main,
+                            color: theme.palette.secondary.main,
                             fontSize: "0.76rem",
                             fontWeight: 850,
                             letterSpacing: "0.12em",
@@ -1410,7 +1435,11 @@ const ProductLoopSection: React.FC = () => {
                         variant="h3"
                         sx={{
                           color: "text.primary",
-                          fontSize: { xs: "1.5rem", sm: "1.85rem", md: "2.08rem" },
+                          fontSize: {
+                            xs: "1.5rem",
+                            sm: "1.85rem",
+                            md: "2.08rem",
+                          },
                           fontWeight: 850,
                           lineHeight: 1.1,
                           letterSpacing: 0,
@@ -1447,8 +1476,8 @@ const ProductLoopSection: React.FC = () => {
                               color: "text.primary",
                               backgroundColor:
                                 theme.palette.mode === "dark"
-                                  ? alpha(theme.palette.common.white, 0.04)
-                                  : alpha(theme.palette.primary.main, 0.06),
+                                  ? alpha(theme.palette.tertiary.main, 0.3)
+                                  : alpha(theme.palette.tertiary.main, 0.24),
                               border: `1px solid ${alpha(
                                 theme.palette.divider,
                                 0.58,
@@ -1546,8 +1575,8 @@ const CapabilitySignalRail: React.FC<{
               color: "text.primary",
               backgroundColor:
                 theme.palette.mode === "dark"
-                  ? alpha(theme.palette.common.white, 0.05)
-                  : alpha(theme.palette.primary.main, 0.08),
+                  ? alpha(theme.palette.tertiary.main, 0.32)
+                  : alpha(theme.palette.tertiary.main, 0.22),
               border: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
               whiteSpace: "nowrap",
               "& .MuiChip-label": {
@@ -1602,7 +1631,7 @@ const ArtifactSection: React.FC = () => {
               >
                 <Stack direction="row" spacing={1} alignItems="center">
                   <TerminalIcon
-                    sx={{ color: theme.palette.primary.main, fontSize: 20 }}
+                    sx={{ color: theme.palette.secondary.main, fontSize: 20 }}
                   />
                   <Typography sx={{ fontWeight: 800, color: "text.primary" }}>
                     Terraform preview
@@ -1614,8 +1643,9 @@ const ArtifactSection: React.FC = () => {
                   sx={{
                     borderRadius: 1,
                     fontWeight: 700,
-                    color: theme.palette.primary.main,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    color: theme.palette.secondary.main,
+                    backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
+                    border: `1px solid ${alpha(theme.palette.tertiary.main, 0.42)}`,
                   }}
                 />
               </Box>
@@ -1660,7 +1690,7 @@ const ArtifactSection: React.FC = () => {
                               width: 72,
                               fontSize: "0.72rem",
                               fontWeight: 850,
-                              color: theme.palette.primary.main,
+                              color: theme.palette.secondary.main,
                               textTransform: "uppercase",
                               letterSpacing: "0.08em",
                             }}
@@ -1722,14 +1752,14 @@ const TemplateShowcaseSection: React.FC<{
         background:
           theme.palette.mode === "dark"
             ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.018)} 0%, transparent 100%)`
-            : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.028)} 0%, transparent 100%)`,
+            : `linear-gradient(180deg, ${alpha(theme.palette.tertiary.main, 0.18)} 0%, transparent 100%)`,
       }}
     >
       <Container maxWidth="lg">
         <Stack
           direction={{ xs: "column", md: "row" }}
           justifyContent="space-between"
-          alignItems={{ xs: "flex-start", md: "flex-end" }}
+          alignItems={{ xs: "flex-start", md: "center" }}
           spacing={3}
           sx={{ mb: { xs: 4, md: 6 } }}
         >
@@ -1789,7 +1819,7 @@ const TemplateShowcaseSection: React.FC<{
               <Box>
                 <Typography
                   sx={{
-                    color: theme.palette.primary.main,
+                    color: theme.palette.secondary.main,
                     fontWeight: 850,
                     fontSize: "0.76rem",
                     letterSpacing: "0.12em",
@@ -1826,8 +1856,9 @@ const TemplateShowcaseSection: React.FC<{
                 sx={{
                   borderRadius: 1,
                   fontWeight: 800,
-                  color: theme.palette.primary.main,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.secondary.main,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.44)}`,
                 }}
               />
             </Stack>
@@ -1861,8 +1892,8 @@ const TemplateShowcaseSection: React.FC<{
                   top: "22%",
                   width: "56%",
                   height: "34%",
-                  borderTop: `2px solid ${alpha(theme.palette.primary.main, 0.28)}`,
-                  borderRight: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  borderTop: `2px solid ${alpha(theme.palette.secondary.main, 0.28)}`,
+                  borderRight: `2px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
                   transform: "skewY(-9deg)",
                 }}
               />
@@ -1886,7 +1917,7 @@ const TemplateShowcaseSection: React.FC<{
                     width: { xs: 126, md: 144 },
                     p: 1.35,
                     borderRadius: 1,
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.26)}`,
+                    border: `1px solid ${alpha(theme.palette.secondary.main, 0.28)}`,
                     backgroundColor:
                       theme.palette.mode === "dark"
                         ? alpha(theme.palette.background.paper, 0.95)
@@ -1903,8 +1934,11 @@ const TemplateShowcaseSection: React.FC<{
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: theme.palette.primary.main,
-                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.secondary.main,
+                        backgroundColor: alpha(
+                          theme.palette.tertiary.main,
+                          0.22,
+                        ),
                       }}
                     >
                       {node.icon}
@@ -1975,8 +2009,9 @@ const TemplateShowcaseSection: React.FC<{
                       height: 22,
                       borderRadius: 1,
                       fontWeight: 800,
-                      color: theme.palette.primary.main,
-                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      color: theme.palette.secondary.main,
+                      backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
+                      border: `1px solid ${alpha(theme.palette.tertiary.main, 0.42)}`,
                     }}
                   />
                 </Stack>
@@ -2009,7 +2044,10 @@ const TemplateShowcaseSection: React.FC<{
               sx={{
                 mt: 2.1,
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(2, 1fr)",
+                  sm: "repeat(4, 1fr)",
+                },
                 gap: 1.1,
               }}
             >
@@ -2025,12 +2063,12 @@ const TemplateShowcaseSection: React.FC<{
                     p: 1.1,
                     borderRadius: 1,
                     border: `1px solid ${alpha(theme.palette.divider, 0.58)}`,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                    backgroundColor: alpha(theme.palette.tertiary.main, 0.18),
                   }}
                 >
                   <Typography
                     sx={{
-                      color: theme.palette.primary.main,
+                      color: theme.palette.secondary.main,
                       fontSize: "0.66rem",
                       fontWeight: 850,
                       textTransform: "uppercase",
@@ -2063,7 +2101,7 @@ const TemplateShowcaseSection: React.FC<{
           >
             <Typography
               sx={{
-                color: theme.palette.primary.main,
+                color: theme.palette.secondary.main,
                 fontWeight: 850,
                 fontSize: "0.74rem",
                 letterSpacing: "0.1em",
@@ -2105,7 +2143,7 @@ const TemplateShowcaseSection: React.FC<{
           >
             <Typography
               sx={{
-                color: theme.palette.primary.main,
+                color: theme.palette.secondary.main,
                 fontWeight: 850,
                 fontSize: "0.74rem",
                 letterSpacing: "0.1em",
@@ -2125,7 +2163,7 @@ const TemplateShowcaseSection: React.FC<{
                     p: 1.05,
                     borderRadius: 1,
                     border: `1px solid ${alpha(theme.palette.divider, 0.56)}`,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                    backgroundColor: alpha(theme.palette.tertiary.main, 0.18),
                   }}
                 >
                   <Typography
@@ -2168,7 +2206,7 @@ const TemplateShowcaseSection: React.FC<{
               <Box>
                 <Typography
                   sx={{
-                    color: theme.palette.primary.main,
+                    color: theme.palette.secondary.main,
                     fontWeight: 850,
                     fontSize: "0.74rem",
                     letterSpacing: "0.1em",
@@ -2195,8 +2233,9 @@ const TemplateShowcaseSection: React.FC<{
                   alignSelf: { xs: "flex-start", sm: "center" },
                   borderRadius: 1,
                   fontWeight: 800,
-                  color: theme.palette.primary.main,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.secondary.main,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.42)}`,
                 }}
               />
             </Stack>
@@ -2208,7 +2247,7 @@ const TemplateShowcaseSection: React.FC<{
                       p: 1.3,
                       borderRadius: 1,
                       border: `1px solid ${alpha(theme.palette.divider, 0.56)}`,
-                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                      backgroundColor: alpha(theme.palette.tertiary.main, 0.18),
                     }}
                   >
                     <Stack
@@ -2245,34 +2284,38 @@ const TemplateShowcaseSection: React.FC<{
                           height: 22,
                           borderRadius: 1,
                           fontWeight: 800,
-                          color: theme.palette.primary.main,
-                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                          color: theme.palette.secondary.main,
+                          backgroundColor: alpha(
+                            theme.palette.tertiary.main,
+                            0.22,
+                          ),
+                          border: `1px solid ${alpha(theme.palette.tertiary.main, 0.42)}`,
                         }}
                       />
                     </Stack>
                     <Box
                       sx={{
-                      mt: 1.2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                        mt: 1.2,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
                       }}
                     >
                       <Typography
-                      sx={{
-                        color: theme.palette.text.secondary,
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {template.status}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color: "text.primary",
-                        fontSize: "0.7rem",
-                        fontWeight: 800,
-                      }}
+                        sx={{
+                          color: theme.palette.text.secondary,
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {template.status}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: "text.primary",
+                          fontSize: "0.7rem",
+                          fontWeight: 800,
+                        }}
                       >
                         {template.nodes}
                       </Typography>
@@ -2299,7 +2342,7 @@ const TemplateShowcaseSection: React.FC<{
               <Box>
                 <Typography
                   sx={{
-                    color: theme.palette.primary.main,
+                    color: theme.palette.secondary.main,
                     fontWeight: 850,
                     fontSize: "0.74rem",
                     letterSpacing: "0.1em",
@@ -2355,8 +2398,8 @@ const TemplateShowcaseSection: React.FC<{
                       color: "text.primary",
                       backgroundColor:
                         theme.palette.mode === "dark"
-                          ? alpha(theme.palette.common.white, 0.04)
-                          : alpha(theme.palette.primary.main, 0.06),
+                          ? alpha(theme.palette.tertiary.main, 0.24)
+                          : alpha(theme.palette.tertiary.main, 0.18),
                       border: `1px solid ${alpha(theme.palette.divider, 0.52)}`,
                     }}
                   />
@@ -2388,15 +2431,21 @@ const CapabilityMatrixSection: React.FC = () => {
         background:
           theme.palette.mode === "dark"
             ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.018)} 0%, transparent 100%)`
-            : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, transparent 100%)`,
+            : `linear-gradient(180deg, ${alpha(theme.palette.tertiary.main, 0.18)} 0%, transparent 100%)`,
       }}
     >
       <Container maxWidth="lg">
-        <Box sx={{ maxWidth: 980, mx: "auto", textAlign: "center" }}>
+        <Box
+          sx={{
+            maxWidth: 980,
+            mx: "auto",
+            textAlign: { xs: "center", md: "left" },
+          }}
+        >
           <Typography
             variant="overline"
             sx={{
-              color: theme.palette.primary.main,
+              color: theme.palette.secondary.main,
               fontWeight: 850,
               letterSpacing: "0.14em",
               lineHeight: 1.6,
@@ -2449,10 +2498,18 @@ const CapabilityMatrixSection: React.FC = () => {
           sx={{
             mt: { xs: 4, md: 6 },
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", xl: "repeat(3, 1fr)" },
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              xl: "repeat(3, 1fr)",
+            },
             gap: { xs: 1.5, md: 0 },
-            borderTop: { md: `1px solid ${alpha(theme.palette.divider, 0.68)}` },
-            borderLeft: { md: `1px solid ${alpha(theme.palette.divider, 0.68)}` },
+            borderTop: {
+              md: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+            },
+            borderLeft: {
+              md: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+            },
           }}
         >
           {capabilityItems.map((item) => (
@@ -2462,8 +2519,12 @@ const CapabilityMatrixSection: React.FC = () => {
                 position: "relative",
                 p: { xs: 2.1, sm: 2.3, md: 2.55 },
                 minHeight: { xs: "auto", md: 220 },
-                borderRight: { md: `1px solid ${alpha(theme.palette.divider, 0.68)}` },
-                borderBottom: { md: `1px solid ${alpha(theme.palette.divider, 0.68)}` },
+                borderRight: {
+                  md: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+                },
+                borderBottom: {
+                  md: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+                },
                 backgroundColor:
                   theme.palette.mode === "dark"
                     ? alpha(theme.palette.background.paper, 0.68)
@@ -2486,17 +2547,23 @@ const CapabilityMatrixSection: React.FC = () => {
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
-                    color: theme.palette.primary.main,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    color: theme.palette.secondary.main,
+                    backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
                   }}
                 >
                   {item.icon}
                 </Box>
-                <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: "100%",
+                  }}
+                >
                   <Typography
                     variant="caption"
                     sx={{
-                      color: theme.palette.primary.main,
+                      color: theme.palette.secondary.main,
                       fontWeight: 850,
                       textTransform: "uppercase",
                       letterSpacing: "0.08em",
@@ -2624,14 +2691,14 @@ const FinalCta: React.FC<{
                 textTransform: "none",
                 fontWeight: 850,
                 color: "text.primary",
-                borderColor: alpha(theme.palette.primary.main, 0.38),
+                borderColor: alpha(theme.palette.secondary.main, 0.42),
                 backgroundColor:
                   theme.palette.mode === "dark"
                     ? alpha(theme.palette.common.white, 0.02)
                     : alpha(theme.palette.common.white, 0.48),
                 "&:hover": {
-                  borderColor: theme.palette.primary.main,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  borderColor: theme.palette.secondary.main,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
                 },
               }}
             >
@@ -2781,10 +2848,11 @@ const LandingPage: React.FC = () => {
                 height: 34,
                 px: 0.5,
                 fontWeight: 800,
-                color: theme.palette.primary.main,
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                color: theme.palette.secondary.main,
+                backgroundColor: alpha(theme.palette.tertiary.main, 0.28),
+                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.46)}`,
                 "& .MuiChip-icon": {
-                  color: theme.palette.primary.main,
+                  color: theme.palette.secondary.main,
                 },
               }}
             />
@@ -2792,7 +2860,7 @@ const LandingPage: React.FC = () => {
               id="landing-hero-title"
               variant="h1"
               sx={{
-                color: "text.primary",
+                color: theme.palette.primary.main,
                 fontSize: { xs: "2.55rem", sm: "4.2rem", md: "5.6rem" },
                 fontWeight: 850,
                 lineHeight: 0.96,
@@ -2872,15 +2940,15 @@ const LandingPage: React.FC = () => {
                   py: 1.35,
                   textTransform: "none",
                   fontWeight: 850,
-                  borderColor: alpha(theme.palette.primary.main, 0.38),
+                  borderColor: alpha(theme.palette.secondary.main, 0.42),
                   color: "text.primary",
                   backgroundColor:
                     theme.palette.mode === "dark"
                       ? alpha(theme.palette.common.white, 0.02)
                       : alpha(theme.palette.common.white, 0.52),
                   "&:hover": {
-                    borderColor: theme.palette.primary.main,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                    borderColor: theme.palette.secondary.main,
+                    backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
                   },
                 }}
               >
@@ -2909,7 +2977,7 @@ const LandingPage: React.FC = () => {
                   alignItems="center"
                 >
                   <VerifiedIcon
-                    sx={{ color: theme.palette.primary.main, fontSize: 18 }}
+                    sx={{ color: theme.palette.secondary.main, fontSize: 18 }}
                   />
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
                     {label}

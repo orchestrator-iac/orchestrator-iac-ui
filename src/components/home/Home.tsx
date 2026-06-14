@@ -332,9 +332,9 @@ const Home: React.FC = () => {
                   fontWeight: 600,
                   px: 0.5,
                   letterSpacing: "0.01em",
-                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                  color: theme.palette.primary.main,
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                  color: theme.palette.secondary.main,
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
                 }}
               />
             )}
@@ -354,9 +354,9 @@ const Home: React.FC = () => {
                   fontWeight: 600,
                   px: 0.5,
                   letterSpacing: "0.01em",
-                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                  color: theme.palette.primary.main,
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                  color: theme.palette.secondary.main,
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
                   cursor: "pointer",
                 }}
               />
@@ -377,9 +377,9 @@ const Home: React.FC = () => {
                   fontWeight: 600,
                   px: 0.5,
                   letterSpacing: "0.01em",
-                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                  color: theme.palette.primary.main,
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                  color: theme.palette.secondary.main,
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
                   cursor: "pointer",
                 }}
               />

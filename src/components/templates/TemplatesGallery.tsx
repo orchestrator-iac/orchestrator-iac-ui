@@ -213,19 +213,19 @@ const TemplatesGallery: React.FC = () => {
           >
             <Box
               aria-hidden="true"
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 44,
-                height: 44,
-                borderRadius: 2,
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
-                color: theme.palette.primary.main,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
-                flexShrink: 0,
-                fontSize: "1.1rem",
-              }}
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.18)}, ${alpha(theme.palette.tertiary.main, 0.22)})`,
+                  color: theme.palette.secondary.main,
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.45)}`,
+                  flexShrink: 0,
+                  fontSize: "1.1rem",
+                }}
             >
               <FontAwesomeIcon icon="layer-group" />
             </Box>
@@ -253,8 +253,8 @@ const TemplatesGallery: React.FC = () => {
             borderRadius: 3,
             overflow: "hidden",
             position: "relative",
-            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.background.default, 0.9)} 100%)`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.12)} 0%, ${alpha(theme.palette.tertiary.main, 0.12)} 100%)`,
+            border: `1px solid ${alpha(theme.palette.tertiary.main, 0.38)}`,
             p: { xs: 3, sm: 4 },
           }}
         >
@@ -268,7 +268,7 @@ const TemplatesGallery: React.FC = () => {
               width: 200,
               height: 200,
               borderRadius: "50%",
-              background: alpha(theme.palette.primary.main, 0.06),
+              background: alpha(theme.palette.tertiary.main, 0.2),
               pointerEvents: "none",
             }}
           />
@@ -305,10 +305,10 @@ const TemplatesGallery: React.FC = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.28)}, ${alpha(theme.palette.primary.main, 0.1)})`,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.22)}, ${alpha(theme.palette.tertiary.main, 0.24)})`,
+                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.42)}`,
                 fontSize: "1.4rem",
-                color: theme.palette.primary.main,
+                color: theme.palette.secondary.main,
               }}
             >
               <FontAwesomeIcon icon="rocket" />
@@ -350,8 +350,8 @@ const TemplatesGallery: React.FC = () => {
                       px: 1.5,
                       py: 0.75,
                       borderRadius: 2,
-                      background: alpha(theme.palette.primary.main, 0.06),
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+                      background: alpha(theme.palette.tertiary.main, 0.2),
+                      border: `1px solid ${alpha(theme.palette.tertiary.main, 0.42)}`,
                     }}
                   >
                     <FontAwesomeIcon
@@ -359,14 +359,14 @@ const TemplatesGallery: React.FC = () => {
                       aria-hidden="true"
                       style={{
                         fontSize: "0.7rem",
-                        color: theme.palette.primary.main,
+                        color: theme.palette.secondary.main,
                       }}
                     />
                     <Typography
                       variant="caption"
                       sx={{
                         fontWeight: 600,
-                        color: theme.palette.primary.main,
+                        color: theme.palette.secondary.main,
                       }}
                     >
                       {label}

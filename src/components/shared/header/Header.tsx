@@ -143,13 +143,15 @@ const Header: React.FC = () => {
                 <Avatar
                   sx={{
                     bgcolor:
-                      theme.palette.mode === "dark" ? "#2a2a2a" : "#f0f0f0",
+                      theme.palette.mode === "dark"
+                        ? alpha(theme.palette.tertiary.main, 0.22)
+                        : alpha(theme.palette.tertiary.main, 0.32),
                     color: theme.palette.primary.main,
                     fontWeight: 600,
                     width: 40,
                     height: 40,
                     border: "2px solid",
-                    borderColor: alpha(theme.palette.primary.main, 0.2),
+                    borderColor: alpha(theme.palette.tertiary.main, 0.55),
                     transition: "all 0.3s ease",
                   }}
                   alt={user.firstName}
@@ -197,7 +199,7 @@ const Header: React.FC = () => {
                     gap: 1.5,
                     transition: "all 0.2s ease",
                     "&:hover": {
-                          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+                      backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
                     },
                   }}
                 >
