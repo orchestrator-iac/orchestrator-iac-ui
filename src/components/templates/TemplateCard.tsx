@@ -86,8 +86,8 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
             alignItems: "center",
             justifyContent: "center",
             fontSize: "2.5rem",
-            color: alpha(theme.palette.primary.main, 0.5),
-            backgroundColor: alpha(theme.palette.primary.main, 0.04),
+            color: alpha(theme.palette.secondary.main, 0.82),
+            backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
           }}
         >
           <FontAwesomeIcon aria-hidden="true" icon="sitemap" />
@@ -217,7 +217,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
           color: theme.palette.primary.main,
           "&:hover": {
             borderColor: theme.palette.primary.main,
-            backgroundColor: alpha(theme.palette.primary.main, 0.08),
+            backgroundColor: alpha(theme.palette.secondary.main, 0.12),
           },
           textTransform: "none",
           fontWeight: 500,

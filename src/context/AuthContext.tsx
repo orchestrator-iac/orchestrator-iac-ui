@@ -90,7 +90,8 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
           setToken(newTok);
         }
       } catch (err) {
-        // Clear state and redirect to login if silent refresh fails
+        // Clear auth state if silent refresh fails. ProtectedRoute owns
+        // redirecting protected pages; public pages must stay public.
         console.debug("No refresh token available or refresh failed", err);
         try {
           tokenManager.clearAccessToken();
@@ -99,21 +100,6 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
         }
         setToken(null);
         setUser(null);
-        try {
-          if (
-            globalThis.window !== undefined &&
-            globalThis.location.pathname !== "/login"
-          ) {
-            try {
-              localStorage.setItem("loggedOutAt", String(Date.now()));
-            } catch {
-              globalThis.location.href = "/login";
-            }
-            globalThis.location.href = "/login";
-          }
-        } catch (e) {
-          console.debug("AuthContext: failed to redirect to /login", e);
-        }
       } finally {
         setIsInitializing(false);
       }

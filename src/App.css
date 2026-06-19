@@ -1,47 +1,47 @@
 /* index.css or App.css */
 :root {
-  --primary: #1a5757;
-  --secondary: #3da9a9;
-  --ternary: #52c9c9;
-  --bg-color: #f8f9fa;
+  --primary: #0b5f61;
+  --secondary: #1f8f93;
+  --ternary: #9fd4d5;
+  --bg-color: #edf2f3;
   --card-bg: #ffffff;
-  --card-color: #1e293b;
-  --text-color: #64748b;
+  --card-color: #0f1d21;
+  --text-color: #51636b;
   --pastel: #d4a5a5;
-  --text1: #0f172a;
-  --text2: #334155;
-  --text3: #64748b;
-  --text4: #94a3b8;
+  --text1: #0f1d21;
+  --text2: #33444c;
+  --text3: #60727a;
+  --text4: #90a0a7;
 }
 
 [data-theme="dark"] {
-  --primary: #4bbebe;
-  --secondary: #7dd3d3;
-  --ternary: #8ecacc;
-  --bg-color: #0f172a;
-  --card-bg: #1e293b;
-  --card-color: #e2e8f0;
-  --text-color: #94a3b8;
+  --primary: #7fd7d6;
+  --secondary: #58b6b8;
+  --ternary: #2e5558;
+  --bg-color: #111516;
+  --card-bg: #171d1f;
+  --card-color: #f2f7f8;
+  --text-color: #b9c7cb;
   --pastel: #f7d9d9;
-  --text1: #f1f5f9;
-  --text2: #cbd5e1;
-  --text3: #94a3b8;
-  --text4: #64748b;
+  --text1: #f2f7f8;
+  --text2: #d6e0e3;
+  --text3: #b1c0c4;
+  --text4: #85979d;
 }
 
 [data-theme="light"] {
-  --primary: #1a5757;
-  --secondary: #3da9a9;
-  --ternary: #52c9c9;
-  --bg-color: #f8f9fa;
+  --primary: #0b5f61;
+  --secondary: #1f8f93;
+  --ternary: #9fd4d5;
+  --bg-color: #edf2f3;
   --card-bg: #ffffff;
-  --card-color: #1e293b;
-  --text-color: #64748b;
+  --card-color: #0f1d21;
+  --text-color: #51636b;
   --pastel: #d4a5a5;
-  --text1: #0f172a;
-  --text2: #334155;
-  --text3: #64748b;
-  --text4: #94a3b8;
+  --text1: #0f1d21;
+  --text2: #33444c;
+  --text3: #60727a;
+  --text4: #90a0a7;
 }
 
 body {
@@ -73,12 +73,12 @@ body::before {
   background:
     radial-gradient(
       circle at 20% 10%,
-      rgba(75, 190, 190, 0.03) 0%,
+      rgba(31, 143, 147, 0.04) 0%,
       transparent 50%
     ),
     radial-gradient(
       circle at 80% 80%,
-      rgba(32, 90, 90, 0.03) 0%,
+      rgba(159, 212, 213, 0.06) 0%,
       transparent 50%
     );
   pointer-events: none;
@@ -89,12 +89,12 @@ body::before {
   background:
     radial-gradient(
       circle at 20% 10%,
-      rgba(75, 190, 190, 0.05) 0%,
+      rgba(88, 182, 184, 0.08) 0%,
       transparent 50%
     ),
     radial-gradient(
       circle at 80% 80%,
-      rgba(136, 207, 207, 0.05) 0%,
+      rgba(46, 85, 88, 0.12) 0%,
       transparent 50%
     );
 }
@@ -128,12 +128,12 @@ body::before {
 /* Selection color */
 ::selection {
   background: var(--secondary);
-  color: #fff;
+  color: #000;
 }
 
 ::-moz-selection {
   background: var(--secondary);
-  color: #fff;
+  color: #000;
 }
 
 /* Rich note editor enhancements */

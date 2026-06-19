@@ -24,3 +24,10 @@ dist-ssr
 *.sw?
 .agents/*
 skills-lock.json
+
+# Keep the repo-local Codex skills versioned.
+!.agents/skills/
+!.agents/skills/orchestrator-iac-ui/
+!.agents/skills/orchestrator-iac-ui/**
+!.agents/skills/orchestrator-iac-cross-repo/
+!.agents/skills/orchestrator-iac-cross-repo/**

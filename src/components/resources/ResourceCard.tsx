@@ -87,8 +87,8 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
             alignItems: "center",
             justifyContent: "center",
             fontSize: "2.5rem",
-            color: alpha(theme.palette.primary.main, 0.5),
-            backgroundColor: alpha(theme.palette.primary.main, 0.04),
+            color: alpha(theme.palette.secondary.main, 0.82),
+            backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
           }}
         >
           <FontAwesomeIcon icon="cube" />

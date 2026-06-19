@@ -152,9 +152,9 @@ const ResourcesGallery: React.FC = () => {
                   width: 44,
                   height: 44,
                   borderRadius: 2,
-                  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
-                  color: theme.palette.primary.main,
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
+                  background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.18)}, ${alpha(theme.palette.tertiary.main, 0.22)})`,
+                  color: theme.palette.secondary.main,
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.45)}`,
                   flexShrink: 0,
                   fontSize: "1.1rem",
                 }}
@@ -281,9 +281,9 @@ const ResourcesGallery: React.FC = () => {
                 },
               },
               "& .MuiToggleButton-root.Mui-selected": {
-                backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                color: theme.palette.primary.main,
-                borderColor: alpha(theme.palette.primary.main, 0.25),
+                backgroundColor: alpha(theme.palette.secondary.main, 0.16),
+                color: theme.palette.secondary.main,
+                borderColor: alpha(theme.palette.secondary.main, 0.32),
               },
             }}
           >
@@ -305,9 +305,9 @@ const ResourcesGallery: React.FC = () => {
               size="small"
               sx={{
                 fontWeight: 600,
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.primary.main,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                color: theme.palette.secondary.main,
+                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
               }}
             />
           )}

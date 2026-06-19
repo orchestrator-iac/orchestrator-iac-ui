@@ -56,7 +56,6 @@ const PlanCard: React.FC<PlanCardProps> = ({
   isImplementing = false,
 }) => {
   const errorCount = plan.securityNotes.filter((n) => n.severity === "error").length;
-  const warnCount = plan.securityNotes.filter((n) => n.severity === "warn").length;
 
   return (
     <Paper
