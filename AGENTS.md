@@ -42,3 +42,11 @@ This repo is the React + TypeScript front end for a SaaS product. Optimize for p
 - Do not introduce new dependencies unless the tradeoff is clear.
 - Add or update tests for meaningful UI or logic changes.
 - For visual work, verify behavior across the main flows before finishing.
+
+## Resource Mapping Contract
+
+- Treat `resourceId` and `from:nodes:type=...` as the canonical graph-side resource types. Keep these aligned with the catalog resource IDs, not Terraform module names.
+- Treat `outputRef` as the source module output name. It is allowed to differ from the linked field name, and the UI should preserve it when saving connected values.
+- Preserve link metadata on connected values (`id`, `friendlyId`, `__nodeType`, `outputRef`) so the backend can render module references correctly.
+- Prefer plain `cardinality = "1"` and `cardinality = "many"` for new mappings. Avoid range syntax unless a specific resource contract truly needs it.
+- When editing a resource form, verify the options source, the saved value shape, and the Terraform template together so the picker, graph, and generated IaC stay in sync.
