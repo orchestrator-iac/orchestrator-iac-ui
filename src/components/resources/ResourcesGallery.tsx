@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   Box,
   Typography,
@@ -12,6 +12,7 @@ import {
   ToggleButton,
   useTheme,
   alpha,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -49,6 +50,7 @@ const ResourcesGallery: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [cloudFilter, setCloudFilter] = useState<CloudFilter>("all");
   const [showContent, setShowContent] = useState(false);
+  const hasRetriedFailedLoad = useRef(false);
 
   // Restore body scroll
   useEffect(() => {
@@ -61,9 +63,15 @@ const ResourcesGallery: React.FC = () => {
     return () => clearTimeout(t);
   }, []);
 
-  // Fetch resources if not already loaded
+  // Fetch resources on first visit and recover once from a stale failed load.
   useEffect(() => {
     if (status === "idle") {
+      dispatch(fetchResources());
+      return;
+    }
+
+    if (status === "failed" && !hasRetriedFailedLoad.current) {
+      hasRetriedFailedLoad.current = true;
       dispatch(fetchResources());
     }
   }, [dispatch, status]);
@@ -103,6 +111,7 @@ const ResourcesGallery: React.FC = () => {
   }, [resources, searchQuery, cloudFilter]);
 
   const isLoading = status === "loading";
+  const isError = status === "failed";
   const isEmpty = status === "succeeded" && filteredResources.length === 0;
 
   return (
@@ -387,6 +396,64 @@ const ResourcesGallery: React.FC = () => {
               </Box>
             </Grid>
           ))
+        ) : isError ? (
+          <Grid size={12}>
+            <Fade in timeout={800}>
+              <Box
+                role="alert"
+                aria-live="polite"
+                sx={{
+                  p: { xs: 5, sm: 8 },
+                  textAlign: "center",
+                  borderRadius: 3,
+                  border: "1px dashed",
+                  borderColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.error.main, 0.35)
+                      : alpha(theme.palette.error.main, 0.25),
+                  backgroundColor: alpha(theme.palette.error.main, 0.04),
+                }}
+              >
+                <Box sx={{ maxWidth: 520, mx: "auto" }}>
+                  <Alert
+                    severity="error"
+                    variant="outlined"
+                    sx={{
+                      mb: 2,
+                      borderRadius: 2,
+                      textAlign: "left",
+                      alignItems: "center",
+                    }}
+                  >
+                    We couldn't load the resources right now.
+                  </Alert>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.75 }}>
+                    Resource gallery unavailable
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", lineHeight: 1.6, mb: 3 }}
+                  >
+                    Try again. If this keeps happening, the backend may still
+                    be warming up or your session may need to be refreshed.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => dispatch(fetchResources())}
+                    startIcon={
+                      <FontAwesomeIcon
+                        icon="arrow-rotate-right"
+                        style={{ fontSize: "0.8rem" }}
+                      />
+                    }
+                    sx={{ borderRadius: 2, textTransform: "none" }}
+                  >
+                    Retry loading
+                  </Button>
+                </Box>
+              </Box>
+            </Fade>
+          </Grid>
         ) : isEmpty ? (
           <Grid size={12}>
             <Fade in timeout={800}>
