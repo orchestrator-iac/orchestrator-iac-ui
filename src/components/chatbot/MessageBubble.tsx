@@ -3,6 +3,7 @@ import { Avatar, Box, Typography } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import type { ChatMessage } from "@/types/chat";
 import PlanCard from "./PlanCard";
+import { RiRobot3Fill } from "react-icons/ri";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -71,7 +72,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           mt: 0.5,
         }}
       >
-        M
+        <RiRobot3Fill size={16} />
       </Avatar>
 
       <Box

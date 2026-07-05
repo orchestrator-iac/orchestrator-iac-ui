@@ -16,7 +16,10 @@ import SaveIcon from "@mui/icons-material/Save";
 import { Node, Edge } from "@xyflow/react";
 
 import { orchestratorService } from "../../../services/orchestratorService";
-import { prepareOrchestratorForSave } from "../../../utils/orchestratorUtils";
+import {
+  prepareOrchestratorForSave,
+  validateOrchestratorData,
+} from "../../../utils/orchestratorUtils";
 import { TemplateInfo } from "../../../types/orchestrator";
 import { generateFlowImage } from "../utils/downloadImage";
 import { useAuth } from "../../../context/AuthContext";
@@ -75,6 +78,12 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
   const handleSave = useCallback(async () => {
     if (!templateName.trim()) {
       setSaveError("Please provide a name for this orchestrator");
+      return;
+    }
+
+    const validation = validateOrchestratorData(nodes, edges);
+    if (!validation.valid) {
+      setSaveError(validation.errors.join(", "));
       return;
     }
 

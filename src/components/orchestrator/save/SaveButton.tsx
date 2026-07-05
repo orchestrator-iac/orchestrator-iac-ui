@@ -35,10 +35,15 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Sync external open state with internal state
+  // Sync external open state with internal state.
+  // The menu drives this path, so it should open the dialog directly.
   useEffect(() => {
-    if (externalOpen !== undefined && externalOpen !== dialogOpen) {
-      handleClick();
+    if (externalOpen === undefined) {
+      return;
+    }
+    setDialogOpen(externalOpen);
+    if (externalOpen) {
+      setValidationError(null);
     }
   }, [externalOpen]);
 

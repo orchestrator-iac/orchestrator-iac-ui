@@ -1,30 +1,12 @@
-import { Outlet, useLocation } from "react-router-dom";
-import Header from "../header/Header";
+import { Outlet } from "react-router-dom";
 
 import styles from "./Layout.module.css";
 
 const Layout = () => {
-  const location = useLocation();
-  const noHeaderRoutes = [
-    "/login",
-    "/register",
-    "/register-success",
-    "/confirm",
-    "/email-verification/forgot",
-    "/email-verification/verify",
-    "/night-sky",
-    "/black-hole",
-    "/update-password",
-  ];
-  const hideHeader = noHeaderRoutes.includes(location.pathname);
-
   return (
-    <>
-      {!hideHeader && <Header />}
-      <div className={styles.componentBody}>
-        <Outlet />
-      </div>
-    </>
+    <div className={styles.componentBody}>
+      <Outlet />
+    </div>
   );
 };
 

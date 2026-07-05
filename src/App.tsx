@@ -9,11 +9,13 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Box } from "@mui/material";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ChatLayoutProvider, useChatLayout } from "./context/ChatLayoutContext";
 
 import Home from "./components/home/Home";
 import Resources from "./components/resources/Resources";
@@ -23,6 +25,7 @@ import Register from "./components/auth/register/Register";
 import RegisterSuccessPage from "./components/auth/register/RegisterSuccessPage";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import Layout from "./components/shared/layout/Layout";
+import Header from "./components/shared/header/Header";
 import Profile from "./components/auth/profile/Profile";
 import ConfirmEmail from "./components/auth/ConfirmEmail";
 import NotFound from "./components/shared/NotFound";
@@ -35,19 +38,52 @@ import TemplatesGallery from "./components/templates/TemplatesGallery";
 import TemplateDetail from "./components/templates/TemplateDetail";
 import ResourcesGallery from "./components/resources/ResourcesGallery";
 
+const NO_HEADER_ROUTES = [
+  "/login",
+  "/register",
+  "/register-success",
+  "/confirm",
+  "/email-verification/forgot",
+  "/email-verification/verify",
+  "/night-sky",
+  "/black-hole",
+  "/update-password",
+];
+
 // Add FontAwesome icon packs
 library.add(fab, fas);
 
-const App = () => {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const AppShell: React.FC<{
+  isSplitView: boolean;
+  splitWidth: number;
+  isDragging: boolean;
+}> = ({ isSplitView, splitWidth, isDragging }) => {
+  const location = useLocation();
+  const hideHeader = NO_HEADER_ROUTES.includes(location.pathname);
 
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <AuthProvider>
-        <ThemeProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Layout />}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        width: "100vw",
+        overflow: "hidden",
+      }}
+    >
+      {!hideHeader && <Header />}
+      <Box sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <Box
+          sx={{
+            width: isSplitView ? `calc(100% - ${splitWidth}px)` : "100%",
+            height: "100%",
+            overflow: "auto",
+            flexShrink: 0,
+            transition: isDragging ? "none" : "width 0.2s ease",
+          }}
+        >
+          <Routes>
+            <Route path="/" element={<Layout />}>
                 <Route index element={<LandingPage />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
@@ -122,9 +158,38 @@ const App = () => {
                   }
                 />
               </Route>
-            </Routes>
-            <Chatbot />
-          </BrowserRouter>
+          </Routes>
+        </Box>
+        <Chatbot />
+      </Box>
+    </Box>
+  );
+};
+
+const AppLayout = () => {
+  const { isSplitView, splitWidth, isDragging } = useChatLayout();
+
+  return (
+    <BrowserRouter>
+      <AppShell
+        isSplitView={isSplitView}
+        splitWidth={splitWidth}
+        isDragging={isDragging}
+      />
+    </BrowserRouter>
+  );
+};
+
+const App = () => {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
+  return (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <AuthProvider>
+        <ThemeProvider>
+          <ChatLayoutProvider>
+            <AppLayout />
+          </ChatLayoutProvider>
         </ThemeProvider>
       </AuthProvider>
     </GoogleOAuthProvider>

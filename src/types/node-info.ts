@@ -132,7 +132,7 @@ export interface Field {
   hint?: string;
   error_text?: string;
   size?: number | string;
-  required?: boolean;
+  required?: boolean | string | DepExpr;
   info?: string;
   placeholder?: string;
 

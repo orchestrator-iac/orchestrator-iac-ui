@@ -74,7 +74,23 @@ export const registerUser = async (register: Register) => {
     RegisterSchema.parse(register);
     const payload = { ...register, password: base64Encode(register.password) };
     await apiService.post("/user/register", payload, { headers: { "X-Password-Encoding": "base64" } });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const detail = error.response?.data?.detail;
+      const message =
+        typeof detail === "string" && detail.trim().length > 0
+          ? detail
+          : error.response?.data?.message || error.message || "Registration failed";
+
+      const apiError = new Error(message);
+      Object.assign(apiError, {
+        type: "api",
+        status: error.response?.status,
+        response: error.response,
+      });
+      throw apiError;
+    }
+
     if (error instanceof Error) {
       throw new Error(error.message);
     }

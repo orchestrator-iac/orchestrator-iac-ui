@@ -31,7 +31,7 @@ import { Field, FieldGroup, LinkRule } from "../../types/node-info";
 import { CodeEditorField } from "../shared/code-editor/CodeEditorField";
 import { UserProfile } from "../../types/auth";
 import { CloudConfig, availabilityZones } from "../../types/clouds-info";
-import { validCondition } from "../../utils/deps";
+import { isFieldRequired, validCondition } from "../../utils/deps";
 import { renderTemplate } from "@/utils/renderTemplate";
 import ListObjectField from "./ListObjectField";
 import ListSelectTextField from "./ListSelectTextField";
@@ -242,6 +242,7 @@ const DynamicForm: React.FC<Props> = ({
 
     const linkRule = links?.find((r) => r.bind === name);
     const resolvedOptions = resolveOptions(options, formData);
+    const isRequired = isFieldRequired(required, formData);
 
     switch (type) {
       case "info":
@@ -250,7 +251,7 @@ const DynamicForm: React.FC<Props> = ({
         return (
           <TextField
             fullWidth
-            required={!!required}
+            required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
             helperText={error_text || hint}
@@ -264,7 +265,7 @@ const DynamicForm: React.FC<Props> = ({
             fullWidth
             multiline
             rows={fieldCfg?.rows ?? 4}
-            required={!!required}
+            required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
             helperText={error_text || hint}
@@ -274,7 +275,7 @@ const DynamicForm: React.FC<Props> = ({
 
       case "radio":
         return (
-          <FormControl fullWidth required={!!required}>
+          <FormControl fullWidth required={isRequired}>
             <RadioGroup
               value={formData[name] ?? value ?? ""}
               onChange={(e) => handleChange(name, e.target.value)}
@@ -296,7 +297,7 @@ const DynamicForm: React.FC<Props> = ({
 
       case "select":
         return (
-          <FormControl fullWidth required={!!required}>
+          <FormControl fullWidth required={isRequired}>
             <Select
               className="nodrag"
               value={formData[name] ?? value ?? ""}
@@ -381,12 +382,12 @@ const DynamicForm: React.FC<Props> = ({
               }
             }}
             renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder={placeholder ?? "Select or type an ID"}
-                required={!!required}
-                helperText={error_text || hint}
-              />
+                <TextField
+                  {...params}
+                  placeholder={placeholder ?? "Select or type an ID"}
+                  required={isRequired}
+                  helperText={error_text || hint}
+                />
             )}
             renderOption={(props, option) => (
               <MenuItem
@@ -439,7 +440,7 @@ const DynamicForm: React.FC<Props> = ({
         const opts = (resolvedOptions ?? options) as any[] | undefined;
 
         return (
-          <FormControl fullWidth required={!!required}>
+          <FormControl fullWidth required={isRequired}>
             {opts && opts.length > 0 ? (
               opts.map((option) => {
                 const currentValues: string[] = formData[name] ?? value ?? [];
@@ -583,7 +584,7 @@ const DynamicForm: React.FC<Props> = ({
           <TextField
             fullWidth
             type="number"
-            required={!!required}
+            required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
             helperText={error_text || hint}
@@ -758,7 +759,7 @@ const DynamicForm: React.FC<Props> = ({
             value={formData[name] ?? value}
             placeholder={placeholder}
             errorMessage={error_text}
-            required={required}
+            required={isFieldRequired(required, formData)}
             onChange={(newValue) => handleChange(name, newValue)}
           />
         );

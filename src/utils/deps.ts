@@ -135,3 +135,28 @@ export const validCondition = (
   }
   return true;
 };
+
+/**
+ * Decide whether a field should be marked required.
+ * Supports plain booleans plus the same predicate shapes used by depends_on.
+ */
+export const isFieldRequired = (
+  required: unknown,
+  vals: Values = {},
+): boolean => {
+  if (typeof required === "boolean") return required;
+  if (!required) return false;
+
+  try {
+    if (typeof required === "object") {
+      return evalJsonPredicate(required as DepExpr, vals);
+    }
+    if (typeof required === "string") {
+      return evalLegacyString(required, vals);
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+};

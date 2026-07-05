@@ -10,6 +10,8 @@ import {
   Alert,
   useTheme,
   Divider,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import { GoogleLogin } from "@react-oauth/google";
 import { registerUser } from "../../../services/auth";
@@ -17,6 +19,7 @@ import { useGoogleAuth } from "../../../hooks/useGoogleAuth";
 import NightSky from "../../shared/night-sky/NightSky";
 
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const jobFunctions = [
   "Developer",
@@ -39,6 +42,8 @@ const Register: React.FC = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
 
   const handleChange = (e: any) => {
@@ -67,7 +72,11 @@ const Register: React.FC = () => {
       navigate("/register-success");
     } catch (err) {
       console.error("Registration failed:", err);
-      setError("Registration failed. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again.",
+      );
     }
   };
 
@@ -155,10 +164,35 @@ const Register: React.FC = () => {
                 fullWidth
                 label="Password"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={form.password}
                 onChange={handleChange}
                 required
+                slotProps={{
+                  htmlInput: {
+                    "aria-label": "Password",
+                    "aria-required": "true",
+                  },
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                          onClick={() => setShowPassword((v) => !v)}
+                          edge="end"
+                          size="small"
+                        >
+                          <FontAwesomeIcon
+                            icon={showPassword ? "eye-slash" : "eye"}
+                            style={{ fontSize: "0.85rem" }}
+                          />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
             </Grid>
             <Grid size={12}>
@@ -166,10 +200,35 @@ const Register: React.FC = () => {
                 fullWidth
                 label="Confirm Password"
                 name="confirmPassword"
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 value={form.confirmPassword}
                 onChange={handleChange}
                 required
+                slotProps={{
+                  htmlInput: {
+                    "aria-label": "Password",
+                    "aria-required": "true",
+                  },
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label={
+                            showConfirmPassword ? "Hide password" : "Show password"
+                          }
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          edge="end"
+                          size="small"
+                        >
+                          <FontAwesomeIcon
+                            icon={showConfirmPassword ? "eye-slash" : "eye"}
+                            style={{ fontSize: "0.85rem" }}
+                          />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
             </Grid>
           </Grid>

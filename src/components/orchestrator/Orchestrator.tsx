@@ -711,6 +711,7 @@ const OrchestratorReactFlow: React.FC = () => {
         sourceId = String(newSourceId || "");
       }
 
+      const sourceNodeExists = nodes.some((n) => n.id === sourceId);
       const target = nodes.find((n) => n.id === nodeId);
       if (!target) return;
       const baseBind = bindStr.includes("[") ? bindStr.split("[")[0] : bindStr;
@@ -871,7 +872,7 @@ const OrchestratorReactFlow: React.FC = () => {
             });
           }
         }
-        if (sourceId) {
+        if (sourceId && sourceNodeExists) {
           const duplicate = working.some(
             (e) =>
               e.source === sourceId &&
