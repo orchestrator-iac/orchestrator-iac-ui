@@ -523,7 +523,7 @@ const ResourcesGallery: React.FC = () => {
           filteredResources.map((resource, index) => (
             <Grid
               key={resource._id}
-              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+              size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
               display="flex"
             >
               <Fade in={showContent} timeout={600 + index * 50}>
