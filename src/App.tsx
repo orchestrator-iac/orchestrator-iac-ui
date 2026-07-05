@@ -9,11 +9,13 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 
+import { Box } from "@mui/material";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ChatLayoutProvider, useChatLayout } from "./context/ChatLayoutContext";
 
 import Home from "./components/home/Home";
 import Resources from "./components/resources/Resources";
@@ -38,16 +40,23 @@ import ResourcesGallery from "./components/resources/ResourcesGallery";
 // Add FontAwesome icon packs
 library.add(fab, fas);
 
-const App = () => {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const AppLayout = () => {
+  const { isSplitView, splitWidth, isDragging } = useChatLayout();
 
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <AuthProvider>
-        <ThemeProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Layout />}>
+    <BrowserRouter>
+      <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
+        <Box
+          sx={{
+            width: isSplitView ? `calc(100% - ${splitWidth}px)` : "100%",
+            height: "100%",
+            overflow: "auto",
+            flexShrink: 0,
+            transition: isDragging ? "none" : "width 0.2s ease",
+          }}
+        >
+          <Routes>
+            <Route path="/" element={<Layout />}>
                 <Route index element={<LandingPage />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
@@ -122,9 +131,24 @@ const App = () => {
                   }
                 />
               </Route>
-            </Routes>
-            <Chatbot />
-          </BrowserRouter>
+          </Routes>
+        </Box>
+        <Chatbot />
+      </Box>
+    </BrowserRouter>
+  );
+};
+
+const App = () => {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
+  return (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <AuthProvider>
+        <ThemeProvider>
+          <ChatLayoutProvider>
+            <AppLayout />
+          </ChatLayoutProvider>
         </ThemeProvider>
       </AuthProvider>
     </GoogleOAuthProvider>

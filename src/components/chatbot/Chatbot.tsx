@@ -24,17 +24,22 @@ import {
   Snackbar,
   Alert,
   Button,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChatIcon from "@mui/icons-material/Chat";
 import CloseIcon from "@mui/icons-material/Close";
+import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
 import DescriptionIcon from "@mui/icons-material/Description";
 import HistoryIcon from "@mui/icons-material/History";
+import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import SendIcon from "@mui/icons-material/Send";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import NotesList from "@/components/notes/NotesList";
+import { useChatLayout } from "@/context/ChatLayoutContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   appendLocalMessage,
@@ -87,11 +92,69 @@ const TypingIndicator: React.FC = () => (
   </Box>
 );
 
+// ── Drag handle for split-view resize ───────────────────────────────────────────
+
+const DragHandle: React.FC = () => {
+  const { splitWidth, setSplitWidth, setIsDragging } = useChatLayout();
+  const draggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    startXRef.current = e.clientX;
+    startWidthRef.current = splitWidth;
+    setIsDragging(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      const deltaX = e.clientX - startXRef.current;
+      setSplitWidth(startWidthRef.current - deltaX);
+    };
+    const onMouseUp = () => {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      setIsDragging(false);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [setSplitWidth, setIsDragging]);
+
+  return (
+    <Box
+      onMouseDown={onMouseDown}
+      sx={{
+        width: "6px",
+        cursor: "col-resize",
+        flexShrink: 0,
+        bgcolor: "transparent",
+        "&:hover": { bgcolor: "primary.main", opacity: 0.4 },
+        transition: "background-color 0.15s",
+      }}
+    />
+  );
+};
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 const Chatbot: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { isSplitView, toggleSplitView, setSplitView, splitWidth } =
+    useChatLayout();
   const {
     activeSession,
     activeSessionStatus,
@@ -141,6 +204,20 @@ const Chatbot: React.FC = () => {
       dispatch(fetchResources());
     }
   }, [catalogStatus, dispatch]);
+
+  // ── Split view isn't supported on small screens ────────────────────────────
+  useEffect(() => {
+    if (isMobile && isSplitView) {
+      setSplitView(false);
+    }
+  }, [isMobile, isSplitView, setSplitView]);
+
+  const handleToggleSplitView = () => {
+    if (!isSplitView) {
+      setOpenChat(true);
+    }
+    toggleSplitView();
+  };
 
   // ── On open: load latest existing session, or create a new one ────────────────
   useEffect(() => {
@@ -417,40 +494,66 @@ const Chatbot: React.FC = () => {
   return (
     <>
       {/* Floating launcher */}
-      <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1300 }}>
-        <Tooltip title={openChat ? "Close Maestro" : "Open Maestro"}>
-          <IconButton
-            color="primary"
-            onClick={() => setOpenChat((o) => !o)}
-            size="large"
-            sx={{
-              bgcolor: "background.paper",
-              boxShadow: 4,
-              "&:hover": { boxShadow: 6 },
-            }}
-          >
-            {openChat ? <CloseIcon /> : <ChatIcon />}
-          </IconButton>
-        </Tooltip>
-      </Box>
+      {!isSplitView && (
+        <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1300 }}>
+          <Tooltip title={openChat ? "Close Maestro" : "Open Maestro"}>
+            <IconButton
+              color="primary"
+              onClick={() => setOpenChat((o) => !o)}
+              size="large"
+              sx={{
+                bgcolor: "background.paper",
+                boxShadow: 4,
+                "&:hover": { boxShadow: 6 },
+              }}
+            >
+              {openChat ? <CloseIcon /> : <ChatIcon />}
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
 
       {/* Chat panel */}
-      {openChat && (
-        <Paper
-          elevation={8}
+      {(openChat || isSplitView) && (
+        <Box
           sx={{
-            position: "fixed",
-            bottom: 90,
-            right: 24,
-            width: 420,
-            height: 520,
             display: "flex",
-            flexDirection: "column",
-            borderRadius: 3,
-            overflow: "hidden",
-            zIndex: 1299,
+            height: isSplitView ? "100%" : "auto",
+            width: isSplitView ? splitWidth : "auto",
+            flexShrink: 0,
           }}
         >
+          {isSplitView && <DragHandle />}
+          <Paper
+            elevation={isSplitView ? 0 : 8}
+            sx={
+              isSplitView
+                ? {
+                    position: "relative",
+                    height: "100%",
+                    width: "100%",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: 0,
+                    overflow: "hidden",
+                    boxShadow: "none",
+                    borderLeft: (t) => `1px solid ${t.palette.divider}`,
+                  }
+                : {
+                    position: "fixed",
+                    bottom: 90,
+                    right: 24,
+                    width: 420,
+                    height: 520,
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    zIndex: 1299,
+                  }
+            }
+          >
           {/* ── Header ── */}
           <Box
             sx={{
@@ -522,11 +625,32 @@ const Chatbot: React.FC = () => {
                 <DescriptionIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            
+            {!isMobile && (
+              <Tooltip
+                title={
+                  isSplitView ? "Restore floating chat" : "Expand to split view"
+                }
+              >
+                <IconButton
+                  size="small"
+                  color="inherit"
+                  onClick={handleToggleSplitView}
+                >
+                  {isSplitView ? (
+                    <CloseFullscreenIcon fontSize="small" />
+                  ) : (
+                    <OpenInFullIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </Tooltip>
+            )}
             <IconButton
               size="small"
               color="inherit"
-              onClick={() => setOpenChat(false)}
+              onClick={() => {
+                if (isSplitView) setSplitView(false);
+                setOpenChat(false);
+              }}
             >
               <CloseIcon fontSize="small" />
             </IconButton>
@@ -720,7 +844,8 @@ const Chatbot: React.FC = () => {
               />
             </Box>
           )}
-        </Paper>
+          </Paper>
+        </Box>
       )}
 
       {/* Notes modal — preserved for backward compatibility */}

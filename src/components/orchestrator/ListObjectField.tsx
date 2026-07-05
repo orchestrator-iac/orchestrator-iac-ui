@@ -24,7 +24,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import parse from "html-react-parser";
 import { useViewport } from "@xyflow/react";
-import { validCondition } from "../../utils/deps";
+import { isFieldRequired, validCondition } from "../../utils/deps";
 
 type ListObjectFieldProps = {
   name: string;
@@ -115,13 +115,14 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
     itemIndex: number,
   ) => {
     const fieldValue = itemData?.[schemaField.name] ?? schemaField.value ?? "";
+    const isRequired = isFieldRequired(schemaField.required, itemData);
 
     switch (schemaField.type) {
       case "text":
         return (
           <TextField
             fullWidth
-            required={!!schemaField.required}
+            required={isRequired}
             value={fieldValue}
             placeholder={schemaField.placeholder ?? ""}
             helperText={schemaField.error_text || schemaField.hint}
@@ -137,7 +138,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             fullWidth
             multiline
             rows={schemaField.config?.rows ?? 4}
-            required={!!schemaField.required}
+            required={isRequired}
             value={fieldValue}
             placeholder={schemaField.placeholder ?? ""}
             helperText={schemaField.error_text || schemaField.hint}
@@ -152,7 +153,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
           <TextField
             fullWidth
             type="number"
-            required={!!schemaField.required}
+            required={isRequired}
             value={fieldValue}
             placeholder={schemaField.placeholder ?? ""}
             helperText={schemaField.error_text || schemaField.hint}
@@ -180,7 +181,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
           itemData,
         );
         return (
-          <FormControl fullWidth required={!!schemaField.required}>
+          <FormControl fullWidth required={isRequired}>
             <Select
               className="nodrag"
               value={fieldValue}
@@ -304,12 +305,12 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
               }
             }}
             renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder={schemaField.placeholder ?? "Select or type an ID"}
-                required={!!schemaField.required}
-                helperText={schemaField.error_text || schemaField.hint}
-              />
+                <TextField
+                  {...params}
+                  placeholder={schemaField.placeholder ?? "Select or type an ID"}
+                  required={isRequired}
+                  helperText={schemaField.error_text || schemaField.hint}
+                />
             )}
             renderOption={(props, option) => (
               <MenuItem
@@ -345,7 +346,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
           itemData,
         );
         return (
-          <FormControl fullWidth required={!!schemaField.required}>
+          <FormControl fullWidth required={isRequired}>
             <RadioGroup
               value={fieldValue}
               onChange={(e) =>
@@ -384,7 +385,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
         if (opts && opts.length > 0) {
           const currentValues: string[] = fieldValue ?? [];
           return (
-            <FormControl fullWidth required={!!schemaField.required}>
+            <FormControl fullWidth required={isRequired}>
               {opts.map((option) => (
                 <FormControlLabel
                   key={option.value}
