@@ -752,19 +752,20 @@ const Home: React.FC = () => {
               </Typography>
             </Box>
           </Fade>
-          <Grid
-            container
-            columns={{ xs: 4, sm: 8, md: 12 }}
-            spacing={{ xs: 2, sm: 2.5, md: 3 }}
-            alignItems="stretch"
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: { xs: 2, sm: 2.5, md: 3 },
+              alignItems: "stretch",
+            }}
           >
             {isLoading ? (
               // Loading Skeletons
               Array.from({ length: 4 }).map((_, index) => (
-                <Grid
+                <Box
                   key={`skeleton-orch-${index}`}
-                  size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
-                  display="flex"
+                  sx={{ display: "flex" }}
                 >
                   <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
                     <Skeleton
@@ -787,12 +788,12 @@ const Home: React.FC = () => {
                     />
                     <Skeleton variant="rounded" width={150} height={28} />
                   </Box>
-                </Grid>
+                </Box>
               ))
             ) : (
               <>
                 {canCreateOrchestrators && (
-                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} display="flex">
+                  <Box sx={{ display: "flex" }}>
                     <Fade in={showContent} timeout={1000}>
                       <Box
                         className={styles.card}
@@ -829,15 +830,14 @@ const Home: React.FC = () => {
                         </div>
                       </Box>
                     </Fade>
-                  </Grid>
+                  </Box>
                 )}
 
                 {filteredOrchestrators && filteredOrchestrators.length > 0 ? (
                   filteredOrchestrators.map((orchestrator, index) => (
-                    <Grid
+                    <Box
                       key={orchestrator._id}
-                      size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
-                      display="flex"
+                      sx={{ display: "flex" }}
                     >
                       <Fade in={showContent} timeout={1000 + index * 100}>
                         <Box
@@ -1061,10 +1061,10 @@ const Home: React.FC = () => {
                           </Box>
                         </Box>
                       </Fade>
-                    </Grid>
+                    </Box>
                   ))
                 ) : (
-                  <Grid size={12}>
+                  <Box sx={{ gridColumn: "1 / -1" }}>
                     <Fade in={showContent} timeout={1200}>
                       <Box
                         role="status"
@@ -1113,11 +1113,11 @@ const Home: React.FC = () => {
                         </Typography>
                       </Box>
                     </Fade>
-                  </Grid>
+                  </Box>
                 )}
               </>
             )}
-          </Grid>
+          </Box>
         </>
       )}
 

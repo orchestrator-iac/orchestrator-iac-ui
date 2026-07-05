@@ -29,7 +29,6 @@ import {
 } from "@mui/material";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ChatIcon from "@mui/icons-material/Chat";
 import CloseIcon from "@mui/icons-material/Close";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -55,6 +54,9 @@ import { fetchResources } from "@/store/resourcesSlice";
 import MessageBubble from "./MessageBubble";
 import DiffAlert from "./DiffAlert";
 import usePageContext from "@/hooks/usePageContext";
+import { RiRobot3Fill } from "react-icons/ri";
+import { IoMdClose } from "react-icons/io";
+
 
 // ── Typing indicator ───────────────────────────────────────────────────────────
 
@@ -68,7 +70,7 @@ const TypingIndicator: React.FC = () => (
         fontSize: "0.6rem",
       }}
     >
-      M
+      <RiRobot3Fill size={36} />
     </Avatar>
     <Stack direction="row" spacing={0.4} ml={0.5}>
       {[0, 1, 2].map((i) => (
@@ -259,7 +261,11 @@ const Chatbot: React.FC = () => {
         }),
       );
       dispatch(
-        sendMessage({ sessionId: activeSession.id, message: pending, pageContext: pageContext }),
+        sendMessage({
+          sessionId: activeSession.id,
+          message: pending,
+          pageContext: pageContext,
+        }),
       );
     }
   }, [activeSession, dispatch]);
@@ -297,7 +303,11 @@ const Chatbot: React.FC = () => {
       }),
     );
     dispatch(
-      sendMessage({ sessionId: activeSession.id, message: trimmed, pageContext: pageContext }),
+      sendMessage({
+        sessionId: activeSession.id,
+        message: trimmed,
+        pageContext: pageContext,
+      }),
     );
   };
 
@@ -507,7 +517,7 @@ const Chatbot: React.FC = () => {
                 "&:hover": { boxShadow: 6 },
               }}
             >
-              {openChat ? <CloseIcon /> : <ChatIcon />}
+              {openChat ? <IoMdClose size={36} /> : <RiRobot3Fill size={36} />}
             </IconButton>
           </Tooltip>
         </Box>
@@ -544,8 +554,8 @@ const Chatbot: React.FC = () => {
                     position: "fixed",
                     bottom: 90,
                     right: 24,
-                    width: 420,
-                    height: 520,
+                    width: 560,
+                    height: 640,
                     display: "flex",
                     flexDirection: "column",
                     borderRadius: 3,
@@ -554,296 +564,322 @@ const Chatbot: React.FC = () => {
                   }
             }
           >
-          {/* ── Header ── */}
-          <Box
-            sx={{
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              px: 2,
-              py: 1.25,
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 30,
-                height: 30,
-                bgcolor: "primary.dark",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-              }}
+            {/* ── Header ── */}
+            {/* In split view the app header already shows branding, so this row
+              is reduced to just the action icons rather than duplicating it. */}
+            <Box
+              sx={
+                isSplitView
+                  ? {
+                      bgcolor: "background.paper",
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      px: 1,
+                      py: 0.75,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                    }
+                  : {
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                      px: 2,
+                      py: 1.25,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }
+              }
             >
-              M
-            </Avatar>
-            <Box flex={1}>
-              <Typography variant="subtitle2" fontWeight={700} lineHeight={1.2}>
-                Maestro
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                Infrastructure planning assistant
-              </Typography>
-            </Box>
-            <Tooltip title="New chat">
-              <IconButton
-                size="small"
-                color="inherit"
-                onClick={() => {
-                  wantsNewSessionRef.current = true;
-                  setShowHistory(false);
-                  dispatch(clearActiveSession());
-                }}
-              >
-                <AddCommentIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={showHistory ? "Back to chat" : "Chat history"}>
-              <IconButton
-                size="small"
-                color="inherit"
-                onClick={() => {
-                  if (!showHistory && sessionsStatus !== "loading") {
-                    dispatch(fetchSessions());
-                  }
-                  setShowHistory((v) => !v);
-                }}
-              >
-                {showHistory ? (
-                  <ArrowBackIcon fontSize="small" />
-                ) : (
-                  <HistoryIcon fontSize="small" />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Notes">
-              <IconButton
-                size="small"
-                color="inherit"
-                onClick={() => setNotesOpen(true)}
-              >
-                <DescriptionIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            {!isMobile && (
-              <Tooltip
-                title={
-                  isSplitView ? "Restore floating chat" : "Expand to split view"
-                }
-              >
+              {!isSplitView && (
+                <>
+                  <Avatar
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      bgcolor: "primary.dark",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <RiRobot3Fill size={36} />
+                  </Avatar>
+                  <Box flex={1}>
+                    <Typography variant="body1" fontWeight={700}>
+                      Maestro
+                    </Typography>
+                    <Typography variant="caption">
+                      Infrastructure planning assistant
+                    </Typography>
+                  </Box>
+                </>
+              )}
+              {isSplitView && <Box flex={1} />}
+              <Tooltip title="New chat">
                 <IconButton
                   size="small"
                   color="inherit"
-                  onClick={handleToggleSplitView}
+                  onClick={() => {
+                    wantsNewSessionRef.current = true;
+                    setShowHistory(false);
+                    dispatch(clearActiveSession());
+                  }}
                 >
-                  {isSplitView ? (
-                    <CloseFullscreenIcon fontSize="small" />
+                  <AddCommentIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={showHistory ? "Back to chat" : "Chat history"}>
+                <IconButton
+                  size="small"
+                  color="inherit"
+                  onClick={() => {
+                    if (!showHistory && sessionsStatus !== "loading") {
+                      dispatch(fetchSessions());
+                    }
+                    setShowHistory((v) => !v);
+                  }}
+                >
+                  {showHistory ? (
+                    <ArrowBackIcon fontSize="small" />
                   ) : (
-                    <OpenInFullIcon fontSize="small" />
+                    <HistoryIcon fontSize="small" />
                   )}
                 </IconButton>
               </Tooltip>
-            )}
-            <IconButton
-              size="small"
-              color="inherit"
-              onClick={() => {
-                if (isSplitView) setSplitView(false);
-                setOpenChat(false);
-              }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-
-          <Divider />
-
-          {/* ── Diff alert ── */}
-          {showDiffAlert && lastDiffMsg && (
-            <DiffAlert
-              summary={lastDiffMsg.content}
-              onDismiss={() => setDismissedDiff(lastDiffMsg.content)}
-            />
-          )}
-
-          {/* ── Session history panel ── */}
-          {showHistory ? (
-            <Box flex={1} overflow="auto">
-              <Box px={2} py={1.5}>
-                <Typography
-                  variant="subtitle2"
-                  fontWeight={700}
-                  color="text.secondary"
+              <Tooltip title="Notes">
+                <IconButton
+                  size="small"
+                  color="inherit"
+                  onClick={() => setNotesOpen(true)}
                 >
-                  Previous conversations
-                </Typography>
-              </Box>
-              <Divider />
-              {sessionsStatus === "loading" && (
-                <Box display="flex" justifyContent="center" pt={4}>
-                  <CircularProgress size={24} />
-                </Box>
+                  <DescriptionIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {!isMobile && (
+                <Tooltip
+                  title={
+                    isSplitView
+                      ? "Restore floating chat"
+                      : "Expand to split view"
+                  }
+                >
+                  <IconButton
+                    size="small"
+                    color="inherit"
+                    onClick={handleToggleSplitView}
+                  >
+                    {isSplitView ? (
+                      <CloseFullscreenIcon fontSize="small" />
+                    ) : (
+                      <OpenInFullIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </Tooltip>
               )}
-              {sessionsStatus === "succeeded" && sessions.length === 0 && (
-                <Box textAlign="center" px={3} mt={4}>
-                  <Typography variant="body2" color="text.secondary">
-                    No previous conversations.
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={() => {
+                  if (isSplitView) setSplitView(false);
+                  setOpenChat(false);
+                }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            <Divider />
+
+            {/* ── Diff alert ── */}
+            {showDiffAlert && lastDiffMsg && (
+              <DiffAlert
+                summary={lastDiffMsg.content}
+                onDismiss={() => setDismissedDiff(lastDiffMsg.content)}
+              />
+            )}
+
+            {/* ── Session history panel ── */}
+            {showHistory ? (
+              <Box flex={1} overflow="auto">
+                <Box px={2} py={1.5}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight={700}
+                    color="text.secondary"
+                  >
+                    Previous conversations
                   </Typography>
                 </Box>
-              )}
-              {sessionsStatus === "succeeded" && sessions.length > 0 && (
-                <List dense disablePadding>
-                  {sessions.map((s) => {
-                    const isActive = activeSession?.id === s.id;
-                    const updated = new Date(s.updatedAt);
-                    const dateLabel = updated.toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    });
-                    const timeLabel = updated.toLocaleTimeString(undefined, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    });
-                    const label =
-                      s.title?.trim() ||
-                      s.preview?.trim() ||
-                      `Chat — ${dateLabel}`;
-                    const secondaryNode = (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        component="div"
-                      >
-                        {`${s.messageCount} message${s.messageCount === 1 ? "" : "s"}`}{" "}
-                        · {dateLabel} at {timeLabel}
-                      </Typography>
-                    );
-                    return (
-                      <ListItem
-                        key={s.id}
-                        disablePadding
-                        divider
-                        secondaryAction={
-                          <IconButton
-                            edge="end"
-                            size="small"
-                            onClick={(e) => openDeleteDialog(e, s.id, label)}
-                            aria-label="Delete conversation"
-                          >
-                            <DeleteIcon fontSize="small" color="error" />
-                          </IconButton>
-                        }
-                      >
-                        <ListItemButton
-                          selected={isActive}
-                          onClick={() => {
-                            if (!isActive) {
-                              dispatch(fetchSession(s.id));
-                            }
-                            setShowHistory(false);
-                          }}
-                        >
-                          <ListItemText
-                            primary={
-                              <Typography variant="body2" fontWeight={isActive ? 700 : 400} noWrap>
-                                {label}
-                              </Typography>
-                            }
-                            secondary={secondaryNode}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    );
-                  })}
-                </List>
-              )}
-            </Box>
-          ) : (
-            /* ── Message list ── */
-            <Box flex={1} overflow="auto" py={1}>
-              {(!activeSession || activeSession.messages.length === 0) &&
-                !isSending && (
-                  <Box textAlign="center" px={3} mt={3}>
+                <Divider />
+                {sessionsStatus === "loading" && (
+                  <Box display="flex" justifyContent="center" pt={4}>
+                    <CircularProgress size={24} />
+                  </Box>
+                )}
+                {sessionsStatus === "succeeded" && sessions.length === 0 && (
+                  <Box textAlign="center" px={3} mt={4}>
                     <Typography variant="body2" color="text.secondary">
-                      Hi! I'm <strong>Maestro</strong>. Describe the cloud
-                      infrastructure you'd like to build and I'll create a plan
-                      for you.
+                      No previous conversations.
+                    </Typography>
+                  </Box>
+                )}
+                {sessionsStatus === "succeeded" && sessions.length > 0 && (
+                  <List dense disablePadding>
+                    {sessions.map((s) => {
+                      const isActive = activeSession?.id === s.id;
+                      const updated = new Date(s.updatedAt);
+                      const dateLabel = updated.toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      });
+                      const timeLabel = updated.toLocaleTimeString(undefined, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+                      const label =
+                        s.title?.trim() ||
+                        s.preview?.trim() ||
+                        `Chat — ${dateLabel}`;
+                      const secondaryNode = (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          component="div"
+                        >
+                          {`${s.messageCount} message${s.messageCount === 1 ? "" : "s"}`}{" "}
+                          · {dateLabel} at {timeLabel}
+                        </Typography>
+                      );
+                      return (
+                        <ListItem
+                          key={s.id}
+                          disablePadding
+                          divider
+                          secondaryAction={
+                            <IconButton
+                              edge="end"
+                              size="small"
+                              onClick={(e) => openDeleteDialog(e, s.id, label)}
+                              aria-label="Delete conversation"
+                            >
+                              <DeleteIcon fontSize="small" color="error" />
+                            </IconButton>
+                          }
+                        >
+                          <ListItemButton
+                            selected={isActive}
+                            onClick={() => {
+                              if (!isActive) {
+                                dispatch(fetchSession(s.id));
+                              }
+                              setShowHistory(false);
+                            }}
+                          >
+                            <ListItemText
+                              primary={
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={isActive ? 700 : 400}
+                                  noWrap
+                                >
+                                  {label}
+                                </Typography>
+                              }
+                              secondary={secondaryNode}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                )}
+              </Box>
+            ) : (
+              /* ── Message list ── */
+              <Box flex={1} overflow="auto" py={1}>
+                {(!activeSession || activeSession.messages.length === 0) &&
+                  !isSending && (
+                    <Box textAlign="center" px={3} mt={3}>
+                      <Typography variant="body2" color="text.secondary">
+                        Hi! I'm <strong>Maestro</strong>. Describe the cloud
+                        infrastructure you'd like to build and I'll create a
+                        plan for you.
+                      </Typography>
+                    </Box>
+                  )}
+
+                {activeSession?.messages.map((msg, idx) => (
+                  <MessageBubble
+                    key={`${msg.timestamp}-${idx}`}
+                    message={msg}
+                    sessionId={activeSession.id}
+                    onImplement={handleImplement}
+                    isImplementing={isImplementing}
+                  />
+                ))}
+
+                {isSending && <TypingIndicator />}
+
+                {sendError && (
+                  <Box px={2} py={0.5}>
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => dispatch(clearSendError())}
+                    >
+                      ⚠ {sendError} (click to dismiss)
                     </Typography>
                   </Box>
                 )}
 
-              {activeSession?.messages.map((msg, idx) => (
-                <MessageBubble
-                  key={`${msg.timestamp}-${idx}`}
-                  message={msg}
-                  sessionId={activeSession.id}
-                  onImplement={handleImplement}
-                  isImplementing={isImplementing}
+                <div ref={messagesEndRef} />
+              </Box>
+            )}
+
+            <Divider />
+
+            {/* ── Input bar (hidden when browsing history) ── */}
+            {showHistory ? null : (
+              <Box sx={{ px: 1.5, py: 1, bgcolor: "background.paper" }}>
+                <TextField
+                  inputRef={inputRef}
+                  fullWidth
+                  multiline
+                  maxRows={3}
+                  size="small"
+                  placeholder="Ask Maestro to plan your infrastructure…"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSending}
+                  slotProps={{
+                    input: {
+                      sx: { borderRadius: 3 },
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={handleSend}
+                            disabled={
+                              !input.trim() || isSending || isCreatingSession
+                            }
+                          >
+                            {isSending ? (
+                              <CircularProgress size={18} />
+                            ) : (
+                              <SendIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
-              ))}
-
-              {isSending && <TypingIndicator />}
-
-              {sendError && (
-                <Box px={2} py={0.5}>
-                  <Typography
-                    variant="caption"
-                    color="error"
-                    sx={{ cursor: "pointer" }}
-                    onClick={() => dispatch(clearSendError())}
-                  >
-                    ⚠ {sendError} (click to dismiss)
-                  </Typography>
-                </Box>
-              )}
-
-              <div ref={messagesEndRef} />
-            </Box>
-          )}
-
-          <Divider />
-
-          {/* ── Input bar (hidden when browsing history) ── */}
-          {showHistory ? null : (
-            <Box sx={{ px: 1.5, py: 1, bgcolor: "background.paper" }}>
-              <TextField
-                inputRef={inputRef}
-                fullWidth
-                multiline
-                maxRows={3}
-                size="small"
-                placeholder="Ask Maestro to plan your infrastructure…"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isSending}
-                slotProps={{
-                  input: {
-                    sx: { borderRadius: 3 },
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={handleSend}
-                          disabled={
-                            !input.trim() || isSending || isCreatingSession
-                          }
-                        >
-                          {isSending ? (
-                            <CircularProgress size={18} />
-                          ) : (
-                            <SendIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </Box>
-          )}
+              </Box>
+            )}
           </Paper>
         </Box>
       )}

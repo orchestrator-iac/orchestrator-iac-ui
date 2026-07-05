@@ -10,7 +10,7 @@ import { fab } from "@fortawesome/free-brands-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 
 import { Box } from "@mui/material";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
@@ -25,6 +25,7 @@ import Register from "./components/auth/register/Register";
 import RegisterSuccessPage from "./components/auth/register/RegisterSuccessPage";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import Layout from "./components/shared/layout/Layout";
+import Header from "./components/shared/header/Header";
 import Profile from "./components/auth/profile/Profile";
 import ConfirmEmail from "./components/auth/ConfirmEmail";
 import NotFound from "./components/shared/NotFound";
@@ -37,15 +38,41 @@ import TemplatesGallery from "./components/templates/TemplatesGallery";
 import TemplateDetail from "./components/templates/TemplateDetail";
 import ResourcesGallery from "./components/resources/ResourcesGallery";
 
+const NO_HEADER_ROUTES = [
+  "/login",
+  "/register",
+  "/register-success",
+  "/confirm",
+  "/email-verification/forgot",
+  "/email-verification/verify",
+  "/night-sky",
+  "/black-hole",
+  "/update-password",
+];
+
 // Add FontAwesome icon packs
 library.add(fab, fas);
 
-const AppLayout = () => {
-  const { isSplitView, splitWidth, isDragging } = useChatLayout();
+const AppShell: React.FC<{
+  isSplitView: boolean;
+  splitWidth: number;
+  isDragging: boolean;
+}> = ({ isSplitView, splitWidth, isDragging }) => {
+  const location = useLocation();
+  const hideHeader = NO_HEADER_ROUTES.includes(location.pathname);
 
   return (
-    <BrowserRouter>
-      <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        width: "100vw",
+        overflow: "hidden",
+      }}
+    >
+      {!hideHeader && <Header />}
+      <Box sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
         <Box
           sx={{
             width: isSplitView ? `calc(100% - ${splitWidth}px)` : "100%",
@@ -135,6 +162,20 @@ const AppLayout = () => {
         </Box>
         <Chatbot />
       </Box>
+    </Box>
+  );
+};
+
+const AppLayout = () => {
+  const { isSplitView, splitWidth, isDragging } = useChatLayout();
+
+  return (
+    <BrowserRouter>
+      <AppShell
+        isSplitView={isSplitView}
+        splitWidth={splitWidth}
+        isDragging={isDragging}
+      />
     </BrowserRouter>
   );
 };
