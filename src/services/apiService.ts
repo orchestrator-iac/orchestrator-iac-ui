@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { refreshAccessToken } from "./auth";
+import { hasLoggedOutMarker, markLoggedOut } from "./sessionState";
 import tokenManager from "./tokenManager";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -39,6 +40,11 @@ apiClient.interceptors.response.use(
     const status = error?.response?.status;
 
     if (status === 401 && !original?._retry) {
+      if (hasLoggedOutMarker()) {
+        tokenManager.setAccessToken(null);
+        return Promise.reject(error);
+      }
+
       original._retry = true;
 
       try {
@@ -46,6 +52,9 @@ apiClient.interceptors.response.use(
           isRefreshing = true;
           refreshPromise = refreshAccessToken()
             .then((newToken) => {
+              if (hasLoggedOutMarker()) {
+                throw new Error("Session was explicitly logged out");
+              }
               tokenManager.setAccessToken(newToken);
               onRefreshed(newToken);
               return newToken;
@@ -57,31 +66,33 @@ apiClient.interceptors.response.use(
         }
 
         const newToken = await (refreshPromise as Promise<string>);
+        if (hasLoggedOutMarker()) {
+          tokenManager.setAccessToken(null);
+          return Promise.reject(error);
+        }
         original.headers = original.headers ?? {};
         original.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(original); // retry
       } catch (e) {
         // refresh failed -> clear token and force login (avoid reload loop)
         tokenManager.setAccessToken(null);
-        try {
-          if (globalThis.window !== undefined) {
-            try {
-              localStorage.setItem("loggedOutAt", String(Date.now()));
-            } catch {
-              globalThis.location.href = "/login";
+        if (!hasLoggedOutMarker()) {
+          markLoggedOut();
+          try {
+            if (globalThis.window !== undefined) {
+              if (globalThis.location.pathname !== "/login") {
+                console.debug(
+                  "apiService: refresh failed, redirecting to /login",
+                );
+                globalThis.location.href = "/login";
+              }
             }
-            if (globalThis.location.pathname !== "/login") {
-              console.debug(
-                "apiService: refresh failed, redirecting to /login",
-              );
-              globalThis.location.href = "/login";
-            }
+          } catch (err) {
+            console.debug(
+              "apiService: failed to redirect after refresh failure",
+              err,
+            );
           }
-        } catch (err) {
-          console.debug(
-            "apiService: failed to redirect after refresh failure",
-            err,
-          );
         }
         throw e;
       }

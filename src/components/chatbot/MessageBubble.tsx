@@ -1,6 +1,7 @@
 import React from "react";
 import { Avatar, Box, Typography } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
+import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "@/types/chat";
 import PlanCard from "./PlanCard";
 import { RiRobot3Fill } from "react-icons/ri";
@@ -97,9 +98,62 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </Typography>
         )}
 
-        <Typography variant="body2" whiteSpace="pre-wrap">
-          {message.content}
-        </Typography>
+        <Box
+          sx={{
+            fontSize: "0.875rem",
+            lineHeight: 1.5,
+            "& > *": { my: 0.5 },
+            "& h1, & h2, & h3, & h4, & h5, & h6": {
+              fontWeight: 700,
+              my: 0.75,
+              fontSize: "inherit",
+            },
+            "& h1": { fontSize: "1.2rem" },
+            "& h2": { fontSize: "1.1rem" },
+            "& h3": { fontSize: "1rem" },
+            "& strong": { fontWeight: 700 },
+            "& em": { fontStyle: "italic" },
+            "& ul, & ol": { pl: 2, my: 0.5 },
+            "& li": { my: 0.25 },
+            "& code": {
+              bgcolor: dark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)",
+              px: 0.5,
+              py: 0.25,
+              borderRadius: 0.5,
+              fontFamily: "monospace",
+              fontSize: "0.85em",
+            },
+            "& pre": {
+              bgcolor: dark ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.05)",
+              p: 1,
+              borderRadius: 1,
+              overflow: "auto",
+              my: 0.5,
+            },
+            "& pre code": {
+              bgcolor: "transparent",
+              px: 0,
+              py: 0,
+            },
+            "& blockquote": {
+              borderLeft: `3px solid ${theme.palette.divider}`,
+              pl: 1,
+              ml: 0,
+              my: 0.5,
+              opacity: 0.8,
+            },
+            "& a": {
+              color: theme.palette.primary.main,
+              textDecoration: "underline",
+              cursor: "pointer",
+              "&:hover": {
+                opacity: 0.8,
+              },
+            },
+          }}
+        >
+          <ReactMarkdown>{message.content}</ReactMarkdown>
+        </Box>
 
         {isPlan && message.plan && (
           <PlanCard

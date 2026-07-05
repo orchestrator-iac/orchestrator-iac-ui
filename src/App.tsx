@@ -14,7 +14,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ChatLayoutProvider, useChatLayout } from "./context/ChatLayoutContext";
 
 import Home from "./components/home/Home";
@@ -50,6 +50,20 @@ const NO_HEADER_ROUTES = [
   "/update-password",
 ];
 
+const MAESTRO_DISABLED_ROUTES = new Set([
+  "/login",
+  "/register",
+  "/register-success",
+  "/confirm",
+  "/night-sky",
+  "/black-hole",
+  "/update-password",
+]);
+
+const isMaestroDisabledRoute = (pathname: string) =>
+  MAESTRO_DISABLED_ROUTES.has(pathname) ||
+  pathname.startsWith("/email-verification/");
+
 // Add FontAwesome icon packs
 library.add(fab, fas);
 
@@ -59,7 +73,10 @@ const AppShell: React.FC<{
   isDragging: boolean;
 }> = ({ isSplitView, splitWidth, isDragging }) => {
   const location = useLocation();
+  const { token, isInitializing } = useAuth();
   const hideHeader = NO_HEADER_ROUTES.includes(location.pathname);
+  const showChatbot =
+    !isInitializing && Boolean(token) && !isMaestroDisabledRoute(location.pathname);
 
   return (
     <Box
@@ -160,7 +177,7 @@ const AppShell: React.FC<{
               </Route>
           </Routes>
         </Box>
-        <Chatbot />
+        {showChatbot && <Chatbot />}
       </Box>
     </Box>
   );

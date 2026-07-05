@@ -64,13 +64,13 @@ const TypingIndicator: React.FC = () => (
   <Box display="flex" alignItems="center" gap={0.5} px={2} py={0.75}>
     <Avatar
       sx={{
-        width: 24,
-        height: 24,
+        width: 28,
+        height: 28,
         bgcolor: "primary.dark",
         fontSize: "0.6rem",
       }}
     >
-      <RiRobot3Fill size={36} />
+      <RiRobot3Fill size={16} />
     </Avatar>
     <Stack direction="row" spacing={0.4} ml={0.5}>
       {[0, 1, 2].map((i) => (
@@ -888,7 +888,7 @@ const Chatbot: React.FC = () => {
       <Dialog
         open={notesOpen}
         onClose={() => setNotesOpen(false)}
-        maxWidth="sm"
+        maxWidth="lg"
         fullWidth
       >
         <DialogTitle>

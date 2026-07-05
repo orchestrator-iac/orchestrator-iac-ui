@@ -44,10 +44,10 @@ const Header: React.FC = () => {
     navigate("/profile");
   };
 
-  const handleLogoutClick = () => {
+  const handleLogoutClick = async () => {
     handleMenuClose();
-    logout();
-    navigate("/login");
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   return (
