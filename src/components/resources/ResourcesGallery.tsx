@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { RootState, AppDispatch } from "../../store";
 import { fetchResources } from "../../store/resourcesSlice";
 import { useAuth } from "../../context/AuthContext";
+import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 import ResourceCard from "./ResourceCard";
 
 type CloudFilter = "all" | "aws" | "azure" | "gcp";
@@ -62,6 +63,11 @@ const ResourcesGallery: React.FC = () => {
     const t = setTimeout(() => setShowContent(true), 100);
     return () => clearTimeout(t);
   }, []);
+
+  useGuidedTour(
+    "resources",
+    showContent && status === "succeeded" && (resources?.length ?? 0) > 0,
+  );
 
   // Fetch resources on first visit and recover once from a stale failed load.
   useEffect(() => {
@@ -193,6 +199,7 @@ const ResourcesGallery: React.FC = () => {
               startIcon={
                 <FontAwesomeIcon icon="plus" style={{ fontSize: "0.8rem" }} />
               }
+              data-tour="resources-new-resource"
               sx={{
                 borderRadius: 2,
                 textTransform: "none",
@@ -225,6 +232,7 @@ const ResourcesGallery: React.FC = () => {
             value={localSearch}
             onChange={handleSearchChange}
             size="small"
+            data-tour="resources-search"
             sx={{
               flexGrow: 1,
               minWidth: 240,
@@ -273,6 +281,7 @@ const ResourcesGallery: React.FC = () => {
             onChange={handleCloudFilterChange}
             size="small"
             aria-label="Filter by cloud provider"
+            data-tour="resources-cloud-filter"
             sx={{
               "& .MuiToggleButton-root": {
                 textTransform: "none",

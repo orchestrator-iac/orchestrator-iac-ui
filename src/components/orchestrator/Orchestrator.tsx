@@ -42,6 +42,7 @@ import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig } from "../../types/clouds-info";
 import { fetchOrchestrators } from "@/store/orchestratorsSlice";
+import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -114,6 +115,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const [searchParams] = useSearchParams();
   const template_type = searchParams.get("template_type");
   const isViewMode = template_type === "template";
+  const isCustomTemplateFlow = template_type === "custom";
   const [id] = useDnD();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -134,6 +136,11 @@ const OrchestratorReactFlow: React.FC = () => {
   const [currentOrchestratorId, setCurrentOrchestratorId] = useState<
     string | null
   >(null);
+
+  useGuidedTour(
+    "orchestrator",
+    isCustomTemplateFlow && Boolean(templateInfo.cloud) && !initOpen,
+  );
 
   const { data: orchestrators, status: orchestratorsStatus } = useSelector(
     (state: RootState) => state.orchestrators,
@@ -1130,6 +1137,7 @@ const OrchestratorReactFlow: React.FC = () => {
           width: !isViewMode && sidebarOpen ? `calc(100% - ${drawerWidth}px)` : "100%",
           transition: "width 0.3s ease",
         }}
+        data-tour="orchestrator-canvas"
       >
         <ReactFlow
           nodes={nodesWithHelpers}

@@ -28,6 +28,7 @@ import { templateService } from "../../services/templateService";
 import apiService from "../../services/apiService";
 import PublishTemplateDialog from "../orchestrator/publish-template/PublishTemplateDialog";
 import { useAuth } from "../../context/AuthContext";
+import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 
 import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
@@ -121,6 +122,8 @@ const Home: React.FC = () => {
     const timer = setTimeout(() => setShowContent(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  useGuidedTour("home", showContent);
 
   useEffect(() => {
     let mounted = true;
@@ -275,6 +278,7 @@ const Home: React.FC = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             variant="outlined"
             size="small"
+            data-tour="home-search"
             sx={{
               flex: { xs: "1", md: "0 1 420px" },
               "& .MuiOutlinedInput-root": {
@@ -350,6 +354,7 @@ const Home: React.FC = () => {
                 label="Templates"
                 size="small"
                 onClick={() => navigate("/templates")}
+                data-tour="home-templates-chip"
                 sx={{
                   fontWeight: 600,
                   px: 0.5,
@@ -373,6 +378,7 @@ const Home: React.FC = () => {
                 label="Resources"
                 size="small"
                 onClick={() => navigate("/resources")}
+                data-tour="home-resources-chip"
                 sx={{
                   fontWeight: 600,
                   px: 0.5,
@@ -394,14 +400,27 @@ const Home: React.FC = () => {
           topTemplates.length > 0 ||
           topResources.length > 0) && (
           <Fade in={showContent} timeout={700}>
-            <Box component="section" sx={{ mb: 3 }}>
+            <Box
+              component="section"
+              data-tour="home-top-sections"
+              sx={{ mb: 3 }}
+            >
               <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
                 {(loadingInsights || topTemplates.length > 0) && (
                   <Grid>
-                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                    <Box
+                      component="section"
+                      data-tour="home-top-templates"
+                      aria-labelledby="home-top-templates-heading"
+                    >
+                      <Typography
+                        id="home-top-templates-heading"
+                        variant="h5"
+                        sx={{ fontWeight: 700, mb: 1 }}
+                      >
                       Top Templates
-                    </Typography>
-                    <Box sx={{ position: "relative" }}>
+                      </Typography>
+                      <Box sx={{ position: "relative" }}>
                       {!loadingInsights && topTemplates.length > 4 && (
                         <IconButton
                           aria-label="Previous templates"
@@ -463,19 +482,19 @@ const Home: React.FC = () => {
                         </IconButton>
                       )}
 
-                      <Box
-                        ref={templatesRef}
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          overflowX: "auto",
-                          scrollBehavior: "smooth",
-                          pb: 0.5,
-                          "&::-webkit-scrollbar": { display: "none" },
-                          msOverflowStyle: "none",
-                          scrollbarWidth: "none",
-                        }}
-                      >
+                        <Box
+                          ref={templatesRef}
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            overflowX: "auto",
+                            scrollBehavior: "smooth",
+                            pb: 0.5,
+                            "&::-webkit-scrollbar": { display: "none" },
+                            msOverflowStyle: "none",
+                            scrollbarWidth: "none",
+                          }}
+                        >
                         {loadingInsights
                           ? Array.from({ length: 5 }).map((_, i) => (
                               <Box
@@ -533,16 +552,26 @@ const Home: React.FC = () => {
                                 </Typography>
                               </Box>
                             ))}
+                        </Box>
                       </Box>
                     </Box>
                   </Grid>
                 )}
                 {(loadingInsights || topResources.length > 6) && (
                   <Grid>
-                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                    <Box
+                      component="section"
+                      data-tour="home-top-resources"
+                      aria-labelledby="home-top-resources-heading"
+                    >
+                      <Typography
+                        id="home-top-resources-heading"
+                        variant="h5"
+                        sx={{ fontWeight: 700, mb: 1 }}
+                      >
                       Top Resources
-                    </Typography>
-                    <Box sx={{ position: "relative" }}>
+                      </Typography>
+                      <Box sx={{ position: "relative" }}>
                       {!loadingInsights && topResources.length > 0 && (
                         <IconButton
                           aria-label="Previous resources"
@@ -604,19 +633,19 @@ const Home: React.FC = () => {
                         </IconButton>
                       )}
 
-                      <Box
-                        ref={resourcesRef}
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          overflowX: "auto",
-                          scrollBehavior: "smooth",
-                          pb: 0.5,
-                          "&::-webkit-scrollbar": { display: "none" },
-                          msOverflowStyle: "none",
-                          scrollbarWidth: "none",
-                        }}
-                      >
+                        <Box
+                          ref={resourcesRef}
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            overflowX: "auto",
+                            scrollBehavior: "smooth",
+                            pb: 0.5,
+                            "&::-webkit-scrollbar": { display: "none" },
+                            msOverflowStyle: "none",
+                            scrollbarWidth: "none",
+                          }}
+                        >
                         {loadingInsights
                           ? Array.from({ length: 5 }).map((_, i) => (
                               <Box
@@ -686,6 +715,7 @@ const Home: React.FC = () => {
                                 </Typography>
                               </Box>
                             ))}
+                        </Box>
                       </Box>
                     </Box>
                   </Grid>
@@ -795,12 +825,13 @@ const Home: React.FC = () => {
                 {canCreateOrchestrators && (
                   <Box sx={{ display: "flex" }}>
                     <Fade in={showContent} timeout={1000}>
-                      <Box
-                        className={styles.card}
-                        onClick={() => navigateOrchestrator("new")}
-                        sx={{
-                          border: "2px dashed",
-                          borderColor: alpha(theme.palette.primary.main, 0.3),
+                    <Box
+                      className={styles.card}
+                      onClick={() => navigateOrchestrator("new")}
+                      data-tour="home-new-orchestrator"
+                      sx={{
+                        border: "2px dashed",
+                        borderColor: alpha(theme.palette.primary.main, 0.3),
                           backgroundColor: "transparent !important",
                           "&:hover": {
                             borderColor: alpha(theme.palette.primary.main, 0.6),

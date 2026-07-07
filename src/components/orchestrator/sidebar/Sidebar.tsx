@@ -169,6 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
         <Box sx={{ mt: 2, px: 2, pb: 1 }}>
           <Paper
             variant="outlined"
+            data-tour="orchestrator-sidebar-search"
             sx={{
               display: "flex",
               alignItems: "center",

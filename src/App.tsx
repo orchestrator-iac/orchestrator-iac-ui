@@ -3,6 +3,7 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import "@xyflow/react/dist/style.css";
+import "driver.js/dist/driver.css";
 import "./App.css";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
@@ -16,6 +17,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ChatLayoutProvider, useChatLayout } from "./context/ChatLayoutContext";
+import { ProductGuidanceProvider } from "./components/shared/guidance/ProductGuidanceProvider";
 
 import Home from "./components/home/Home";
 import Resources from "./components/resources/Resources";
@@ -188,11 +190,13 @@ const AppLayout = () => {
 
   return (
     <BrowserRouter>
-      <AppShell
-        isSplitView={isSplitView}
-        splitWidth={splitWidth}
-        isDragging={isDragging}
-      />
+      <ProductGuidanceProvider>
+        <AppShell
+          isSplitView={isSplitView}
+          splitWidth={splitWidth}
+          isDragging={isDragging}
+        />
+      </ProductGuidanceProvider>
     </BrowserRouter>
   );
 };

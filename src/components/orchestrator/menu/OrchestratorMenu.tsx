@@ -229,6 +229,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
       <Tooltip title="Orchestrator Menu" arrow>
         <IconButton
           onClick={handleMenuClick}
+          data-tour="orchestrator-menu"
           sx={{
             bgcolor: "background.paper",
             borderRadius: 2,

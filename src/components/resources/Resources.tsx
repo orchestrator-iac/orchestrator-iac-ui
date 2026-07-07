@@ -31,6 +31,7 @@ import TerraformTemplate, {
 import apiService from "../../services/apiService";
 import { useAuth } from "../../context/AuthContext";
 import ModificationPopup from "./modification/ModificationPopup";
+import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 
 const steps = [
   "Basic Info",
@@ -49,6 +50,10 @@ const Resources: React.FC = () => {
 
   const resourceData = useSelector((state: RootState) =>
     resource_id ? state.resource.resources[resource_id] : null,
+  );
+  useGuidedTour(
+    "resourceDetail",
+    Boolean(resource_id && resource_id !== "new" && resourceData),
   );
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
@@ -337,6 +342,7 @@ const Resources: React.FC = () => {
             }}
           >
             <Stepper
+              data-tour="resource-detail-stepper"
               activeStep={activeStep}
               alternativeLabel
               sx={{
@@ -370,7 +376,9 @@ const Resources: React.FC = () => {
               ))}
             </Stepper>
 
-            <Box mt={4}>{renderStepContent(activeStep)}</Box>
+            <Box mt={4} data-tour="resource-detail-step-panel">
+              {renderStepContent(activeStep)}
+            </Box>
 
             <Box
               mt={4}
@@ -408,6 +416,7 @@ const Resources: React.FC = () => {
               <Button
                 variant="contained"
                 onClick={onNext}
+                data-tour="resource-detail-next"
                 sx={{
                   px: 4,
                   py: 1,

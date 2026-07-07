@@ -3,19 +3,28 @@ import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Box,
+  Badge,
   Toolbar,
   Typography,
   IconButton,
   Menu,
   MenuItem,
+  Divider,
   Avatar,
   useTheme,
   alpha,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import ReplayIcon from "@mui/icons-material/Replay";
+import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 import { useThemeContext } from "../theme/useThemeContext";
 import { useAuth } from "../../../context/AuthContext";
+import { useProductGuidance } from "../guidance/ProductGuidanceProvider";
 import styles from "./Header.module.css";
 import MinimalThemeToggle from "../theme/MinimalThemeToggle";
 
@@ -23,9 +32,16 @@ const Header: React.FC = () => {
   const theme = useTheme();
   const { mode } = useThemeContext();
   const { user, logout } = useAuth();
+  const {
+    currentTour,
+    unreadAnnouncementCount,
+    startCurrentTour,
+    openAnnouncements,
+  } = useProductGuidance();
   const navigate = useNavigate();
   const hasImage = user?.imageUrl && user?.imageUrl !== "";
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [helpAnchorEl, setHelpAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
     document.body.className = mode;
@@ -39,6 +55,14 @@ const Header: React.FC = () => {
     setAnchorEl(null);
   };
 
+  const handleHelpOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setHelpAnchorEl(event.currentTarget);
+  };
+
+  const handleHelpClose = () => {
+    setHelpAnchorEl(null);
+  };
+
   const handleProfileClick = () => {
     handleMenuClose();
     navigate("/profile");
@@ -49,6 +73,44 @@ const Header: React.FC = () => {
     await logout();
     navigate("/login", { replace: true });
   };
+
+  const handleReplayCurrentTour = () => {
+    handleHelpClose();
+    startCurrentTour();
+  };
+
+  const handleOpenAnnouncements = () => {
+    handleHelpClose();
+    openAnnouncements();
+  };
+
+  const menuSurface = theme.palette.background.paper;
+  const menuPaperSx = {
+    mt: 1.5,
+    minWidth: 220,
+    borderRadius: 2,
+    overflow: "visible",
+    backgroundColor: menuSurface,
+    backgroundImage: "none",
+    filter: "drop-shadow(0px 4px 12px rgba(0,0,0,0.15))",
+    "& .MuiMenu-list": {
+      backgroundColor: menuSurface,
+    },
+    "&:before": {
+      content: '""',
+      display: "block",
+      position: "absolute",
+      top: 0,
+      right: 14,
+      width: 0,
+      height: 0,
+      borderLeft: "10px solid transparent",
+      borderRight: "10px solid transparent",
+      borderBottom: `10px solid ${menuSurface}`,
+      transform: "translateY(-100%)",
+      zIndex: 0,
+    },
+  } as const;
 
   return (
     <AppBar
@@ -104,6 +166,103 @@ const Header: React.FC = () => {
 
         <div className={styles.controls}>
           <MinimalThemeToggle />
+          <Tooltip title="Help and what is new" arrow>
+            <IconButton
+              onClick={handleHelpOpen}
+              size="small"
+              aria-label="Open help menu"
+              aria-haspopup="true"
+              aria-expanded={Boolean(helpAnchorEl)}
+              data-tour="guidance-help-menu"
+              sx={{
+                transition: "all 0.2s ease",
+                color: "text.primary",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                },
+                "&:focus-visible": {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 3,
+                },
+              }}
+            >
+              <Badge
+                variant="dot"
+                color="secondary"
+                invisible={unreadAnnouncementCount === 0}
+              >
+                <HelpOutlineIcon fontSize="small" />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+          <Menu
+            anchorEl={helpAnchorEl}
+            open={Boolean(helpAnchorEl)}
+            onClose={handleHelpClose}
+            slotProps={{
+              paper: {
+                elevation: 8,
+                sx: menuPaperSx,
+              },
+            }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+          >
+            <MenuItem
+              onClick={handleReplayCurrentTour}
+              disabled={!currentTour}
+              sx={{
+                py: 1.25,
+                px: 2,
+                gap: 1.5,
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                },
+              }}
+            >
+              <ListItemIcon>
+                <ReplayIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary={currentTour ? `Replay ${currentTour.title} tour` : "No tour on this page"}
+                secondary={currentTour ? "Walk through the current screen again" : "Open a page with a guided tour"}
+                slotProps={{
+                  primary: { sx: { fontWeight: 600 } },
+                  secondary: { sx: { fontSize: "0.78rem" } },
+                }}
+              />
+            </MenuItem>
+            <Divider sx={{ my: 0.5 }} />
+            <MenuItem
+              onClick={handleOpenAnnouncements}
+              sx={{
+                py: 1.25,
+                px: 2,
+                gap: 1.5,
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                },
+              }}
+            >
+              <ListItemIcon>
+                <CampaignOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="What's new"
+                secondary={
+                  unreadAnnouncementCount > 0
+                    ? `${unreadAnnouncementCount} update${unreadAnnouncementCount === 1 ? "" : "s"} available`
+                    : "No unread announcements"
+                }
+                slotProps={{
+                  primary: { sx: { fontWeight: 600 } },
+                  secondary: { sx: { fontSize: "0.78rem" } },
+                }}
+              />
+            </MenuItem>
+          </Menu>
           {user && (
             <>
               <IconButton
@@ -168,23 +327,8 @@ const Header: React.FC = () => {
                   paper: {
                     elevation: 8,
                     sx: {
-                      mt: 1.5,
+                      ...menuPaperSx,
                       minWidth: 180,
-                      borderRadius: 2,
-                      overflow: "visible",
-                      filter: "drop-shadow(0px 4px 12px rgba(0,0,0,0.15))",
-                      "&:before": {
-                        content: '""',
-                        display: "block",
-                        position: "absolute",
-                        top: 0,
-                        right: 14,
-                        width: 10,
-                        height: 10,
-                        bgcolor: "background.paper",
-                        transform: "translateY(-50%) rotate(45deg)",
-                        zIndex: 0,
-                      },
                     },
                   },
                 }}

@@ -51,6 +51,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
       role="article"
       aria-label={`Resource: ${resource.resourceName}`}
       tabIndex={0}
+      data-tour="resources-first-card"
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") handleClick();
       }}
