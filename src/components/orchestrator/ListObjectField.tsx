@@ -24,6 +24,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import parse from "html-react-parser";
 import { useViewport } from "@xyflow/react";
+import OverflowTooltipText from "../shared/OverflowTooltipText";
 import { isFieldRequired, validCondition } from "../../utils/deps";
 
 type ListObjectFieldProps = {
@@ -42,6 +43,18 @@ type ListObjectFieldProps = {
     context?: { objectSnapshot?: Record<string, any> },
   ) => void;
   placeholder?: string;
+};
+
+const renderFieldHelperText = (hint?: string, errorText?: string) => {
+  if (errorText) {
+    return errorText;
+  }
+
+  if (!hint) {
+    return undefined;
+  }
+
+  return <OverflowTooltipText text={hint} />;
 };
 
 const ListObjectField: React.FC<ListObjectFieldProps> = ({
@@ -125,7 +138,10 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             required={isRequired}
             value={fieldValue}
             placeholder={schemaField.placeholder ?? ""}
-            helperText={schemaField.error_text || schemaField.hint}
+            helperText={renderFieldHelperText(
+              schemaField.hint,
+              schemaField.error_text,
+            )}
             onChange={(e) =>
               handleListItemChange(itemIndex, schemaField.name, e.target.value)
             }
@@ -141,7 +157,10 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             required={isRequired}
             value={fieldValue}
             placeholder={schemaField.placeholder ?? ""}
-            helperText={schemaField.error_text || schemaField.hint}
+            helperText={renderFieldHelperText(
+              schemaField.hint,
+              schemaField.error_text,
+            )}
             onChange={(e) =>
               handleListItemChange(itemIndex, schemaField.name, e.target.value)
             }
@@ -156,7 +175,10 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
             required={isRequired}
             value={fieldValue}
             placeholder={schemaField.placeholder ?? ""}
-            helperText={schemaField.error_text || schemaField.hint}
+            helperText={renderFieldHelperText(
+              schemaField.hint,
+              schemaField.error_text,
+            )}
             slotProps={{
               htmlInput: {
                 min: schemaField.config?.min,
@@ -309,7 +331,10 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                   {...params}
                   placeholder={schemaField.placeholder ?? "Select or type an ID"}
                   required={isRequired}
-                  helperText={schemaField.error_text || schemaField.hint}
+                  helperText={renderFieldHelperText(
+                    schemaField.hint,
+                    schemaField.error_text,
+                  )}
                 />
             )}
             renderOption={(props, option) => (
@@ -565,7 +590,18 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                       variant="body2"
                       sx={{ display: "block", mb: 0.5 }}
                     >
-                      {schemaField.label}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          minWidth: 0,
+                        }}
+                      >
+                        <OverflowTooltipText
+                          text={schemaField.label}
+                          sx={{ flex: 1, minWidth: 0 }}
+                        />
                       {schemaField?.info && (
                         <Tooltip
                           title={
@@ -593,6 +629,7 @@ const ListObjectField: React.FC<ListObjectFieldProps> = ({
                           </Typography>
                         </Tooltip>
                       )}
+                      </Box>
                     </Typography>
                   )}
                   {renderObjectField(schemaField, item, index)}

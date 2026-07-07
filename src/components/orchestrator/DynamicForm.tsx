@@ -29,6 +29,7 @@ import parse from "html-react-parser";
 import { useViewport } from "@xyflow/react";
 import { Field, FieldGroup, LinkRule } from "../../types/node-info";
 import { CodeEditorField } from "../shared/code-editor/CodeEditorField";
+import OverflowTooltipText from "../shared/OverflowTooltipText";
 import { UserProfile } from "../../types/auth";
 import { CloudConfig, availabilityZones } from "../../types/clouds-info";
 import { isFieldRequired, validCondition } from "../../utils/deps";
@@ -54,6 +55,18 @@ type Props = {
     context?: { objectSnapshot?: Record<string, any> },
   ) => void;
   onValuesChange?: (name: string, value: any) => void;
+};
+
+const renderFieldHelperText = (hint?: string, errorText?: string) => {
+  if (errorText) {
+    return errorText;
+  }
+
+  if (!hint) {
+    return undefined;
+  }
+
+  return <OverflowTooltipText text={hint} />;
 };
 
 const DynamicForm: React.FC<Props> = ({
@@ -254,7 +267,7 @@ const DynamicForm: React.FC<Props> = ({
             required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
-            helperText={error_text || hint}
+            helperText={renderFieldHelperText(hint, error_text)}
             onChange={(e) => handleChange(name, e.target.value)}
           />
         );
@@ -268,7 +281,7 @@ const DynamicForm: React.FC<Props> = ({
             required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
-            helperText={error_text || hint}
+            helperText={renderFieldHelperText(hint, error_text)}
             onChange={(e) => handleChange(name, e.target.value)}
           />
         );
@@ -386,7 +399,7 @@ const DynamicForm: React.FC<Props> = ({
                   {...params}
                   placeholder={placeholder ?? "Select or type an ID"}
                   required={isRequired}
-                  helperText={error_text || hint}
+                  helperText={renderFieldHelperText(hint, error_text)}
                 />
             )}
             renderOption={(props, option) => (
@@ -587,7 +600,7 @@ const DynamicForm: React.FC<Props> = ({
             required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
-            helperText={error_text || hint}
+            helperText={renderFieldHelperText(hint, error_text)}
             slotProps={{
               htmlInput: {
                 min: fieldCfg?.min,
@@ -658,14 +671,25 @@ const DynamicForm: React.FC<Props> = ({
             >
               {fieldCfg?.add_button?.label || `Add ${placeholder ?? "Item"}`}
             </Button>
-            {(error_text || hint) && (
+            {error_text && (
               <Typography
                 variant="caption"
-                color={error_text ? "error" : "text.secondary"}
+                color="error"
                 sx={{ display: "block", mt: 1 }}
               >
-                {error_text || hint}
+                {error_text}
               </Typography>
+            )}
+            {!error_text && hint && (
+              <OverflowTooltipText
+                text={hint}
+                sx={{
+                  mt: 1,
+                  fontSize: theme.typography.caption.fontSize,
+                  lineHeight: theme.typography.caption.lineHeight,
+                  color: theme.palette.text.secondary,
+                }}
+              />
             )}
           </Box>
         );
@@ -882,7 +906,18 @@ const DynamicForm: React.FC<Props> = ({
                               variant="body2"
                               sx={{ display: "block", mb: 0.5 }}
                             >
-                              {field.label}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                  minWidth: 0,
+                                }}
+                              >
+                                <OverflowTooltipText
+                                  text={field.label}
+                                  sx={{ flex: 1, minWidth: 0 }}
+                                />
                               {field?.info && (
                                 <Tooltip
                                   title={
@@ -927,6 +962,7 @@ const DynamicForm: React.FC<Props> = ({
                                   </Typography>
                                 </Tooltip>
                               )}
+                              </Box>
                             </Typography>
                           )}
                           {renderField(field)}

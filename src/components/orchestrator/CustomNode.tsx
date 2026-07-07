@@ -18,6 +18,7 @@ import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import parse from "html-react-parser";
+import OverflowTooltipText from "../shared/OverflowTooltipText";
 import DynamicForm from "./DynamicForm";
 import { getFriendlyId } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
@@ -96,7 +97,10 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
             borderBottom: `1px solid ${theme.palette.background.paper}`,
             alignItems: "center",
             gap: 1,
-            pr: 7,
+            pr: 2,
+            "& .MuiAccordionSummary-content": {
+              minWidth: 0,
+            },
           }}
         >
           {data?.header?.icon && (
@@ -123,6 +127,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
+                minWidth: 0,
               }}
             >
               <Box
@@ -172,14 +177,24 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
             </Box>
 
             {data?.header?.sub_label && (
-              <Box
+              <OverflowTooltipText
+                text={data?.header?.sub_label}
                 sx={{
                   fontSize: "0.8rem",
                   color: theme.palette.textVariants.text4,
                 }}
-              >
-                {data?.header?.sub_label}
-              </Box>
+                tooltipSlotProps={{
+                  tooltip: {
+                    sx: {
+                      bgcolor: theme.palette.background.paper,
+                      color: theme.palette.textVariants.text1,
+                      "& .MuiTooltip-arrow": {
+                        color: theme.palette.background.paper,
+                      },
+                    },
+                  },
+                }}
+              />
             )}
           </Box>
           {isOrchestrator &&
@@ -192,74 +207,74 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
                 isConnectable={Boolean(isConnectable)}
               />
             ))}
-        </AccordionSummary>
 
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            right: 12,
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          {friendlyId && (
-            <Tooltip title={friendlyId} arrow placement="top">
-              <Chip
-                size="small"
-                label={friendlyId}
-                onMouseDown={(event) => event.stopPropagation()}
-                onClick={(event) => event.stopPropagation()}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flexShrink: 0,
+              mr: 0.5,
+            }}
+          >
+            {friendlyId && (
+              <Tooltip title={friendlyId} arrow placement="top">
+                <Chip
+                  size="small"
+                  label={friendlyId}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
                 sx={{
                   color: theme.palette.textVariants.text4,
                   maxWidth: "96px",
-                  marginRight: 4,
                   "& .MuiChip-label": {
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  },
-                }}
-                variant="filled"
-              />
-            </Tooltip>
-          )}
+                      whiteSpace: "nowrap",
+                    },
+                  }}
+                  variant="filled"
+                />
+              </Tooltip>
+            )}
 
-          <Box onMouseDown={(event) => event.stopPropagation()}>
-            <IconButton
-              aria-label="node actions"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleMenuOpen(e);
+            <Box onMouseDown={(event) => event.stopPropagation()}>
+              <IconButton
+                aria-label="node actions"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMenuOpen(e);
+                }}
+                size="small"
+                sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={(e) => {
+                (e as any)?.stopPropagation?.();
+                handleMenuClose();
               }}
-              size="small"
-              sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
+              onClick={(e) => (e as any).stopPropagation()}
+              elevation={3}
             >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
+              <MenuItem onClick={handleDuplicate}>
+                <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
+                Duplicate
+              </MenuItem>
+              <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+                <DeleteOutlineIcon
+                  fontSize="small"
+                  style={{ marginRight: 8 }}
+                />
+                Delete
+              </MenuItem>
+            </Menu>
           </Box>
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={(e) => {
-              (e as any)?.stopPropagation?.();
-              handleMenuClose();
-            }}
-            onClick={(e) => (e as any).stopPropagation()}
-            elevation={3}
-          >
-            <MenuItem onClick={handleDuplicate}>
-              <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
-              Duplicate
-            </MenuItem>
-            <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
-              <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8 }} />
-              Delete
-            </MenuItem>
-          </Menu>
-        </Box>
+        </AccordionSummary>
       </Box>
 
       <AccordionDetails

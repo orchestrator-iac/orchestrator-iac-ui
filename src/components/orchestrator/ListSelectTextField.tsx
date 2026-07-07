@@ -15,6 +15,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useViewport } from "@xyflow/react";
+import OverflowTooltipText from "../shared/OverflowTooltipText";
 
 type ListSelectTextFieldProps = {
   name: string;
@@ -35,6 +36,18 @@ type ListSelectTextFieldProps = {
     context?: { objectSnapshot?: Record<string, any> },
   ) => void;
   allowDuplicates?: boolean;
+};
+
+const renderFieldHelperText = (hint?: string, errorText?: string) => {
+  if (errorText) {
+    return errorText;
+  }
+
+  if (!hint) {
+    return undefined;
+  }
+
+  return <OverflowTooltipText text={hint} />;
 };
 
 const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
@@ -197,7 +210,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
           <TextField
             {...params}
             placeholder={placeholder ?? "Select or type an ID"}
-            helperText={error_text || hint}
+            helperText={renderFieldHelperText(hint, error_text)}
           />
         )}
         renderOption={(props, option) => {
