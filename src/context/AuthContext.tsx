@@ -7,6 +7,7 @@ import {
   useMemo,
 } from "react";
 import { jwtDecode } from "jwt-decode";
+import { useDispatch } from "react-redux";
 
 import {
   getProfile,
@@ -20,6 +21,8 @@ import {
 } from "../services/sessionState";
 import tokenManager from "../services/tokenManager";
 import { AuthContextType, UserProfile } from "../types/auth";
+import { resetAppState } from "../store/appActions";
+import type { AppDispatch } from "../store";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -55,6 +58,7 @@ function userFromToken(token: string): UserProfile | null {
 }
 
 export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
+  const dispatch = useDispatch<AppDispatch>();
   const [token, setToken] = useState<string | null>(
     tokenManager.getAccessToken(),
   );
@@ -65,6 +69,30 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   // True while the silent refresh on page-load is in-flight.
   // ProtectedRoute must not redirect until this is false.
   const [isInitializing, setIsInitializing] = useState(true);
+
+  const clearTransientSessionState = () => {
+    dispatch(resetAppState());
+
+    try {
+      sessionStorage.removeItem("maestro_prefill");
+    } catch {
+      // Best-effort only.
+    }
+  };
+
+  const applyToken = (
+    newToken: string,
+    { resetState = false }: { resetState?: boolean } = {},
+  ) => {
+    if (resetState) {
+      clearTransientSessionState();
+    }
+
+    clearLoggedOutMarker();
+    tokenManager.setAccessToken(newToken);
+    setToken(newToken);
+    setUser(userFromToken(newToken));
+  };
 
   // Keep profile in sync with latest server data (called after profile edits,
   // image uploads, etc. — NOT on every page load).
@@ -96,8 +124,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
 
         const newTok = await refreshAccessToken();
         if (newTok) {
-          tokenManager.setAccessToken(newTok);
-          setToken(newTok);
+          applyToken(newTok);
         }
       } catch (err) {
         // Clear auth state if silent refresh fails. ProtectedRoute owns
@@ -140,7 +167,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
       refreshTimer = globalThis.setTimeout(async () => {
         try {
           const newTok = await refreshAccessToken();
-          login(newTok);
+          applyToken(newTok);
         } catch {
           console.warn("Refresh failed; logging out");
           void logout();
@@ -157,9 +184,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   }, [token]);
 
   const login = (newToken: string) => {
-    clearLoggedOutMarker();
-    tokenManager.setAccessToken(newToken);
-    setToken(newToken);
+    applyToken(newToken, { resetState: true });
   };
 
   const logout = async () => {
@@ -167,6 +192,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
     tokenManager.setAccessToken(null);
     setToken(null);
     setUser(null);
+    clearTransientSessionState();
 
     try {
       await logoutUser();
