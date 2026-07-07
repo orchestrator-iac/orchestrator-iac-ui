@@ -1117,7 +1117,8 @@ const OrchestratorReactFlow: React.FC = () => {
   return (
     <Box
       sx={{
-        height: "calc(100vh - 72px)",
+        height: "100%",
+        minHeight: 0,
         display: "flex",
         flexDirection: "row",
         backgroundColor: theme.palette.background.default,
@@ -1134,6 +1135,8 @@ const OrchestratorReactFlow: React.FC = () => {
       <Box
         sx={{
           flexGrow: 1,
+          height: "100%",
+          minWidth: 0,
           width: !isViewMode && sidebarOpen ? `calc(100% - ${drawerWidth}px)` : "100%",
           transition: "width 0.3s ease",
         }}

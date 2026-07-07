@@ -106,9 +106,14 @@ body::before {
 }
 
 /* Custom scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text4) var(--bg-color);
+}
+
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -117,7 +122,7 @@ body::before {
 
 ::-webkit-scrollbar-thumb {
   background: var(--text4);
-  border-radius: 5px;
+  border-radius: 4px;
   transition: background 0.2s ease;
 }
 
