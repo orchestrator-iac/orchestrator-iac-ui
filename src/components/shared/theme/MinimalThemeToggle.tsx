@@ -37,9 +37,9 @@ export default function MinimalThemeToggle({ size = "small" }: Props) {
         sx={{
           bgcolor: "transparent",
           color: "text.primary",
-          borderRadius: 1,
+          borderRadius: 10,
           px: 0.5,
-          py: 0.25,
+          py: 0.5,
         }}
       >
         {isDark ? <LightModeIcon fontSize={size} /> : <DarkModeIcon fontSize={size} />}

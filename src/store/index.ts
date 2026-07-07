@@ -1,4 +1,8 @@
-import { configureStore } from "@reduxjs/toolkit";
+import {
+  AnyAction,
+  combineReducers,
+  configureStore,
+} from "@reduxjs/toolkit";
 import resourceReducer from "./resourceSlice";
 import iconReducer from "./iconsSlice";
 import customWrappersReducer from "./customWrappersSlice";
@@ -8,20 +12,34 @@ import usersReducer from "./usersSlice";
 import orchestratorsReducer from "./orchestratorsSlice";
 import templatesReducer from "./templatesSlice";
 import chatReducer from "./chatSlice";
+import { resetAppState } from "./appActions";
 
-export const store = configureStore({
-  reducer: {
-    resource: resourceReducer,
-    icons: iconReducer,
-    customWrappers: customWrappersReducer,
-    wrappersTemplate: wrappersTemplateReducer,
-    resources: resourcesReducer,
-    users: usersReducer,
-    orchestrators: orchestratorsReducer,
-    templates: templatesReducer,
-    chat: chatReducer,
-  },
+const appReducer = combineReducers({
+  resource: resourceReducer,
+  icons: iconReducer,
+  customWrappers: customWrappersReducer,
+  wrappersTemplate: wrappersTemplateReducer,
+  resources: resourcesReducer,
+  users: usersReducer,
+  orchestrators: orchestratorsReducer,
+  templates: templatesReducer,
+  chat: chatReducer,
 });
 
-export type RootState = ReturnType<typeof store.getState>;
+const rootReducer = (
+  state: ReturnType<typeof appReducer> | undefined,
+  action: AnyAction,
+) => {
+  if (resetAppState.match(action)) {
+    return appReducer(undefined, action);
+  }
+
+  return appReducer(state, action);
+};
+
+export const store = configureStore({
+  reducer: rootReducer,
+});
+
+export type RootState = ReturnType<typeof appReducer>;
 export type AppDispatch = typeof store.dispatch;
