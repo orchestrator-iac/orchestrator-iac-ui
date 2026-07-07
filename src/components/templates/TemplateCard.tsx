@@ -58,6 +58,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
       role="article"
       aria-label={`Template: ${template.templateName}`}
       tabIndex={0}
+      data-tour="templates-first-card"
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleClick(); }}
       sx={{ "&:focus-visible": { outline: "2px solid", outlineColor: theme.palette.primary.main, outlineOffset: 2 } }}
     >

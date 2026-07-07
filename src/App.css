@@ -182,3 +182,109 @@ body::before {
   background: #1e293b;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
+
+/* Driver.js guidance theming */
+.orchestrator-guidance-popover {
+  border-radius: 8px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(11, 95, 97, 0.16);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.12);
+}
+
+body[data-theme="light"] .orchestrator-guidance-popover {
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--text1);
+}
+
+body[data-theme="dark"] .orchestrator-guidance-popover {
+  background: rgba(23, 29, 31, 0.98);
+  color: var(--text1);
+  border-color: rgba(127, 215, 214, 0.18);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.45);
+}
+
+.orchestrator-guidance-popover .driver-popover-title {
+  color: inherit;
+  font-family: inherit;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.orchestrator-guidance-popover .driver-popover-description {
+  color: var(--text2);
+  font-family: inherit;
+}
+
+.orchestrator-guidance-popover .driver-popover-progress-text {
+  color: var(--text3);
+  font-family: inherit;
+}
+
+.orchestrator-guidance-popover .driver-popover-close-btn {
+  color: var(--text4);
+}
+
+.orchestrator-guidance-popover .driver-popover-close-btn:hover,
+.orchestrator-guidance-popover .driver-popover-close-btn:focus {
+  color: var(--text1);
+}
+
+.orchestrator-guidance-popover .driver-popover-footer-btn {
+  border-radius: 4px;
+  border-color: rgba(11, 95, 97, 0.18);
+  background-color: transparent;
+  color: var(--text1);
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.orchestrator-guidance-popover .driver-popover-footer-btn:hover,
+.orchestrator-guidance-popover .driver-popover-footer-btn:focus {
+  background-color: rgba(31, 143, 147, 0.08);
+}
+
+body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-footer-btn {
+  border-color: rgba(127, 215, 214, 0.22);
+}
+
+body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-footer-btn:hover,
+body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-footer-btn:focus {
+  background-color: rgba(127, 215, 214, 0.12);
+}
+
+.orchestrator-guidance-popover .driver-popover-btn-disabled {
+  opacity: 0.45;
+}
+
+body[data-theme="light"] .orchestrator-guidance-popover .driver-popover-arrow-side-top {
+  border-top-color: rgba(255, 255, 255, 0.98);
+}
+
+body[data-theme="light"] .orchestrator-guidance-popover .driver-popover-arrow-side-right {
+  border-right-color: rgba(255, 255, 255, 0.98);
+}
+
+body[data-theme="light"] .orchestrator-guidance-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: rgba(255, 255, 255, 0.98);
+}
+
+body[data-theme="light"] .orchestrator-guidance-popover .driver-popover-arrow-side-left {
+  border-left-color: rgba(255, 255, 255, 0.98);
+}
+
+body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-arrow-side-top {
+  border-top-color: rgba(23, 29, 31, 0.98);
+}
+
+body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-arrow-side-right {
+  border-right-color: rgba(23, 29, 31, 0.98);
+}
+
+body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: rgba(23, 29, 31, 0.98);
+}
+
+body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-arrow-side-left {
+  border-left-color: rgba(23, 29, 31, 0.98);
+}

@@ -8,7 +8,16 @@ import {
 } from "react";
 import { jwtDecode } from "jwt-decode";
 
-import { getProfile, refreshAccessToken } from "../services/auth";
+import {
+  getProfile,
+  logoutUser,
+  refreshAccessToken,
+} from "../services/auth";
+import {
+  clearLoggedOutMarker,
+  hasLoggedOutMarker,
+  markLoggedOut,
+} from "../services/sessionState";
 import tokenManager from "../services/tokenManager";
 import { AuthContextType, UserProfile } from "../types/auth";
 
@@ -65,7 +74,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
       setUser(u);
     } catch (e) {
       console.warn("Failed to refresh profile:", e);
-      logout();
+      void logout();
     }
   };
 
@@ -78,7 +87,8 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
         // If we're already on the login page, skip the silent refresh.
         if (
           globalThis.window !== undefined &&
-          globalThis.location.pathname === "/login"
+          (globalThis.location.pathname === "/login" ||
+            hasLoggedOutMarker())
         ) {
           setIsInitializing(false);
           return;
@@ -117,7 +127,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
 
       if (isExpired) {
         console.warn("JWT expired");
-        logout();
+        void logout();
         return;
       }
 
@@ -133,12 +143,12 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
           login(newTok);
         } catch {
           console.warn("Refresh failed; logging out");
-          logout();
+          void logout();
         }
       }, refreshIn);
     } catch (err) {
       console.error("Failed to decode token:", err);
-      logout();
+      void logout();
     }
 
     return () => {
@@ -147,14 +157,22 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   }, [token]);
 
   const login = (newToken: string) => {
+    clearLoggedOutMarker();
     tokenManager.setAccessToken(newToken);
     setToken(newToken);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    markLoggedOut();
     tokenManager.setAccessToken(null);
     setToken(null);
     setUser(null);
+
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.warn("Failed to clear server session during logout:", error);
+    }
   };
 
   const googleLogin = async (credential: string) => {

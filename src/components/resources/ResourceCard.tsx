@@ -51,6 +51,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
       role="article"
       aria-label={`Resource: ${resource.resourceName}`}
       tabIndex={0}
+      data-tour="resources-first-card"
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") handleClick();
       }}
@@ -88,7 +89,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
             justifyContent: "center",
             fontSize: "2.5rem",
             color: alpha(theme.palette.secondary.main, 0.82),
-            backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
+            // backgroundColor: alpha(theme.palette.tertiary.main, 0.22),
           }}
         >
           <FontAwesomeIcon icon="cube" />

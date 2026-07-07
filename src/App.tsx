@@ -3,6 +3,7 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import "@xyflow/react/dist/style.css";
+import "driver.js/dist/driver.css";
 import "./App.css";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
@@ -14,8 +15,9 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ChatLayoutProvider, useChatLayout } from "./context/ChatLayoutContext";
+import { ProductGuidanceProvider } from "./components/shared/guidance/ProductGuidanceProvider";
 
 import Home from "./components/home/Home";
 import Resources from "./components/resources/Resources";
@@ -50,6 +52,20 @@ const NO_HEADER_ROUTES = [
   "/update-password",
 ];
 
+const MAESTRO_DISABLED_ROUTES = new Set([
+  "/login",
+  "/register",
+  "/register-success",
+  "/confirm",
+  "/night-sky",
+  "/black-hole",
+  "/update-password",
+]);
+
+const isMaestroDisabledRoute = (pathname: string) =>
+  MAESTRO_DISABLED_ROUTES.has(pathname) ||
+  pathname.startsWith("/email-verification/");
+
 // Add FontAwesome icon packs
 library.add(fab, fas);
 
@@ -59,7 +75,10 @@ const AppShell: React.FC<{
   isDragging: boolean;
 }> = ({ isSplitView, splitWidth, isDragging }) => {
   const location = useLocation();
+  const { token, isInitializing } = useAuth();
   const hideHeader = NO_HEADER_ROUTES.includes(location.pathname);
+  const showChatbot =
+    !isInitializing && Boolean(token) && !isMaestroDisabledRoute(location.pathname);
 
   return (
     <Box
@@ -160,7 +179,7 @@ const AppShell: React.FC<{
               </Route>
           </Routes>
         </Box>
-        <Chatbot />
+        {showChatbot && <Chatbot />}
       </Box>
     </Box>
   );
@@ -171,11 +190,13 @@ const AppLayout = () => {
 
   return (
     <BrowserRouter>
-      <AppShell
-        isSplitView={isSplitView}
-        splitWidth={splitWidth}
-        isDragging={isDragging}
-      />
+      <ProductGuidanceProvider>
+        <AppShell
+          isSplitView={isSplitView}
+          splitWidth={splitWidth}
+          isDragging={isDragging}
+        />
+      </ProductGuidanceProvider>
     </BrowserRouter>
   );
 };

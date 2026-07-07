@@ -132,6 +132,17 @@ export const refreshAccessToken = async (): Promise<string> => {
   }
 };
 
+export const logoutUser = async (): Promise<void> => {
+  await axios.post(
+    `${import.meta.env.VITE_API_BASE_URL}/user/logout`,
+    {},
+    {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+};
+
 export const loginWithGoogle = async (credential: string): Promise<string> => {
   const res = await apiService.post("/user/google-login", { credential });
   return res.access_token;

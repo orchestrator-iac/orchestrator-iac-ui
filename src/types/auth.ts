@@ -37,7 +37,7 @@ export interface AuthContextType {
   /** True while the initial silent refresh is in-flight on page load. */
   isInitializing: boolean;
   login: (token: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
   /** Returns true when the current user holds the given permission. */

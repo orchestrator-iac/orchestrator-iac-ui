@@ -29,6 +29,7 @@ import {
   setSortBy,
   resetTemplates,
 } from "../../store/templatesSlice";
+import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 import TemplateCard from "./TemplateCard";
 
 const PAGE_SIZE = 20;
@@ -51,14 +52,11 @@ const TemplatesGallery: React.FC = () => {
     document.body.style.overflow = "auto";
   }, []);
 
-  // First-visit welcome banner
-  useEffect(() => {
-    const seen = localStorage.getItem("orchestrator-templates-visited");
-    if (!seen) {
-      setShowWelcome(true);
-      localStorage.setItem("orchestrator-templates-visited", "1");
-    }
-  }, []);
+
+  useGuidedTour(
+    "templates",
+    showContent && status === "succeeded" && items.length > 0,
+  );
 
   // SEO — keep meta tags in sync when navigating client-side
   useEffect(() => {
@@ -245,7 +243,8 @@ const TemplatesGallery: React.FC = () => {
         </Box>
       </Fade>
 
-      {/* First-visit Welcome Banner */}
+      {false && (
+      /* First-visit Welcome Banner */
       <Collapse in={showWelcome} timeout={500}>
         <Box
           sx={{
@@ -378,6 +377,7 @@ const TemplatesGallery: React.FC = () => {
           </Stack>
         </Box>
       </Collapse>
+      )}
 
       {/* Search + Sort bar */}
       <Fade in={showContent} timeout={700}>
@@ -397,6 +397,7 @@ const TemplatesGallery: React.FC = () => {
             value={localSearch}
             onChange={handleSearchChange}
             size="small"
+            data-tour="templates-search"
             inputProps={{ "aria-label": "Search templates" }}
             sx={{
               flexGrow: 1,
@@ -445,6 +446,7 @@ const TemplatesGallery: React.FC = () => {
             onChange={handleSortChange}
             size="small"
             aria-label="Sort templates"
+            data-tour="templates-sort"
             sx={{
               "& .MuiToggleButton-root": {
                 textTransform: "none",
@@ -988,3 +990,12 @@ const TemplatesGallery: React.FC = () => {
 };
 
 export default TemplatesGallery;
+
+
+
+
+
+
+
+
+
