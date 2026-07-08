@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
   alpha,
+  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import {
@@ -30,6 +31,9 @@ import {
   VerifiedUser as VerifiedIcon,
   VpnLock as NetworkIcon,
 } from "@mui/icons-material";
+import MaestroRobot, {
+  type MaestroRobotState,
+} from "@/components/chatbot/MaestroRobot";
 
 const SITE_URL = "https://orchestrator.next-zen.dev";
 
@@ -69,6 +73,15 @@ interface ArtifactItem {
   label: string;
   title: string;
   description: string;
+}
+
+interface MaestroJourneyStep {
+  step: string;
+  label: string;
+  title: string;
+  description: string;
+  mascotState: MaestroRobotState;
+  detail: string;
 }
 
 const templateRows: TemplateItem[] = [
@@ -263,6 +276,35 @@ const capabilitySignals = [
   "Connected infrastructure graphs",
   "Structured forms for resources",
   "Portable IaC bundles",
+];
+
+const MAESTRO_CAROUSEL_INTERVAL_MS = 3600;
+
+const maestroJourney: MaestroJourneyStep[] = [
+  {
+    step: "01",
+    label: "Idea",
+    title: "Describe the outcome.",
+    description: "Start with what you want to build.",
+    mascotState: "idea",
+    detail: "Maestro frames the goal before anything is drawn.",
+  },
+  {
+    step: "02",
+    label: "Listening",
+    title: "Add the constraints.",
+    description: "Mention privacy, guardrails, and platform needs.",
+    mascotState: "listening",
+    detail: "Maestro listens for the rules that shape the design.",
+  },
+  {
+    step: "03",
+    label: "Thinking",
+    title: "Get the starter draft.",
+    description: "Maestro turns the request into an architecture handoff.",
+    mascotState: "thinking",
+    detail: "Talking is next once the draft is ready to hand back.",
+  },
 ];
 
 const setHeadAttribute = (
@@ -1318,6 +1360,356 @@ const ProductLoopMockup: React.FC<{
           {renderMainContent()}
         </Box>
       </SurfaceBox>
+    </Box>
+  );
+};
+
+const MaestroSection: React.FC<{
+  onStartDesigning: () => void;
+}> = ({ onStartDesigning }) => {
+  const theme = useTheme();
+  const prefersReducedMotion = useMediaQuery(
+    "(prefers-reduced-motion: reduce)",
+  );
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const activeStep = maestroJourney[activeStepIndex] ?? maestroJourney[0];
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveStepIndex((currentIndex) => {
+        return (currentIndex + 1) % maestroJourney.length;
+      });
+    }, MAESTRO_CAROUSEL_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [prefersReducedMotion]);
+
+  return (
+    <Box
+      component="section"
+      aria-labelledby="maestro-heading"
+      sx={{
+        py: { xs: 9, md: 13 },
+        borderTop: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.68)}`,
+        background:
+          theme.palette.mode === "dark"
+            ? `linear-gradient(180deg, ${alpha(theme.palette.secondary.main, 0.07)} 0%, transparent 100%)`
+            : `linear-gradient(180deg, ${alpha(theme.palette.tertiary.main, 0.24)} 0%, ${alpha(theme.palette.common.white, 0.18)} 100%)`,
+      }}
+    >
+      <Container maxWidth="lg">
+        <Grid container spacing={{ xs: 4, md: 7 }} alignItems="center">
+          <Grid size={{ xs: 12, md: 5 }}>
+            <SectionIntro
+              label="Meet Maestro"
+              title="A simple carousel that shows how Maestro works."
+              description="It moves from idea to listening to thinking, then hands the draft back to you."
+            />
+
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ mt: 3, flexWrap: "wrap", gap: 1 }}
+            >
+              <Chip
+                label={prefersReducedMotion ? "Manual preview" : "Auto preview"}
+                size="small"
+                sx={{
+                  borderRadius: 999,
+                  fontWeight: 700,
+                  color: theme.palette.secondary.main,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.28),
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.46)}`,
+                }}
+              />
+              <Chip
+                label="3 steps"
+                size="small"
+                sx={{
+                  borderRadius: 999,
+                  fontWeight: 700,
+                  color: theme.palette.secondary.main,
+                  backgroundColor: alpha(theme.palette.tertiary.main, 0.28),
+                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.46)}`,
+                }}
+              />
+            </Stack>
+
+            <SurfaceBox
+              sx={{
+                mt: 3,
+                p: { xs: 1.35, sm: 1.6 },
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.background.paper, 0.68)
+                    : alpha(theme.palette.common.white, 0.88),
+              }}
+            >
+              <Stack spacing={1.5}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ flexWrap: "wrap", gap: 1 }}
+                >
+                  {maestroJourney.map((step, index) => {
+                    const isActive = index === activeStepIndex;
+
+                    return (
+                      <Box
+                        key={step.step}
+                        component="button"
+                        type="button"
+                        onClick={() => setActiveStepIndex(index)}
+                        aria-pressed={isActive}
+                        sx={{
+                          minWidth: 84,
+                          px: 1.15,
+                          py: 1,
+                          borderRadius: 1.1,
+                          border: `1px solid ${alpha(
+                            isActive
+                              ? theme.palette.secondary.main
+                              : theme.palette.divider,
+                            isActive ? 0.46 : 0.72,
+                          )}`,
+                          backgroundColor: isActive
+                            ? alpha(
+                                theme.palette.secondary.main,
+                                theme.palette.mode === "dark" ? 0.16 : 0.08,
+                              )
+                            : "transparent",
+                          color: isActive
+                            ? theme.palette.secondary.main
+                            : theme.palette.text.secondary,
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition:
+                            "border-color 180ms ease, background-color 180ms ease, color 180ms ease",
+                          appearance: "none",
+                          "&:focus-visible": {
+                            outline: `2px solid ${alpha(theme.palette.secondary.main, 0.65)}`,
+                            outlineOffset: 2,
+                          },
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: "block",
+                            fontWeight: 900,
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          {step.step}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            mt: 0.35,
+                            fontSize: "0.92rem",
+                            fontWeight: 800,
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {step.label}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+
+                <Box>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: theme.palette.secondary.main,
+                      fontWeight: 850,
+                      letterSpacing: "0.12em",
+                    }}
+                  >
+                    Step {activeStep.step}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 0.5,
+                      color: "text.primary",
+                      fontWeight: 850,
+                      fontSize: { xs: "1.2rem", md: "1.35rem" },
+                      lineHeight: 1.15,
+                    }}
+                  >
+                    {activeStep.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mt: 0.9,
+                      color: "text.secondary",
+                      lineHeight: 1.7,
+                      maxWidth: 420,
+                    }}
+                  >
+                    {activeStep.description}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Box
+                    sx={{
+                      height: 6,
+                      borderRadius: 999,
+                      overflow: "hidden",
+                      backgroundColor: alpha(
+                        theme.palette.divider,
+                        theme.palette.mode === "dark" ? 0.55 : 0.7,
+                      ),
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${((activeStepIndex + 1) / maestroJourney.length) * 100}%`,
+                        height: "100%",
+                        borderRadius: 999,
+                        backgroundColor: theme.palette.secondary.main,
+                        transition: "width 320ms ease",
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      mt: 0.85,
+                      display: "block",
+                      color: "text.secondary",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {prefersReducedMotion
+                      ? "Select a step to preview Maestro."
+                      : "The carousel moves to the next step automatically."}
+                  </Typography>
+                </Box>
+              </Stack>
+            </SurfaceBox>
+
+            <Button
+              variant="contained"
+              size="large"
+              onClick={onStartDesigning}
+              startIcon={<PlayIcon />}
+              sx={{
+                mt: 3.2,
+                borderRadius: 1,
+                px: 3,
+                py: 1.25,
+                textTransform: "none",
+                fontWeight: 850,
+                boxShadow: "none",
+                "&:hover": {
+                  boxShadow: "none",
+                },
+              }}
+            >
+              Start Designing
+            </Button>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 7 }}>
+            <SurfaceBox
+              sx={{
+                border: "none",
+                overflow: "hidden",
+                position: "relative",
+                minHeight: { xs: 420, md: 520 },
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.background.paper, 0.74)
+                    : alpha(theme.palette.common.white, 0.95),
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: "10% -10% auto auto",
+                  width: { xs: 220, md: 300 },
+                  height: { xs: 220, md: 300 },
+                  borderRadius: "50%",
+                  background:
+                    theme.palette.mode === "dark"
+                      ? `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.28)} 0%, transparent 72%)`
+                      : `radial-gradient(circle, ${alpha(theme.palette.tertiary.main, 0.32)} 0%, transparent 72%)`,
+                  pointerEvents: "none",
+                },
+              }}
+            >
+              <Stack
+                alignItems="center"
+                justifyContent="center"
+                spacing={2.2}
+                sx={{
+                  minHeight: "100%",
+                  textAlign: "center",
+                  p: { xs: 2.6, sm: 3.2, md: 4 },
+                  position: "relative",
+                  zIndex: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: { xs: 260, sm: 320, md: 380 },
+                    height: { xs: 260, sm: 320, md: 380 },
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background:
+                      theme.palette.mode === "dark"
+                        ? `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.24)} 0%, ${alpha(theme.palette.background.paper, 0)} 68%)`
+                        : `radial-gradient(circle, ${alpha(theme.palette.tertiary.main, 0.28)} 0%, ${alpha(theme.palette.common.white, 0)} 70%)`,
+                  }}
+                >
+                  <MaestroRobot
+                    state={activeStep.mascotState}
+                    size={260}
+                    decorative
+                    robotColor={
+                      theme.palette.mode === "dark"
+                        ? theme.palette.secondary.light
+                        : theme.palette.primary.dark
+                    }
+                  />
+                </Box>
+
+                <Box sx={{ maxWidth: 360 }}>
+                  <Typography
+                    id="maestro-heading"
+                    sx={{
+                      color: "text.primary",
+                      fontWeight: 850,
+                      fontSize: { xs: "1.2rem", md: "1.4rem" },
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {activeStep.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mt: 1,
+                      color: "text.secondary",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {activeStep.detail}
+                  </Typography>
+                </Box>
+              </Stack>
+            </SurfaceBox>
+          </Grid>
+        </Grid>
+      </Container>
     </Box>
   );
 };
@@ -2991,6 +3383,7 @@ const LandingPage: React.FC = () => {
       </Box>
 
       <Box component="main">
+        <MaestroSection onStartDesigning={goToCanvas} />
         <ProductLoopSection />
         <ArtifactSection />
         <TemplateShowcaseSection onBrowseTemplates={goToTemplates} />

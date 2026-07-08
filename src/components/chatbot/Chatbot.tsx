@@ -17,7 +17,6 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
-  Stack,
   TextField,
   Tooltip,
   Typography,
@@ -27,6 +26,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
@@ -54,45 +54,54 @@ import { fetchResources } from "@/store/resourcesSlice";
 import MessageBubble from "./MessageBubble";
 import DiffAlert from "./DiffAlert";
 import usePageContext from "@/hooks/usePageContext";
-import { RiRobot3Fill } from "react-icons/ri";
+import MaestroRobot, { type MaestroRobotState } from "./MaestroRobot";
 import { IoMdClose } from "react-icons/io";
-
 
 // ── Typing indicator ───────────────────────────────────────────────────────────
 
-const TypingIndicator: React.FC = () => (
-  <Box display="flex" alignItems="center" gap={0.5} px={2} py={0.75}>
-    <Avatar
-      sx={{
-        width: 28,
-        height: 28,
-        bgcolor: "primary.dark",
-        fontSize: "0.6rem",
-      }}
-    >
-      <RiRobot3Fill size={16} />
-    </Avatar>
-    <Stack direction="row" spacing={0.4} ml={0.5}>
-      {[0, 1, 2].map((i) => (
-        <Box
-          key={i}
-          sx={{
-            width: 7,
-            height: 7,
-            borderRadius: "50%",
-            bgcolor: "primary.main",
-            animation: "bounce 1.2s infinite",
-            animationDelay: `${i * 0.2}s`,
-            "@keyframes bounce": {
-              "0%, 80%, 100%": { transform: "scale(0.6)" },
-              "40%": { transform: "scale(1)" },
-            },
-          }}
+const TALKING_STATE_MS = 1600;
+
+const TypingIndicator: React.FC = () => {
+  const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
+  const robotBadgeBg = dark
+    ? theme.palette.tertiary.dark
+    : alpha(theme.palette.primary.main, 0.1);
+  const robotBadgeBorder = dark
+    ? `1px solid ${alpha(theme.palette.primary.light, 0.32)}`
+    : `1px solid ${alpha(theme.palette.primary.main, 0.14)}`;
+  const robotColor = dark
+    ? theme.palette.secondary.light
+    : theme.palette.primary.dark;
+
+  return (
+    <Box display="flex" alignItems="center" gap={1} px={2} py={0.75}>
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          bgcolor: robotBadgeBg,
+          border: robotBadgeBorder,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <MaestroRobot
+          state="thinking"
+          size={20}
+          decorative
+          robotColor={robotColor}
         />
-      ))}
-    </Stack>
-  </Box>
-);
+      </Box>
+      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+        Maestro is thinking...
+      </Typography>
+    </Box>
+  );
+};
 
 // ── Drag handle for split-view resize ───────────────────────────────────────────
 
@@ -154,6 +163,7 @@ const Chatbot: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const theme = useTheme();
+  const dark = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { isSplitView, toggleSplitView, setSplitView, splitWidth } =
     useChatLayout();
@@ -188,6 +198,10 @@ const Chatbot: React.FC = () => {
   const [toastSeverity, setToastSeverity] = useState<
     "success" | "info" | "warning" | "error"
   >("info");
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [talkingMessageKey, setTalkingMessageKey] = useState<string | null>(
+    null,
+  );
 
   const pageContext = usePageContext();
 
@@ -199,6 +213,8 @@ const Chatbot: React.FC = () => {
   // Set to true when the user explicitly clicks "New chat" so the session-load
   // effect creates a fresh session instead of reloading the latest one.
   const wantsNewSessionRef = useRef(false);
+  const previousSessionIdRef = useRef<string | null>(null);
+  const previousMessageCountRef = useRef(0);
 
   // ── Load resource catalog once (needed by handleImplement) ────────────────
   useEffect(() => {
@@ -284,9 +300,52 @@ const Chatbot: React.FC = () => {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
+  useEffect(() => {
+    if (showHistory) {
+      setIsInputFocused(false);
+      setTalkingMessageKey(null);
+    }
+  }, [showHistory]);
+
+  useEffect(() => {
+    const sessionId = activeSession?.id ?? null;
+    const messages = activeSession?.messages ?? [];
+
+    if (sessionId !== previousSessionIdRef.current) {
+      previousSessionIdRef.current = sessionId;
+      previousMessageCountRef.current = messages.length;
+      setTalkingMessageKey(null);
+      return;
+    }
+
+    if (messages.length <= previousMessageCountRef.current) {
+      previousMessageCountRef.current = messages.length;
+      return;
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === "assistant") {
+      setTalkingMessageKey(`${lastMessage.timestamp}-${messages.length - 1}`);
+    }
+
+    previousMessageCountRef.current = messages.length;
+  }, [activeSession]);
+
+  useEffect(() => {
+    if (!talkingMessageKey || isSending || showHistory) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setTalkingMessageKey((current) =>
+        current === talkingMessageKey ? null : current,
+      );
+    }, TALKING_STATE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [talkingMessageKey, isSending, showHistory]);
+
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed || isSending) return;
+    if (!trimmed || isSending || Boolean(pendingMessageRef.current)) return;
     setInput("");
     // Session still being created — stash the message and send once ready
     if (!activeSession) {
@@ -499,6 +558,22 @@ const Chatbot: React.FC = () => {
   const showDiffAlert =
     lastDiffMsg && lastDiffMsg.content !== dismissedDiff && !isSending;
 
+  const isWaitingForSessionSend =
+    isCreatingSession && Boolean(pendingMessageRef.current);
+  const hasDraftInput = input.trim().length > 0;
+  const launcherRobotColor = dark ? theme.palette.secondary.light : undefined;
+  const headerAvatarBg = dark ? theme.palette.tertiary.dark : "primary.dark";
+  const headerRobotColor = dark
+    ? theme.palette.secondary.light
+    : theme.palette.primary.light;
+
+  let maestroState: MaestroRobotState = "idle";
+  if (!showHistory) {
+    if (isSending || isWaitingForSessionSend) maestroState = "thinking";
+    else if (talkingMessageKey) maestroState = "talking";
+    else if (isInputFocused || hasDraftInput) maestroState = "listening";
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -508,6 +583,7 @@ const Chatbot: React.FC = () => {
         <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1300 }}>
           <Tooltip title={openChat ? "Close Maestro" : "Open Maestro"}>
             <IconButton
+              aria-label={openChat ? "Close Maestro" : "Open Maestro"}
               color="primary"
               onClick={() => setOpenChat((o) => !o)}
               size="large"
@@ -517,7 +593,16 @@ const Chatbot: React.FC = () => {
                 "&:hover": { boxShadow: 6 },
               }}
             >
-              {openChat ? <IoMdClose size={36} /> : <RiRobot3Fill size={36} />}
+              {openChat ? (
+                <IoMdClose size={36} />
+              ) : (
+                <MaestroRobot
+                  state={maestroState}
+                  size={36}
+                  decorative
+                  robotColor={launcherRobotColor}
+                />
+              )}
             </IconButton>
           </Tooltip>
         </Box>
@@ -597,12 +682,15 @@ const Chatbot: React.FC = () => {
                     sx={{
                       width: 50,
                       height: 50,
-                      bgcolor: "primary.dark",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
+                      bgcolor: headerAvatarBg,
                     }}
                   >
-                    <RiRobot3Fill size={36} />
+                    <MaestroRobot
+                      state={maestroState}
+                      size={38}
+                      decorative
+                      robotColor={headerRobotColor}
+                    />
                   </Avatar>
                   <Box flex={1}>
                     <Typography variant="body1" fontWeight={700}>
@@ -799,7 +887,8 @@ const Chatbot: React.FC = () => {
               /* ── Message list ── */
               <Box flex={1} overflow="auto" py={1}>
                 {(!activeSession || activeSession.messages.length === 0) &&
-                  !isSending && (
+                  !isSending &&
+                  !isWaitingForSessionSend && (
                     <Box textAlign="center" px={3} mt={3}>
                       <Typography variant="body2" color="text.secondary">
                         Hi! I'm <strong>Maestro</strong>. Describe the cloud
@@ -809,17 +898,28 @@ const Chatbot: React.FC = () => {
                     </Box>
                   )}
 
-                {activeSession?.messages.map((msg, idx) => (
-                  <MessageBubble
-                    key={`${msg.timestamp}-${idx}`}
-                    message={msg}
-                    sessionId={activeSession.id}
-                    onImplement={handleImplement}
-                    isImplementing={isImplementing}
-                  />
-                ))}
+                {activeSession?.messages.map((msg, idx) => {
+                  const messageKey = `${msg.timestamp}-${idx}`;
+                  const assistantAvatarState: MaestroRobotState =
+                    msg.role === "assistant" &&
+                    talkingMessageKey === messageKey &&
+                    !isSending
+                      ? "talking"
+                      : "idle";
 
-                {isSending && <TypingIndicator />}
+                  return (
+                    <MessageBubble
+                      key={messageKey}
+                      message={msg}
+                      sessionId={activeSession.id}
+                      onImplement={handleImplement}
+                      isImplementing={isImplementing}
+                      assistantAvatarState={assistantAvatarState}
+                    />
+                  );
+                })}
+
+                {(isSending || isWaitingForSessionSend) && <TypingIndicator />}
 
                 {sendError && (
                   <Box px={2} py={0.5}>
@@ -842,21 +942,35 @@ const Chatbot: React.FC = () => {
 
             {/* ── Input bar (hidden when browsing history) ── */}
             {showHistory ? null : (
-              <Box sx={{ px: 1.5, py: 1, bgcolor: "background.paper" }}>
+              <Box sx={{ bgcolor: "background.paper" }}>
                 <TextField
                   inputRef={inputRef}
                   fullWidth
                   multiline
-                  maxRows={3}
+                  maxRows={5}
                   size="small"
                   placeholder="Ask Maestro to plan your infrastructure…"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  disabled={isSending}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
+                  disabled={isSending || isWaitingForSessionSend}
+                  sx={{
+                    px: 0,
+                    py: 1,
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      border: "none",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      border: "none",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      border: "none",
+                    },
+                  }}
                   slotProps={{
                     input: {
-                      sx: { borderRadius: 3 },
                       endAdornment: (
                         <InputAdornment position="end">
                           <IconButton

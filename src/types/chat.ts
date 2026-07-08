@@ -11,6 +11,7 @@ export interface SecurityNote {
 
 export interface PlanResource {
   resourceType: string;
+  resourceName?: string;
   cloudProvider: string;
   intent: string;
   config: Record<string, unknown>;

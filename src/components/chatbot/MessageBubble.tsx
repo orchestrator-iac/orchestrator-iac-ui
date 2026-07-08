@@ -4,13 +4,14 @@ import { useTheme, alpha } from "@mui/material/styles";
 import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "@/types/chat";
 import PlanCard from "./PlanCard";
-import { RiRobot3Fill } from "react-icons/ri";
+import MaestroRobot, { type MaestroRobotState } from "./MaestroRobot";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   sessionId: string;
   onImplement?: (sessionId: string) => void;
   isImplementing?: boolean;
+  assistantAvatarState?: MaestroRobotState;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -18,9 +19,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   sessionId,
   onImplement,
   isImplementing = false,
+  assistantAvatarState = "idle",
 }) => {
   const theme = useTheme();
   const dark = theme.palette.mode === "dark";
+  const avatarBg = dark
+    ? theme.palette.tertiary.dark
+    : alpha(theme.palette.primary.main, 0.1);
+  const avatarBorder = dark
+    ? `1px solid ${alpha(theme.palette.primary.light, 0.32)}`
+    : `1px solid ${alpha(theme.palette.primary.main, 0.14)}`;
+  const robotColor = dark
+    ? theme.palette.secondary.light
+    : theme.palette.primary.dark;
 
   const isUser = message.role === "user";
   const isDiff = message.messageType === "diff";
@@ -47,9 +58,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           sx={{
             bgcolor: "primary.main",
             color: "primary.contrastText",
-            borderRadius: "18px 18px 4px 18px",
-            px: 1.5,
-            py: 0.75,
+            borderRadius: "8px 8px 0px 8px",
+            p: 0.75,
             maxWidth: "80%",
           }}
         >
@@ -64,24 +74,27 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <Box display="flex" alignItems="flex-start" mb={1} px={1} gap={1}>
       <Avatar
         sx={{
-          width: 28,
-          height: 28,
-          bgcolor: "primary.dark",
-          fontSize: "0.7rem",
-          fontWeight: 700,
+          width: 32,
+          height: 32,
+          bgcolor: avatarBg,
+          border: avatarBorder,
           flexShrink: 0,
-          mt: 0.5,
+          mt: 0.25,
         }}
       >
-        <RiRobot3Fill size={16} />
+        <MaestroRobot
+          state={assistantAvatarState}
+          size={20}
+          decorative
+          robotColor={robotColor}
+        />
       </Avatar>
 
       <Box
         sx={{
           bgcolor: bubbleBg,
-          borderRadius: "4px 18px 18px 18px",
-          px: 1.5,
-          py: 0.75,
+          borderRadius: "0px 8px 8px 8px",
+          p: 0.75,
           maxWidth: "85%",
           borderLeft,
         }}
