@@ -278,32 +278,38 @@ const capabilitySignals = [
   "Portable IaC bundles",
 ];
 
-const MAESTRO_CAROUSEL_INTERVAL_MS = 3600;
+const MAESTRO_CAROUSEL_INTERVAL_MS = 10000;
 
 const maestroJourney: MaestroJourneyStep[] = [
   {
     step: "01",
-    label: "Idea",
-    title: "Describe the outcome.",
-    description: "Start with what you want to build.",
+    label: "Goal",
+    title: "Tell Maestro what you want to build.",
+    description:
+      "Start with the infrastructure outcome, such as a landing zone, platform, or service stack.",
     mascotState: "idea",
-    detail: "Maestro frames the goal before anything is drawn.",
+    detail:
+      "Maestro uses your goal to shape the first version of the architecture.",
   },
   {
     step: "02",
-    label: "Listening",
-    title: "Add the constraints.",
-    description: "Mention privacy, guardrails, and platform needs.",
+    label: "Constraints",
+    title: "Add the rules it needs to follow.",
+    description:
+      "Include cloud preferences, security requirements, networking limits, and team standards.",
     mascotState: "listening",
-    detail: "Maestro listens for the rules that shape the design.",
+    detail:
+      "Maestro listens for the guardrails that make the design fit your environment.",
   },
   {
     step: "03",
-    label: "Thinking",
-    title: "Get the starter draft.",
-    description: "Maestro turns the request into an architecture handoff.",
+    label: "Draft",
+    title: "Review the starter architecture.",
+    description:
+      "Maestro turns your request into a structured first draft you can inspect and refine.",
     mascotState: "thinking",
-    detail: "Talking is next once the draft is ready to hand back.",
+    detail:
+      "You get an architecture that is ready to edit, validate, and move forward.",
   },
 ];
 
@@ -1364,9 +1370,7 @@ const ProductLoopMockup: React.FC<{
   );
 };
 
-const MaestroSection: React.FC<{
-  onStartDesigning: () => void;
-}> = ({ onStartDesigning }) => {
+const MaestroSection: React.FC = () => {
   const theme = useTheme();
   const prefersReducedMotion = useMediaQuery(
     "(prefers-reduced-motion: reduce)",
@@ -1404,42 +1408,12 @@ const MaestroSection: React.FC<{
     >
       <Container maxWidth="lg">
         <Grid container spacing={{ xs: 4, md: 7 }} alignItems="center">
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <SectionIntro
               label="Meet Maestro"
-              title="A simple carousel that shows how Maestro works."
-              description="It moves from idea to listening to thinking, then hands the draft back to you."
+              title="Maestro turns an infrastructure idea into Architecture."
+              description="Share what you want to build, add the constraints that matter, and Maestro hands back a structured draft you can review and refine."
             />
-
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{ mt: 3, flexWrap: "wrap", gap: 1 }}
-            >
-              <Chip
-                label={prefersReducedMotion ? "Manual preview" : "Auto preview"}
-                size="small"
-                sx={{
-                  borderRadius: 999,
-                  fontWeight: 700,
-                  color: theme.palette.secondary.main,
-                  backgroundColor: alpha(theme.palette.tertiary.main, 0.28),
-                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.46)}`,
-                }}
-              />
-              <Chip
-                label="3 steps"
-                size="small"
-                sx={{
-                  borderRadius: 999,
-                  fontWeight: 700,
-                  color: theme.palette.secondary.main,
-                  backgroundColor: alpha(theme.palette.tertiary.main, 0.28),
-                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.46)}`,
-                }}
-              />
-            </Stack>
-
             <SurfaceBox
               sx={{
                 mt: 3,
@@ -1454,7 +1428,7 @@ const MaestroSection: React.FC<{
                 <Stack
                   direction="row"
                   spacing={1}
-                  sx={{ flexWrap: "wrap", gap: 1 }}
+                  sx={{ flexWrap: "wrap", gap: 1, justifyContent: "center" }}
                 >
                   {maestroJourney.map((step, index) => {
                     const isActive = index === activeStepIndex;
@@ -1467,10 +1441,10 @@ const MaestroSection: React.FC<{
                         onClick={() => setActiveStepIndex(index)}
                         aria-pressed={isActive}
                         sx={{
-                          minWidth: 84,
                           px: 1.15,
                           py: 1,
                           borderRadius: 1.1,
+                          textTransform: "uppercase",
                           border: `1px solid ${alpha(
                             isActive
                               ? theme.palette.secondary.main
@@ -1497,16 +1471,6 @@ const MaestroSection: React.FC<{
                           },
                         }}
                       >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            display: "block",
-                            fontWeight: 900,
-                            lineHeight: 1.1,
-                          }}
-                        >
-                          {step.step}
-                        </Typography>
                         <Typography
                           sx={{
                             mt: 0.35,
@@ -1595,30 +1559,9 @@ const MaestroSection: React.FC<{
                 </Box>
               </Stack>
             </SurfaceBox>
-
-            <Button
-              variant="contained"
-              size="large"
-              onClick={onStartDesigning}
-              startIcon={<PlayIcon />}
-              sx={{
-                mt: 3.2,
-                borderRadius: 1,
-                px: 3,
-                py: 1.25,
-                textTransform: "none",
-                fontWeight: 850,
-                boxShadow: "none",
-                "&:hover": {
-                  boxShadow: "none",
-                },
-              }}
-            >
-              Start Designing
-            </Button>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 7 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <SurfaceBox
               sx={{
                 border: "none",
@@ -1682,7 +1625,7 @@ const MaestroSection: React.FC<{
                   />
                 </Box>
 
-                <Box sx={{ maxWidth: 360 }}>
+                <Box>
                   <Typography
                     id="maestro-heading"
                     sx={{
@@ -2829,8 +2772,6 @@ const CapabilityMatrixSection: React.FC = () => {
       <Container maxWidth="lg">
         <Box
           sx={{
-            maxWidth: 980,
-            mx: "auto",
             textAlign: { xs: "center", md: "left" },
           }}
         >
@@ -2855,8 +2796,6 @@ const CapabilityMatrixSection: React.FC = () => {
               fontWeight: 850,
               letterSpacing: 0,
               lineHeight: 0.98,
-              maxWidth: 860,
-              mx: "auto",
             }}
           >
             Remove Orchestration Guesswork.
@@ -2865,8 +2804,6 @@ const CapabilityMatrixSection: React.FC = () => {
             variant="body1"
             sx={{
               mt: 2.2,
-              maxWidth: 760,
-              mx: "auto",
               color: "text.secondary",
               fontSize: { xs: "1rem", md: "1.08rem" },
               lineHeight: 1.75,
@@ -3383,7 +3320,7 @@ const LandingPage: React.FC = () => {
       </Box>
 
       <Box component="main">
-        <MaestroSection onStartDesigning={goToCanvas} />
+        <MaestroSection />
         <ProductLoopSection />
         <ArtifactSection />
         <TemplateShowcaseSection onBrowseTemplates={goToTemplates} />

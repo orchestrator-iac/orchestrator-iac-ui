@@ -2,6 +2,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   TextField,
   Button,
   MenuItem,
@@ -32,6 +33,7 @@ type InitPopupProps = {
   templateInfo?: CloudConfig;
   setTemplateInfo: (info: CloudConfig) => void;
   onClose: () => void;
+  onBackToHome?: () => void;
   onSubmit: (data: {
     templateName: string;
     cloud: string;
@@ -45,6 +47,7 @@ const InitPopup = ({
   templateInfo,
   setTemplateInfo,
   onClose,
+  onBackToHome,
   onSubmit,
 }: InitPopupProps) => {
   const [form, setForm] = useState({
@@ -142,10 +145,12 @@ const InitPopup = ({
               fullWidth
               required
               sx={{
+                mt: 1,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                 },
               }}
+              autoComplete="off"
             />
           </Grid>
 
@@ -163,6 +168,7 @@ const InitPopup = ({
                   borderRadius: 2,
                 },
               }}
+              autoComplete="off"
             />
           </Grid>
 
@@ -224,6 +230,7 @@ const InitPopup = ({
                   }
                   fullWidth
                   required
+                  autoComplete="off"
                 />
               )}
               renderOption={(props, option) => (
@@ -287,26 +294,45 @@ const InitPopup = ({
             </List>
           </Grid>
 
-          <Grid size={12}>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-              sx={{
-                mt: 2,
-                borderRadius: 2,
-                textTransform: "none",
-                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                },
-              }}
-              disabled={!isFormValid}
-            >
-              Save
-            </Button>
-          </Grid>
         </Grid>
       </DialogContent>
+      <DialogActions
+        sx={{
+          px: 3,
+          pb: 3,
+          pt: 1,
+          justifyContent: onBackToHome ? "space-between" : "flex-end",
+        }}
+      >
+        {onBackToHome ? (
+          <Button
+            onClick={onBackToHome}
+            sx={{
+              borderRadius: 2,
+              px: 2,
+              textTransform: "none",
+            }}
+          >
+            Back to Home
+          </Button>
+        ) : null}
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          sx={{
+            borderRadius: 2,
+            px: 3,
+            textTransform: "none",
+            transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            "&:hover": {
+              transform: "translateY(-2px)",
+            },
+          }}
+          disabled={!isFormValid}
+        >
+          Save
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

@@ -120,6 +120,11 @@ const apiService = {
     return response.data;
   },
 
+  patch: async (url: string, data?: any, config?: AxiosRequestConfig) => {
+    const response = await apiClient.patch(url, data, config);
+    return response.data;
+  },
+
   delete: async (url: string, config?: AxiosRequestConfig) => {
     const response = await apiClient.delete(url, config);
     return response.data;
