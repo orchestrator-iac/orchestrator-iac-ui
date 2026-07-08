@@ -1653,6 +1653,11 @@ const OrchestratorReactFlow: React.FC = () => {
         templateInfo={templateInfo}
         setTemplateInfo={setTemplateInfo}
         onClose={() => setInitOpen(false)}
+        onBackToHome={
+          template_id === "new"
+            ? () => navigate("/home", { replace: true })
+            : undefined
+        }
         onSubmit={handleInitSubmit}
       />
 
