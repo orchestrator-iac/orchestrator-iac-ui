@@ -1,5 +1,7 @@
 import apiService from "./apiService";
 import type {
+  ChatMessage,
+  ChatMessageFeedbackRequest,
   ChatSessionUpdateRequest,
   ChatSessionResponse,
   ChatSendResponse,
@@ -25,6 +27,13 @@ export const chatService = {
     id: string,
     updates: ChatSessionUpdateRequest,
   ): Promise<ChatSessionResponse> => apiService.patch(`${BASE}/sessions/${id}`, updates),
+
+  upsertMessageFeedback: (
+    sessionId: string,
+    messageId: string,
+    feedback: ChatMessageFeedbackRequest,
+  ): Promise<ChatMessage> =>
+    apiService.put(`${BASE}/sessions/${sessionId}/messages/${messageId}/feedback`, feedback),
 
   sendMessage: (id: string, message: string, pageContext?: any): Promise<ChatSendResponse> =>
     apiService.post(

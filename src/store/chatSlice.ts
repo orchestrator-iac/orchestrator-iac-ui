@@ -6,6 +6,7 @@ import {
 import { chatService } from "@/services/chatService";
 import type {
   ChatMessage,
+  ChatMessageFeedbackRequest,
   ChatSessionUpdateRequest,
   ChatSessionListItem,
   ChatSessionResponse,
@@ -34,6 +35,14 @@ const initialState: ChatState = {
   isSending: false,
   sendError: null,
 };
+
+const replaceMessageById = (
+  messages: ChatMessage[],
+  updatedMessage: ChatMessage,
+): ChatMessage[] =>
+  messages.map((message) =>
+    message.id === updatedMessage.id ? updatedMessage : message,
+  );
 
 // ── Thunks ─────────────────────────────────────────────────────────────────────
 
@@ -88,6 +97,35 @@ export const updateSession = createAsyncThunk(
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Failed to update session";
+      return rejectWithValue(msg);
+    }
+  },
+);
+
+export const upsertMessageFeedback = createAsyncThunk(
+  "chat/upsertMessageFeedback",
+  async (
+    {
+      sessionId,
+      messageId,
+      feedback,
+    }: {
+      sessionId: string;
+      messageId: string;
+      feedback: ChatMessageFeedbackRequest;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      const updatedMessage = await chatService.upsertMessageFeedback(
+        sessionId,
+        messageId,
+        feedback,
+      );
+      return { sessionId, updatedMessage };
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to save feedback";
       return rejectWithValue(msg);
     }
   },
@@ -223,17 +261,15 @@ const chatSlice = createSlice({
         const resp = action.payload;
         if (!state.activeSession) return;
 
-        // Append assistant reply to the local message list
-        const botMsg: ChatMessage = {
-          role: "assistant",
-          content: resp.botResponse,
-          timestamp: new Date().toISOString(),
-          messageType: (resp.messageType as MessageType) || "text",
-          plan: resp.updatedPlan,
-        };
         state.activeSession.messages = [
           ...state.activeSession.messages,
-          botMsg,
+          {
+            ...resp.assistantMessage,
+            messageType:
+              (resp.assistantMessage.messageType as MessageType) ||
+              resp.messageType ||
+              "text",
+          },
         ];
 
         // Update the stored plan if Maestro returned one
@@ -245,6 +281,14 @@ const chatSlice = createSlice({
         state.isSending = false;
         state.sendError = action.payload as string;
       });
+
+    builder.addCase(upsertMessageFeedback.fulfilled, (state, action) => {
+      if (state.activeSession?.id !== action.payload.sessionId) return;
+      state.activeSession.messages = replaceMessageById(
+        state.activeSession.messages,
+        action.payload.updatedMessage,
+      );
+    });
 
     // deleteSession
     builder.addCase(deleteSession.fulfilled, (state, action) => {
