@@ -49,10 +49,15 @@ import {
   fetchSession,
   fetchSessions,
   sendMessage,
+  upsertMessageFeedback,
   updateSession,
 } from "@/store/chatSlice";
 import { fetchResources } from "@/store/resourcesSlice";
-import type { PlanImplementationAction, PlanSchema } from "@/types/chat";
+import type {
+  ChatMessageFeedbackRequest,
+  PlanImplementationAction,
+  PlanSchema,
+} from "@/types/chat";
 import { writeMaestroDraft } from "@/utils/maestroDraft";
 import MessageBubble from "./MessageBubble";
 import DiffAlert from "./DiffAlert";
@@ -273,6 +278,7 @@ const Chatbot: React.FC = () => {
       pendingMessageRef.current = null;
       dispatch(
         appendLocalMessage({
+          id: `local_${uuidv4()}`,
           role: "user",
           content: pending,
           timestamp: new Date().toISOString(),
@@ -328,7 +334,7 @@ const Chatbot: React.FC = () => {
 
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === "assistant") {
-      setTalkingMessageKey(`${lastMessage.timestamp}-${messages.length - 1}`);
+      setTalkingMessageKey(lastMessage.id);
     }
 
     previousMessageCountRef.current = messages.length;
@@ -358,6 +364,7 @@ const Chatbot: React.FC = () => {
     // Optimistically show user message before the round-trip
     dispatch(
       appendLocalMessage({
+        id: `local_${uuidv4()}`,
         role: "user",
         content: trimmed,
         timestamp: new Date().toISOString(),
@@ -395,6 +402,23 @@ const Chatbot: React.FC = () => {
   ) => {
     if (reason === "clickaway") return;
     setToastOpen(false);
+  };
+
+  const handleSubmitMessageFeedback = async (
+    messageId: string,
+    feedback: ChatMessageFeedbackRequest,
+  ) => {
+    if (!activeSession) {
+      throw new Error("No active Maestro session found.");
+    }
+
+    await dispatch(
+      upsertMessageFeedback({
+        sessionId: activeSession.id,
+        messageId,
+        feedback,
+      }),
+    ).unwrap();
   };
 
   const handleImplement = async (
@@ -537,7 +561,9 @@ const Chatbot: React.FC = () => {
             ? `/orchestrator/${linkedOrchestratorId}`
             : "/orchestrator/new";
 
-        navigate(`${targetPath}?template_type=custom&maestro_draft=${draftToken}`);
+        navigate(
+          `${targetPath}?template_type=custom&maestro_draft=${draftToken}`,
+        );
       } catch (e) {
         console.error("Failed to open orchestrator editor:", e);
         showToast("Failed to open orchestrator editor", "error");
@@ -938,15 +964,14 @@ const Chatbot: React.FC = () => {
                     </Box>
                   )}
 
-                {activeSession?.messages.map((msg, idx) => {
-                  const messageKey = `${msg.timestamp}-${idx}`;
+                {activeSession?.messages.map((msg) => {
+                  const messageKey = msg.id;
                   const assistantAvatarState: MaestroRobotState =
                     msg.role === "assistant" &&
                     talkingMessageKey === messageKey &&
                     !isSending
                       ? "talking"
                       : "idle";
-
                   return (
                     <MessageBubble
                       key={messageKey}
@@ -954,6 +979,7 @@ const Chatbot: React.FC = () => {
                       sessionId={activeSession.id}
                       linkedOrchestratorId={activeSession.orchestratorId}
                       onImplement={handleImplement}
+                      onSubmitFeedback={handleSubmitMessageFeedback}
                       isImplementing={isImplementing}
                       assistantAvatarState={assistantAvatarState}
                     />

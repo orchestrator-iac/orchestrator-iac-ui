@@ -4,6 +4,7 @@ export type MessageRole = "user" | "assistant";
 export type MessageType = "text" | "plan" | "diff" | "system";
 export type SessionStatus = "planning" | "implementing" | "active" | "closed";
 export type PlanImplementationAction = "create" | "update";
+export type MessageFeedbackSentiment = "positive" | "negative";
 
 export interface SecurityNote {
   message: string;
@@ -27,12 +28,28 @@ export interface PlanSchema {
   estimatedMonthlyUSD?: number | null;
 }
 
+export interface ChatMessageFeedback {
+  sentiment: MessageFeedbackSentiment;
+  reasons: string[];
+  details?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessageFeedbackRequest {
+  sentiment: MessageFeedbackSentiment;
+  reasons?: string[];
+  details?: string;
+}
+
 export interface ChatMessage {
+  id: string;
   role: MessageRole;
   content: string;
   timestamp: string;
   messageType: MessageType;
   plan?: PlanSchema;
+  feedback?: ChatMessageFeedback;
 }
 
 export interface PageContext {
@@ -72,6 +89,7 @@ export interface ChatSendResponse {
   sessionId: string;
   botResponse: string;
   messageType: MessageType;
+  assistantMessage: ChatMessage;
   updatedPlan?: PlanSchema;
   diffSummary?: string;
   intent: string;
