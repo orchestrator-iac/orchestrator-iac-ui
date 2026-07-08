@@ -94,7 +94,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
               primary={
                 <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap">
                   <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>
-                    {res.resourceType}
+                    {res.resourceName || res.resourceType}
                   </Typography>
                   <Chip
                     label={res.cloudProvider.toUpperCase()}
