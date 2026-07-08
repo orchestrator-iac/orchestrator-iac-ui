@@ -3,12 +3,15 @@ import {
   Alert,
   Box,
   Button,
+  ButtonGroup,
   Chip,
   Divider,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Paper,
   Stack,
   Tooltip,
@@ -19,9 +22,12 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import type { PlanSchema, SecurityNote } from "@/types/chat";
-
-// ── Security note icon / colour mapping ──────────────────────────────────────
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import type {
+  PlanImplementationAction,
+  PlanSchema,
+  SecurityNote,
+} from "@/types/chat";
 
 const SEVERITY_META: Record<
   SecurityNote["severity"],
@@ -32,37 +38,45 @@ const SEVERITY_META: Record<
   error: { color: "error", icon: <ErrorOutlineIcon fontSize="small" /> },
 };
 
-// ── Cloud provider chip colour ────────────────────────────────────────────────
-
 const PROVIDER_COLOURS: Record<string, "primary" | "secondary" | "default"> = {
   aws: "primary",
   azure: "secondary",
   gcp: "default",
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 interface PlanCardProps {
   plan: PlanSchema;
   sessionId: string;
-  onImplement?: (sessionId: string) => void;
+  linkedOrchestratorId?: string;
+  onImplement?: (
+    sessionId: string,
+    action: PlanImplementationAction,
+    plan: PlanSchema,
+  ) => void;
   isImplementing?: boolean;
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({
   plan,
   sessionId,
+  linkedOrchestratorId,
   onImplement,
   isImplementing = false,
 }) => {
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   const errorCount = plan.securityNotes.filter((n) => n.severity === "error").length;
+  const hasLinkedWorkflow = Boolean(linkedOrchestratorId);
+
+  const handleImplement = (action: PlanImplementationAction) => {
+    onImplement?.(sessionId, action, plan);
+    setMenuAnchorEl(null);
+  };
 
   return (
     <Paper
       variant="outlined"
       sx={{ borderRadius: 2, overflow: "hidden", mt: 1, width: "100%" }}
     >
-      {/* Header */}
       <Box sx={{ bgcolor: "primary.main", px: 2, py: 1 }}>
         <Typography variant="subtitle2" color="primary.contrastText" fontWeight={700}>
           Infrastructure Plan
@@ -74,7 +88,6 @@ const PlanCard: React.FC<PlanCardProps> = ({
         </Typography>
       </Box>
 
-      {/* Summary */}
       <Box sx={{ px: 2, py: 1.5 }}>
         <Typography variant="body2" color="text.secondary">
           {plan.summary}
@@ -83,7 +96,6 @@ const PlanCard: React.FC<PlanCardProps> = ({
 
       <Divider />
 
-      {/* Resource list */}
       <List dense disablePadding>
         {plan.resources.map((res, idx) => (
           <ListItem key={idx} alignItems="flex-start" sx={{ px: 2, py: 0.75 }}>
@@ -124,7 +136,6 @@ const PlanCard: React.FC<PlanCardProps> = ({
         ))}
       </List>
 
-      {/* Security notes */}
       {plan.securityNotes.length > 0 && (
         <>
           <Divider />
@@ -151,7 +162,6 @@ const PlanCard: React.FC<PlanCardProps> = ({
         </>
       )}
 
-      {/* Implement button */}
       <Divider />
       <Box sx={{ px: 2, py: 1.5, display: "flex", justifyContent: "flex-end" }}>
         {errorCount > 0 && (
@@ -170,16 +180,49 @@ const PlanCard: React.FC<PlanCardProps> = ({
             </span>
           </Tooltip>
         )}
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          startIcon={<RocketLaunchIcon />}
-          disabled={isImplementing || errorCount > 0}
-          onClick={() => onImplement?.(sessionId)}
-        >
-          {isImplementing ? "Implementing…" : "Start Implementation"}
-        </Button>
+        {hasLinkedWorkflow ? (
+          <>
+            <ButtonGroup variant="contained" size="small" color="primary">
+              <Button
+                startIcon={<RocketLaunchIcon />}
+                disabled={isImplementing || errorCount > 0}
+                onClick={() => handleImplement("update")}
+              >
+                {isImplementing ? "Preparing..." : "Update Workflow"}
+              </Button>
+              <Button
+                size="small"
+                disabled={isImplementing || errorCount > 0}
+                aria-label="Open workflow action menu"
+                onClick={(event) => setMenuAnchorEl(event.currentTarget)}
+              >
+                <ArrowDropDownIcon />
+              </Button>
+            </ButtonGroup>
+            <Menu
+              anchorEl={menuAnchorEl}
+              open={Boolean(menuAnchorEl)}
+              onClose={() => setMenuAnchorEl(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <MenuItem onClick={() => handleImplement("create")}>
+                Create New Workflow
+              </MenuItem>
+            </Menu>
+          </>
+        ) : (
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            startIcon={<RocketLaunchIcon />}
+            disabled={isImplementing || errorCount > 0}
+            onClick={() => handleImplement("create")}
+          >
+            {isImplementing ? "Preparing..." : "Start Implementation"}
+          </Button>
+        )}
       </Box>
     </Paper>
   );

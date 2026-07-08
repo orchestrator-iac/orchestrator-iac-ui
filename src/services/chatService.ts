@@ -1,5 +1,6 @@
 import apiService from "./apiService";
 import type {
+  ChatSessionUpdateRequest,
   ChatSessionResponse,
   ChatSendResponse,
   ChatSessionsListResponse,
@@ -19,6 +20,11 @@ export const chatService = {
 
   getSession: (id: string): Promise<ChatSessionResponse> =>
     apiService.get(`${BASE}/sessions/${id}`),
+
+  updateSession: (
+    id: string,
+    updates: ChatSessionUpdateRequest,
+  ): Promise<ChatSessionResponse> => apiService.patch(`${BASE}/sessions/${id}`, updates),
 
   sendMessage: (id: string, message: string, pageContext?: any): Promise<ChatSendResponse> =>
     apiService.post(

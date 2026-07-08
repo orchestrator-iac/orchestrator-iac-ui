@@ -45,12 +45,15 @@ import {
   clearActiveSession,
   clearSendError,
   createSession,
+  deleteSession,
   fetchSession,
   fetchSessions,
-  deleteSession,
   sendMessage,
+  updateSession,
 } from "@/store/chatSlice";
 import { fetchResources } from "@/store/resourcesSlice";
+import type { PlanImplementationAction, PlanSchema } from "@/types/chat";
+import { writeMaestroDraft } from "@/utils/maestroDraft";
 import MessageBubble from "./MessageBubble";
 import DiffAlert from "./DiffAlert";
 import usePageContext from "@/hooks/usePageContext";
@@ -394,10 +397,15 @@ const Chatbot: React.FC = () => {
     setToastOpen(false);
   };
 
-  const handleImplement = async (sessionId: string) => {
+  const handleImplement = async (
+    sessionId: string,
+    action: PlanImplementationAction,
+    planOverride?: PlanSchema,
+  ) => {
     if (activeSession?.id !== sessionId) return;
 
     const plan =
+      planOverride ||
       activeSession.currentPlan ||
       activeSession.messages
         .slice()
@@ -493,11 +501,43 @@ const Chatbot: React.FC = () => {
         },
       };
 
-      // Prefill the Orchestrator editor: store in sessionStorage and navigate in-place.
-      // Chatbot is rendered outside <Routes> so the conversation stays visible.
+      const linkedOrchestratorId = activeSession.orchestratorId;
+      const draftAction =
+        action === "update" && linkedOrchestratorId ? "update" : "create";
+
       try {
-        sessionStorage.setItem("maestro_prefill", JSON.stringify(saveReq));
-        navigate("/orchestrator/new?template_type=custom");
+        await dispatch(
+          updateSession({
+            id: sessionId,
+            updates: { status: "implementing" },
+          }),
+        ).unwrap();
+      } catch (e) {
+        console.error("Failed to update Maestro session state:", e);
+        showToast(
+          "Opened the draft, but Maestro could not update the session state.",
+          "warning",
+        );
+      }
+
+      try {
+        const draftToken = uuidv4();
+        writeMaestroDraft({
+          token: draftToken,
+          sessionId,
+          action: draftAction,
+          targetOrchestratorId:
+            draftAction === "update" ? linkedOrchestratorId : null,
+          summary: plan.summary,
+          saveRequest: saveReq,
+        });
+
+        const targetPath =
+          draftAction === "update" && linkedOrchestratorId
+            ? `/orchestrator/${linkedOrchestratorId}`
+            : "/orchestrator/new";
+
+        navigate(`${targetPath}?template_type=custom&maestro_draft=${draftToken}`);
       } catch (e) {
         console.error("Failed to open orchestrator editor:", e);
         showToast("Failed to open orchestrator editor", "error");
@@ -912,6 +952,7 @@ const Chatbot: React.FC = () => {
                       key={messageKey}
                       message={msg}
                       sessionId={activeSession.id}
+                      linkedOrchestratorId={activeSession.orchestratorId}
                       onImplement={handleImplement}
                       isImplementing={isImplementing}
                       assistantAvatarState={assistantAvatarState}

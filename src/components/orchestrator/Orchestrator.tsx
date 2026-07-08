@@ -17,7 +17,7 @@ import {
 } from "@xyflow/react";
 import { useDispatch, useSelector } from "react-redux";
 import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { useTheme } from "@mui/material/styles";
 import DeblurIcon from "@mui/icons-material/Deblur";
@@ -26,6 +26,10 @@ import SouthAmericaIcon from "@mui/icons-material/SouthAmerica";
 import Snackbar from "@mui/material/Snackbar";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import { Box, Chip } from "@mui/material";
 
 import CustomNode from "./CustomNode";
@@ -38,10 +42,17 @@ import { useDnD } from "./sidebar/DnDContext";
 
 import { AppDispatch, RootState } from "../../store";
 import { fetchResourceById } from "../../store/resourceSlice";
+import { updateSession } from "../../store/chatSlice";
 import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig } from "../../types/clouds-info";
+import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
 import { fetchOrchestrators } from "@/store/orchestratorsSlice";
+import {
+  clearMaestroDraft,
+  readMaestroDraft,
+  type MaestroDraftPayload,
+} from "@/utils/maestroDraft";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 
 const initialNodes: Node[] = [];
@@ -52,6 +63,59 @@ const defaultOptions: Record<string, string> = {
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
   "elk.spacing.nodeNode": "80",
   "org.eclipse.elk.portConstraints": "FIXED_ORDER",
+};
+
+type PersistedGraphLike = {
+  templateInfo?: Partial<CloudConfig> | null;
+  nodes?: Array<Record<string, any>>;
+  edges?: Array<Record<string, any>>;
+};
+
+const EMPTY_TEMPLATE_INFO: CloudConfig = {
+  templateName: "",
+  description: "",
+  cloud: undefined,
+  region: "",
+};
+
+const normalizeTemplateInfo = (
+  templateInfo?: Partial<CloudConfig> | null,
+): CloudConfig => ({
+  templateName: templateInfo?.templateName || "",
+  description: templateInfo?.description || "",
+  cloud: templateInfo?.cloud,
+  region: templateInfo?.region || "",
+});
+
+const serializePersistedSnapshot = (graph: PersistedGraphLike): string => {
+  const nodes = [...(graph.nodes || [])]
+    .map((node) => ({
+      id: node.id,
+      resourceId: node.resourceId,
+      position: node.position || { x: 0, y: 0 },
+      values: node.values || {},
+      __nodeType: node.__nodeType,
+      friendlyId: node.friendlyId,
+      isExpanded: node.isExpanded,
+    }))
+    .sort((left, right) => String(left.id).localeCompare(String(right.id)));
+
+  const edges = [...(graph.edges || [])]
+    .map((edge) => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      sourceHandle: edge.sourceHandle ?? null,
+      targetHandle: edge.targetHandle ?? null,
+      data: edge.data || {},
+    }))
+    .sort((left, right) => String(left.id).localeCompare(String(right.id)));
+
+  return JSON.stringify({
+    templateInfo: normalizeTemplateInfo(graph.templateInfo),
+    nodes,
+    edges,
+  });
 };
 
 const useLayoutElements = () => {
@@ -109,11 +173,13 @@ const OrchestratorReactFlow: React.FC = () => {
   const { user } = useAuth();
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { template_id } = useParams<{ template_id: string }>();
   const { getLayoutElements } = useLayoutElements();
   const { fitView } = useReactFlow();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const template_type = searchParams.get("template_type");
+  const maestroDraftToken = searchParams.get("maestro_draft");
   const isViewMode = template_type === "template";
   const isCustomTemplateFlow = template_type === "custom";
   const [id] = useDnD();
@@ -127,15 +193,16 @@ const OrchestratorReactFlow: React.FC = () => {
     edges: Edge[];
   } | null>(null);
   const [snackOpen, setSnackOpen] = useState(false);
-  const [templateInfo, setTemplateInfo] = useState<CloudConfig>({
-    templateName: "",
-    description: "",
-    cloud: undefined,
-    region: "",
-  });
+  const [templateInfo, setTemplateInfo] = useState<CloudConfig>(EMPTY_TEMPLATE_INFO);
   const [currentOrchestratorId, setCurrentOrchestratorId] = useState<
     string | null
   >(null);
+  const [baselineSnapshot, setBaselineSnapshot] = useState<string | null>(null);
+  const [maestroReviewDraft, setMaestroReviewDraft] =
+    useState<MaestroDraftPayload | null>(null);
+  const [pendingMaestroDraft, setPendingMaestroDraft] =
+    useState<MaestroDraftPayload | null>(null);
+  const [replaceDraftDialogOpen, setReplaceDraftDialogOpen] = useState(false);
 
   useGuidedTour(
     "orchestrator",
@@ -148,6 +215,187 @@ const OrchestratorReactFlow: React.FC = () => {
 
   const drawerWidth = 240;
 
+  const clearMaestroDraftQuery = useCallback(() => {
+    if (!searchParams.has("maestro_draft")) {
+      return;
+    }
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("maestro_draft");
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const loadSerializedGraph = useCallback(
+    async (
+      serializedNodes: Array<Record<string, any>>,
+      serializedEdges: Array<Record<string, any>>,
+      appliedTemplateInfo: CloudConfig,
+    ) => {
+      const fetchPromises = (serializedNodes || []).map((dbNode) =>
+        dispatch(fetchResourceById(String(dbNode.id).split("-")[0])),
+      );
+
+      const results = await Promise.all(fetchPromises);
+      const resourceNodes: Node[] = [];
+
+      for (let i = 0; i < results.length; i += 1) {
+        const resultAction = results[i];
+        const dbNode = serializedNodes[i];
+
+        if (fetchResourceById.fulfilled.match(resultAction)) {
+          const resourceData = resultAction.payload;
+          resourceNodes.push({
+            id: dbNode.id,
+            type: "customNode",
+            position: dbNode.position || { x: 0, y: 0 },
+            data: {
+              ...resourceData?.data?.resourceNode?.data,
+              values: dbNode.values || {},
+              __nodeType:
+                dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+              __resourceId: dbNode.resourceId,
+              isExpanded: dbNode.isExpanded ?? true,
+              friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
+              header: {
+                ...resourceData?.data?.resourceNode?.data?.header,
+                icon: resourceData?.data?.resourceIcon?.url,
+              },
+              templateInfo: appliedTemplateInfo,
+              userInfo: user,
+            },
+          });
+          continue;
+        }
+
+        resourceNodes.push({
+          id: dbNode.id,
+          type: "customNode",
+          position: dbNode.position || { x: 0, y: 0 },
+          data: {
+            values: dbNode.values || {},
+            __nodeType:
+              dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+            __resourceId: dbNode.resourceId,
+            isExpanded: dbNode.isExpanded ?? true,
+            friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
+            header: {
+              label:
+                dbNode.resourceName ||
+                dbNode.__nodeType ||
+                dbNode.resourceId ||
+                "Unknown Resource",
+              icon: dbNode.previewIcon,
+            },
+            handles: [],
+            links: [],
+            templateInfo: appliedTemplateInfo,
+            userInfo: user,
+          },
+        });
+      }
+
+      const nextEdges: Edge[] = [];
+      for (const dbEdge of serializedEdges || []) {
+        const source = resourceNodes.find((node) => node.id === dbEdge.source);
+        const target = resourceNodes.find((node) => node.id === dbEdge.target);
+        if (!source || !target) {
+          continue;
+        }
+
+        const sourceType = (source.data as any)?.__nodeType ?? source.type;
+        const rules = (target.data as any)?.links ?? [];
+        const rule = rules.find(
+          (candidate: any) =>
+            Array.isArray(candidate.fromTypes) &&
+            candidate.fromTypes.includes(sourceType),
+        );
+
+        nextEdges.push({
+          id: rule
+            ? `${source.id}->${target.id}:${rule.bind}`
+            : dbEdge.id || `${source.id}->${target.id}`,
+          source: source.id,
+          target: target.id,
+          type: "animatedGradient",
+          data: rule
+            ? {
+                ...(rule.edgeData ?? { kind: rule.bind }),
+                bindKey: dbEdge.data?.bindKey,
+                animated: rule.edgeData?.animated ?? true,
+              }
+            : {
+                kind: dbEdge.data?.kind || "depends_on",
+                bindKey: dbEdge.data?.bindKey,
+                animated: true,
+              },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 12,
+            height: 12,
+          },
+        });
+      }
+
+      setTemplateInfo(appliedTemplateInfo);
+      setNodes(resourceNodes);
+      setEdges(nextEdges);
+      setInitOpen(false);
+
+      setTimeout(() => {
+        getLayoutElements({
+          "elk.algorithm": "layered",
+          "elk.direction": "RIGHT",
+        });
+      }, 150);
+    },
+    [dispatch, getLayoutElements, setEdges, setNodes, user],
+  );
+
+  const buildCurrentCanvasSnapshot = useCallback(() => {
+    if (nodes.length === 0 && edges.length === 0 && !templateInfo.templateName) {
+      return null;
+    }
+
+    const saveRequest = prepareOrchestratorForSave(
+      nodes,
+      edges,
+      templateInfo,
+      user,
+    );
+    return serializePersistedSnapshot(saveRequest);
+  }, [edges, nodes, templateInfo, user]);
+
+  const isCanvasDirty = useCallback(() => {
+    const currentSnapshot = buildCurrentCanvasSnapshot();
+    if (!currentSnapshot || !baselineSnapshot) {
+      return false;
+    }
+    return currentSnapshot !== baselineSnapshot;
+  }, [baselineSnapshot, buildCurrentCanvasSnapshot]);
+
+  const applyMaestroDraft = useCallback(
+    async (draft: MaestroDraftPayload) => {
+      const appliedTemplateInfo = normalizeTemplateInfo(
+        draft.saveRequest.templateInfo,
+      );
+
+      await loadSerializedGraph(
+        draft.saveRequest.nodes as Array<Record<string, any>>,
+        draft.saveRequest.edges as Array<Record<string, any>>,
+        appliedTemplateInfo,
+      );
+
+      setCurrentOrchestratorId(
+        draft.action === "update" ? draft.targetOrchestratorId ?? null : null,
+      );
+      setMaestroReviewDraft(draft);
+      setPendingMaestroDraft(null);
+      setReplaceDraftDialogOpen(false);
+      setBaselineSnapshot(serializePersistedSnapshot(draft.saveRequest));
+    },
+    [loadSerializedGraph],
+  );
+
+  // Legacy prefill path kept inert while the new Maestro draft flow below owns routing.
   useEffect(() => {
     if (orchestratorsStatus === "idle") dispatch(fetchOrchestrators({}));
   }, [dispatch, orchestratorsStatus]);
@@ -374,7 +622,7 @@ const OrchestratorReactFlow: React.FC = () => {
   }, [edges, setNodes]);
 
   useEffect(() => {
-    if (!template_id || !template_type) return;
+    if (!template_id || !template_type || searchParams.has("template_type")) return;
     else if (template_id === "new") {
       // Check for prefill payload placed by Maestro (via sessionStorage)
       const prefillRaw = sessionStorage.getItem("maestro_prefill");
@@ -596,10 +844,110 @@ const OrchestratorReactFlow: React.FC = () => {
     template_id,
     template_type,
     orchestrators,
+    searchParams,
     setNodes,
     setEdges,
     getLayoutElements,
     user,
+  ]);
+
+  useEffect(() => {
+    if (!template_id || !template_type || !maestroDraftToken) {
+      return;
+    }
+
+    const draft = readMaestroDraft();
+    clearMaestroDraft();
+    clearMaestroDraftQuery();
+
+    if (!draft || draft.token !== maestroDraftToken) {
+      return;
+    }
+
+    const matchesRoute =
+      draft.action === "update"
+        ? template_id !== "new" && draft.targetOrchestratorId === template_id
+        : template_id === "new";
+
+    if (!matchesRoute) {
+      return;
+    }
+
+    if (isCanvasDirty()) {
+      setPendingMaestroDraft(draft);
+      setReplaceDraftDialogOpen(true);
+      return;
+    }
+
+    applyMaestroDraft(draft).catch((error) => {
+      console.error("Failed to apply Maestro draft:", error);
+      setInitOpen(template_id === "new");
+    });
+  }, [
+    applyMaestroDraft,
+    clearMaestroDraftQuery,
+    isCanvasDirty,
+    maestroDraftToken,
+    template_id,
+    template_type,
+  ]);
+
+  useEffect(() => {
+    if (!template_id || !template_type || maestroDraftToken) {
+      return;
+    }
+
+    if (template_id === "new") {
+      setCurrentOrchestratorId(null);
+      if (
+        nodes.length === 0 &&
+        edges.length === 0 &&
+        !templateInfo.templateName &&
+        !templateInfo.cloud
+      ) {
+        setInitOpen(true);
+      }
+      return;
+    }
+
+    const orchestratorData = orchestrators.find((item) => item._id === template_id);
+    if (!orchestratorData) {
+      return;
+    }
+
+    const appliedTemplateInfo = normalizeTemplateInfo(orchestratorData.templateInfo);
+    setCurrentOrchestratorId(template_id);
+    setMaestroReviewDraft(null);
+    setPendingMaestroDraft(null);
+    setReplaceDraftDialogOpen(false);
+
+    loadSerializedGraph(
+      orchestratorData.nodes as Array<Record<string, any>>,
+      orchestratorData.edges as Array<Record<string, any>>,
+      appliedTemplateInfo,
+    )
+      .then(() => {
+        setBaselineSnapshot(
+          serializePersistedSnapshot({
+            templateInfo: orchestratorData.templateInfo,
+            nodes: orchestratorData.nodes as Array<Record<string, any>>,
+            edges: orchestratorData.edges as Array<Record<string, any>>,
+          }),
+        );
+      })
+      .catch((error) => {
+        console.error("Failed to load orchestrator graph:", error);
+      });
+  }, [
+    edges.length,
+    loadSerializedGraph,
+    maestroDraftToken,
+    nodes.length,
+    orchestrators,
+    templateInfo.cloud,
+    templateInfo.templateName,
+    template_id,
+    template_type,
   ]);
 
   // Drag edge → update target form (values[bind]) + enforce rules
@@ -1037,10 +1385,66 @@ const OrchestratorReactFlow: React.FC = () => {
     [setNodes, isArchitectureMode],
   );
 
-  // Handler for when orchestrator is successfully saved
-  const handleOrchestrationSaved = useCallback((orchestratorId: string) => {
-    setCurrentOrchestratorId(orchestratorId);
+  const handleConfirmDraftReplace = useCallback(() => {
+    if (!pendingMaestroDraft) {
+      setReplaceDraftDialogOpen(false);
+      return;
+    }
+
+    applyMaestroDraft(pendingMaestroDraft).catch((error) => {
+      console.error("Failed to replace canvas with Maestro draft:", error);
+    });
+  }, [applyMaestroDraft, pendingMaestroDraft]);
+
+  const handleCancelDraftReplace = useCallback(() => {
+    setPendingMaestroDraft(null);
+    setReplaceDraftDialogOpen(false);
   }, []);
+
+  // Handler for when orchestrator is successfully saved
+  const handleOrchestrationSaved = useCallback(
+    (orchestratorId: string) => {
+      setCurrentOrchestratorId(orchestratorId);
+
+      const currentSnapshot = buildCurrentCanvasSnapshot();
+      if (currentSnapshot) {
+        setBaselineSnapshot(currentSnapshot);
+      }
+
+      if (template_id === "new") {
+        navigate(`/orchestrator/${orchestratorId}?template_type=custom`, {
+          replace: true,
+        });
+      }
+
+      if (maestroReviewDraft?.sessionId) {
+        void dispatch(
+          updateSession({
+            id: maestroReviewDraft.sessionId,
+            updates: {
+              orchestratorId,
+              status: "active",
+            },
+          }),
+        )
+          .unwrap()
+          .catch((error) => {
+            console.error("Failed to sync Maestro session after save:", error);
+          });
+      }
+
+      setMaestroReviewDraft(null);
+      setPendingMaestroDraft(null);
+      setReplaceDraftDialogOpen(false);
+    },
+    [
+      buildCurrentCanvasSnapshot,
+      dispatch,
+      maestroReviewDraft,
+      navigate,
+      template_id,
+    ],
+  );
 
   const handleNodesChange = useCallback(
     (changes: Parameters<typeof onNodesChange>[0]) => {
@@ -1165,35 +1569,44 @@ const OrchestratorReactFlow: React.FC = () => {
           fitView
         >
           <Panel position="top-left">
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {templateInfo?.templateName && (
-                <Chip
-                  icon={<DeblurIcon />}
-                  label={templateInfo?.templateName}
-                  onClick={isViewMode ? undefined : () => setInitOpen(true)}
-                />
-              )}
-              {templateInfo?.cloud && (
-                <Chip
-                  icon={<CloudCircleIcon />}
-                  label={templateInfo?.cloud.toUpperCase()}
-                  onClick={isViewMode ? undefined : () => setInitOpen(true)}
-                />
-              )}
-              {templateInfo?.region && (
-                <Chip
-                  icon={<SouthAmericaIcon />}
-                  label={templateInfo?.region}
-                  onClick={isViewMode ? undefined : () => setInitOpen(true)}
-                />
-              )}
-              {isViewMode && (
-                <Chip
-                  label="Read-only preview"
-                  size="small"
-                  variant="outlined"
-                  sx={{ opacity: 0.7, fontSize: "0.75rem" }}
-                />
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+                {templateInfo?.templateName && (
+                  <Chip
+                    icon={<DeblurIcon />}
+                    label={templateInfo?.templateName}
+                    onClick={isViewMode ? undefined : () => setInitOpen(true)}
+                  />
+                )}
+                {templateInfo?.cloud && (
+                  <Chip
+                    icon={<CloudCircleIcon />}
+                    label={templateInfo?.cloud.toUpperCase()}
+                    onClick={isViewMode ? undefined : () => setInitOpen(true)}
+                  />
+                )}
+                {templateInfo?.region && (
+                  <Chip
+                    icon={<SouthAmericaIcon />}
+                    label={templateInfo?.region}
+                    onClick={isViewMode ? undefined : () => setInitOpen(true)}
+                  />
+                )}
+                {isViewMode && (
+                  <Chip
+                    label="Read-only preview"
+                    size="small"
+                    variant="outlined"
+                    sx={{ opacity: 0.7, fontSize: "0.75rem" }}
+                  />
+                )}
+              </Box>
+              {maestroReviewDraft && !isViewMode && (
+                <Alert severity="info" sx={{ maxWidth: 520 }}>
+                  {maestroReviewDraft.action === "update"
+                    ? "Maestro loaded a workflow update draft. Review the proposed graph changes, then save to apply them to this workflow."
+                    : "Maestro loaded a new workflow draft. Review it and save when you are ready to create the workflow."}
+                </Alert>
               )}
             </Box>
           </Panel>
@@ -1242,6 +1655,31 @@ const OrchestratorReactFlow: React.FC = () => {
         onClose={() => setInitOpen(false)}
         onSubmit={handleInitSubmit}
       />
+
+      <Dialog
+        open={replaceDraftDialogOpen}
+        onClose={handleCancelDraftReplace}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Replace Unsaved Changes?</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mt: 1 }}>
+            You have unsaved canvas edits. Loading the new Maestro draft will replace
+            those local changes.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDraftReplace}>Keep Current Canvas</Button>
+          <Button
+            onClick={handleConfirmDraftReplace}
+            variant="contained"
+            color="warning"
+          >
+            Load Maestro Draft
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Undo Snackbar */}
       <Snackbar

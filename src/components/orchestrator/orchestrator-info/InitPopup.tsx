@@ -142,10 +142,12 @@ const InitPopup = ({
               fullWidth
               required
               sx={{
+                mt: 1,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                 },
               }}
+              autoComplete="off"
             />
           </Grid>
 
@@ -163,6 +165,7 @@ const InitPopup = ({
                   borderRadius: 2,
                 },
               }}
+              autoComplete="off"
             />
           </Grid>
 
@@ -224,6 +227,7 @@ const InitPopup = ({
                   }
                   fullWidth
                   required
+                  autoComplete="off"
                 />
               )}
               renderOption={(props, option) => (
@@ -287,13 +291,15 @@ const InitPopup = ({
             </List>
           </Grid>
 
-          <Grid size={12}>
+          <Grid size={12} sx={{
+            textAlign: "right",
+          }}>
             <Button
               onClick={handleSubmit}
               variant="contained"
               sx={{
-                mt: 2,
                 borderRadius: 2,
+                px: 3,
                 textTransform: "none",
                 transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
                 "&:hover": {

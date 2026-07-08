@@ -3,6 +3,7 @@
 export type MessageRole = "user" | "assistant";
 export type MessageType = "text" | "plan" | "diff" | "system";
 export type SessionStatus = "planning" | "implementing" | "active" | "closed";
+export type PlanImplementationAction = "create" | "update";
 
 export interface SecurityNote {
   message: string;
@@ -81,4 +82,9 @@ export interface ChatSendResponse {
 export interface ChatSessionsListResponse {
   sessions: ChatSessionListItem[];
   total: number;
+}
+
+export interface ChatSessionUpdateRequest {
+  orchestratorId?: string | null;
+  status?: SessionStatus;
 }

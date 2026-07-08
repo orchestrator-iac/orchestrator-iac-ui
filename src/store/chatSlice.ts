@@ -6,6 +6,7 @@ import {
 import { chatService } from "@/services/chatService";
 import type {
   ChatMessage,
+  ChatSessionUpdateRequest,
   ChatSessionListItem,
   ChatSessionResponse,
   MessageType,
@@ -71,6 +72,22 @@ export const fetchSession = createAsyncThunk(
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Failed to load session";
+      return rejectWithValue(msg);
+    }
+  },
+);
+
+export const updateSession = createAsyncThunk(
+  "chat/updateSession",
+  async (
+    { id, updates }: { id: string; updates: ChatSessionUpdateRequest },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await chatService.updateSession(id, updates);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to update session";
       return rejectWithValue(msg);
     }
   },
@@ -176,6 +193,24 @@ const chatSlice = createSlice({
       .addCase(fetchSession.rejected, (state) => {
         state.activeSessionStatus = "failed";
       });
+
+    builder.addCase(updateSession.fulfilled, (state, action) => {
+      const updated = action.payload;
+      if (state.activeSession?.id === updated.id) {
+        state.activeSession = updated;
+      }
+      state.sessions = state.sessions.map((session) =>
+        session.id === updated.id
+          ? {
+              ...session,
+              title: updated.title,
+              status: updated.status,
+              orchestratorId: updated.orchestratorId,
+              updatedAt: updated.updatedAt,
+            }
+          : session,
+      );
+    });
 
     // sendMessage
     builder

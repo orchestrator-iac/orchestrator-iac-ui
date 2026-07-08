@@ -2,14 +2,23 @@ import React from "react";
 import { Avatar, Box, Typography } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import ReactMarkdown from "react-markdown";
-import type { ChatMessage } from "@/types/chat";
+import type {
+  ChatMessage,
+  PlanImplementationAction,
+  PlanSchema,
+} from "@/types/chat";
 import PlanCard from "./PlanCard";
 import MaestroRobot, { type MaestroRobotState } from "./MaestroRobot";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   sessionId: string;
-  onImplement?: (sessionId: string) => void;
+  linkedOrchestratorId?: string;
+  onImplement?: (
+    sessionId: string,
+    action: PlanImplementationAction,
+    plan: PlanSchema,
+  ) => void;
   isImplementing?: boolean;
   assistantAvatarState?: MaestroRobotState;
 }
@@ -17,6 +26,7 @@ interface MessageBubbleProps {
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   sessionId,
+  linkedOrchestratorId,
   onImplement,
   isImplementing = false,
   assistantAvatarState = "idle",
@@ -172,6 +182,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <PlanCard
             plan={message.plan}
             sessionId={sessionId}
+            linkedOrchestratorId={linkedOrchestratorId}
             onImplement={onImplement}
             isImplementing={isImplementing}
           />
