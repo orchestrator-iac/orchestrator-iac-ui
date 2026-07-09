@@ -13,7 +13,7 @@ import {
   InputAdornment,
   IconButton,
 } from "@mui/material";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { registerUser } from "../../../services/auth";
 import { useGoogleAuth } from "../../../hooks/useGoogleAuth";
 import NightSky from "../../shared/night-sky/NightSky";
@@ -44,7 +44,13 @@ const Register: React.FC = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
+  const {
+    handleGoogleSuccess,
+    handleGoogleError,
+    error: googleError,
+    setError: setGoogleError,
+  } = useGoogleAuth();
+  const visibleError = error || googleError;
 
   const handleChange = (e: any) => {
     setForm((prev) => ({
@@ -55,6 +61,7 @@ const Register: React.FC = () => {
 
   const handleRegister = async () => {
     setError("");
+    setGoogleError("");
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -80,6 +87,16 @@ const Register: React.FC = () => {
     }
   };
 
+  const onGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    setError("");
+    await handleGoogleSuccess(credentialResponse);
+  };
+
+  const onGoogleError = () => {
+    setError("");
+    handleGoogleError();
+  };
+
   return (
     <Box position="relative" height="100vh">
       <NightSky />
@@ -92,16 +109,60 @@ const Register: React.FC = () => {
       >
         <Box
           sx={{
-            p: 4,
-            maxWidth: "35vw",
+            p: { xs: 3, sm: 4 },
+            maxWidth: 560,
             width: "100%",
             borderRadius: 2,
             backgroundColor: theme.palette.background.default,
           }}
         >
           <Typography variant="h4" gutterBottom>
-            Register
+            Create your account
           </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            Continue with Google for a passwordless sign-up, or use email below
+            if you want to create a password-based account.
+          </Typography>
+
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              Continue with Google
+            </Typography>
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+              Google handles the sign-in step, so you do not need to enter a
+              password on this page.
+            </Typography>
+            <Box display="flex" justifyContent="center">
+              <GoogleLogin
+                onSuccess={onGoogleSuccess}
+                onError={onGoogleError}
+                theme="outline"
+                size="large"
+                width="100%"
+              />
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 3 }}>
+            <Typography variant="body2" color="textSecondary">
+              Or sign up with email
+            </Typography>
+          </Divider>
+
+          {visibleError && (
+            <Box mb={2}>
+              <Alert
+                severity="error"
+                onClose={() => {
+                  setError("");
+                  setGoogleError("");
+                }}
+              >
+                {visibleError}
+              </Alert>
+            </Box>
+          )}
+
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
@@ -232,12 +293,16 @@ const Register: React.FC = () => {
               />
             </Grid>
           </Grid>
-
-          {error && (
-            <Box mt={2}>
-              <Alert severity="error">{error}</Alert>
-            </Box>
-          )}
+          <Box mt={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={handleRegister}
+            >
+              Create account with email
+            </Button>
+          </Box>
           <Box mt={2}>
             <Typography variant="body2" color="textSecondary">
               Already have an account?{" "}
@@ -249,32 +314,6 @@ const Register: React.FC = () => {
                 Login
               </Box>
             </Typography>
-          </Box>
-          <Box mt={3}>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={handleRegister}
-            >
-              Register
-            </Button>
-          </Box>
-          <Box mt={2}>
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="body2" color="textSecondary">
-                OR
-              </Typography>
-            </Divider>
-            <Box display="flex" justifyContent="center">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                theme="outline"
-                size="large"
-                width="100%"
-              />
-            </Box>
           </Box>
         </Box>
       </Box>
