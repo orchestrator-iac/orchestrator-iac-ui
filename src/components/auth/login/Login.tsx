@@ -13,7 +13,7 @@ import {
   alpha,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { loginUser } from "../../../services/auth";
 import { useAuth } from "../../../context/AuthContext";
 import { useGoogleAuth } from "../../../hooks/useGoogleAuth";
@@ -32,15 +32,23 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [resendEmailVerification, setResendEmailVerification] = useState(false);
-  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth(redirectTo);
+  const {
+    handleGoogleSuccess,
+    handleGoogleError,
+    error: googleError,
+    setError: setGoogleError,
+  } = useGoogleAuth(redirectTo);
 
   const isDark = theme.palette.mode === "dark";
   const tealMain = theme.palette.primary.main;
   const tealLight = theme.palette.secondary.main;
+  const visibleError = error || googleError;
 
   const handleLogin = async () => {
     setError("");
+    setGoogleError("");
     setFieldErrors({});
+    setResendEmailVerification(false);
     setLoading(true);
     try {
       const token = await loginUser({ email, password });
@@ -67,6 +75,16 @@ const Login: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    setError("");
+    await handleGoogleSuccess(credentialResponse);
+  };
+
+  const onGoogleError = () => {
+    setError("");
+    handleGoogleError();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -141,13 +159,16 @@ const Login: React.FC = () => {
             </Box>
 
             {/* Error alert */}
-            {error && (
+            {visibleError && (
               <Alert
                 severity="error"
-                onClose={() => setError("")}
+                onClose={() => {
+                  setError("");
+                  setGoogleError("");
+                }}
                 sx={{ mb: 2.5, borderRadius: 2, fontSize: "0.875rem" }}
               >
-                {error}
+                {visibleError}
               </Alert>
             )}
 
@@ -285,8 +306,8 @@ const Login: React.FC = () => {
 
             <Box display="flex" justifyContent="center">
               <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
+                onSuccess={onGoogleSuccess}
+                onError={onGoogleError}
                 theme={isDark ? "filled_black" : "outline"}
                 size="large"
                 width="100%"

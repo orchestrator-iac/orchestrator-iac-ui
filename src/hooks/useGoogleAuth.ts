@@ -1,9 +1,10 @@
+import type { CredentialResponse } from "@react-oauth/google";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 interface UseGoogleAuthReturn {
-  handleGoogleSuccess: (credentialResponse: any) => Promise<void>;
+  handleGoogleSuccess: (credentialResponse: CredentialResponse) => Promise<void>;
   handleGoogleError: () => void;
   error: string;
   setError: (error: string) => void;
@@ -14,12 +15,19 @@ export const useGoogleAuth = (redirectTo = "/home"): UseGoogleAuthReturn => {
   const { googleLogin } = useAuth();
   const [error, setError] = useState<string>("");
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setError("Google authentication failed. Please try again.");
+      return;
+    }
+
     try {
       await googleLogin(credentialResponse.credential);
       navigate(redirectTo);
-    } catch (err: any) {
-      setError(err?.message || "Google authentication failed");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Google authentication failed",
+      );
     }
   };
 
