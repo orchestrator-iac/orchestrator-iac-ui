@@ -966,12 +966,6 @@ const Chatbot: React.FC = () => {
 
                 {activeSession?.messages.map((msg) => {
                   const messageKey = msg.id;
-                  const assistantAvatarState: MaestroRobotState =
-                    msg.role === "assistant" &&
-                    talkingMessageKey === messageKey &&
-                    !isSending
-                      ? "talking"
-                      : "idle";
                   return (
                     <MessageBubble
                       key={messageKey}
@@ -981,7 +975,7 @@ const Chatbot: React.FC = () => {
                       onImplement={handleImplement}
                       onSubmitFeedback={handleSubmitMessageFeedback}
                       isImplementing={isImplementing}
-                      assistantAvatarState={assistantAvatarState}
+                      assistantAvatarState={'talking'}
                     />
                   );
                 })}
