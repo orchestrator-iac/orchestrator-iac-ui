@@ -23,6 +23,7 @@ export type OrchestratorNodeData = NodeData & {
   userInfo?: UserProfile;
   templateInfo?: CloudConfig;
   __viewMode?: "architecture" | "detailed";
+  __validationErrors?: Record<string, string>;
 };
 
 export type OrchestratorNodeProps = NodeProps & {

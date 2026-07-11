@@ -292,6 +292,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
           allEdges={data?.__helpers?.allEdges}
           templateInfo={data?.templateInfo}
           userInfo={data?.userInfo}
+          validationErrors={data?.__validationErrors}
           onLinkFieldChange={(bind, newSourceId, context) =>
             data?.__helpers?.onLinkFieldChange?.(bind, newSourceId, context)
           }

@@ -12,6 +12,13 @@ import {
   Snackbar,
   CircularProgress,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  List,
+  ListItem,
 } from "@mui/material";
 import { Node, Edge } from "@xyflow/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -22,11 +29,18 @@ import ArchitectureIcon from "@mui/icons-material/Architecture";
 import DownloadIcon from "@mui/icons-material/Download";
 import CodeIcon from "@mui/icons-material/Code";
 import ArchiveIcon from "@mui/icons-material/Archive";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { SaveButton } from "../save";
 import { DeleteButton } from "../delete";
-import { TemplateInfo } from "../../../types/orchestrator";
+import {
+  IaCValidationIssue,
+  TemplateInfo,
+} from "../../../types/orchestrator";
 import { downloadFlowAsImage } from "../utils/downloadImage.ts";
-import { orchestratorService } from "../../../services/orchestratorService";
+import {
+  IacValidationError,
+  orchestratorService,
+} from "../../../services/orchestratorService";
 import PublishTemplateDialog from "../publish-template/PublishTemplateDialog";
 
 interface OrchestratorMenuProps {
@@ -38,6 +52,7 @@ interface OrchestratorMenuProps {
   orchestratorName?: string;
   isArchitectureMode: boolean;
   onArchitectureModeChange: (value: boolean) => void;
+  onValidationIssuesChange?: (issues: IaCValidationIssue[]) => void;
   /** templateId set on the orchestrator if it has been published to the gallery */
   templateId?: string;
 }
@@ -51,6 +66,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   orchestratorName,
   isArchitectureMode,
   onArchitectureModeChange,
+  onValidationIssuesChange,
   templateId,
 }) => {
   const theme = useTheme();
@@ -63,6 +79,16 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   >("none");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [validationIssues, setValidationIssues] = useState<IaCValidationIssue[]>(
+    [],
+  );
+  const [validationAction, setValidationAction] = useState<
+    "generate" | "downloadZip"
+  >("generate");
+  const [validationOrchestratorId, setValidationOrchestratorId] = useState<
+    string | null
+  >(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -119,33 +145,71 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
     }
   };
 
-  const triggerGenerate = useCallback(async (id: string) => {
-    setIsGenerating(true);
-    try {
-      await orchestratorService.generateIac(id);
-      setSnackbar({
-        open: true,
-        message: "IaC generation request submitted successfully.",
-        severity: "success",
-      });
-    } catch (error: any) {
-      console.error("Failed to generate IaC:", error);
-      setSnackbar({
-        open: true,
-        message: error?.message || "Failed to generate IaC",
-        severity: "error",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+  const openValidationDialog = useCallback(
+    (
+      issues: IaCValidationIssue[],
+      action: "generate" | "downloadZip",
+      orchestratorId: string,
+    ) => {
+      onValidationIssuesChange?.(issues);
+      setValidationIssues(issues);
+      setValidationAction(action);
+      setValidationOrchestratorId(orchestratorId);
+      setValidationDialogOpen(true);
+    },
+    [onValidationIssuesChange],
+  );
+
+  const closeValidationDialog = useCallback(() => {
+    setValidationDialogOpen(false);
+    setValidationIssues([]);
+    setValidationOrchestratorId(null);
   }, []);
 
-  const triggerDownload = useCallback(async (id: string) => {
-    setIsDownloading(true);
-    try {
-      const resp = await orchestratorService.generateIac(id);
-      const url =
-        resp?.downloadIaCUrl || resp?.downloadUrl || resp?.url || resp?.link;
+  const triggerGenerate = useCallback(
+    async (id: string, mode: "strict" | "draft" = "strict") => {
+      setIsGenerating(true);
+      try {
+        const response = await orchestratorService.generateIac(id, { mode });
+        onValidationIssuesChange?.(response.iacValidationIssues ?? []);
+        setSnackbar({
+          open: true,
+          message:
+            response.iacValidationIssues &&
+            response.iacValidationIssues.length > 0
+              ? "Draft IaC generated with validation warnings."
+              : "IaC generation request submitted successfully.",
+          severity:
+            response.iacValidationIssues &&
+            response.iacValidationIssues.length > 0
+              ? "info"
+              : "success",
+        });
+      } catch (error: any) {
+        console.error("Failed to generate IaC:", error);
+        if (error instanceof IacValidationError) {
+          openValidationDialog(error.issues, "generate", id);
+          return;
+        }
+        setSnackbar({
+          open: true,
+          message: error?.message || "Failed to generate IaC",
+          severity: "error",
+        });
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [onValidationIssuesChange, openValidationDialog],
+  );
+
+  const triggerDownload = useCallback(
+    async (id: string, mode: "strict" | "draft" = "strict") => {
+      setIsDownloading(true);
+      try {
+        const resp = await orchestratorService.generateIac(id, { mode });
+        onValidationIssuesChange?.(resp.iacValidationIssues ?? []);
+        const url = resp?.downloadIaCUrl;
       if (url) {
         try {
           const a = document.createElement("a");
@@ -162,8 +226,14 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         }
         setSnackbar({
           open: true,
-          message: "Your IaC zip is downloading.",
-          severity: "success",
+          message:
+            resp.iacValidationIssues && resp.iacValidationIssues.length > 0
+              ? "Draft IaC zip is downloading with validation warnings."
+              : "Your IaC zip is downloading.",
+          severity:
+            resp.iacValidationIssues && resp.iacValidationIssues.length > 0
+              ? "info"
+              : "success",
         });
       } else {
         setSnackbar({
@@ -172,17 +242,41 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           severity: "error",
         });
       }
-    } catch (error: any) {
-      console.error("Failed to download IaC:", error);
-      setSnackbar({
-        open: true,
-        message: error?.message || "Failed to download IaC",
-        severity: "error",
-      });
-    } finally {
-      setIsDownloading(false);
+      } catch (error: any) {
+        console.error("Failed to download IaC:", error);
+        if (error instanceof IacValidationError) {
+          openValidationDialog(error.issues, "downloadZip", id);
+          return;
+        }
+        setSnackbar({
+          open: true,
+          message: error?.message || "Failed to download IaC",
+          severity: "error",
+        });
+      } finally {
+        setIsDownloading(false);
+      }
+    },
+    [onValidationIssuesChange, openValidationDialog],
+  );
+
+  const handleProceedWithDraft = useCallback(async () => {
+    if (!validationOrchestratorId) {
+      return;
     }
-  }, []);
+    closeValidationDialog();
+    if (validationAction === "downloadZip") {
+      await triggerDownload(validationOrchestratorId, "draft");
+      return;
+    }
+    await triggerGenerate(validationOrchestratorId, "draft");
+  }, [
+    closeValidationDialog,
+    triggerDownload,
+    triggerGenerate,
+    validationAction,
+    validationOrchestratorId,
+  ]);
 
   const handleSaveSuccessInternal = useCallback(
     async (savedId: string) => {
@@ -483,6 +577,42 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      <Dialog
+        open={validationDialogOpen}
+        onClose={closeValidationDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Fix required fields before strict IaC generation</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Some required values are missing. You can fix them now, or continue
+            with a draft IaC artifact and fill the values after download.
+          </Alert>
+          <List dense disablePadding>
+            {validationIssues.map((issue) => (
+              <ListItem key={`${issue.nodeId}:${issue.field}`} disableGutters>
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  <WarningAmberIcon color="warning" fontSize="small" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={issue.message}
+                  secondary={`${issue.friendlyId || issue.nodeId} - ${issue.label}`}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeValidationDialog}>Fix now</Button>
+          <Button onClick={handleProceedWithDraft} variant="contained">
+            {validationAction === "downloadZip"
+              ? "Download Draft Anyway"
+              : "Generate Draft Anyway"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
