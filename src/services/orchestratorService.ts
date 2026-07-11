@@ -1,5 +1,6 @@
 import apiService from "./apiService";
 import {
+  IaCValidationIssue,
   SaveOrchestratorRequest,
   SaveOrchestratorResponse,
   OrchestratorListItem,
@@ -46,6 +47,29 @@ const withNormalizedDates = <T extends Record<string, any>>(response: T) => ({
   updatedAt: toIsoString((response as any).updatedAt),
   metadata: normalizeMetadataDates((response as any).metadata),
 });
+
+type GenerateIacMode = "strict" | "draft";
+
+export class IacValidationError extends Error {
+  issues: IaCValidationIssue[];
+  mode: GenerateIacMode;
+  orchestrator?: SaveOrchestratorResponse;
+
+  constructor(
+    message: string,
+    options: {
+      issues: IaCValidationIssue[];
+      mode: GenerateIacMode;
+      orchestrator?: SaveOrchestratorResponse;
+    },
+  ) {
+    super(message);
+    this.name = "IacValidationError";
+    this.issues = options.issues;
+    this.mode = options.mode;
+    this.orchestrator = options.orchestrator;
+  }
+}
 
 /**
  * Service for managing orchestrator configurations (nodes, edges, metadata)
@@ -221,20 +245,26 @@ export const orchestratorService = {
    */
   generateIac: async (
     id: string,
-  ): Promise<{
-    status?: string;
-    message?: string;
-    downloadIaCUrl?: string;
-    downloadUrl?: string;
-    url?: string;
-    link?: string;
-  }> => {
+    options?: { mode?: GenerateIacMode },
+  ): Promise<SaveOrchestratorResponse> => {
     try {
-      // Adjust endpoint as needed to match backend
-      const response = await apiService.post(`/orchestrators/${id}/generate`);
-      return response;
-    } catch (error) {
+      const response = await apiService.post(`/orchestrators/${id}/generate`, {
+        mode: options?.mode ?? "strict",
+      });
+      return withNormalizedDates(response);
+    } catch (error: any) {
       console.error("Failed to generate IaC:", error);
+      const detail = error?.response?.data?.detail;
+      const issues = detail?.iacValidationIssues;
+      if (Array.isArray(issues) && issues.length > 0) {
+        throw new IacValidationError(detail?.message || "IaC validation failed", {
+          issues,
+          mode: detail?.mode === "draft" ? "draft" : "strict",
+          orchestrator: detail?.orchestrator
+            ? withNormalizedDates(detail.orchestrator)
+            : undefined,
+        });
+      }
       throw new Error("Failed to generate infrastructure as code");
     }
   },

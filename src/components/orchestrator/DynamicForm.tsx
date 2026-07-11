@@ -49,6 +49,7 @@ type Props = {
   allEdges?: any[];
   userInfo?: UserProfile;
   templateInfo?: CloudConfig;
+  validationErrors?: Record<string, string>;
   onLinkFieldChange?: (
     bind: string,
     newSourceId: string,
@@ -76,6 +77,7 @@ const DynamicForm: React.FC<Props> = ({
   allNodes,
   userInfo,
   templateInfo,
+  validationErrors,
   onLinkFieldChange,
   onValuesChange,
 }) => {
@@ -256,6 +258,12 @@ const DynamicForm: React.FC<Props> = ({
     const linkRule = links?.find((r) => r.bind === name);
     const resolvedOptions = resolveOptions(options, formData);
     const isRequired = isFieldRequired(required, formData);
+    const validationErrorText = validationErrors?.[name];
+    const hasValidationError = Boolean(validationErrorText);
+    const helperText = renderFieldHelperText(
+      hint,
+      validationErrorText ?? error_text,
+    );
 
     switch (type) {
       case "info":
@@ -267,7 +275,8 @@ const DynamicForm: React.FC<Props> = ({
             required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
-            helperText={renderFieldHelperText(hint, error_text)}
+            error={hasValidationError}
+            helperText={helperText}
             onChange={(e) => handleChange(name, e.target.value)}
           />
         );
@@ -281,7 +290,8 @@ const DynamicForm: React.FC<Props> = ({
             required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
-            helperText={renderFieldHelperText(hint, error_text)}
+            error={hasValidationError}
+            helperText={helperText}
             onChange={(e) => handleChange(name, e.target.value)}
           />
         );
@@ -399,7 +409,8 @@ const DynamicForm: React.FC<Props> = ({
                   {...params}
                   placeholder={placeholder ?? "Select or type an ID"}
                   required={isRequired}
-                  helperText={renderFieldHelperText(hint, error_text)}
+                  error={hasValidationError}
+                  helperText={helperText}
                 />
             )}
             renderOption={(props, option) => (
@@ -600,7 +611,8 @@ const DynamicForm: React.FC<Props> = ({
             required={isRequired}
             value={formData[name] ?? value ?? ""}
             placeholder={placeholder ?? ""}
-            helperText={renderFieldHelperText(hint, error_text)}
+            error={hasValidationError}
+            helperText={helperText}
             slotProps={{
               htmlInput: {
                 min: fieldCfg?.min,

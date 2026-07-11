@@ -11,6 +11,8 @@ const ellipsisTextSx: BoxProps["sx"] = {
 
 interface OverflowTooltipTextProps {
   text?: string | null;
+  className?: string;
+  component?: React.ElementType;
   sx?: BoxProps["sx"];
   tooltipSlotProps?: TooltipProps["slotProps"];
   tooltipPlacement?: TooltipProps["placement"];
@@ -18,6 +20,8 @@ interface OverflowTooltipTextProps {
 
 export default function OverflowTooltipText({
   text,
+  className,
+  component = "div",
   sx,
   tooltipSlotProps,
   tooltipPlacement = "top",
@@ -75,6 +79,8 @@ export default function OverflowTooltipText({
     >
       <Box
         ref={textRef}
+        component={component}
+        className={className}
         sx={
           sx
             ? [ellipsisTextSx, ...(Array.isArray(sx) ? sx : [sx])]

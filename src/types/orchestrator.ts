@@ -37,6 +37,17 @@ export interface TemplateInfo {
   region?: string;
 }
 
+export interface IaCValidationIssue {
+  severity: "error" | "warning";
+  blocking: boolean;
+  nodeId: string;
+  resourceId: string;
+  friendlyId?: string;
+  field: string;
+  label: string;
+  message: string;
+}
+
 // Complete orchestrator state for saving
 export interface SaveOrchestratorRequest {
   templateInfo: TemplateInfo;
@@ -67,6 +78,9 @@ export interface SaveOrchestratorResponse {
   userId: string;
   createdAt?: string;
   updatedAt?: string;
+  downloadIaCUrl?: string;
+  iacValidationIssues?: IaCValidationIssue[];
+  iacGenerationSummary?: Record<string, any> | null;
 }
 
 // List view for saved orchestrations

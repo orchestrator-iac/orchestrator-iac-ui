@@ -46,6 +46,7 @@ import { updateSession } from "../../store/chatSlice";
 import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig } from "../../types/clouds-info";
+import { IaCValidationIssue } from "../../types/orchestrator";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
 import { fetchOrchestrators } from "@/store/orchestratorsSlice";
 import {
@@ -86,6 +87,15 @@ const normalizeTemplateInfo = (
   cloud: templateInfo?.cloud,
   region: templateInfo?.region || "",
 });
+
+const buildValidationErrorMap = (issues: IaCValidationIssue[]) =>
+  issues.reduce<Record<string, Record<string, string>>>((acc, issue) => {
+    acc[issue.nodeId] = {
+      ...(acc[issue.nodeId] ?? {}),
+      [issue.field]: issue.message,
+    };
+    return acc;
+  }, {});
 
 const serializePersistedSnapshot = (graph: PersistedGraphLike): string => {
   const nodes = [...(graph.nodes || [])]
@@ -198,6 +208,9 @@ const OrchestratorReactFlow: React.FC = () => {
     string | null
   >(null);
   const [baselineSnapshot, setBaselineSnapshot] = useState<string | null>(null);
+  const [validationErrorsByNode, setValidationErrorsByNode] = useState<
+    Record<string, Record<string, string>>
+  >({});
   const [maestroReviewDraft, setMaestroReviewDraft] =
     useState<MaestroDraftPayload | null>(null);
   const [pendingMaestroDraft, setPendingMaestroDraft] =
@@ -1355,6 +1368,27 @@ const OrchestratorReactFlow: React.FC = () => {
   const onValuesChange = useCallback(
     (nodeId: string, name: string, value: any) => {
       if (isArchitectureMode) return;
+      setValidationErrorsByNode((prev) => {
+        const nodeErrors = prev[nodeId];
+        if (!nodeErrors?.[name]) {
+          return prev;
+        }
+
+        const nextNodeErrors = { ...nodeErrors };
+        delete nextNodeErrors[name];
+
+        if (Object.keys(nextNodeErrors).length === 0) {
+          const rest = { ...prev };
+          delete rest[nodeId];
+          return rest;
+        }
+
+        return {
+          ...prev,
+          [nodeId]: nextNodeErrors,
+        };
+      });
+
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id !== nodeId) return n;
@@ -1383,6 +1417,32 @@ const OrchestratorReactFlow: React.FC = () => {
       );
     },
     [setNodes, isArchitectureMode],
+  );
+
+  const handleValidationIssuesChange = useCallback(
+    (issues: IaCValidationIssue[]) => {
+      setValidationErrorsByNode(buildValidationErrorMap(issues));
+
+      if (issues.length === 0) {
+        return;
+      }
+
+      const affectedNodeIds = new Set(issues.map((issue) => issue.nodeId));
+      setNodes((nds) =>
+        nds.map((node) =>
+          affectedNodeIds.has(node.id)
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  isExpanded: true,
+                },
+              }
+            : node,
+        ),
+      );
+    },
+    [setNodes],
   );
 
   const handleConfirmDraftReplace = useCallback(() => {
@@ -1504,6 +1564,7 @@ const OrchestratorReactFlow: React.FC = () => {
               onDeleteNode,
             },
             __viewMode: isArchitectureMode ? "architecture" : "detailed",
+            __validationErrors: validationErrorsByNode[n.id],
           },
         };
       }),
@@ -1515,6 +1576,7 @@ const OrchestratorReactFlow: React.FC = () => {
       onValuesChange,
       onCloneNode,
       onDeleteNode,
+      validationErrorsByNode,
     ],
   );
 
@@ -1631,6 +1693,7 @@ const OrchestratorReactFlow: React.FC = () => {
                   onArchitectureModeChange={(value) =>
                     setIsArchitectureMode(value)
                   }
+                  onValidationIssuesChange={handleValidationIssuesChange}
                 />
               )}
             </Box>

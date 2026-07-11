@@ -4,6 +4,7 @@ import { Box, Typography, useTheme, alpha } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import styles from "./Resources.module.css";
+import OverflowTooltipText from "../shared/OverflowTooltipText";
 import awsLogo from "../../assets/aws_logo.svg";
 import awsLogoLight from "../../assets/aws_logo_light.svg";
 import awsLogoDark from "../../assets/aws_logo_dark.svg";
@@ -106,13 +107,21 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
       </Typography>
 
       {/* Description */}
-      <Typography
-        variant="body2"
+      <OverflowTooltipText
+        text={resource.resourceDescription || "No description"}
+        component="p"
         className={styles.cardDescription}
-        sx={{ mb: 1.5 }}
-      >
-        {resource.resourceDescription || "No description"}
-      </Typography>
+        sx={{
+          mb: 1.5,
+          display: "-webkit-box",
+          WebkitBoxOrient: "vertical",
+          WebkitLineClamp: 2,
+          lineClamp: 2,
+          whiteSpace: "normal",
+          overflow: "hidden",
+          textOverflow: "unset",
+        }}
+      />
 
       {/* Version badge */}
       <Box
