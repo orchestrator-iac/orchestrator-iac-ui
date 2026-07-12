@@ -3046,10 +3046,11 @@ const LandingPage: React.FC = () => {
 
   useEffect(() => {
     const previousTitle = document.title;
-    const title = "Orchestrator | Reusable Terraform Templates";
+    const title = "Orchestrator | Reusable IaC Templates";
     const description =
-      "Browse reusable cloud infrastructure templates, shape them visually, and generate Terraform with Orchestrator.";
+      "Browse reusable cloud infrastructure templates, shape them visually, and generate IaC with Orchestrator.";
     const url = `${SITE_URL}/`;
+    const image = `${SITE_URL}/og-landing.png`;
 
     document.title = title;
     setHeadAttribute(
@@ -3093,6 +3094,55 @@ const LandingPage: React.FC = () => {
       { property: "og:type" },
       "content",
       "website",
+    );
+    setHeadAttribute(
+      'meta[property="og:image"]',
+      "meta",
+      { property: "og:image" },
+      "content",
+      image,
+    );
+    setHeadAttribute(
+      'meta[property="og:image:width"]',
+      "meta",
+      { property: "og:image:width" },
+      "content",
+      "1200",
+    );
+    setHeadAttribute(
+      'meta[property="og:image:height"]',
+      "meta",
+      { property: "og:image:height" },
+      "content",
+      "630",
+    );
+    setHeadAttribute(
+      'meta[name="twitter:card"]',
+      "meta",
+      { name: "twitter:card" },
+      "content",
+      "summary_large_image",
+    );
+    setHeadAttribute(
+      'meta[name="twitter:title"]',
+      "meta",
+      { name: "twitter:title" },
+      "content",
+      title,
+    );
+    setHeadAttribute(
+      'meta[name="twitter:description"]',
+      "meta",
+      { name: "twitter:description" },
+      "content",
+      description,
+    );
+    setHeadAttribute(
+      'meta[name="twitter:image"]',
+      "meta",
+      { name: "twitter:image" },
+      "content",
+      image,
     );
     setHeadAttribute(
       'link[rel="canonical"]',

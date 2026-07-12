@@ -61,7 +61,9 @@ const TemplatesGallery: React.FC = () => {
   // SEO — keep meta tags in sync when navigating client-side
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = "Infrastructure Templates | Orchestrator";
+    const title = "Infrastructure Templates | Orchestrator";
+    const image = "https://orchestrator.next-zen.dev/og-templates.png";
+    document.title = title;
 
     const set = (sel: string, attr: string, val: string) => {
       let el = document.querySelector<HTMLMetaElement | HTMLLinkElement>(sel);
@@ -83,11 +85,18 @@ const TemplatesGallery: React.FC = () => {
     set(
       'meta[property="og:title"]',
       "content",
-      "Infrastructure Templates | Orchestrator",
+      title,
     );
     set('meta[property="og:description"]', "content", desc);
     set('meta[property="og:url"]', "content", url);
     set('meta[property="og:type"]', "content", "website");
+    set('meta[property="og:image"]', "content", image);
+    set('meta[property="og:image:width"]', "content", "1200");
+    set('meta[property="og:image:height"]', "content", "630");
+    set('meta[name="twitter:card"]', "content", "summary_large_image");
+    set('meta[name="twitter:title"]', "content", title);
+    set('meta[name="twitter:description"]', "content", desc);
+    set('meta[name="twitter:image"]', "content", image);
     set('link[rel="canonical"]', "href", url);
 
     return () => {
