@@ -85,6 +85,10 @@ const Header: React.FC = () => {
   };
 
   const menuSurface = theme.palette.background.paper;
+  const brandLogoSrc =
+    theme.palette.mode === "dark"
+      ? "/dark-luminous.svg"
+      : "/full-color.svg";
   const menuPaperSx = {
     mt: 1.5,
     minWidth: 220,
@@ -151,16 +155,18 @@ const Header: React.FC = () => {
           }}
         >
           <Box
+            component="img"
+            src={brandLogoSrc}
+            alt=""
             sx={{
-              height: 32,
-              width: 64,
+              height: 56,
+              width: 96,
               marginRight: 1.5,
-              backgroundImage: "url('/logo.png')",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "contain",
-              backgroundPosition: "center",
+              display: "block",
+              objectFit: "contain",
+              flexShrink: 0,
             }}
-          ></Box>
+          />
           Orchestrator
         </Typography>
 
