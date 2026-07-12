@@ -143,7 +143,7 @@ const Header: React.FC = () => {
           to={user ? "/home" : "/"}
           className={styles.logo}
           sx={{
-            fontSize: "1.35rem",
+            fontSize: "2rem",
             textDecoration: "none",
             color: theme.palette.primary.main,
             fontWeight: 600,
@@ -161,7 +161,6 @@ const Header: React.FC = () => {
             sx={{
               height: 56,
               width: 96,
-              marginRight: 1.5,
               display: "block",
               objectFit: "contain",
               flexShrink: 0,
