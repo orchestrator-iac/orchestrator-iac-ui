@@ -10,6 +10,28 @@ export const fetchOrchestrators = createAsyncThunk(
   },
 );
 
+const mapOrchestratorToListItem = (item: any): OrchestratorListItem => ({
+  _id: item._id,
+  templateInfo: item.templateInfo,
+  templateId: item.templateId || undefined,
+  nodes: item.nodes || [],
+  edges: item.edges || [],
+  nodeCount: item.nodeCount ?? item.nodes?.length ?? 0,
+  edgeCount: item.edgeCount ?? item.edges?.length ?? 0,
+  previewImageUrl: item.previewImageUrl,
+  createdAt: item.metadata?.createdAt ?? item.createdAt ?? new Date().toISOString(),
+  updatedAt: item.metadata?.updatedAt ?? item.updatedAt ?? new Date().toISOString(),
+  metadata: item.metadata,
+});
+
+export const fetchOrchestratorById = createAsyncThunk(
+  "orchestrators/fetchOrchestratorById",
+  async (id: string) => {
+    const response = await orchestratorService.getOrchestrator(id);
+    return mapOrchestratorToListItem(response);
+  },
+);
+
 export const deleteOrchestrator = createAsyncThunk(
   "orchestrators/deleteOrchestrator",
   async (id: string) => {
@@ -69,30 +91,23 @@ const orchestratorsSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message || "Failed to fetch orchestrators";
       })
+      .addCase(fetchOrchestratorById.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.error = null;
+        const index = state.data.findIndex((item) => item._id === action.payload._id);
+        if (index >= 0) {
+          state.data[index] = action.payload;
+          return;
+        }
+        state.data.unshift(action.payload);
+      })
       // Delete orchestrator
       .addCase(deleteOrchestrator.fulfilled, (state, action) => {
         state.data = state.data.filter((item) => item._id !== action.payload);
       })
       // Duplicate orchestrator
       .addCase(duplicateOrchestrator.fulfilled, (state, action) => {
-        state.data.unshift({
-          _id: action.payload._id,
-          name: action.payload.name,
-          description: action.payload.description,
-          templateInfo: action.payload.templateInfo,
-          nodes: action.payload.nodes || [],
-          edges: action.payload.edges || [],
-          nodeCount: action.payload.nodes?.length || 0,
-          edgeCount: action.payload.edges?.length || 0,
-          createdAt:
-            action.payload.metadata?.createdAt ??
-            action.payload.createdAt ??
-            new Date().toISOString(),
-          updatedAt:
-            action.payload.metadata?.updatedAt ??
-            action.payload.updatedAt ??
-            new Date().toISOString(),
-        });
+        state.data.unshift(mapOrchestratorToListItem(action.payload));
       });
   },
 });

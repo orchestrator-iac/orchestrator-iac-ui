@@ -67,7 +67,7 @@ const renderFieldHelperText = (hint?: string, errorText?: string) => {
     return undefined;
   }
 
-  return <OverflowTooltipText text={hint} />;
+  return <OverflowTooltipText text={hint} component="span" />;
 };
 
 const DynamicForm: React.FC<Props> = ({
@@ -706,7 +706,12 @@ const DynamicForm: React.FC<Props> = ({
           </Box>
         );
 
-      case "list<key-value>":
+      case "list<key-value>": {
+        const keyField = fieldCfg?.key ?? {};
+        const valueField = fieldCfg?.value ?? {};
+        const removeButton = fieldCfg?.remove_button ?? {};
+        const addButton = fieldCfg?.add_button ?? {};
+
         return (
           <>
             {fieldCfg && (
@@ -722,10 +727,10 @@ const DynamicForm: React.FC<Props> = ({
                         marginTop: 2,
                       }}
                     >
-                      <Grid size={fieldCfg.key.size}>
+                      <Grid size={keyField.size ?? 5}>
                         <TextField
-                          label={fieldCfg.key.label}
-                          required={fieldCfg.key.required}
+                          label={keyField.label ?? "Key"}
+                          required={Boolean(keyField.required)}
                           value={key}
                           onChange={(e) => {
                             const updatedList = {
@@ -738,9 +743,9 @@ const DynamicForm: React.FC<Props> = ({
                           }}
                         />
                       </Grid>
-                      <Grid size={fieldCfg.value.size}>
+                      <Grid size={valueField.size ?? 5}>
                         <TextField
-                          label={fieldCfg.value.label}
+                          label={valueField.label ?? "Value"}
                           value={val as any}
                           onChange={(e) => {
                             const updatedList = {
@@ -751,8 +756,8 @@ const DynamicForm: React.FC<Props> = ({
                           }}
                         />
                       </Grid>
-                      <Grid size={fieldCfg.remove_button.size}>
-                        <Tooltip title={fieldCfg.remove_button.label}>
+                      <Grid size={removeButton.size ?? 2}>
+                        <Tooltip title={removeButton.label ?? "Remove item"}>
                           <IconButton
                             onClick={() => {
                               const updatedList = {
@@ -763,7 +768,7 @@ const DynamicForm: React.FC<Props> = ({
                               handleChange(name, updatedList);
                             }}
                           >
-                            <DeleteIcon sx={fieldCfg.remove_button.style} />
+                            <DeleteIcon sx={removeButton.style} />
                           </IconButton>
                         </Tooltip>
                       </Grid>
@@ -771,7 +776,7 @@ const DynamicForm: React.FC<Props> = ({
                   ),
                 )}
                 <Button
-                  variant={fieldCfg.add_button.variant}
+                  variant={addButton.variant ?? "outlined"}
                   onClick={() => {
                     const updatedList = { ...formData[name] } as Record<
                       string,
@@ -782,12 +787,13 @@ const DynamicForm: React.FC<Props> = ({
                   }}
                   sx={{ mt: 1 }}
                 >
-                  <AddIcon /> {fieldCfg.add_button.label}
+                  <AddIcon /> {addButton.label ?? "Add item"}
                 </Button>
               </div>
             )}
           </>
         );
+      }
 
       case "code-editor":
         return (

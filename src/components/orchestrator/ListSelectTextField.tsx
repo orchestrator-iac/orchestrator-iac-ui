@@ -38,6 +38,47 @@ type ListSelectTextFieldProps = {
   allowDuplicates?: boolean;
 };
 
+const normalizeListSelectTextValue = (rawValue: unknown): string[] => {
+  if (Array.isArray(rawValue)) {
+    return rawValue.map((item) => {
+      if (typeof item === "string") {
+        return item;
+      }
+      if (item && typeof item === "object") {
+        const candidate = item as { id?: unknown; value?: unknown };
+        return String(candidate.id ?? candidate.value ?? "");
+      }
+      return String(item ?? "");
+    });
+  }
+
+  if (typeof rawValue === "string") {
+    return rawValue ? [rawValue] : [];
+  }
+
+  if (rawValue && typeof rawValue === "object") {
+    const record = rawValue as Record<string, unknown>;
+    if ("id" in record || "value" in record) {
+      return [String(record.id ?? record.value ?? "")];
+    }
+    return Object.keys(record)
+      .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }))
+      .map((key) => {
+        const item = record[key];
+        if (typeof item === "string") {
+          return item;
+        }
+        if (item && typeof item === "object") {
+          const candidate = item as { id?: unknown; value?: unknown };
+          return String(candidate.id ?? candidate.value ?? "");
+        }
+        return String(item ?? "");
+      });
+  }
+
+  return [];
+};
+
 const renderFieldHelperText = (hint?: string, errorText?: string) => {
   if (errorText) {
     return errorText;
@@ -47,7 +88,7 @@ const renderFieldHelperText = (hint?: string, errorText?: string) => {
     return undefined;
   }
 
-  return <OverflowTooltipText text={hint} />;
+  return <OverflowTooltipText text={hint} component="span" />;
 };
 
 const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
@@ -71,7 +112,7 @@ const ListSelectTextField: React.FC<ListSelectTextFieldProps> = ({
     zoom = 1;
   }
 
-  const currentList = (formData[name] ?? value ?? []) as string[];
+  const currentList = normalizeListSelectTextValue(formData[name] ?? value ?? []);
 
   // Track previous values to detect changes and (re)create edges
   const prevValuesRef = React.useRef<string[]>(currentList);

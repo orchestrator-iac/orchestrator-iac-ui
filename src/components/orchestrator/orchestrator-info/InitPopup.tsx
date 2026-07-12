@@ -13,6 +13,7 @@ import {
   Autocomplete,
   Typography,
   Box,
+  SelectChangeEvent,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import apiService from "../../../services/apiService";
@@ -50,7 +51,14 @@ const InitPopup = ({
   onBackToHome,
   onSubmit,
 }: InitPopupProps) => {
-  const [form, setForm] = useState({
+  type InitFormState = {
+    templateName: string;
+    description: string;
+    cloud: CloudProvider | "";
+    region: string;
+  };
+
+  const [form, setForm] = useState<InitFormState>({
     templateName: templateInfo?.templateName || "",
     description: templateInfo?.description || "",
     cloud: templateInfo?.cloud || "",
@@ -75,12 +83,22 @@ const InitPopup = ({
     });
   }, [templateInfo]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === "cloud" ? { region: "" } : {}),
+    }));
+  };
+
+  const handleCloudChange = (e: SelectChangeEvent<string>) => {
+    const value = e.target.value as CloudProvider | "";
+    setForm((prev) => ({
+      ...prev,
+      cloud: value,
+      region: "",
     }));
   };
 
@@ -178,7 +196,7 @@ const InitPopup = ({
               label="Cloud"
               name="cloud"
               value={form.cloud}
-              onChange={handleChange}
+              onChange={handleCloudChange}
               onBlur={() => setTouched((prev) => ({ ...prev, cloud: true }))}
               error={touched.cloud && !form.cloud}
               helperText={
@@ -186,6 +204,11 @@ const InitPopup = ({
               }
               fullWidth
               required
+              SelectProps={{
+                MenuProps: {
+                  disablePortal: true,
+                },
+              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
@@ -204,6 +227,7 @@ const InitPopup = ({
               getOptionLabel={(option) =>
                 option ? `${option.name} (${option.code})` : ""
               }
+              isOptionEqualToValue={(option, value) => option.code === value.code}
               value={
                 form.cloud
                   ? cloudRegions[form.cloud].find(
