@@ -500,10 +500,162 @@ const ProductNodeCard: React.FC<ProductNode> = ({
 
 const HeroProductScene: React.FC = () => {
   const theme = useTheme();
-  const gridLine =
+  const [sceneRotation, setSceneRotation] = useState({ rx: 0, ry: 0 });
+  const [isHovering, setIsHovering] = useState(false);
+  const accent = theme.palette.secondary.main;
+  const canvasBg =
     theme.palette.mode === "dark"
-      ? alpha(theme.palette.common.white, 0.06)
-      : alpha(theme.palette.common.black, 0.06);
+      ? "rgba(15,23,26,0.94)"
+      : "rgba(250, 253, 253, 0.96)";
+  const panelBg =
+    theme.palette.mode === "dark"
+      ? "rgba(26,36,40,0.92)"
+      : "rgba(255,255,255,0.94)";
+  const codePanelBg =
+    theme.palette.mode === "dark"
+      ? "rgba(15,20,23,0.97)"
+      : "rgba(14, 28, 33, 0.96)";
+  const shellBorder =
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.08)
+      : alpha(theme.palette.primary.dark, 0.14);
+  const shellDivider =
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.07)
+      : alpha(theme.palette.primary.dark, 0.1);
+  const shellText =
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.55)
+      : alpha(theme.palette.primary.dark, 0.58);
+  const sceneTitleColor =
+    theme.palette.mode === "dark" ? "#EAFBFA" : theme.palette.primary.dark;
+  const sceneSubtleText =
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.5)
+      : alpha(theme.palette.primary.dark, 0.52);
+  const sceneTokenText =
+    theme.palette.mode === "dark" ? "#EAFBFA" : "#D7F4F3";
+  const sceneTokenMuted =
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.45)
+      : alpha("#D7F4F3", 0.55);
+  const sceneCardBorder =
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.09)
+      : alpha(theme.palette.primary.dark, 0.12);
+  const sceneCardShadow =
+    theme.palette.mode === "dark"
+      ? "0 14px 28px -12px rgba(0,0,0,0.5)"
+      : "0 18px 36px -18px rgba(16, 44, 48, 0.22)";
+  const scenePanelShadow =
+    theme.palette.mode === "dark"
+      ? "0 30px 60px -24px rgba(0,0,0,0.55)"
+      : "0 28px 56px -26px rgba(16, 44, 48, 0.18)";
+  const sceneCodeShadow =
+    theme.palette.mode === "dark"
+      ? "0 34px 70px -26px rgba(0,0,0,0.6)"
+      : "0 34px 70px -28px rgba(9, 38, 43, 0.26)";
+  const sceneItems = [
+    {
+      label: "VPC",
+      sub: "10.0.0.0/16",
+      left: 340,
+      top: 210,
+      depth: 40,
+      delay: "120ms",
+      duration: "5.2s",
+      offset: "0s",
+      icon: <NetworkIcon sx={{ color: accent, fontSize: 18 }} />,
+    },
+    {
+      label: "Public subnet",
+      sub: "2 zones",
+      left: 560,
+      top: 148,
+      depth: 46,
+      delay: "220ms",
+      duration: "4.6s",
+      offset: "0.4s",
+      icon: <DnsIcon sx={{ color: accent, fontSize: 18 }} />,
+    },
+    {
+      label: "RDS",
+      sub: "private",
+      left: 790,
+      top: 246,
+      depth: 52,
+      delay: "320ms",
+      duration: "5.6s",
+      offset: "0.8s",
+      icon: <StorageIcon sx={{ color: accent, fontSize: 18 }} />,
+    },
+    {
+      label: "Gateway",
+      sub: "egress",
+      left: 400,
+      top: 380,
+      depth: 44,
+      delay: "420ms",
+      duration: "4.9s",
+      offset: "1.1s",
+      icon: <ConnectIcon sx={{ color: accent, fontSize: 18 }} />,
+    },
+  ] as const;
+  const galleryItems = [
+    { label: "AWS VPC Landing Zone", sub: "12 nodes - AWS" },
+    { label: "Kubernetes Platform Base", sub: "18 nodes - AWS" },
+  ] as const;
+  const codeTokens = [
+    [
+      { text: "module ", color: accent },
+      { text: '"network" ', color: "#FCD34D" },
+      { text: "{", color: sceneTokenMuted },
+    ],
+    [
+      { text: "  source", color: sceneTokenText },
+      { text: " = ", color: sceneTokenMuted },
+      { text: '"./modules/vpc"', color: "#FCD34D" },
+    ],
+    [
+      { text: "  cidr", color: sceneTokenText },
+      { text: "   = ", color: sceneTokenMuted },
+      { text: '"10.0.0.0/16"', color: "#FCD34D" },
+    ],
+    [{ text: "}", color: sceneTokenMuted }],
+    [{ text: "", color: sceneTokenMuted }],
+    [
+      { text: "module ", color: accent },
+      { text: '"database" ', color: "#FCD34D" },
+      { text: "{", color: sceneTokenMuted },
+    ],
+    [
+      { text: "  source", color: sceneTokenText },
+      { text: "    = ", color: sceneTokenMuted },
+      { text: '"./modules/rds"', color: "#FCD34D" },
+    ],
+    [
+      { text: "  subnet_ids", color: sceneTokenText },
+      { text: " = ", color: sceneTokenMuted },
+      { text: "module.network.private_subnets", color: sceneTokenText },
+    ],
+    [{ text: "}", color: sceneTokenMuted }],
+  ] as const;
+
+  const handleSceneMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const px = (event.clientX - rect.left) / rect.width;
+    const py = (event.clientY - rect.top) / rect.height;
+    setSceneRotation({
+      ry: (px - 0.5) * 16,
+      rx: (0.5 - py) * 11,
+    });
+    setIsHovering(true);
+  };
+
+  const handleSceneLeave = () => {
+    setSceneRotation({ rx: 0, ry: 0 });
+    setIsHovering(false);
+  };
 
   return (
     <Box
@@ -520,261 +672,468 @@ const HeroProductScene: React.FC = () => {
         sx={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `linear-gradient(${gridLine} 1px, transparent 1px), linear-gradient(90deg, ${gridLine} 1px, transparent 1px)`,
-          backgroundSize: "56px 56px",
           maskImage:
             "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
-          opacity: theme.palette.mode === "dark" ? 0.62 : 0.7,
-        }}
-      />
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
           background:
             theme.palette.mode === "dark"
               ? `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
                   theme.palette.background.default,
                   0.92,
-                )} 32%, ${alpha(theme.palette.background.default, 0.3)} 100%)`
+                )} 32%, ${alpha(theme.palette.background.default, 0.18)} 72%, ${alpha(theme.palette.background.default, 0.04)} 100%)`
               : `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
                   theme.palette.background.default,
                   0.94,
-                )} 34%, ${alpha(theme.palette.background.default, 0.36)} 100%)`,
+                )} 34%, ${alpha(theme.palette.background.default, 0.18)} 72%, ${alpha(theme.palette.background.default, 0.04)} 100%)`,
         }}
       />
 
       <Box
         sx={{
           position: "absolute",
-          width: { xs: 720, md: 980 },
-          height: { xs: 560, md: 650 },
-          right: { xs: -430, sm: -360, md: -220, lg: -80, xl: 10 },
-          top: { xs: 120, md: 26 },
-          opacity: { xs: 0.26, sm: 0.38, md: 0.72 },
+          width: { sm: 860, md: 980 },
+          height: { sm: 560, md: 640 },
+          right: { sm: -300, md: -180, lg: -40, xl: 40 },
+          top: { sm: 72, md: 36 },
+          opacity: { sm: 0.52, md: 1 },
+          pointerEvents: "auto",
         }}
+        onMouseMove={handleSceneMove}
+        onMouseLeave={handleSceneLeave}
       >
-        <SurfaceBox
+        <Box
           sx={{
             position: "absolute",
-            inset: { xs: "42px 0 auto auto", md: "40px 0 auto auto" },
-            width: { xs: 590, md: 760 },
-            height: { xs: 390, md: 470 },
-            overflow: "hidden",
+            inset: 0,
+            perspective: 1800,
           }}
         >
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={1}
+          <Box
             sx={{
-              px: 2,
-              py: 1.4,
-              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              position: "absolute",
+              inset: 0,
+              transformStyle: "preserve-3d",
+              transform: `rotateX(${sceneRotation.rx}deg) rotateY(${sceneRotation.ry}deg)`,
+              transition: isHovering
+                ? "transform 150ms ease-out"
+                : "transform 600ms ease-out",
             }}
           >
             <Box
               sx={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                backgroundColor: "#ef4444",
-              }}
-            />
-            <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                backgroundColor: "#f59e0b",
-              }}
-            />
-            <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                backgroundColor: "#22c55e",
-              }}
-            />
-            <Typography
-              sx={{
-                ml: 1.5,
-                fontSize: "0.76rem",
-                fontWeight: 700,
-                color: "text.secondary",
+                position: "absolute",
+                left: 190,
+                top: 50,
+                width: 760,
+                height: 460,
+                transform: "translateZ(0px)",
+                borderRadius: 2,
+                overflow: "hidden",
+                background: canvasBg,
+                border: `1px solid ${shellBorder}`,
+                boxShadow: "0 40px 80px -30px rgba(0,0,0,0.55)",
+                animation: "heroFadeUp 700ms cubic-bezier(0.16,1,0.3,1) both",
               }}
             >
-              Orchestrator canvas
-            </Typography>
-          </Stack>
-
-          <Box
-            sx={{
-              position: "relative",
-              height: "calc(100% - 45px)",
-              backgroundImage: `linear-gradient(${gridLine} 1px, transparent 1px), linear-gradient(90deg, ${gridLine} 1px, transparent 1px)`,
-              backgroundSize: "34px 34px",
-            }}
-          >
-            <Box
-              sx={{
-                position: "absolute",
-                left: "19%",
-                top: "28%",
-                width: "53%",
-                height: "38%",
-                borderTop: `2px solid ${alpha(theme.palette.secondary.main, 0.34)}`,
-                borderRight: `2px solid ${alpha(theme.palette.secondary.main, 0.22)}`,
-                transform: "skewY(-9deg)",
-              }}
-            />
-            <Box
-              sx={{
-                position: "absolute",
-                left: "18%",
-                top: "44%",
-                width: "58%",
-                borderTop: `2px solid ${alpha("#64748b", 0.4)}`,
-                transform: "rotate(14deg)",
-              }}
-            />
-            {architectureNodes.map((node) => (
-              <ProductNodeCard key={node.label} {...node} />
-            ))}
-          </Box>
-        </SurfaceBox>
-
-        <SurfaceBox
-          sx={{
-            position: "absolute",
-            left: { xs: 42, md: 0 },
-            top: { xs: 0, md: 68 },
-            width: { xs: 235, md: 260 },
-            p: 1.5,
-          }}
-        >
-          <Typography
-            sx={{
-              mb: 1.25,
-              fontSize: "0.76rem",
-              fontWeight: 800,
-              color: "text.primary",
-            }}
-          >
-            Template gallery
-          </Typography>
-          <Stack spacing={1}>
-            {templateRows.slice(0, 2).map((template) => (
-              <Box
-                key={template.name}
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={1.25}
                 sx={{
-                  p: 1.2,
-                  borderRadius: 1,
-                  border: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
-                  backgroundColor: alpha(theme.palette.tertiary.main, 0.18),
+                  px: 2.25,
+                  py: 1.6,
+                  borderBottom: `1px solid ${shellDivider}`,
                 }}
               >
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <TemplateIcon
-                    sx={{ color: theme.palette.secondary.main, fontSize: 18 }}
+                {["#EF4444", "#F59E0B", "#22C55E"].map((color) => (
+                  <Box
+                    key={color}
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      backgroundColor: color,
+                    }}
                   />
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
+                ))}
+                <Typography
+                  sx={{
+                    ml: 1,
+                    color: shellText,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: 0.2,
+                    fontFamily:
+                      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                  }}
+                >
+                  Orchestrator canvas
+                </Typography>
+              </Stack>
+
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: "42px 0 0 0",
+                  backgroundImage: `radial-gradient(circle, ${theme.palette.mode === "dark" ? alpha(theme.palette.common.white, 0.055) : alpha(theme.palette.primary.dark, 0.08)} 1px, transparent 1px)`,
+                  backgroundSize: "26px 26px",
+                }}
+              />
+            </Box>
+
+            <Box
+              component="svg"
+              viewBox="0 0 760 460"
+              sx={{
+                position: "absolute",
+                left: 190,
+                top: 50,
+                width: 760,
+                height: 460,
+                transform: "translateZ(26px)",
+                overflow: "visible",
+              }}
+            >
+              {[
+                ["VPC", "Public subnet"],
+                ["VPC", "RDS"],
+                ["Public subnet", "Gateway"],
+                ["Gateway", "RDS"],
+              ].map(([from, to], index) => {
+                const a = sceneItems.find((item) => item.label === from)!;
+                const b = sceneItems.find((item) => item.label === to)!;
+                return (
+                  <line
+                    key={`${from}-${to}`}
+                    x1={a.left - 190}
+                    y1={a.top - 50}
+                    x2={b.left - 190}
+                    y2={b.top - 50}
+                    stroke={accent}
+                    strokeWidth="1.6"
+                    strokeDasharray="6 8"
+                    style={{
+                      animation: `heroDash 4.5s linear infinite, heroFadeUp 600ms ease-out ${500 + index * 90}ms both`,
+                    }}
+                  />
+                );
+              })}
+            </Box>
+
+            {sceneItems.map((item) => (
+              <Box
+                key={item.label}
+                sx={{
+                  position: "absolute",
+                  left: item.left,
+                  top: item.top,
+                  transform: `translate3d(-50%, -50%, ${item.depth}px)`,
+                }}
+              >
+                <Box
+                  sx={{
+                    animation: `heroFloat ${item.duration} ease-in-out ${item.offset} infinite`,
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1.5}
+                    sx={{
+                      px: 2.25,
+                      py: 1.65,
+                      borderRadius: 1.5,
+                      background: panelBg,
+                      border: `1px solid ${sceneCardBorder}`,
+                      boxShadow: sceneCardShadow,
+                      whiteSpace: "nowrap",
+                      animation: `heroFadeUp 600ms cubic-bezier(0.16,1,0.3,1) ${item.delay} both`,
+                    }}
+                  >
+                    <Box
                       sx={{
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        color: "text.primary",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        width: 34,
+                        height: 34,
+                        borderRadius: 1,
+                        backgroundColor: alpha(accent, 0.14),
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flex: "0 0 auto",
                       }}
                     >
-                      {template.name}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "0.66rem",
-                        color: "text.secondary",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {template.nodes} - {template.cloud}
-                    </Typography>
-                  </Box>
-                </Stack>
+                      {item.icon}
+                    </Box>
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontSize: 14,
+                          fontWeight: 800,
+                          color: sceneTitleColor,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {item.label}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          mt: 0.25,
+                          fontSize: 11,
+                          color: sceneSubtleText,
+                          fontFamily:
+                            'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                        }}
+                      >
+                        {item.sub}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
               </Box>
             ))}
-          </Stack>
-        </SurfaceBox>
 
-        <SurfaceBox
-          sx={{
-            position: "absolute",
-            right: { xs: 22, md: 8 },
-            bottom: { xs: 18, md: 0 },
-            width: { xs: 335, md: 390 },
-            overflow: "hidden",
-          }}
-        >
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{
-              px: 1.6,
-              py: 1.2,
-              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
-            }}
-          >
-            <Stack direction="row" spacing={1} alignItems="center">
-              <CodeIcon
-                sx={{ color: theme.palette.secondary.main, fontSize: 18 }}
-              />
-              <Typography
+            <Box
+              sx={{
+                position: "absolute",
+                left: 0,
+                top: 78,
+                width: 240,
+                transform: "translateZ(64px)",
+              }}
+            >
+              <Box
                 sx={{
-                  fontSize: "0.76rem",
-                  color: "text.primary",
-                  fontWeight: 800,
+                  p: 2.25,
+                  borderRadius: 2,
+                  background:
+                    theme.palette.mode === "dark"
+                      ? alpha("#141c1f", 0.95)
+                      : "rgba(255,255,255,0.95)",
+                  border: `1px solid ${shellBorder}`,
+                  boxShadow: scenePanelShadow,
+                  animation:
+                    "heroFadeUp 700ms cubic-bezier(0.16,1,0.3,1) 60ms both",
                 }}
               >
-                Generated Terraform
-              </Typography>
-            </Stack>
-            <Chip
-              label="Valid"
-              size="small"
+                <Typography
+                  sx={{
+                    mb: 1.75,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    color: sceneTitleColor,
+                  }}
+                >
+                  Template gallery
+                </Typography>
+                <Stack spacing={1.25}>
+                  {galleryItems.map((item) => (
+                    <Stack
+                      key={item.label}
+                      direction="row"
+                      spacing={1.5}
+                      alignItems="center"
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 1.25,
+                        border: `1px solid ${theme.palette.mode === "dark" ? alpha(theme.palette.common.white, 0.07) : alpha(theme.palette.primary.dark, 0.08)}`,
+                        backgroundColor:
+                          theme.palette.mode === "dark"
+                            ? alpha(theme.palette.common.white, 0.02)
+                            : alpha(theme.palette.tertiary.main, 0.14),
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 1,
+                          backgroundColor: alpha(accent, 0.14),
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flex: "0 0 auto",
+                        }}
+                      >
+                        <TemplateIcon sx={{ color: accent, fontSize: 15 }} />
+                      </Box>
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontSize: 12.5,
+                            fontWeight: 700,
+                            color: sceneTitleColor,
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            mt: 0.35,
+                            fontSize: 10,
+                            color: sceneSubtleText,
+                            fontFamily:
+                              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                          }}
+                        >
+                          {item.sub}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Box>
+            </Box>
+
+            <Box
               sx={{
-                height: 22,
-                borderRadius: 1,
-                fontSize: "0.66rem",
-                fontWeight: 700,
-                color: "#15803d",
-                backgroundColor: alpha("#22c55e", 0.12),
+                position: "absolute",
+                left: 540,
+                top: 322,
+                width: 440,
+                transform: "translateZ(78px)",
               }}
-            />
-          </Stack>
-          <Box
-            component="pre"
-            sx={{
-              m: 0,
-              p: 1.8,
-              fontSize: "0.72rem",
-              lineHeight: 1.65,
-              color:
-                theme.palette.mode === "dark"
-                  ? alpha(theme.palette.common.white, 0.84)
-                  : "#334155",
-              whiteSpace: "pre-wrap",
-              fontFamily:
-                'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            }}
-          >
-            {terraformLines.join("\n")}
+            >
+              <Box
+                sx={{
+                  overflow: "hidden",
+                  borderRadius: 2,
+                  background: codePanelBg,
+                  border: `1px solid ${sceneCardBorder}`,
+                  boxShadow: sceneCodeShadow,
+                  animation:
+                    "heroFadeUp 700ms cubic-bezier(0.16,1,0.3,1) 420ms both",
+                }}
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  spacing={1.5}
+                  sx={{
+                    px: 2.25,
+                    py: 1.6,
+                    borderBottom: `1px solid ${shellDivider}`,
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    spacing={1.15}
+                    alignItems="center"
+                    sx={{ minWidth: 0 }}
+                  >
+                    <CodeIcon sx={{ color: accent, fontSize: 14 }} />
+                    <Typography
+                      sx={{
+                        fontSize: 12.5,
+                        fontWeight: 800,
+                        color: sceneTokenText,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Generated Terraform
+                    </Typography>
+                  </Stack>
+                  <Typography
+                    sx={{
+                      px: 1.25,
+                      py: 0.35,
+                      borderRadius: 999,
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      color: "#4ADE80",
+                      backgroundColor: alpha("#4ADE80", 0.12),
+                      boxShadow: "0 0 0 0 rgba(45,212,191,0.45)",
+                      animation: "heroGlow 2400ms ease-in-out infinite",
+                    }}
+                  >
+                    Valid
+                  </Typography>
+                </Stack>
+                <Box
+                  sx={{
+                    px: 2.25,
+                    pt: 2,
+                    pb: 2.5,
+                    fontFamily:
+                      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                    fontSize: 12,
+                    lineHeight: 1.75,
+                  }}
+                >
+                  {codeTokens.map((line, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: "flex",
+                        minHeight: "1.2em",
+                        animation: `heroLineIn 350ms ease-out ${620 + index * 55}ms both`,
+                      }}
+                    >
+                      {line.map((token, tokenIndex) => (
+                        <Box
+                          key={`${index}-${tokenIndex}`}
+                          component="span"
+                          sx={{ color: token.color, whiteSpace: "pre" }}
+                        >
+                          {token.text}
+                        </Box>
+                      ))}
+                    </Box>
+                  ))}
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      width: 7,
+                      height: 13,
+                      backgroundColor: accent,
+                      verticalAlign: "-2px",
+                      animation: "heroBlink 1s step-end infinite",
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
           </Box>
-        </SurfaceBox>
+        </Box>
+
+        <Box
+          sx={{
+            "@keyframes heroFadeUp": {
+              from: {
+                opacity: 0,
+                transform: "translateY(16px) scale(0.95)",
+              },
+              to: {
+                opacity: 1,
+                transform: "translateY(0) scale(1)",
+              },
+            },
+            "@keyframes heroFloat": {
+              "0%, 100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-7px)" },
+            },
+            "@keyframes heroDash": {
+              to: { strokeDashoffset: -140 },
+            },
+            "@keyframes heroGlow": {
+              "0%, 100%": {
+                boxShadow: "0 0 0 0 rgba(45,212,191,0.45)",
+              },
+              "50%": {
+                boxShadow: "0 0 0 5px rgba(45,212,191,0)",
+              },
+            },
+            "@keyframes heroBlink": {
+              "0%, 49%": { opacity: 1 },
+              "50%, 100%": { opacity: 0 },
+            },
+            "@keyframes heroLineIn": {
+              from: { opacity: 0, transform: "translateX(-8px)" },
+              to: { opacity: 1, transform: "translateX(0)" },
+            },
+          }}
+        />
       </Box>
     </Box>
   );
