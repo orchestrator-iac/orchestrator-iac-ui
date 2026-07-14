@@ -32,6 +32,7 @@ import apiService from "../../services/apiService";
 import { useAuth } from "../../context/AuthContext";
 import ModificationPopup from "./modification/ModificationPopup";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
+import { ResourceIconValue } from "@/types/resourceIcon";
 
 const steps = [
   "Basic Info",
@@ -97,7 +98,7 @@ const Resources: React.FC = () => {
       resourceIcon: {
         id: "",
         url: "",
-      },
+      } as ResourceIconValue,
       modifiedHistory: [],
     },
     mode: "onTouched",

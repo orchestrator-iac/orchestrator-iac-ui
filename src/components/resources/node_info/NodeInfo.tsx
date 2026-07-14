@@ -29,11 +29,13 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   setResourceNode,
   onValidationChange,
 }) => {
+  const serializeResourceNode = (node: NodeInfoType | null) =>
+    JSON.stringify(node, null, 2);
   const theme = useTheme();
   const { mode } = useThemeContext();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [resourceNodeTemp, setResourceNodeTemp] = useState<string>(
-    JSON.stringify(resourceNode, null, 2),
+    serializeResourceNode(resourceNode),
   );
   const default_info = {
     type: "customNode",
@@ -59,6 +61,13 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
       handles: [],
     },
   };
+
+  useEffect(() => {
+    const serializedNode = serializeResourceNode(resourceNode);
+    if (serializedNode !== resourceNodeTemp) {
+      setResourceNodeTemp(serializedNode);
+    }
+  }, [resourceNode]);
 
   useEffect(() => {
     if (resourceNodeTemp) {

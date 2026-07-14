@@ -264,6 +264,9 @@ const DynamicForm: React.FC<Props> = ({
       hint,
       validationErrorText ?? error_text,
     );
+    const currentListValue = Array.isArray(formData[name] ?? value)
+      ? (formData[name] ?? value)
+      : [];
 
     switch (type) {
       case "info":
@@ -630,8 +633,7 @@ const DynamicForm: React.FC<Props> = ({
       case "list<text>":
         return (
           <Box>
-            {(formData[name] ?? value ?? []).map(
-              (item: string, index: number) => (
+            {currentListValue.map((item: string, index: number) => (
                 <Grid
                   container
                   spacing={2}
@@ -645,9 +647,7 @@ const DynamicForm: React.FC<Props> = ({
                       value={item}
                       placeholder={placeholder ?? ""}
                       onChange={(e) => {
-                        const updatedList = [
-                          ...(formData[name] ?? value ?? []),
-                        ];
+                        const updatedList = [...currentListValue];
                         updatedList[index] = e.target.value;
                         handleChange(name, updatedList);
                       }}
@@ -657,9 +657,7 @@ const DynamicForm: React.FC<Props> = ({
                     <Tooltip title="Remove">
                       <IconButton
                         onClick={() => {
-                          const updatedList = [
-                            ...(formData[name] ?? value ?? []),
-                          ];
+                          const updatedList = [...currentListValue];
                           updatedList.splice(index, 1);
                           handleChange(name, updatedList);
                         }}
@@ -670,13 +668,12 @@ const DynamicForm: React.FC<Props> = ({
                     </Tooltip>
                   </Grid>
                 </Grid>
-              ),
-            )}
+              ))}
             <Button
               variant={fieldCfg?.add_button?.variant || "outlined"}
               startIcon={<AddIcon />}
               onClick={() => {
-                const updatedList = [...(formData[name] ?? value ?? []), ""];
+                const updatedList = [...currentListValue, ""];
                 handleChange(name, updatedList);
               }}
               sx={{ mt: 1 }}

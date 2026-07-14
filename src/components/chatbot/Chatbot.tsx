@@ -477,7 +477,10 @@ const Chatbot: React.FC = () => {
           friendlyId,
           isExpanded: true,
           // Kept for fallback rendering only — not used by fetchResourceById
-          previewIcon: catalogEntry?.resourceIcon?.url ?? undefined,
+          previewIcon:
+            catalogEntry?.resourceIcon?.url ??
+            catalogEntry?.resourceIcon?.sprite?.sheetUrl ??
+            undefined,
           resourceName: catalogEntry?.resourceName ?? type,
         };
       });

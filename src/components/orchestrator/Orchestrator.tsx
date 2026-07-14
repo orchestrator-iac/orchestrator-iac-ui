@@ -322,7 +322,7 @@ const OrchestratorReactFlow: React.FC = () => {
                 friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
                 header: {
                   ...resourceData?.data?.resourceNode?.data?.header,
-                  icon: resourceData?.data?.resourceIcon?.url,
+                  icon: resourceData?.data?.resourceIcon,
                 },
                 templateInfo: appliedTemplateInfo,
                 userInfo: user,
@@ -525,7 +525,7 @@ const OrchestratorReactFlow: React.FC = () => {
               __nodeType: resourceType, // keep the real resource type for rules/labels
               header: {
                 ...newNode.data.header,
-                icon: resourceData?.data?.resourceIcon?.url,
+                icon: resourceData?.data?.resourceIcon,
               },
               templateInfo: templateInfo,
               userInfo: user,
@@ -757,7 +757,7 @@ const OrchestratorReactFlow: React.FC = () => {
                     friendlyId: dbNode.friendlyId,
                     header: {
                       ...resourceData?.data?.resourceNode?.data?.header,
-                      icon: resourceData?.data?.resourceIcon?.url,
+                      icon: resourceData?.data?.resourceIcon,
                     },
                     templateInfo: appliedTemplateInfo,
                     userInfo: user,
@@ -893,7 +893,7 @@ const OrchestratorReactFlow: React.FC = () => {
                   friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
                   header: {
                     ...resourceData?.data?.resourceNode?.data?.header,
-                    icon: resourceData?.data?.resourceIcon?.url,
+                    icon: resourceData?.data?.resourceIcon,
                   },
                   templateInfo,
                   userInfo: user,

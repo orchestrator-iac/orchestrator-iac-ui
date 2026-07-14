@@ -23,6 +23,7 @@ import { useDnD } from "./DnDContext";
 import { RootState, AppDispatch } from "../../../store";
 import { fetchResources } from "../../../store/resourcesSlice";
 import { CloudProvider } from "../../../types/clouds-info";
+import ResourceIconView from "@/components/shared/ResourceIconView";
 
 const drawerWidth = 240;
 
@@ -216,9 +217,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
               onDragStart={(event) => onDragStart(event, resource._id)}
               draggable
             >
-              <Box
-                component="img"
-                src={resource?.resourceIcon?.url}
+              <ResourceIconView
+                icon={resource?.resourceIcon}
                 alt={resource.resourceName}
                 sx={{
                   width: 40,

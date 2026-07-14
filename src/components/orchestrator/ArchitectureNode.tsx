@@ -13,6 +13,7 @@ import { useTheme } from "@mui/material/styles";
 
 import { getFriendlyId, resolveValueByPath } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
+import ResourceIconView from "../shared/ResourceIconView";
 
 const asDisplayString = (value: any): string => {
   if (value == null) {
@@ -42,8 +43,8 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
     [id, data?.__nodeType, data?.__helpers?.allNodes],
   );
 
-  const iconSrc = React.useMemo(() => {
-    return data?.header?.icon || "";
+  const iconValue = React.useMemo(() => {
+    return data?.header?.icon;
   }, [data?.header?.icon]);
 
   const architectureView = data?.architectureView;
@@ -166,10 +167,9 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
       }}
     >
       <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-        {iconSrc && (
-          <Box
-            component="img"
-            src={iconSrc}
+        {iconValue && (
+          <ResourceIconView
+            icon={iconValue}
             alt={data?.header?.label || "Resource Icon"}
             sx={{
               width: 44,

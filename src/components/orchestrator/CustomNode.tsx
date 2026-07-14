@@ -18,6 +18,7 @@ import MenuItem from "@mui/material/MenuItem";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import parse from "html-react-parser";
 import OverflowTooltipText from "../shared/OverflowTooltipText";
+import ResourceIconView from "../shared/ResourceIconView";
 import DynamicForm from "./DynamicForm";
 import { getFriendlyId } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
@@ -103,9 +104,8 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
           }}
         >
           {data?.header?.icon && (
-            <Box
-              component="img"
-              src={data?.header?.icon}
+            <ResourceIconView
+              icon={data?.header?.icon}
               alt={data?.header?.label || "Resource Icon"}
               sx={{
                 width: 42,

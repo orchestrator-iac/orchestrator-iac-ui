@@ -29,6 +29,8 @@ import apiService from "../../services/apiService";
 import PublishTemplateDialog from "../orchestrator/publish-template/PublishTemplateDialog";
 import { useAuth } from "../../context/AuthContext";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
+import ResourceIconView from "../shared/ResourceIconView";
+import { hasRenderableResourceIcon } from "@/types/resourceIcon";
 
 import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
@@ -680,15 +682,16 @@ const Home: React.FC = () => {
                                   },
                                 }}
                               >
-                                {r.resourceIcon?.url ? (
-                                  <img
-                                    src={r.resourceIcon.url}
+                                {hasRenderableResourceIcon(r.resourceIcon) ? (
+                                  <ResourceIconView
+                                    icon={r.resourceIcon}
                                     alt={r.resourceName || r.resourceId}
-                                    style={{
+                                    sx={{
                                       width: "100%",
                                       height: 150,
+                                      display: "block",
                                       objectFit: "cover",
-                                      borderRadius: 6,
+                                      borderRadius: "6px",
                                     }}
                                   />
                                 ) : (
