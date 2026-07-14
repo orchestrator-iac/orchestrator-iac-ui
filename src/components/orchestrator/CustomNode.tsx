@@ -15,10 +15,10 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import IconButton from "@mui/material/IconButton";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import parse from "html-react-parser";
 import OverflowTooltipText from "../shared/OverflowTooltipText";
+import ResourceIconView from "../shared/ResourceIconView";
 import DynamicForm from "./DynamicForm";
 import { getFriendlyId } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
@@ -104,9 +104,8 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
           }}
         >
           {data?.header?.icon && (
-            <Box
-              component="img"
-              src={data?.header?.icon}
+            <ResourceIconView
+              icon={data?.header?.icon}
               alt={data?.header?.label || "Resource Icon"}
               sx={{
                 width: 42,
@@ -238,18 +237,45 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
               </Tooltip>
             )}
 
-            <Box onMouseDown={(event) => event.stopPropagation()}>
-              <IconButton
-                aria-label="node actions"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuOpen(e);
-                }}
-                size="small"
-                sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
+            <Box
+              component="span"
+              role="button"
+              tabIndex={0}
+              aria-label="node actions"
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event: React.MouseEvent<HTMLElement>) => {
+                event.stopPropagation();
+                handleMenuOpen(event);
+              }}
+              onKeyDown={(event: React.KeyboardEvent<HTMLElement>) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleMenuOpen(event as unknown as React.MouseEvent<HTMLElement>);
+                }
+              }}
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: "999px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: 0.6,
+                cursor: "pointer",
+                transition: "opacity 0.2s ease, background-color 0.2s ease",
+                "&:hover": {
+                  opacity: 1,
+                  backgroundColor: "action.hover",
+                },
+                "&:focus-visible": {
+                  opacity: 1,
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
+              }}
+            >
+              <MoreVertIcon fontSize="small" />
             </Box>
             <Menu
               anchorEl={anchorEl}

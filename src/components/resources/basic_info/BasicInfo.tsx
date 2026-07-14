@@ -15,7 +15,6 @@ import {
   CircularProgress,
   Card,
   CardActionArea,
-  CardMedia,
   CardContent,
   Typography,
   Tooltip,
@@ -31,17 +30,21 @@ import { Controller, useFormContext } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchIcons, resetIcons } from "../../../store/iconsSlice";
 import ModificationHistory from "../modification/ModificationHistoryTimeline";
-
-/** Normalize url field: always returns [{url, iconKind}] */
-function getVariants(icon: any): { url: string; iconKind: string }[] {
-  if (Array.isArray(icon.url)) return icon.url;
-  if (typeof icon.url === "string") return [{ url: icon.url, iconKind: icon.iconKind ?? "unknown" }];
-  return [];
-}
+import ResourceIconView from "@/components/shared/ResourceIconView";
+import {
+  buildResourceIconValue,
+  getCatalogIconVariants,
+  hasRenderableResourceIcon,
+  type CatalogIconRecord,
+  type CatalogIconVariant,
+} from "@/types/resourceIcon";
 
 /** Card with optional carousel for icons that have multiple URL variants */
-const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ icon, onSelect }) => {
-  const variants = getVariants(icon);
+const IconCard: React.FC<{
+  icon: CatalogIconRecord;
+  onSelect: (variant: CatalogIconVariant) => void;
+}> = ({ icon, onSelect }) => {
+  const variants = getCatalogIconVariants(icon);
   const [idx, setIdx] = useState(0);
   const current = variants[idx] ?? { url: "", iconKind: "" };
   const multi = variants.length > 1;
@@ -58,14 +61,18 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
         "&:hover": { transform: "translateY(-4px)", boxShadow: 3 },
       }}
     >
-      <CardActionArea onClick={() => onSelect(current.url)}>
+      <CardActionArea onClick={() => onSelect(current)}>
         {/* Image area with prev/next arrows */}
         <Box sx={{ position: "relative" }}>
-          <CardMedia
-            component="img"
-            height="120"
-            image={current.url}
-            alt={icon.name}
+          <ResourceIconView
+            icon={buildResourceIconValue(icon, current, { includeSprite: true })}
+            alt={icon.name ?? "Catalog icon"}
+            sx={{
+              width: "100%",
+              height: 120,
+              display: "block",
+              objectFit: "contain",
+            }}
           />
           {multi && (
             <>
@@ -119,7 +126,7 @@ const IconCard: React.FC<{ icon: any; onSelect: (url: string) => void }> = ({ ic
               <Box sx={{ position: "absolute", bottom: 4, width: "100%", display: "flex", justifyContent: "center", gap: 0.5 }}>
                 {variants.map((v, i) => (
                   <Box
-                    key={v.url}
+                    key={`${v.iconKind ?? "unknown"}-${v.url ?? i}-${i}`}
                     sx={{
                       width: 5, height: 5, borderRadius: "50%",
                       bgcolor: i === idx ? "primary.main" : "grey.400",
@@ -221,8 +228,11 @@ const BasicInfo: React.FC = () => {
     [dispatch, loading, hasMore, page, searchQuery, formCloudProvider],
   );
 
-  const handleSelectIcon = (icon: any, url: string) => {
-    setValue("resourceIcon", { id: icon._id, url });
+  const handleSelectIcon = (
+    icon: CatalogIconRecord,
+    variant: CatalogIconVariant,
+  ) => {
+    setValue("resourceIcon", buildResourceIconValue(icon, variant));
     setOpen(false);
   };
 
@@ -378,13 +388,14 @@ const BasicInfo: React.FC = () => {
                           },
                         }}
                       >
-                        {field.value?.url ? "Change Icon" : "Upload Icon"}
+                        {hasRenderableResourceIcon(field.value)
+                          ? "Change Icon"
+                          : "Upload Icon"}
                       </Button>
 
-                      {field.value?.url && (
-                        <Box
-                          component="img"
-                          src={field.value.url}
+                      {hasRenderableResourceIcon(field.value) && (
+                        <ResourceIconView
+                          icon={field.value}
                           alt="Selected Icon"
                           sx={{
                             width: 32,
@@ -519,7 +530,10 @@ const BasicInfo: React.FC = () => {
               <Grid container spacing={2}>
                 {icons.map((icon: any) => (
                   <Grid size={{ xs: 12, sm: 6, md: 3 }} key={icon._id ?? icon.url}>
-                    <IconCard icon={icon} onSelect={(url) => handleSelectIcon(icon, url)} />
+                    <IconCard
+                      icon={icon}
+                      onSelect={(variant) => handleSelectIcon(icon, variant)}
+                    />
                   </Grid>
                 ))}
               </Grid>

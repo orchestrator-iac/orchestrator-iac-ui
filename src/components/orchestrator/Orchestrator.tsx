@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -30,6 +36,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Typography from "@mui/material/Typography";
 import { Box, Chip } from "@mui/material";
 
 import CustomNode from "./CustomNode";
@@ -45,15 +52,19 @@ import { fetchResourceById } from "../../store/resourceSlice";
 import { updateSession } from "../../store/chatSlice";
 import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
-import { CloudConfig } from "../../types/clouds-info";
+import { CloudConfig, CloudProvider } from "../../types/clouds-info";
 import { IaCValidationIssue } from "../../types/orchestrator";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
-import { fetchOrchestrators } from "@/store/orchestratorsSlice";
+import {
+  fetchOrchestratorById,
+  fetchOrchestrators,
+} from "@/store/orchestratorsSlice";
 import {
   clearMaestroDraft,
   readMaestroDraft,
   type MaestroDraftPayload,
 } from "@/utils/maestroDraft";
+import LumaSpin from "@/components/ui/luma-spin";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 
 const initialNodes: Node[] = [];
@@ -67,7 +78,12 @@ const defaultOptions: Record<string, string> = {
 };
 
 type PersistedGraphLike = {
-  templateInfo?: Partial<CloudConfig> | null;
+  templateInfo?: {
+    templateName?: string;
+    description?: string;
+    cloud?: string;
+    region?: string;
+  } | null;
   nodes?: Array<Record<string, any>>;
   edges?: Array<Record<string, any>>;
 };
@@ -80,11 +96,16 @@ const EMPTY_TEMPLATE_INFO: CloudConfig = {
 };
 
 const normalizeTemplateInfo = (
-  templateInfo?: Partial<CloudConfig> | null,
+  templateInfo?: {
+    templateName?: string;
+    description?: string;
+    cloud?: string;
+    region?: string;
+  } | null,
 ): CloudConfig => ({
   templateName: templateInfo?.templateName || "",
   description: templateInfo?.description || "",
-  cloud: templateInfo?.cloud,
+  cloud: templateInfo?.cloud as CloudProvider | undefined,
   region: templateInfo?.region || "",
 });
 
@@ -203,7 +224,8 @@ const OrchestratorReactFlow: React.FC = () => {
     edges: Edge[];
   } | null>(null);
   const [snackOpen, setSnackOpen] = useState(false);
-  const [templateInfo, setTemplateInfo] = useState<CloudConfig>(EMPTY_TEMPLATE_INFO);
+  const [templateInfo, setTemplateInfo] =
+    useState<CloudConfig>(EMPTY_TEMPLATE_INFO);
   const [currentOrchestratorId, setCurrentOrchestratorId] = useState<
     string | null
   >(null);
@@ -216,6 +238,9 @@ const OrchestratorReactFlow: React.FC = () => {
   const [pendingMaestroDraft, setPendingMaestroDraft] =
     useState<MaestroDraftPayload | null>(null);
   const [replaceDraftDialogOpen, setReplaceDraftDialogOpen] = useState(false);
+  const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const requestedOrchestratorIdsRef = useRef<Set<string>>(new Set());
+  const routeLoadCountRef = useRef(0);
 
   useGuidedTour(
     "orchestrator",
@@ -237,31 +262,80 @@ const OrchestratorReactFlow: React.FC = () => {
     setSearchParams(nextParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
+  const beginRouteLoad = useCallback(() => {
+    routeLoadCountRef.current += 1;
+    if (routeLoadCountRef.current === 1) {
+      setIsRouteLoading(true);
+    }
+  }, []);
+
+  const endRouteLoad = useCallback(() => {
+    routeLoadCountRef.current = Math.max(0, routeLoadCountRef.current - 1);
+    if (routeLoadCountRef.current === 0) {
+      setIsRouteLoading(false);
+    }
+  }, []);
+
+  const runWithRouteLoading = useCallback(
+    async <T,>(work: () => Promise<T>) => {
+      beginRouteLoad();
+      try {
+        return await work();
+      } finally {
+        endRouteLoad();
+      }
+    },
+    [beginRouteLoad, endRouteLoad],
+  );
+
   const loadSerializedGraph = useCallback(
     async (
       serializedNodes: Array<Record<string, any>>,
       serializedEdges: Array<Record<string, any>>,
       appliedTemplateInfo: CloudConfig,
-    ) => {
-      const fetchPromises = (serializedNodes || []).map((dbNode) =>
-        dispatch(fetchResourceById(String(dbNode.id).split("-")[0])),
-      );
+    ) =>
+      runWithRouteLoading(async () => {
+        const fetchPromises = (serializedNodes || []).map((dbNode) =>
+          dispatch(fetchResourceById(String(dbNode.id).split("-")[0])),
+        );
 
-      const results = await Promise.all(fetchPromises);
-      const resourceNodes: Node[] = [];
+        const results = await Promise.all(fetchPromises);
+        const resourceNodes: Node[] = [];
 
-      for (let i = 0; i < results.length; i += 1) {
-        const resultAction = results[i];
-        const dbNode = serializedNodes[i];
+        for (let i = 0; i < results.length; i += 1) {
+          const resultAction = results[i];
+          const dbNode = serializedNodes[i];
 
-        if (fetchResourceById.fulfilled.match(resultAction)) {
-          const resourceData = resultAction.payload;
+          if (fetchResourceById.fulfilled.match(resultAction)) {
+            const resourceData = resultAction.payload;
+            resourceNodes.push({
+              id: dbNode.id,
+              type: "customNode",
+              position: dbNode.position || { x: 0, y: 0 },
+              data: {
+                ...resourceData?.data?.resourceNode?.data,
+                values: dbNode.values || {},
+                __nodeType:
+                  dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+                __resourceId: dbNode.resourceId,
+                isExpanded: dbNode.isExpanded ?? true,
+                friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
+                header: {
+                  ...resourceData?.data?.resourceNode?.data?.header,
+                  icon: resourceData?.data?.resourceIcon,
+                },
+                templateInfo: appliedTemplateInfo,
+                userInfo: user,
+              },
+            });
+            continue;
+          }
+
           resourceNodes.push({
             id: dbNode.id,
             type: "customNode",
             position: dbNode.position || { x: 0, y: 0 },
             data: {
-              ...resourceData?.data?.resourceNode?.data,
               values: dbNode.values || {},
               __nodeType:
                 dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
@@ -269,102 +343,95 @@ const OrchestratorReactFlow: React.FC = () => {
               isExpanded: dbNode.isExpanded ?? true,
               friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
               header: {
-                ...resourceData?.data?.resourceNode?.data?.header,
-                icon: resourceData?.data?.resourceIcon?.url,
+                label:
+                  dbNode.resourceName ||
+                  dbNode.__nodeType ||
+                  dbNode.resourceId ||
+                  "Unknown Resource",
+                icon: dbNode.previewIcon,
               },
+              handles: [],
+              links: [],
               templateInfo: appliedTemplateInfo,
               userInfo: user,
             },
           });
-          continue;
         }
 
-        resourceNodes.push({
-          id: dbNode.id,
-          type: "customNode",
-          position: dbNode.position || { x: 0, y: 0 },
-          data: {
-            values: dbNode.values || {},
-            __nodeType:
-              dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
-            __resourceId: dbNode.resourceId,
-            isExpanded: dbNode.isExpanded ?? true,
-            friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
-            header: {
-              label:
-                dbNode.resourceName ||
-                dbNode.__nodeType ||
-                dbNode.resourceId ||
-                "Unknown Resource",
-              icon: dbNode.previewIcon,
+        const nextEdges: Edge[] = [];
+        for (const dbEdge of serializedEdges || []) {
+          const source = resourceNodes.find(
+            (node) => node.id === dbEdge.source,
+          );
+          const target = resourceNodes.find(
+            (node) => node.id === dbEdge.target,
+          );
+          if (!source || !target) {
+            continue;
+          }
+
+          const sourceType = (source.data as any)?.__nodeType ?? source.type;
+          const rules = (target.data as any)?.links ?? [];
+          const rule = rules.find(
+            (candidate: any) =>
+              Array.isArray(candidate.fromTypes) &&
+              candidate.fromTypes.includes(sourceType),
+          );
+
+          nextEdges.push({
+            id: rule
+              ? `${source.id}->${target.id}:${rule.bind}`
+              : dbEdge.id || `${source.id}->${target.id}`,
+            source: source.id,
+            target: target.id,
+            type: "animatedGradient",
+            data: rule
+              ? {
+                  ...(rule.edgeData ?? { kind: rule.bind }),
+                  bindKey: dbEdge.data?.bindKey,
+                  animated: rule.edgeData?.animated ?? true,
+                }
+              : {
+                  kind: dbEdge.data?.kind || "depends_on",
+                  bindKey: dbEdge.data?.bindKey,
+                  animated: true,
+                },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 12,
+              height: 12,
             },
-            handles: [],
-            links: [],
-            templateInfo: appliedTemplateInfo,
-            userInfo: user,
-          },
-        });
-      }
-
-      const nextEdges: Edge[] = [];
-      for (const dbEdge of serializedEdges || []) {
-        const source = resourceNodes.find((node) => node.id === dbEdge.source);
-        const target = resourceNodes.find((node) => node.id === dbEdge.target);
-        if (!source || !target) {
-          continue;
+          });
         }
 
-        const sourceType = (source.data as any)?.__nodeType ?? source.type;
-        const rules = (target.data as any)?.links ?? [];
-        const rule = rules.find(
-          (candidate: any) =>
-            Array.isArray(candidate.fromTypes) &&
-            candidate.fromTypes.includes(sourceType),
-        );
+        setTemplateInfo(appliedTemplateInfo);
+        setNodes(resourceNodes);
+        setEdges(nextEdges);
+        setInitOpen(false);
 
-        nextEdges.push({
-          id: rule
-            ? `${source.id}->${target.id}:${rule.bind}`
-            : dbEdge.id || `${source.id}->${target.id}`,
-          source: source.id,
-          target: target.id,
-          type: "animatedGradient",
-          data: rule
-            ? {
-                ...(rule.edgeData ?? { kind: rule.bind }),
-                bindKey: dbEdge.data?.bindKey,
-                animated: rule.edgeData?.animated ?? true,
-              }
-            : {
-                kind: dbEdge.data?.kind || "depends_on",
-                bindKey: dbEdge.data?.bindKey,
-                animated: true,
-              },
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 12,
-            height: 12,
-          },
-        });
-      }
-
-      setTemplateInfo(appliedTemplateInfo);
-      setNodes(resourceNodes);
-      setEdges(nextEdges);
-      setInitOpen(false);
-
-      setTimeout(() => {
-        getLayoutElements({
-          "elk.algorithm": "layered",
-          "elk.direction": "RIGHT",
-        });
-      }, 150);
-    },
-    [dispatch, getLayoutElements, setEdges, setNodes, user],
+        setTimeout(() => {
+          getLayoutElements({
+            "elk.algorithm": "layered",
+            "elk.direction": "RIGHT",
+          });
+        }, 150);
+      }),
+    [
+      dispatch,
+      getLayoutElements,
+      runWithRouteLoading,
+      setEdges,
+      setNodes,
+      user,
+    ],
   );
 
   const buildCurrentCanvasSnapshot = useCallback(() => {
-    if (nodes.length === 0 && edges.length === 0 && !templateInfo.templateName) {
+    if (
+      nodes.length === 0 &&
+      edges.length === 0 &&
+      !templateInfo.templateName
+    ) {
       return null;
     }
 
@@ -398,7 +465,7 @@ const OrchestratorReactFlow: React.FC = () => {
       );
 
       setCurrentOrchestratorId(
-        draft.action === "update" ? draft.targetOrchestratorId ?? null : null,
+        draft.action === "update" ? (draft.targetOrchestratorId ?? null) : null,
       );
       setMaestroReviewDraft(draft);
       setPendingMaestroDraft(null);
@@ -458,7 +525,7 @@ const OrchestratorReactFlow: React.FC = () => {
               __nodeType: resourceType, // keep the real resource type for rules/labels
               header: {
                 ...newNode.data.header,
-                icon: resourceData?.data?.resourceIcon?.url,
+                icon: resourceData?.data?.resourceIcon,
               },
               templateInfo: templateInfo,
               userInfo: user,
@@ -635,7 +702,8 @@ const OrchestratorReactFlow: React.FC = () => {
   }, [edges, setNodes]);
 
   useEffect(() => {
-    if (!template_id || !template_type || searchParams.has("template_type")) return;
+    if (!template_id || !template_type || searchParams.has("template_type"))
+      return;
     else if (template_id === "new") {
       // Check for prefill payload placed by Maestro (via sessionStorage)
       const prefillRaw = sessionStorage.getItem("maestro_prefill");
@@ -680,13 +748,16 @@ const OrchestratorReactFlow: React.FC = () => {
                   data: {
                     ...resourceData?.data?.resourceNode?.data,
                     values: dbNode.values || {},
-                    __nodeType: dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+                    __nodeType:
+                      dbNode.__nodeType ||
+                      dbNode.resourceType ||
+                      dbNode.resourceId,
                     __resourceId: dbNode.resourceId,
                     isExpanded: dbNode.isExpanded ?? true,
                     friendlyId: dbNode.friendlyId,
                     header: {
                       ...resourceData?.data?.resourceNode?.data?.header,
-                      icon: resourceData?.data?.resourceIcon?.url,
+                      icon: resourceData?.data?.resourceIcon,
                     },
                     templateInfo: appliedTemplateInfo,
                     userInfo: user,
@@ -700,12 +771,18 @@ const OrchestratorReactFlow: React.FC = () => {
                   position: dbNode.position || { x: 0, y: 0 },
                   data: {
                     values: dbNode.values || {},
-                    __nodeType: dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+                    __nodeType:
+                      dbNode.__nodeType ||
+                      dbNode.resourceType ||
+                      dbNode.resourceId,
                     __resourceId: dbNode.resourceId,
                     isExpanded: dbNode.isExpanded ?? true,
                     friendlyId: dbNode.friendlyId,
                     header: {
-                      label: dbNode.resourceName || dbNode.__nodeType || dbNode.resourceId,
+                      label:
+                        dbNode.resourceName ||
+                        dbNode.__nodeType ||
+                        dbNode.resourceId,
                       icon: dbNode.previewIcon,
                     },
                     handles: [],
@@ -729,23 +806,33 @@ const OrchestratorReactFlow: React.FC = () => {
               const target = resourceNodes.find((n) => n.id === dbEdge.target);
               if (!source || !target) continue;
 
-              const sourceType = (source.data as any)?.__nodeType ?? source.type;
+              const sourceType =
+                (source.data as any)?.__nodeType ?? source.type;
               const rules = (target.data as any)?.links ?? [];
               const rule = rules.find(
-                (r: any) => Array.isArray(r.fromTypes) && r.fromTypes.includes(sourceType),
+                (r: any) =>
+                  Array.isArray(r.fromTypes) &&
+                  r.fromTypes.includes(sourceType),
               );
 
               const newEdge: Edge = {
                 id: rule
                   ? `${source.id}->${target.id}:${rule.bind}`
-                  : (dbEdge.id || `${source.id}->${target.id}`),
+                  : dbEdge.id || `${source.id}->${target.id}`,
                 source: source.id,
                 target: target.id,
                 type: "animatedGradient",
                 data: rule
-                  ? { ...(rule.edgeData ?? { kind: rule.bind }), animated: rule.edgeData?.animated ?? true }
+                  ? {
+                      ...(rule.edgeData ?? { kind: rule.bind }),
+                      animated: rule.edgeData?.animated ?? true,
+                    }
                   : { kind: "depends_on", animated: true },
-                markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+                markerEnd: {
+                  type: MarkerType.ArrowClosed,
+                  width: 12,
+                  height: 12,
+                },
               };
 
               setEdges((eds) => addEdge(newEdge, eds));
@@ -753,7 +840,10 @@ const OrchestratorReactFlow: React.FC = () => {
 
             // Auto-layout after all nodes are placed
             setTimeout(() => {
-              getLayoutElements({ "elk.algorithm": "layered", "elk.direction": "RIGHT" });
+              getLayoutElements({
+                "elk.algorithm": "layered",
+                "elk.direction": "RIGHT",
+              });
             }, 150);
           });
         } catch (err) {
@@ -803,7 +893,7 @@ const OrchestratorReactFlow: React.FC = () => {
                   friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
                   header: {
                     ...resourceData?.data?.resourceNode?.data?.header,
-                    icon: resourceData?.data?.resourceIcon?.url,
+                    icon: resourceData?.data?.resourceIcon,
                   },
                   templateInfo,
                   userInfo: user,
@@ -923,12 +1013,29 @@ const OrchestratorReactFlow: React.FC = () => {
       return;
     }
 
-    const orchestratorData = orchestrators.find((item) => item._id === template_id);
+    const orchestratorData = orchestrators.find(
+      (item) => item._id === template_id,
+    );
     if (!orchestratorData) {
+      if (requestedOrchestratorIdsRef.current.has(template_id)) {
+        return;
+      }
+
+      requestedOrchestratorIdsRef.current.add(template_id);
+      void runWithRouteLoading(async () =>
+        dispatch(fetchOrchestratorById(template_id)).unwrap(),
+      ).catch((error) => {
+        requestedOrchestratorIdsRef.current.delete(template_id);
+        console.error("Failed to fetch orchestrator by id:", error);
+      });
       return;
     }
 
-    const appliedTemplateInfo = normalizeTemplateInfo(orchestratorData.templateInfo);
+    requestedOrchestratorIdsRef.current.delete(template_id);
+
+    const appliedTemplateInfo = normalizeTemplateInfo(
+      orchestratorData.templateInfo,
+    );
     setCurrentOrchestratorId(template_id);
     setMaestroReviewDraft(null);
     setPendingMaestroDraft(null);
@@ -952,6 +1059,7 @@ const OrchestratorReactFlow: React.FC = () => {
         console.error("Failed to load orchestrator graph:", error);
       });
   }, [
+    dispatch,
     edges.length,
     loadSerializedGraph,
     maestroDraftToken,
@@ -1465,6 +1573,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const handleOrchestrationSaved = useCallback(
     (orchestratorId: string) => {
       setCurrentOrchestratorId(orchestratorId);
+      void dispatch(fetchOrchestratorById(orchestratorId));
 
       const currentSnapshot = buildCurrentCanvasSnapshot();
       if (currentSnapshot) {
@@ -1603,11 +1712,71 @@ const OrchestratorReactFlow: React.FC = () => {
           flexGrow: 1,
           height: "100%",
           minWidth: 0,
-          width: !isViewMode && sidebarOpen ? `calc(100% - ${drawerWidth}px)` : "100%",
+          width:
+            !isViewMode && sidebarOpen
+              ? `calc(100% - ${drawerWidth}px)`
+              : "100%",
           transition: "width 0.3s ease",
         }}
         data-tour="orchestrator-canvas"
+        position="relative"
       >
+        {isRouteLoading && (
+          <Box
+            aria-live="polite"
+            role="status"
+            sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 3,
+              bgcolor:
+                theme.palette.mode === "dark"
+                  ? "rgba(7, 10, 18, 0.24)"
+                  : "rgba(244, 247, 251, 0.28)",
+              backdropFilter: "blur(8px) saturate(120%)",
+              WebkitBackdropFilter: "blur(8px) saturate(120%)",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 1.25,
+                textAlign: "center",
+                px: 2,
+                py: 1,
+                transform: "translateY(-2%)",
+              }}
+            >
+              <LumaSpin size={72} />
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Loading orchestrator
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  maxWidth: 320,
+                  fontSize: "0.95rem",
+                }}
+              >
+                Preparing your resources and canvas so the workflow opens
+                cleanly.
+              </Typography>
+            </Box>
+          </Box>
+        )}
         <ReactFlow
           nodes={nodesWithHelpers}
           edges={edges}
@@ -1632,7 +1801,14 @@ const OrchestratorReactFlow: React.FC = () => {
         >
           <Panel position="top-left">
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
+              >
                 {templateInfo?.templateName && (
                   <Chip
                     icon={<DeblurIcon />}
@@ -1733,12 +1909,14 @@ const OrchestratorReactFlow: React.FC = () => {
         <DialogTitle>Replace Unsaved Changes?</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mt: 1 }}>
-            You have unsaved canvas edits. Loading the new Maestro draft will replace
-            those local changes.
+            You have unsaved canvas edits. Loading the new Maestro draft will
+            replace those local changes.
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDraftReplace}>Keep Current Canvas</Button>
+          <Button onClick={handleCancelDraftReplace}>
+            Keep Current Canvas
+          </Button>
           <Button
             onClick={handleConfirmDraftReplace}
             variant="contained"

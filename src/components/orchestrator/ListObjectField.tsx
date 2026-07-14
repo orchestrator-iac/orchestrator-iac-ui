@@ -54,7 +54,7 @@ const renderFieldHelperText = (hint?: string, errorText?: string) => {
     return undefined;
   }
 
-  return <OverflowTooltipText text={hint} />;
+  return <OverflowTooltipText text={hint} component="span" />;
 };
 
 const ListObjectField: React.FC<ListObjectFieldProps> = ({

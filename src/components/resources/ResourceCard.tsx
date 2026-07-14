@@ -5,11 +5,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import styles from "./Resources.module.css";
 import OverflowTooltipText from "../shared/OverflowTooltipText";
+import ResourceIconView from "../shared/ResourceIconView";
 import awsLogo from "../../assets/aws_logo.svg";
 import awsLogoLight from "../../assets/aws_logo_light.svg";
 import awsLogoDark from "../../assets/aws_logo_dark.svg";
 import azLogo from "../../assets/az_logo.svg";
 import gcpLogo from "../../assets/gcp_logo.svg";
+import {
+  hasRenderableResourceIcon,
+  ResourceIconValue,
+} from "@/types/resourceIcon";
 
 const logoMap: Record<string, { light: string; dark: string; default: string }> = {
   aws: { light: awsLogoLight, dark: awsLogoDark, default: awsLogo },
@@ -25,7 +30,7 @@ export interface ResourceItem {
   resourceDescription: string;
   publishedBy?: string;
   publishedAt?: string;
-  resourceIcon?: { id: string; url: string };
+  resourceIcon?: ResourceIconValue;
   resourceId: string;
 }
 
@@ -74,9 +79,9 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
       )}
 
       {/* Resource icon */}
-      {resource.resourceIcon?.url ? (
-        <img
-          src={resource.resourceIcon.url}
+      {hasRenderableResourceIcon(resource.resourceIcon) ? (
+        <ResourceIconView
+          icon={resource.resourceIcon}
           alt={resource.resourceName}
           className={styles.cardImage}
         />

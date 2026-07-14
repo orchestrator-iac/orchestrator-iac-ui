@@ -24,31 +24,76 @@ const depExpr: z.ZodType<any> = z.lazy(() =>
 
 export const FieldConfigSchema = z.record(z.string(), z.any());
 
-export const FieldSchema = z.object({
-  depends_on: z.union([z.string(), depExpr]).optional().nullable(),
-  label: z.string(),
-  sub_label: z.string().nullable().optional(),
-  name: z.string(),
-  type: z.string(),
-  value: z.any().nullable().optional(),
-  hint: z.string().nullable().optional(),
-  error_text: z.string().nullable().optional(),
-  size: z.union([z.number(), z.string()]).nullable().optional(),
-  required: z.union([z.boolean(), z.string(), depExpr]).nullable().optional(),
-  info: z.string().nullable().optional(),
-  placeholder: z.string().nullable().optional(),
+const validateValueShapeForType = (
+  fieldType: string,
+  value: unknown,
+  ctx: z.RefinementCtx,
+  path: (string | number)[],
+) => {
+  if (value == null) {
+    return;
+  }
 
-  // ✅ allow either a static array of options OR a dynamic rule string
-  //    e.g. "from:nodes:type=vpc"
-  options: z
-    .union([z.array(OptionSchema), z.string()])
-    .nullable()
-    .optional(),
+  if (fieldType === "list<text>" || fieldType === "list<select+text>") {
+    if (!Array.isArray(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path,
+        message: `${fieldType} fields require an array value.`,
+      });
+    }
+    return;
+  }
 
-  disabled: z.boolean().nullable().optional(),
-  allowDuplicates: z.boolean().nullable().optional(),
-  config: FieldConfigSchema.nullable().optional(),
-});
+  if (fieldType === "select" && Array.isArray(value)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path,
+      message: "select fields require a scalar value.",
+    });
+    return;
+  }
+
+  if (fieldType === "switch" && typeof value !== "boolean") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path,
+      message: "switch fields require a boolean value.",
+    });
+    return;
+  }
+
+  if (fieldType === "number" && typeof value !== "number" && value !== "") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path,
+      message: "number fields require a numeric value.",
+    });
+  }
+};
+
+export const FieldSchema = z
+  .object({
+    depends_on: z.union([z.string(), depExpr]).optional().nullable(),
+    label: z.string(),
+    sub_label: z.string().nullable().optional(),
+    name: z.string(),
+    type: z.string(),
+    value: z.any().nullable().optional(),
+    hint: z.string().nullable().optional(),
+    error_text: z.string().nullable().optional(),
+    size: z.union([z.number(), z.string()]).nullable().optional(),
+    required: z.union([z.boolean(), z.string(), depExpr]).nullable().optional(),
+    info: z.string().nullable().optional(),
+    placeholder: z.string().nullable().optional(),
+    options: z.union([z.array(OptionSchema), z.string()]).nullable().optional(),
+    disabled: z.boolean().nullable().optional(),
+    allowDuplicates: z.boolean().nullable().optional(),
+    config: FieldConfigSchema.nullable().optional(),
+  })
+  .superRefine((field, ctx) => {
+    validateValueShapeForType(field.type, field.value, ctx, ["value"]);
+  });
 
 export const FieldGroupSchema = z.object({
   label: z.string(),
@@ -93,23 +138,42 @@ export const LinkRuleSchema = z.object({
   cardinality: z.union([z.number(), z.string()]).optional(),
 
   /** output name from source module (e.g., 'vpc_id' becomes 'module.vpc_instance.vpc_id') */
-  outputRef: z.union([z.string(), z.record(z.string(), z.string())]).optional().nullable(),
+  outputRef: z
+    .union([z.string(), z.record(z.string(), z.string())])
+    .optional()
+    .nullable(),
 
   /** anything you want stamped onto the edge data */
   edgeData: z.record(z.string(), z.any()).optional(),
 });
 
 /** ---------- Node Data ---------- */
-export const NodeDataSchema = z.object({
-  header: HeaderSchema,
-  fields: z.array(FieldGroupSchema).nullable().optional(),
-  footer: FooterSchema.nullable().optional(),
-  handles: z.array(HandleSchema).nullable().optional(),
-  values: z.record(z.string(), z.any().nullable()).nullable().optional(),
+export const NodeDataSchema = z
+  .object({
+    header: HeaderSchema,
+    fields: z.array(FieldGroupSchema).nullable().optional(),
+    footer: FooterSchema.nullable().optional(),
+    handles: z.array(HandleSchema).nullable().optional(),
+    values: z.record(z.string(), z.any().nullable()).nullable().optional(),
+    links: z.array(LinkRuleSchema).nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const fieldMap = new Map<string, z.infer<typeof FieldSchema>>();
 
-  // ✅ NEW: schema-driven linking rules
-  links: z.array(LinkRuleSchema).nullable().optional(),
-});
+    for (const group of data.fields ?? []) {
+      for (const field of group.fields ?? []) {
+        fieldMap.set(field.name, field);
+      }
+    }
+
+    for (const [name, value] of Object.entries(data.values ?? {})) {
+      const field = fieldMap.get(name);
+      if (!field) {
+        continue;
+      }
+      validateValueShapeForType(field.type, value, ctx, ["values", name]);
+    }
+  });
 
 /** ---------- NodeInfo ---------- */
 export const NodeInfoSchema = z.object({
