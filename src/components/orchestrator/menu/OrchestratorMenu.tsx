@@ -27,7 +27,6 @@ import SaveIcon from "@mui/icons-material/Save";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ArchitectureIcon from "@mui/icons-material/Architecture";
 import DownloadIcon from "@mui/icons-material/Download";
-import CodeIcon from "@mui/icons-material/Code";
 import ArchiveIcon from "@mui/icons-material/Archive";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { SaveButton } from "../save";
@@ -114,13 +113,6 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
 
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
-    handleMenuClose();
-  };
-
-  const handleGenerateClick = () => {
-    // Always save before generating IaC
-    setPendingAction("generate");
-    setSaveDialogOpen(true);
     handleMenuClose();
   };
 
@@ -380,7 +372,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           <ListItemIcon>
             <ArchitectureIcon
               fontSize="small"
-              color={isArchitectureMode ? "primary" : "inherit"}
+              color={isArchitectureMode ? "primary" : "disabled"}
             />
           </ListItemIcon>
           <ListItemText
@@ -419,9 +411,10 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           <ListItemText>Download as Image</ListItemText>
         </MenuItem>
 
+        
         <MenuItem
-          onClick={handleGenerateClick}
-          disabled={!canSave || isGenerating}
+          onClick={() => { setPublishDialogOpen(true); handleMenuClose(); }}
+          disabled={!canDelete}
           sx={{
             borderRadius: 1.5,
             mx: 0.5,
@@ -429,18 +422,37 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           }}
         >
           <ListItemIcon>
-            {isGenerating ? (
-              <CircularProgress size={18} />
-            ) : (
-              <CodeIcon
-                fontSize="small"
-                color={canSave ? "primary" : "disabled"}
-              />
-            )}
+            <FontAwesomeIcon
+              icon={templateId ? "pen" : "layer-group"}
+              style={{
+                fontSize: 16,
+                color: canDelete
+                  ? theme.palette.primary.main
+                  : theme.palette.action.disabled,
+              }}
+            />
           </ListItemIcon>
           <ListItemText>
-            {isGenerating ? "Generating IaC…" : "Generate IaC"}
+            {templateId ? "Manage Template" : "Publish as Template"}
           </ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={handleSaveClick}
+          disabled={!canSave}
+          sx={{
+            borderRadius: 1.5,
+            mx: 0.5,
+            "&:hover": { bgcolor: "action.hover" },
+          }}
+        >
+          <ListItemIcon>
+            <SaveIcon
+              fontSize="small"
+              color={canSave ? "primary" : "disabled"}
+            />
+          </ListItemIcon>
+          <ListItemText>Save Orchestrator</ListItemText>
         </MenuItem>
 
         <MenuItem
@@ -468,24 +480,6 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         </MenuItem>
 
         <MenuItem
-          onClick={handleSaveClick}
-          disabled={!canSave}
-          sx={{
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": { bgcolor: "action.hover" },
-          }}
-        >
-          <ListItemIcon>
-            <SaveIcon
-              fontSize="small"
-              color={canSave ? "primary" : "disabled"}
-            />
-          </ListItemIcon>
-          <ListItemText>Save Orchestrator</ListItemText>
-        </MenuItem>
-
-        <MenuItem
           onClick={handleDeleteClick}
           disabled={!canDelete}
           sx={{
@@ -504,26 +498,6 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
             />
           </ListItemIcon>
           <ListItemText>Delete Orchestrator</ListItemText>
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => { setPublishDialogOpen(true); handleMenuClose(); }}
-          disabled={!canDelete}
-          sx={{
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": { bgcolor: "action.hover" },
-          }}
-        >
-          <ListItemIcon>
-            <FontAwesomeIcon
-              icon={templateId ? "pen" : "layer-group"}
-              style={{ fontSize: 16, opacity: canDelete ? 1 : 0.4 }}
-            />
-          </ListItemIcon>
-          <ListItemText>
-            {templateId ? "Manage Template" : "Publish as Template"}
-          </ListItemText>
         </MenuItem>
       </Menu>
 
