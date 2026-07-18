@@ -72,24 +72,6 @@ const ResourcesGallery: React.FC = () => {
     return () => clearTimeout(t);
   }, []);
 
-  useGuidedTour(
-    "resources",
-    showContent && status === "succeeded" && (resources?.length ?? 0) > 0,
-  );
-
-  // Fetch resources on first visit and recover once from a stale failed load.
-  useEffect(() => {
-    if (status === "idle") {
-      dispatch(fetchResources());
-      return;
-    }
-
-    if (status === "failed" && !hasRetriedFailedLoad.current) {
-      hasRetriedFailedLoad.current = true;
-      dispatch(fetchResources());
-    }
-  }, [dispatch, status]);
-
   useEffect(() => {
     if (status !== "succeeded" || !resources?.length) {
       return;
@@ -140,6 +122,28 @@ const ResourcesGallery: React.FC = () => {
       cancelled = true;
     };
   }, [resources, resolvedIcons, status]);
+
+  useGuidedTour(
+    "resources",
+    showContent && status === "succeeded" && (resources?.length ?? 0) > 0,
+  );
+
+  // Fetch resources on first visit and recover once from a stale failed
+  // load. AbortController cancels the inflight request on StrictMode's
+  // double-invoke so we don't leave a stale request running.
+  useEffect(() => {
+    if (status === "idle") {
+      const promise = dispatch(fetchResources());
+      return () => promise.abort();
+    }
+
+    if (status === "failed" && !hasRetriedFailedLoad.current) {
+      hasRetriedFailedLoad.current = true;
+      const promise = dispatch(fetchResources());
+      return () => promise.abort();
+    }
+  }, [dispatch, status]);
+
 
   // Debounced search
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -596,13 +600,7 @@ const ResourcesGallery: React.FC = () => {
             >
               <Fade in={showContent} timeout={600 + index * 50}>
                 <Box sx={{ width: "100%", display: "flex" }}>
-                  <ResourceCard
-                    resource={{
-                      ...resource,
-                      resourceIcon:
-                        resolvedIcons[resource._id] ?? resource.resourceIcon,
-                    }}
-                  />
+                  <ResourceCard resource={resource} />
                 </Box>
               </Fade>
             </Grid>

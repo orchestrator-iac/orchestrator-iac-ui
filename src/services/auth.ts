@@ -116,12 +116,18 @@ export const updatePassword = async (
   return response as UpdatePasswordResponse;
 };
 
-export const refreshAccessToken = async (): Promise<string> => {
+export const refreshAccessToken = async (
+  signal?: AbortSignal,
+): Promise<string> => {
   try {
     const res = await axios.post(
       `${import.meta.env.VITE_API_BASE_URL}/user/refresh`,
       {},
-      { withCredentials: true, headers: { "Content-Type": "application/json" } },
+      {
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
+        signal,
+      },
     );
     return res.data?.access_token as string;
   } catch (err: any) {
