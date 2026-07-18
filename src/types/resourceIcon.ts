@@ -131,6 +131,16 @@ export const normalizeResourceIcon = (
     normalized.url = candidate.url;
   }
 
+  if (
+    !normalized.url &&
+    typeof candidate.type === "string" &&
+    candidate.type.toLowerCase() === "url" &&
+    typeof candidate.value === "string" &&
+    candidate.value.trim()
+  ) {
+    normalized.url = candidate.value;
+  }
+
   normalized.sprite = normalizeSpriteRef(candidate.sprite);
   normalized.search = normalizeSearchMetadata(candidate.search);
 

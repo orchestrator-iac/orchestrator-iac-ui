@@ -84,6 +84,10 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
           icon={resource.resourceIcon}
           alt={resource.resourceName}
           className={styles.cardImage}
+          sx={{
+            width: "100%",
+            height: "200px"
+          }}
         />
       ) : (
         <Box

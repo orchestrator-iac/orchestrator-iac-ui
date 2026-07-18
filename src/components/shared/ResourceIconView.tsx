@@ -1,7 +1,10 @@
 import React from "react";
 import { Box, type SxProps, type Theme } from "@mui/material";
 
-import { normalizeResourceIcon } from "@/types/resourceIcon";
+import {
+  normalizeResourceIcon,
+  type ResourceSpriteRef,
+} from "@/types/resourceIcon";
 
 interface ResourceIconViewProps {
   icon?: unknown;
@@ -9,6 +12,28 @@ interface ResourceIconViewProps {
   className?: string;
   sx?: SxProps<Theme>;
 }
+
+type AtlasSprite = ResourceSpriteRef & {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  sheetWidth: number;
+  sheetHeight: number;
+};
+
+const isAtlasSprite = (
+  sprite: ResourceSpriteRef | null | undefined,
+): sprite is AtlasSprite =>
+  Boolean(
+    sprite?.sheetUrl &&
+      typeof sprite.x === "number" &&
+      typeof sprite.y === "number" &&
+      typeof sprite.width === "number" &&
+      typeof sprite.height === "number" &&
+      typeof sprite.sheetWidth === "number" &&
+      typeof sprite.sheetHeight === "number",
+  );
 
 const ResourceIconView: React.FC<ResourceIconViewProps> = ({
   icon,
@@ -23,16 +48,7 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
     return null;
   }
 
-  const atlasSprite =
-    normalized.sprite?.sheetUrl &&
-    typeof normalized.sprite.x === "number" &&
-    typeof normalized.sprite.y === "number" &&
-    typeof normalized.sprite.width === "number" &&
-    typeof normalized.sprite.height === "number" &&
-    typeof normalized.sprite.sheetWidth === "number" &&
-    typeof normalized.sprite.sheetHeight === "number"
-      ? normalized.sprite
-      : null;
+  const atlasSprite = isAtlasSprite(normalized.sprite) ? normalized.sprite : null;
   const atlasDisplayScale =
     atlasSprite && atlasSprite.pixelRatio && atlasSprite.pixelRatio > 0
       ? atlasSprite.pixelRatio

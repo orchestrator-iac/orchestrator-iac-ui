@@ -24,7 +24,12 @@ import { RootState, AppDispatch } from "../../store";
 import { fetchResources } from "../../store/resourcesSlice";
 import { useAuth } from "../../context/AuthContext";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
-import ResourceCard from "./ResourceCard";
+import ResourceCard, { type ResourceItem } from "./ResourceCard";
+import {
+  resolveResourceIcon,
+  shouldResolveResourceIcon,
+} from "@/services/resourceIconResolver";
+import { type ResourceIconValue } from "@/types/resourceIcon";
 
 type CloudFilter = "all" | "aws" | "azure" | "gcp";
 
@@ -52,6 +57,9 @@ const ResourcesGallery: React.FC = () => {
   const [cloudFilter, setCloudFilter] = useState<CloudFilter>("all");
   const [showContent, setShowContent] = useState(false);
   const hasRetriedFailedLoad = useRef(false);
+  const [resolvedIcons, setResolvedIcons] = useState<
+    Record<string, ResourceIconValue>
+  >({});
 
   // Restore body scroll
   useEffect(() => {
@@ -81,6 +89,57 @@ const ResourcesGallery: React.FC = () => {
       dispatch(fetchResources());
     }
   }, [dispatch, status]);
+
+  useEffect(() => {
+    if (status !== "succeeded" || !resources?.length) {
+      return;
+    }
+
+    const targets = resources.filter(
+      (resource: ResourceItem) =>
+        shouldResolveResourceIcon(resource.resourceIcon) &&
+        !resolvedIcons[resource._id],
+    );
+
+    if (targets.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadResolvedIcons = async () => {
+      const entries = await Promise.all(
+        targets.map(async (resource: ResourceItem) => [
+          resource._id,
+          await resolveResourceIcon(resource),
+        ] as const),
+      );
+
+      if (cancelled) {
+        return;
+      }
+
+      const nextIcons = entries.reduce<Record<string, ResourceIconValue>>(
+        (accumulator, [resourceId, icon]) => {
+          if (icon) {
+            accumulator[resourceId] = icon;
+          }
+          return accumulator;
+        },
+        {},
+      );
+
+      if (Object.keys(nextIcons).length > 0) {
+        setResolvedIcons((current) => ({ ...current, ...nextIcons }));
+      }
+    };
+
+    void loadResolvedIcons();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resources, resolvedIcons, status]);
 
   // Debounced search
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -537,7 +596,13 @@ const ResourcesGallery: React.FC = () => {
             >
               <Fade in={showContent} timeout={600 + index * 50}>
                 <Box sx={{ width: "100%", display: "flex" }}>
-                  <ResourceCard resource={resource} />
+                  <ResourceCard
+                    resource={{
+                      ...resource,
+                      resourceIcon:
+                        resolvedIcons[resource._id] ?? resource.resourceIcon,
+                    }}
+                  />
                 </Box>
               </Fade>
             </Grid>
