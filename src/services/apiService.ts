@@ -102,12 +102,40 @@ apiClient.interceptors.response.use(
   },
 );
 
+// In-flight GET de-duplication: collapses concurrent identical GET requests
+// (same url + params) into a single network round trip. This is what fixes
+// the common "two components mount at once and both fetch the same list"
+// pattern (e.g. a sidebar and a gallery both fetching /configs) product-wide,
+// without needing every call site to coordinate. A per-caller AbortSignal is
+// intentionally NOT forwarded to the shared network request: one caller
+// unmounting/aborting must not cancel the response other callers are still
+// waiting on. The entry is removed as soon as the request settles, so it
+// only dedupes requests that overlap in time — it is not a response cache.
+const inFlightGetRequests = new Map<string, Promise<any>>();
+
+const buildGetKey = (url: string, params?: unknown) =>
+  `${url}?${JSON.stringify(params ?? {})}`;
+
 // API service methods
 const apiService = {
   // Define `T` as a generic type for each method
   get: async (url: string, config?: AxiosRequestConfig) => {
-    const response = await apiClient.get(url, config);
-    return response.data;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- deliberately dropped, see comment above
+    const { signal, ...rest } = config ?? {};
+    const key = buildGetKey(url, rest.params);
+
+    const existing = inFlightGetRequests.get(key);
+    if (existing) return existing;
+
+    const promise = apiClient
+      .get(url, rest)
+      .then((response) => response.data)
+      .finally(() => {
+        inFlightGetRequests.delete(key);
+      });
+
+    inFlightGetRequests.set(key, promise);
+    return promise;
   },
 
   post: async (url: string, data?: any, config?: AxiosRequestConfig) => {

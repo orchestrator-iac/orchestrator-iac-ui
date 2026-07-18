@@ -109,7 +109,10 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   // On mount attempt to seed in-memory access token from refresh cookie.
   // isInitializing stays true until this settles so ProtectedRoute won't
   // redirect to /login before we've had a chance to restore the session.
+  // AbortController cancels the inflight request on StrictMode's
+  // double-invoke so the silent refresh only completes once.
   useEffect(() => {
+    const controller = new AbortController();
     (async () => {
       try {
         // If we're already on the login page, skip the silent refresh.
@@ -122,11 +125,14 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
           return;
         }
 
-        const newTok = await refreshAccessToken();
+        const newTok = await refreshAccessToken(controller.signal);
         if (newTok) {
           applyToken(newTok);
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
+          return;
+        }
         // Clear auth state if silent refresh fails. ProtectedRoute owns
         // redirecting protected pages; public pages must stay public.
         console.debug("No refresh token available or refresh failed", err);
@@ -138,9 +144,13 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
         setToken(null);
         setUser(null);
       } finally {
-        setIsInitializing(false);
+        if (!controller.signal.aborted) {
+          setIsInitializing(false);
+        }
       }
     })();
+
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {

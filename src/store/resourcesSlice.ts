@@ -3,9 +3,10 @@ import apiService from "../services/apiService";
 
 export const fetchResources = createAsyncThunk(
   "resources/fetchResources",
-  async () => {
+  async (_: void, { signal }) => {
     const response = await apiService.get(
       "/configs?fields=_id,cloudProvider,resourceName,resourceVersion,resourceDescription,publishedBy,publishedAt,resourceIcon,resourceId",
+      { signal },
     );
     return response ?? [];
   },
@@ -36,7 +37,11 @@ const resourcesSlice = createSlice({
         state.status = "succeeded";
         state.data = action.payload;
       })
-      .addCase(fetchResources.rejected, (state) => {
+      .addCase(fetchResources.rejected, (state, action) => {
+        // Ignore cancellations from AbortController (e.g. StrictMode's
+        // mount/cleanup/remount, or component unmount) — only a real
+        // failure should flip status to "failed".
+        if (action.meta.aborted) return;
         state.status = "failed";
       });
   },

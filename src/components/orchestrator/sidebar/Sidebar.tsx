@@ -67,12 +67,13 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
     event.dataTransfer.effectAllowed = "move";
   };
 
-  // Fetch once when idle/empty
+  // Fetch once when idle. AbortController cancels the inflight request on
+  // StrictMode's double-invoke so we don't leave a stale request running.
   useEffect(() => {
-    if (resourcesStatus === "idle" || resources.length === 0) {
-      dispatch(fetchResources());
-    }
-  }, [dispatch, resourcesStatus, resources.length]);
+    if (resourcesStatus !== "idle") return;
+    const promise = dispatch(fetchResources());
+    return () => promise.abort();
+  }, [dispatch, resourcesStatus]);
 
   // Debounce search input for smoother typing
   useEffect(() => {

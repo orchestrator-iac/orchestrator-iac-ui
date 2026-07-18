@@ -21,6 +21,7 @@ const KNOWN_INCORRECT_ICON_URLS = [
 ];
 
 const iconResolutionCache = new Map<string, Promise<ResourceIconValue | null>>();
+const searchQueryCache = new Map<string, Promise<CatalogIconRecord[]>>();
 
 const normalizeToken = (value: string): string =>
   value
@@ -119,6 +120,35 @@ const buildSearchEndpoint = (query: string, cloudProvider?: string): string => {
   return `/icons/search?${params.toString()}`;
 };
 
+const buildSearchCacheKey = (query: string, cloudProvider?: string): string =>
+  [query, cloudProvider ?? ""].join("|");
+
+const fetchSearchResults = (
+  query: string,
+  cloudProvider?: string,
+): Promise<CatalogIconRecord[]> => {
+  const cacheKey = buildSearchCacheKey(query, cloudProvider);
+  const cached = searchQueryCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const promise = apiService
+    .get(buildSearchEndpoint(query, cloudProvider))
+    .then((response) => {
+      const icons = Array.isArray(response?.value)
+        ? (response.value as CatalogIconRecord[])
+        : Array.isArray(response)
+          ? (response as CatalogIconRecord[])
+          : [];
+      return icons;
+    })
+    .catch(() => []);
+
+  searchQueryCache.set(cacheKey, promise);
+  return promise;
+};
+
 export const shouldResolveResourceIcon = (
   icon: ResourceIconValue | undefined,
 ): boolean => {
@@ -157,12 +187,7 @@ export const resolveResourceIcon = async (
   const promise = (async () => {
     const queries = buildIconQueries(target);
     for (const query of queries) {
-      const response = await apiService.get(buildSearchEndpoint(query, target.cloudProvider));
-      const icons = Array.isArray(response?.value)
-        ? (response.value as CatalogIconRecord[])
-        : Array.isArray(response)
-          ? (response as CatalogIconRecord[])
-          : [];
+      const icons = await fetchSearchResults(query, target.cloudProvider);
       const match = pickBestCatalogIcon(icons, query);
       if (!match) {
         continue;
