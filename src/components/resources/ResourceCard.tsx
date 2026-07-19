@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, useTheme, alpha } from "@mui/material";
+import { Box, Typography, Tooltip, useTheme, alpha } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import styles from "./Resources.module.css";
@@ -36,9 +36,18 @@ export interface ResourceItem {
 
 interface ResourceCardProps {
   resource: ResourceItem;
+  // Gallery-only derived values (not part of the raw API/ResourceItem
+  // shape) so other consumers of ResourceItem, e.g. a resource detail
+  // page, aren't coupled to gallery-specific popularity concerns.
+  usageCount?: number;
+  isPopular?: boolean;
 }
 
-const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
+const ResourceCard: React.FC<ResourceCardProps> = ({
+  resource,
+  usageCount,
+  isPopular,
+}) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
@@ -132,28 +141,60 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
         }}
       />
 
-      {/* Version badge */}
+      {/* Version badge + Popular badge */}
       <Box
-        component="code"
         sx={{
-          fontSize: "0.8rem",
-          color: "text.secondary",
-          backgroundColor:
-            theme.palette.mode === "dark"
-              ? "rgba(255, 255, 255, 0.05)"
-              : "rgba(0, 0, 0, 0.04)",
-          px: 1.5,
-          py: 0.75,
-          borderRadius: 1,
-          display: "inline-flex",
+          display: "flex",
           alignItems: "center",
-          gap: 0.5,
-          alignSelf: "flex-start",
+          gap: 1,
+          flexWrap: "wrap",
           mt: "auto",
         }}
       >
-        <FontAwesomeIcon icon="tag" style={{ fontSize: "0.7rem" }} />
-        v{resource.resourceVersion}
+        <Box
+          component="code"
+          sx={{
+            fontSize: "0.8rem",
+            color: "text.secondary",
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.05)"
+                : "rgba(0, 0, 0, 0.04)",
+            px: 1.5,
+            py: 0.75,
+            borderRadius: 1,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 0.5,
+            alignSelf: "flex-start",
+          }}
+        >
+          <FontAwesomeIcon icon="tag" style={{ fontSize: "0.7rem" }} />
+          v{resource.resourceVersion}
+        </Box>
+
+        {isPopular && (
+          <Tooltip title={`Used in ${usageCount} orchestrators`} arrow>
+            <Box
+              aria-label={`Popular: used in ${usageCount} orchestrators`}
+              sx={{
+                fontSize: "0.8rem",
+                color: theme.palette.secondary.main,
+                backgroundColor: alpha(theme.palette.secondary.main, 0.14),
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 1,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+                fontWeight: 600,
+              }}
+            >
+              <FontAwesomeIcon aria-hidden="true" icon="fire" style={{ fontSize: "0.7rem" }} />
+              Popular
+            </Box>
+          </Tooltip>
+        )}
       </Box>
     </Box>
   );

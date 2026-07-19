@@ -8,6 +8,7 @@ import iconReducer from "./iconsSlice";
 import customWrappersReducer from "./customWrappersSlice";
 import wrappersTemplateReducer from "./wrappersTemplateSlice";
 import resourcesReducer from "./resourcesSlice";
+import resourceAnalyticsReducer from "./resourceAnalyticsSlice";
 import usersReducer from "./usersSlice";
 import orchestratorsReducer from "./orchestratorsSlice";
 import templatesReducer from "./templatesSlice";
@@ -20,6 +21,7 @@ const appReducer = combineReducers({
   customWrappers: customWrappersReducer,
   wrappersTemplate: wrappersTemplateReducer,
   resources: resourcesReducer,
+  resourceAnalytics: resourceAnalyticsReducer,
   users: usersReducer,
   orchestrators: orchestratorsReducer,
   templates: templatesReducer,
