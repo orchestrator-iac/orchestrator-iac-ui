@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 
 import { RootState, AppDispatch } from "../../store";
 import { fetchResources } from "../../store/resourcesSlice";
+import { fetchTopResources } from "../../store/resourceAnalyticsSlice";
 import { useAuth } from "../../context/AuthContext";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 import ResourceCard, { type ResourceItem } from "./ResourceCard";
@@ -40,6 +41,20 @@ const CLOUD_LABELS: Record<CloudFilter, string> = {
   gcp: "GCP",
 };
 
+type ResourceSortBy = "popular" | "newest" | "az";
+
+const SORT_OPTIONS: { value: ResourceSortBy; label: string; icon: string }[] = [
+  { value: "popular", label: "Popular", icon: "fire" },
+  { value: "newest", label: "Newest", icon: "clock" },
+  { value: "az", label: "A-Z", icon: "arrow-down-a-z" },
+];
+
+// A resource must have been used in at least this many orchestrators to
+// earn the "Popular" badge — a raw usage floor rather than a fixed top-N,
+// so the badge count grows/shrinks with real usage instead of always
+// spotlighting a fixed number of cards.
+const POPULAR_USAGE_THRESHOLD = 3;
+
 const ResourcesGallery: React.FC = () => {
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
@@ -51,10 +66,14 @@ const ResourcesGallery: React.FC = () => {
   const { data: resources, status } = useSelector(
     (state: RootState) => state.resources,
   );
+  const { byId: usageById } = useSelector(
+    (state: RootState) => state.resourceAnalytics,
+  );
 
   const [localSearch, setLocalSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [cloudFilter, setCloudFilter] = useState<CloudFilter>("all");
+  const [sortBy, setSortBy] = useState<ResourceSortBy>("popular");
   const [showContent, setShowContent] = useState(false);
   const hasRetriedFailedLoad = useRef(false);
   const [resolvedIcons, setResolvedIcons] = useState<
@@ -144,6 +163,14 @@ const ResourcesGallery: React.FC = () => {
     }
   }, [dispatch, status]);
 
+  // Best-effort popularity data, fetched independently — a failure or
+  // empty/missing cache here must never block or error the main gallery,
+  // it just leaves every resource at usage count 0 (alphabetical fallback).
+  useEffect(() => {
+    const promise = dispatch(fetchTopResources());
+    return () => promise.abort();
+  }, [dispatch]);
+
 
   // Debounced search
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -163,10 +190,17 @@ const ResourcesGallery: React.FC = () => {
     if (newFilter) setCloudFilter(newFilter);
   };
 
-  // Client-side filtering
+  const handleSortByChange = (
+    _: React.MouseEvent<HTMLElement>,
+    newSortBy: ResourceSortBy,
+  ) => {
+    if (newSortBy) setSortBy(newSortBy);
+  };
+
+  // Client-side filtering, then sorting
   const filteredResources = useMemo(() => {
     if (!resources) return [];
-    return resources.filter((r) => {
+    const filtered = resources.filter((r) => {
       const matchesCloud =
         cloudFilter === "all" || r.cloudProvider === cloudFilter;
       const term = searchQuery.trim().toLowerCase();
@@ -177,7 +211,31 @@ const ResourcesGallery: React.FC = () => {
         (r.resourceId || "").toLowerCase().includes(term);
       return matchesCloud && matchesSearch;
     });
-  }, [resources, searchQuery, cloudFilter]);
+
+    const byName = (a: ResourceItem, b: ResourceItem) =>
+      (a.resourceName || "").localeCompare(b.resourceName || "");
+
+    if (sortBy === "az") {
+      return [...filtered].sort(byName);
+    }
+
+    if (sortBy === "newest") {
+      return [...filtered].sort((a, b) => {
+        const at = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+        const bt = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+        return bt - at || byName(a, b);
+      });
+    }
+
+    // "popular": usage count descending, alphabetical tiebreak. Resources
+    // with no usage data (count 0) simply interleave alphabetically among
+    // other unused resources instead of being frozen at the bottom.
+    return [...filtered].sort((a, b) => {
+      const ac = usageById[a.resourceId] || 0;
+      const bc = usageById[b.resourceId] || 0;
+      return bc - ac || byName(a, b);
+    });
+  }, [resources, searchQuery, cloudFilter, sortBy, usageById]);
 
   const isLoading = status === "loading";
   const isError = status === "failed";
@@ -376,6 +434,49 @@ const ResourcesGallery: React.FC = () => {
                 sx={{ mr: c === "gcp" ? 0 : 0.5 }}
               >
                 {CLOUD_LABELS[c]}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+
+          <ToggleButtonGroup
+            value={sortBy}
+            exclusive
+            onChange={handleSortByChange}
+            size="small"
+            aria-label="Sort resources"
+            data-tour="resources-sort"
+            sx={{
+              "& .MuiToggleButton-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                px: 2,
+                borderRadius: "10px !important",
+                borderColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.common.white, 0.1)
+                    : alpha(theme.palette.common.black, 0.12),
+                transition: "all 0.2s ease",
+                "&:focus-visible": {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
+              },
+              "& .MuiToggleButton-root.Mui-selected": {
+                backgroundColor: alpha(theme.palette.secondary.main, 0.16),
+                color: theme.palette.secondary.main,
+                borderColor: alpha(theme.palette.secondary.main, 0.32),
+              },
+            }}
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <ToggleButton
+                key={opt.value}
+                value={opt.value}
+                aria-label={`Sort by ${opt.label}`}
+                sx={{ mr: opt.value === "az" ? 0 : 0.5, gap: 0.75 }}
+              >
+                <FontAwesomeIcon icon={opt.icon} style={{ fontSize: "0.75rem" }} />
+                {opt.label}
               </ToggleButton>
             ))}
           </ToggleButtonGroup>
@@ -600,7 +701,14 @@ const ResourcesGallery: React.FC = () => {
             >
               <Fade in={showContent} timeout={600 + index * 50}>
                 <Box sx={{ width: "100%", display: "flex" }}>
-                  <ResourceCard resource={resource} />
+                  <ResourceCard
+                    resource={resource}
+                    usageCount={usageById[resource.resourceId] || 0}
+                    isPopular={
+                      (usageById[resource.resourceId] || 0) >=
+                      POPULAR_USAGE_THRESHOLD
+                    }
+                  />
                 </Box>
               </Fade>
             </Grid>
