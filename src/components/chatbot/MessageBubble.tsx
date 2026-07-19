@@ -137,7 +137,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             bgcolor: "primary.main",
             color: "primary.contrastText",
             borderRadius: "8px 8px 0px 8px",
-            p: 0.75,
+            p: 1.5,
             maxWidth: "80%",
           }}
         >
@@ -190,6 +190,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             p: 0.75,
             maxWidth: "85%",
             borderLeft,
+            marginBottom: 1.5
           }}
         >
           {isSystem && (

@@ -147,7 +147,7 @@ const Header: React.FC = () => {
             textDecoration: "none",
             color: theme.palette.primary.main,
             fontWeight: 600,
-            letterSpacing: "-0.02em",
+            letterSpacing: "0.1em",
             transition: "all 0.2s ease",
             "&:hover": {
               color: theme.palette.secondary.main,

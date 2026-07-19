@@ -418,71 +418,77 @@ const Home: React.FC = () => {
                       <Typography
                         id="home-top-templates-heading"
                         variant="h5"
-                        sx={{ fontWeight: 700, mb: 1 }}
+                        sx={{
+                          fontWeight: 700,
+                          mb: 1,
+                          textTransform: "uppercase",
+                          color: theme.palette.secondary.main,
+                          letterSpacing: "0.1em",
+                        }}
                       >
-                      Top Templates
+                        Top Templates
                       </Typography>
                       <Box sx={{ position: "relative" }}>
-                      {!loadingInsights && topTemplates.length > 4 && (
-                        <IconButton
-                          aria-label="Previous templates"
-                          size="small"
-                          onClick={() => scrollTemplatesByPage(-1)}
-                          disabled={!tmplCanLeft}
-                          sx={{
-                            position: "absolute",
-                            left: 6,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            zIndex: 10,
-                            boxShadow: 1,
-                            p: 0.6,
-                            height: 50,
-                            width: 50,
-                            opacity: 0.9,
-                            backgroundColor: theme.palette.background.paper,
-                            "&:hover": {
-                              opacity: 1,
+                        {!loadingInsights && topTemplates.length > 4 && (
+                          <IconButton
+                            aria-label="Previous templates"
+                            size="small"
+                            onClick={() => scrollTemplatesByPage(-1)}
+                            disabled={!tmplCanLeft}
+                            sx={{
+                              position: "absolute",
+                              left: 6,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              zIndex: 10,
+                              boxShadow: 1,
+                              p: 0.6,
+                              height: 50,
+                              width: 50,
+                              opacity: 0.9,
                               backgroundColor: theme.palette.background.paper,
-                            },
-                          }}
-                        >
-                          <FontAwesomeIcon
-                            icon="chevron-left"
-                            style={{ fontSize: "1.5rem" }}
-                          />
-                        </IconButton>
-                      )}
-                      {!loadingInsights && topTemplates.length > 4 && (
-                        <IconButton
-                          aria-label="Next templates"
-                          size="small"
-                          onClick={() => scrollTemplatesByPage(1)}
-                          disabled={!tmplCanRight}
-                          sx={{
-                            position: "absolute",
-                            right: 6,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            zIndex: 10,
-                            boxShadow: 1,
-                            p: 0.6,
-                            height: 50,
-                            width: 50,
-                            opacity: 0.9,
-                            backgroundColor: theme.palette.background.paper,
-                            "&:hover": {
-                              opacity: 1,
+                              "&:hover": {
+                                opacity: 1,
+                                backgroundColor: theme.palette.background.paper,
+                              },
+                            }}
+                          >
+                            <FontAwesomeIcon
+                              icon="chevron-left"
+                              style={{ fontSize: "1.5rem" }}
+                            />
+                          </IconButton>
+                        )}
+                        {!loadingInsights && topTemplates.length > 4 && (
+                          <IconButton
+                            aria-label="Next templates"
+                            size="small"
+                            onClick={() => scrollTemplatesByPage(1)}
+                            disabled={!tmplCanRight}
+                            sx={{
+                              position: "absolute",
+                              right: 6,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              zIndex: 10,
+                              boxShadow: 1,
+                              p: 0.6,
+                              height: 50,
+                              width: 50,
+                              opacity: 0.9,
                               backgroundColor: theme.palette.background.paper,
-                            },
-                          }}
-                        >
-                          <FontAwesomeIcon
-                            icon="chevron-right"
-                            style={{ fontSize: "1.5rem" }}
-                          />
-                        </IconButton>
-                      )}
+                              "&:hover": {
+                                opacity: 1,
+                                backgroundColor: theme.palette.background.paper,
+                              },
+                            }}
+                          >
+                            <FontAwesomeIcon
+                              icon="chevron-right"
+                              style={{ fontSize: "1.5rem" }}
+                            />
+                          </IconButton>
+                        )}
 
                         <Box
                           ref={templatesRef}
@@ -497,63 +503,66 @@ const Home: React.FC = () => {
                             scrollbarWidth: "none",
                           }}
                         >
-                        {loadingInsights
-                          ? Array.from({ length: 5 }).map((_, i) => (
-                              <Box
-                                key={`tmpl-skel-${i}`}
-                                sx={{ width: 250, p: 1 }}
-                              >
-                                <Skeleton variant="rectangular" height={150} />
-                                <Skeleton variant="text" />
-                                <Skeleton variant="text" />
-                              </Box>
-                            ))
-                          : topTemplates.map((t) => (
-                              <Box
-                                key={t.id}
-                                onClick={() => navigate(`/templates/${t.id}`)}
-                                sx={{
-                                  minWidth: 250,
-                                  p: 1,
-                                  borderRadius: 2,
-                                  border: "1px solid",
-                                  borderColor: "divider",
-                                  cursor: "pointer",
-                                  transition:
-                                    "box-shadow 0.2s ease, border-color 0.2s ease",
-                                  "&:hover": {
-                                    borderColor: "primary.main",
-                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-                                  },
-                                }}
-                              >
-                                <img
-                                  src={t.previewImageUrl}
-                                  alt={t.templateName}
-                                  style={{
-                                    width: "100%",
-                                    height: 150,
-                                    objectFit: "cover",
-                                    borderRadius: 6,
+                          {loadingInsights
+                            ? Array.from({ length: 5 }).map((_, i) => (
+                                <Box
+                                  key={`tmpl-skel-${i}`}
+                                  sx={{ width: 250, p: 1 }}
+                                >
+                                  <Skeleton
+                                    variant="rectangular"
+                                    height={150}
+                                  />
+                                  <Skeleton variant="text" />
+                                  <Skeleton variant="text" />
+                                </Box>
+                              ))
+                            : topTemplates.map((t) => (
+                                <Box
+                                  key={t.id}
+                                  onClick={() => navigate(`/templates/${t.id}`)}
+                                  sx={{
+                                    minWidth: 250,
+                                    p: 1,
+                                    borderRadius: 2,
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    cursor: "pointer",
+                                    transition:
+                                      "box-shadow 0.2s ease, border-color 0.2s ease",
+                                    "&:hover": {
+                                      borderColor: "primary.main",
+                                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                    },
                                   }}
-                                />
-                                <Typography
-                                  variant="body2"
-                                  sx={{ mt: 1, fontWeight: 600 }}
                                 >
-                                  {t.templateName}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{ color: "text.secondary" }}
-                                >
-                                  {t.analytics?.usageCount ||
-                                    t.analytics?.viewCount ||
-                                    0}{" "}
-                                  uses
-                                </Typography>
-                              </Box>
-                            ))}
+                                  <img
+                                    src={t.previewImageUrl}
+                                    alt={t.templateName}
+                                    style={{
+                                      width: "100%",
+                                      height: 150,
+                                      objectFit: "cover",
+                                      borderRadius: 6,
+                                    }}
+                                  />
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ mt: 1, fontWeight: 600 }}
+                                  >
+                                    {t.templateName}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ color: "text.secondary" }}
+                                  >
+                                    {t.analytics?.usageCount ||
+                                      t.analytics?.viewCount ||
+                                      0}{" "}
+                                    uses
+                                  </Typography>
+                                </Box>
+                              ))}
                         </Box>
                       </Box>
                     </Box>
@@ -569,71 +578,77 @@ const Home: React.FC = () => {
                       <Typography
                         id="home-top-resources-heading"
                         variant="h5"
-                        sx={{ fontWeight: 700, mb: 1 }}
+                        sx={{
+                          fontWeight: 700,
+                          mb: 1,
+                          textTransform: "uppercase",
+                          color: theme.palette.secondary.main,
+                          letterSpacing: "0.1em",
+                        }}
                       >
-                      Top Resources
+                        Top Resources
                       </Typography>
                       <Box sx={{ position: "relative" }}>
-                      {!loadingInsights && topResources.length > 0 && (
-                        <IconButton
-                          aria-label="Previous resources"
-                          size="small"
-                          onClick={() => scrollResourcesByPage(-1)}
-                          disabled={!resCanLeft}
-                          sx={{
-                            position: "absolute",
-                            left: 6,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            zIndex: 10,
-                            boxShadow: 1,
-                            p: 0.6,
-                            height: 50,
-                            width: 50,
-                            opacity: 0.9,
-                            backgroundColor: theme.palette.background.paper,
-                            "&:hover": {
-                              opacity: 1,
+                        {!loadingInsights && topResources.length > 0 && (
+                          <IconButton
+                            aria-label="Previous resources"
+                            size="small"
+                            onClick={() => scrollResourcesByPage(-1)}
+                            disabled={!resCanLeft}
+                            sx={{
+                              position: "absolute",
+                              left: 6,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              zIndex: 10,
+                              boxShadow: 1,
+                              p: 0.6,
+                              height: 50,
+                              width: 50,
+                              opacity: 0.9,
                               backgroundColor: theme.palette.background.paper,
-                            },
-                          }}
-                        >
-                          <FontAwesomeIcon
-                            icon="chevron-left"
-                            style={{ fontSize: "1.5rem" }}
-                          />
-                        </IconButton>
-                      )}
-                      {!loadingInsights && topResources.length > 6 && (
-                        <IconButton
-                          aria-label="Next resources"
-                          size="small"
-                          onClick={() => scrollResourcesByPage(1)}
-                          disabled={!resCanRight}
-                          sx={{
-                            position: "absolute",
-                            right: 6,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            zIndex: 10,
-                            boxShadow: 1,
-                            p: 0.6,
-                            height: 50,
-                            width: 50,
-                            opacity: 0.9,
-                            backgroundColor: theme.palette.background.paper,
-                            "&:hover": {
-                              opacity: 1,
+                              "&:hover": {
+                                opacity: 1,
+                                backgroundColor: theme.palette.background.paper,
+                              },
+                            }}
+                          >
+                            <FontAwesomeIcon
+                              icon="chevron-left"
+                              style={{ fontSize: "1.5rem" }}
+                            />
+                          </IconButton>
+                        )}
+                        {!loadingInsights && topResources.length > 6 && (
+                          <IconButton
+                            aria-label="Next resources"
+                            size="small"
+                            onClick={() => scrollResourcesByPage(1)}
+                            disabled={!resCanRight}
+                            sx={{
+                              position: "absolute",
+                              right: 6,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              zIndex: 10,
+                              boxShadow: 1,
+                              p: 0.6,
+                              height: 50,
+                              width: 50,
+                              opacity: 0.9,
                               backgroundColor: theme.palette.background.paper,
-                            },
-                          }}
-                        >
-                          <FontAwesomeIcon
-                            icon="chevron-right"
-                            style={{ fontSize: "1.5rem" }}
-                          />
-                        </IconButton>
-                      )}
+                              "&:hover": {
+                                opacity: 1,
+                                backgroundColor: theme.palette.background.paper,
+                              },
+                            }}
+                          >
+                            <FontAwesomeIcon
+                              icon="chevron-right"
+                              style={{ fontSize: "1.5rem" }}
+                            />
+                          </IconButton>
+                        )}
 
                         <Box
                           ref={resourcesRef}
@@ -648,76 +663,79 @@ const Home: React.FC = () => {
                             scrollbarWidth: "none",
                           }}
                         >
-                        {loadingInsights
-                          ? Array.from({ length: 5 }).map((_, i) => (
-                              <Box
-                                key={`res-skel-${i}`}
-                                sx={{ width: 250, p: 1 }}
-                              >
-                                <Skeleton variant="rectangular" height={150} />
-                                <Skeleton variant="text" />
-                                <Skeleton variant="text" />
-                              </Box>
-                            ))
-                          : topResources.map((r) => (
-                              <Box
-                                key={r.resourceId}
-                                onClick={() =>
-                                  navigate(
-                                    `/resources/${r._id || r.resourceId}`,
-                                  )
-                                }
-                                sx={{
-                                  minWidth: 200,
-                                  p: 1,
-                                  borderRadius: 2,
-                                  border: "1px solid",
-                                  borderColor: "divider",
-                                  cursor: "pointer",
-                                  transition:
-                                    "box-shadow 0.2s ease, border-color 0.2s ease",
-                                  "&:hover": {
-                                    borderColor: "primary.main",
-                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-                                  },
-                                }}
-                              >
-                                {hasRenderableResourceIcon(r.resourceIcon) ? (
-                                  <ResourceIconView
-                                    icon={r.resourceIcon}
-                                    alt={r.resourceName || r.resourceId}
-                                    sx={{
-                                      width: "100%",
-                                      height: 150,
-                                      display: "block",
-                                      objectFit: "cover",
-                                      borderRadius: "6px",
-                                    }}
-                                  />
-                                ) : (
-                                  <Box
-                                    sx={{
-                                      width: "100%",
-                                      height: 150,
-                                      backgroundColor: "divider",
-                                      borderRadius: 1,
-                                    }}
-                                  />
-                                )}
-                                <Typography
-                                  variant="body2"
-                                  sx={{ mt: 1, fontWeight: 600 }}
+                          {loadingInsights
+                            ? Array.from({ length: 5 }).map((_, i) => (
+                                <Box
+                                  key={`res-skel-${i}`}
+                                  sx={{ width: 250, p: 1 }}
                                 >
-                                  {r.resourceName || r.resourceId}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{ color: "text.secondary" }}
+                                  <Skeleton
+                                    variant="rectangular"
+                                    height={150}
+                                  />
+                                  <Skeleton variant="text" />
+                                  <Skeleton variant="text" />
+                                </Box>
+                              ))
+                            : topResources.map((r) => (
+                                <Box
+                                  key={r.resourceId}
+                                  onClick={() =>
+                                    navigate(
+                                      `/resources/${r._id || r.resourceId}`,
+                                    )
+                                  }
+                                  sx={{
+                                    minWidth: 200,
+                                    p: 1,
+                                    borderRadius: 2,
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                    cursor: "pointer",
+                                    transition:
+                                      "box-shadow 0.2s ease, border-color 0.2s ease",
+                                    "&:hover": {
+                                      borderColor: "primary.main",
+                                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                                    },
+                                  }}
                                 >
-                                  {r.count} uses
-                                </Typography>
-                              </Box>
-                            ))}
+                                  {hasRenderableResourceIcon(r.resourceIcon) ? (
+                                    <ResourceIconView
+                                      icon={r.resourceIcon}
+                                      alt={r.resourceName || r.resourceId}
+                                      sx={{
+                                        width: "100%",
+                                        height: 150,
+                                        display: "block",
+                                        objectFit: "cover",
+                                        borderRadius: "6px",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Box
+                                      sx={{
+                                        width: "100%",
+                                        height: 150,
+                                        backgroundColor: "divider",
+                                        borderRadius: 1,
+                                      }}
+                                    />
+                                  )}
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ mt: 1, fontWeight: 600 }}
+                                  >
+                                    {r.resourceName || r.resourceId}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ color: "text.secondary" }}
+                                  >
+                                    {r.count} uses
+                                  </Typography>
+                                </Box>
+                              ))}
                         </Box>
                       </Box>
                     </Box>
@@ -744,11 +762,13 @@ const Home: React.FC = () => {
                 sx={{
                   fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
                   fontWeight: 700,
-                  letterSpacing: "-0.025em",
                   mb: 0.5,
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
+                  textTransform: "uppercase",
+                  color: theme.palette.secondary.main,
+                  letterSpacing: "0.1em",
                 }}
               >
                 <Box
@@ -757,8 +777,8 @@ const Home: React.FC = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: 42,
-                    height: 42,
+                    width: 64,
+                    height: 64,
                     borderRadius: 2,
                     background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
                     color: theme.palette.primary.main,
@@ -767,21 +787,22 @@ const Home: React.FC = () => {
                 >
                   <FontAwesomeIcon
                     icon="sitemap"
-                    style={{ fontSize: "1rem" }}
+                    style={{ fontSize: "2rem" }}
                   />
                 </Box>
-                Orchestrators
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.925rem",
-                  ml: 7.25,
-                  letterSpacing: "0.01em",
-                }}
-              >
-                Manage your infrastructure orchestration workflows
+                <Box>
+                  Orchestrators
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: "0.925rem",
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    Manage your infrastructure orchestration workflows
+                  </Typography>
+                </Box>
               </Typography>
             </Box>
           </Fade>
@@ -796,10 +817,7 @@ const Home: React.FC = () => {
             {isLoading ? (
               // Loading Skeletons
               Array.from({ length: 4 }).map((_, index) => (
-                <Box
-                  key={`skeleton-orch-${index}`}
-                  sx={{ display: "flex" }}
-                >
+                <Box key={`skeleton-orch-${index}`} sx={{ display: "flex" }}>
                   <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
                     <Skeleton
                       variant="rectangular"
@@ -828,13 +846,13 @@ const Home: React.FC = () => {
                 {canCreateOrchestrators && (
                   <Box sx={{ display: "flex" }}>
                     <Fade in={showContent} timeout={1000}>
-                    <Box
-                      className={styles.card}
-                      onClick={() => navigateOrchestrator("new")}
-                      data-tour="home-new-orchestrator"
-                      sx={{
-                        border: "2px dashed",
-                        borderColor: alpha(theme.palette.primary.main, 0.3),
+                      <Box
+                        className={styles.card}
+                        onClick={() => navigateOrchestrator("new")}
+                        data-tour="home-new-orchestrator"
+                        sx={{
+                          border: "2px dashed",
+                          borderColor: alpha(theme.palette.primary.main, 0.3),
                           backgroundColor: "transparent !important",
                           "&:hover": {
                             borderColor: alpha(theme.palette.primary.main, 0.6),
@@ -855,8 +873,10 @@ const Home: React.FC = () => {
                             sx={{
                               mt: 2,
                               fontWeight: 500,
-                              color: "text.secondary",
                               fontSize: "0.95rem",
+                              textTransform: "uppercase",
+                              color: theme.palette.secondary.main,
+                              letterSpacing: "0.1em",
                             }}
                           >
                             New Orchestrator
@@ -869,10 +889,7 @@ const Home: React.FC = () => {
 
                 {filteredOrchestrators && filteredOrchestrators.length > 0 ? (
                   filteredOrchestrators.map((orchestrator, index) => (
-                    <Box
-                      key={orchestrator._id}
-                      sx={{ display: "flex" }}
-                    >
+                    <Box key={orchestrator._id} sx={{ display: "flex" }}>
                       <Fade in={showContent} timeout={1000 + index * 100}>
                         <Box
                           className={styles.card}
