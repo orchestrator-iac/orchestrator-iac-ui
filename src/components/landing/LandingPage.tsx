@@ -533,8 +533,7 @@ const HeroProductScene: React.FC = () => {
     theme.palette.mode === "dark"
       ? alpha(theme.palette.common.white, 0.5)
       : alpha(theme.palette.primary.dark, 0.52);
-  const sceneTokenText =
-    theme.palette.mode === "dark" ? "#EAFBFA" : "#D7F4F3";
+  const sceneTokenText = theme.palette.mode === "dark" ? "#EAFBFA" : "#D7F4F3";
   const sceneTokenMuted =
     theme.palette.mode === "dark"
       ? alpha(theme.palette.common.white, 0.45)
@@ -3599,11 +3598,12 @@ const LandingPage: React.FC = () => {
               variant="h1"
               sx={{
                 color: theme.palette.primary.main,
-                fontSize: { xs: "2.55rem", sm: "4.2rem", md: "5.6rem" },
+                fontSize: { xs: "2.55rem", sm: "3.2rem", md: "4rem" },
                 fontWeight: 850,
                 lineHeight: 0.96,
-                letterSpacing: 0,
                 maxWidth: 720,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
               }}
             >
               Orchestrator
@@ -3621,7 +3621,7 @@ const LandingPage: React.FC = () => {
                 letterSpacing: 0,
               }}
             >
-              Reusable cloud templates that become Terraform.
+              Reusable cloud templates that become Infra as Code.
             </Typography>
             <Typography
               variant="body1"
