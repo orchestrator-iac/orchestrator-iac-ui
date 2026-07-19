@@ -8,8 +8,8 @@ import {
   Fade,
   Chip,
   Button,
-  ToggleButtonGroup,
-  ToggleButton,
+  Select,
+  MenuItem,
   useTheme,
   alpha,
   Alert,
@@ -181,20 +181,6 @@ const ResourcesGallery: React.FC = () => {
     const val = e.target.value;
     setLocalSearch(val);
     debouncedSearch(val);
-  };
-
-  const handleCloudFilterChange = (
-    _: React.MouseEvent<HTMLElement>,
-    newFilter: CloudFilter,
-  ) => {
-    if (newFilter) setCloudFilter(newFilter);
-  };
-
-  const handleSortByChange = (
-    _: React.MouseEvent<HTMLElement>,
-    newSortBy: ResourceSortBy,
-  ) => {
-    if (newSortBy) setSortBy(newSortBy);
   };
 
   // Client-side filtering, then sorting
@@ -396,90 +382,98 @@ const ResourcesGallery: React.FC = () => {
             }}
           />
 
-          <ToggleButtonGroup
+          <Select
             value={cloudFilter}
-            exclusive
-            onChange={handleCloudFilterChange}
+            onChange={(e) => setCloudFilter(e.target.value as CloudFilter)}
             size="small"
             aria-label="Filter by cloud provider"
             data-tour="resources-cloud-filter"
             sx={{
-              "& .MuiToggleButton-root": {
-                textTransform: "none",
-                fontWeight: 600,
-                px: 2,
-                borderRadius: "10px !important",
+              minWidth: 120,
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
+              "& .MuiOutlinedInput-root": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.common.white, 0.03)
+                    : alpha(theme.palette.common.white, 0.5),
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.common.white, 0.05)
+                      : alpha(theme.palette.common.white, 0.7),
+                },
+                "&.Mui-focused": {
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.common.white, 0.07)
+                      : theme.palette.common.white,
+                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+                },
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
                 borderColor:
                   theme.palette.mode === "dark"
                     ? alpha(theme.palette.common.white, 0.1)
                     : alpha(theme.palette.common.black, 0.12),
-                transition: "all 0.2s ease",
-                "&:focus-visible": {
-                  outline: `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: 2,
-                },
-              },
-              "& .MuiToggleButton-root.Mui-selected": {
-                backgroundColor: alpha(theme.palette.secondary.main, 0.16),
-                color: theme.palette.secondary.main,
-                borderColor: alpha(theme.palette.secondary.main, 0.32),
               },
             }}
           >
             {(["all", "aws", "azure", "gcp"] as CloudFilter[]).map((c) => (
-              <ToggleButton
-                key={c}
-                value={c}
-                aria-label={`Filter by ${CLOUD_LABELS[c]}`}
-                sx={{ mr: c === "gcp" ? 0 : 0.5 }}
-              >
+              <MenuItem key={c} value={c}>
                 {CLOUD_LABELS[c]}
-              </ToggleButton>
+              </MenuItem>
             ))}
-          </ToggleButtonGroup>
+          </Select>
 
-          <ToggleButtonGroup
+          <Select
             value={sortBy}
-            exclusive
-            onChange={handleSortByChange}
+            onChange={(e) => setSortBy(e.target.value as ResourceSortBy)}
             size="small"
             aria-label="Sort resources"
             data-tour="resources-sort"
             sx={{
-              "& .MuiToggleButton-root": {
-                textTransform: "none",
-                fontWeight: 600,
-                px: 2,
-                borderRadius: "10px !important",
+              minWidth: 140,
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
+              "& .MuiOutlinedInput-root": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.common.white, 0.03)
+                    : alpha(theme.palette.common.white, 0.5),
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.common.white, 0.05)
+                      : alpha(theme.palette.common.white, 0.7),
+                },
+                "&.Mui-focused": {
+                  backgroundColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.common.white, 0.07)
+                      : theme.palette.common.white,
+                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+                },
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
                 borderColor:
                   theme.palette.mode === "dark"
                     ? alpha(theme.palette.common.white, 0.1)
                     : alpha(theme.palette.common.black, 0.12),
-                transition: "all 0.2s ease",
-                "&:focus-visible": {
-                  outline: `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: 2,
-                },
-              },
-              "& .MuiToggleButton-root.Mui-selected": {
-                backgroundColor: alpha(theme.palette.secondary.main, 0.16),
-                color: theme.palette.secondary.main,
-                borderColor: alpha(theme.palette.secondary.main, 0.32),
               },
             }}
           >
             {SORT_OPTIONS.map((opt) => (
-              <ToggleButton
-                key={opt.value}
-                value={opt.value}
-                aria-label={`Sort by ${opt.label}`}
-                sx={{ mr: opt.value === "az" ? 0 : 0.5, gap: 0.75 }}
-              >
-                <FontAwesomeIcon icon={opt.icon} style={{ fontSize: "0.75rem" }} />
+              <MenuItem key={opt.value} value={opt.value}>
+                <FontAwesomeIcon icon={opt.icon} style={{ fontSize: "0.75rem", marginRight: "0.5rem" }} />
                 {opt.label}
-              </ToggleButton>
+              </MenuItem>
             ))}
-          </ToggleButtonGroup>
+          </Select>
 
           {status === "succeeded" && (
             <Chip
