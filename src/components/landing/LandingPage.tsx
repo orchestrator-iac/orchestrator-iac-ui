@@ -3621,7 +3621,7 @@ const LandingPage: React.FC = () => {
                 letterSpacing: 0,
               }}
             >
-              Reusable cloud templates that become Terraform.
+              Reusable cloud templates that become Infra as Code.
             </Typography>
             <Typography
               variant="body1"
