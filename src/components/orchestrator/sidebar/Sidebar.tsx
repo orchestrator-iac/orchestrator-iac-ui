@@ -18,14 +18,21 @@ import {
   KeyboardArrowLeft as KeyboardArrowLeftIcon,
 } from "@mui/icons-material";
 import Fuse from "fuse.js";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { useDnD } from "./DnDContext";
 import { RootState, AppDispatch } from "../../../store";
 import { fetchResources } from "../../../store/resourcesSlice";
+import { fetchTopResources } from "../../../store/resourceAnalyticsSlice";
 import { CloudProvider } from "../../../types/clouds-info";
 import ResourceIconView from "@/components/shared/ResourceIconView";
 
 const drawerWidth = 240;
+
+// Matches the "Popular" badge threshold on the Resources gallery
+// (ResourcesGallery.tsx) — a resource must have been used in at least this
+// many orchestrators to be considered popular.
+const POPULAR_USAGE_THRESHOLD = 3;
 
 interface SidebarProps {
   open: boolean;
@@ -44,6 +51,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { data: resources, status: resourcesStatus } = useSelector(
     (state: RootState) => state.resources,
+  );
+  const { byId: usageById } = useSelector(
+    (state: RootState) => state.resourceAnalytics,
   );
 
   // --- local state for search ---
@@ -75,6 +85,14 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
     return () => promise.abort();
   }, [dispatch, resourcesStatus]);
 
+  // Best-effort popularity data, fetched independently — a failure or
+  // empty/missing cache here must never block or error the sidebar, it
+  // just leaves every resource at usage count 0 (original-order fallback).
+  useEffect(() => {
+    const promise = dispatch(fetchTopResources());
+    return () => promise.abort();
+  }, [dispatch]);
+
   // Debounce search input for smoother typing
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 160);
@@ -82,14 +100,23 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   }, [searchTerm]);
 
   /**
-   * Provider-scoped resources computed once per changes to source or provider.
-   * This preserves your original filter by cloudProvider. :contentReference[oaicite:1]{index=1}
+   * Provider-scoped resources, sorted by popularity (usage count desc, then
+   * alphabetical) so the most-used resources for this cloud surface first —
+   * same comparator as the Resources gallery's default "Popular" sort.
    */
   const providerScoped = useMemo(() => {
-    return (resources || []).filter(
+    const scoped = (resources || []).filter(
       (r: any) => r?.cloudProvider === cloudProvider,
     );
-  }, [resources, cloudProvider]);
+    return [...scoped].sort((a: any, b: any) => {
+      const ac = usageById[a.resourceId] || 0;
+      const bc = usageById[b.resourceId] || 0;
+      return (
+        bc - ac ||
+        (a.resourceName || "").localeCompare(b.resourceName || "")
+      );
+    });
+  }, [resources, cloudProvider, usageById]);
 
   /**
    * Build Fuse index for fuzzy matching.
@@ -168,7 +195,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
           },
         }}
       >
-        <Box sx={{ mt: 2, px: 2, pb: 1 }}>
+        <Box sx={{ mt: 2, px: 2, pb: 1, flexShrink: 0 }}>
           <Paper
             variant="outlined"
             data-tour="orchestrator-sidebar-search"
@@ -196,9 +223,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
           </Paper>
         </Box>
 
-        <Divider />
+        <Divider sx={{ flexShrink: 0 }} />
 
-        <List>
+        <List sx={{ flex: 1, overflowY: "auto" }}>
           {visibleResources.map((resource: any) => (
             <ListItemButton
               key={resource._id}
@@ -224,10 +251,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
                 sx={{
                   width: 40,
                   height: 40,
-                  borderRadius: "8px",
                   mr: 2,
                   objectFit: "contain",
-                  boxShadow: `0 0 2px ${theme.palette.secondary.main}`,
                 }}
               />
               <ListItemText
@@ -247,6 +272,18 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
                     >
                       v{resource.resourceVersion}
                     </Box>
+                    {(usageById[resource.resourceId] || 0) >=
+                      POPULAR_USAGE_THRESHOLD && (
+                      <FontAwesomeIcon
+                        icon="fire"
+                        aria-label="Popular"
+                        title="Popular"
+                        style={{
+                          fontSize: "0.75rem",
+                          color: theme.palette.secondary.main,
+                        }}
+                      />
+                    )}
                   </Box>
                 }
                 secondary={resource.resourceDescription}
