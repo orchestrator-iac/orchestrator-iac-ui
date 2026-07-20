@@ -13,7 +13,6 @@ import {
   Autocomplete,
   Typography,
   Box,
-  SelectChangeEvent,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import apiService from "../../../services/apiService";
@@ -93,7 +92,9 @@ const InitPopup = ({
     }));
   };
 
-  const handleCloudChange = (e: SelectChangeEvent<string>) => {
+  const handleCloudChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const value = e.target.value as CloudProvider | "";
     setForm((prev) => ({
       ...prev,

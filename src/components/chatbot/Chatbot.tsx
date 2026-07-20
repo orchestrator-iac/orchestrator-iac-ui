@@ -442,6 +442,31 @@ const Chatbot: React.FC = () => {
       const normalize = (s: string) =>
         s.toLowerCase().replace(/[^a-z0-9]+/g, "_");
 
+      // Maestro's plan config sometimes represents a reference field (e.g.
+      // "Virtual network") as an object like {value, label} or {id, name}
+      // instead of a plain scalar ID. Stored as-is, that object ends up in a
+      // text/select input and renders as the literal string "[object Object]".
+      // Unwrap any such object down to its underlying scalar before it's
+      // written into node values.
+      const normalizeConfigValue = (v: unknown): unknown => {
+        if (v !== null && typeof v === "object" && !Array.isArray(v)) {
+          const obj = v as Record<string, unknown>;
+          const scalar = obj.value ?? obj.id ?? obj.name ?? obj.label;
+          return scalar !== undefined ? scalar : v;
+        }
+        return v;
+      };
+      const normalizeConfig = (
+        config: Record<string, unknown> | undefined
+      ): Record<string, unknown> => {
+        if (!config) return {};
+        const result: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(config)) {
+          result[key] = normalizeConfigValue(val);
+        }
+        return result;
+      };
+
       // Build a lookup: catalog entry, keyed primarily by "cloud:resourceId"
       // since the same resourceId (e.g. "subnet") can exist once per cloud
       // provider with entirely different fields/schema. A plain resourceId
@@ -479,7 +504,7 @@ const Chatbot: React.FC = () => {
           id,
           resourceId, // canonical type string ("vpc") — used as __nodeType on load
           position: { x: idx * 220, y: 0 },
-          values: res.config || {},
+          values: normalizeConfig(res.config),
           __nodeType: resourceId, // same type string, consistent with onDrop
           friendlyId,
           isExpanded: true,

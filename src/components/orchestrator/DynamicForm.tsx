@@ -364,7 +364,19 @@ const DynamicForm: React.FC<Props> = ({
           disabled: !!o.disabled,
         })) as Array<{ label: string; value: string; disabled?: boolean }>;
 
-        const currentVal = String(formData[name] ?? value ?? "");
+        const rawVal = formData[name] ?? value ?? "";
+        // Guard against reference-field values that arrive as an object
+        // (e.g. {value, label} or {id, name}) instead of a scalar ID — blindly
+        // calling String() on those would render the literal "[object Object]".
+        const currentVal =
+          rawVal !== null && typeof rawVal === "object"
+            ? String(
+                (rawVal as any).value ??
+                  (rawVal as any).id ??
+                  (rawVal as any).label ??
+                  ""
+              )
+            : String(rawVal);
         const matched = opts.find((o) => o.value === currentVal) || null;
 
         return (
