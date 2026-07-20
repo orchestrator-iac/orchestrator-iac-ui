@@ -26,7 +26,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
@@ -72,12 +71,6 @@ const TALKING_STATE_MS = 1600;
 const TypingIndicator: React.FC = () => {
   const theme = useTheme();
   const dark = theme.palette.mode === "dark";
-  const robotBadgeBg = dark
-    ? theme.palette.tertiary.dark
-    : alpha(theme.palette.primary.main, 0.1);
-  const robotBadgeBorder = dark
-    ? `1px solid ${alpha(theme.palette.primary.light, 0.32)}`
-    : `1px solid ${alpha(theme.palette.primary.main, 0.14)}`;
   const robotColor = dark
     ? theme.palette.secondary.light
     : theme.palette.primary.dark;
@@ -86,11 +79,8 @@ const TypingIndicator: React.FC = () => {
     <Box display="flex" alignItems="center" gap={1} px={2} py={0.75}>
       <Box
         sx={{
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          bgcolor: robotBadgeBg,
-          border: robotBadgeBorder,
+          width: 50,
+          height: 50,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -99,7 +89,7 @@ const TypingIndicator: React.FC = () => {
       >
         <MaestroRobot
           state="thinking"
-          size={20}
+          size={36}
           decorative
           robotColor={robotColor}
         />
@@ -447,12 +437,22 @@ const Chatbot: React.FC = () => {
       const normalize = (s: string) =>
         s.toLowerCase().replace(/[^a-z0-9]+/g, "_");
 
-      // Build a lookup: normalized resourceId -> catalog entry
+      // Build a lookup: catalog entry, keyed primarily by "cloud:resourceId"
+      // since the same resourceId (e.g. "subnet") can exist once per cloud
+      // provider with entirely different fields/schema. A plain resourceId
+      // key is also kept as a fallback for resource types that aren't
+      // cloud-specific — but the compound key must win when both exist,
+      // otherwise the last-iterated cloud's entry silently shadows the
+      // others (e.g. an Azure plan's "subnet" nodes resolving to the AWS
+      // subnet's schema, which has completely different config fields).
       const catalogLookup = new Map<string, any>();
       for (const entry of resourceCatalog) {
-        // Key by the type string (resourceId field, e.g. "vpc", "nat_gateway")
         const key = normalize(entry.resourceId || entry.resourceName || "");
-        catalogLookup.set(key, entry);
+        const cloud = String(entry.cloudProvider || "").toLowerCase();
+        catalogLookup.set(`${cloud}:${key}`, entry);
+        if (!catalogLookup.has(key)) {
+          catalogLookup.set(key, entry);
+        }
       }
 
       // Build nodes using the exact same convention as onDrop:
@@ -461,7 +461,9 @@ const Chatbot: React.FC = () => {
       //   - __nodeType = type string (what all rules/links use)
       const nodes = plan.resources.map((res, idx) => {
         const type = normalize(res.resourceType || `resource${idx}`);
-        const catalogEntry = catalogLookup.get(type);
+        const cloud = String(res.cloudProvider || "").toLowerCase();
+        const catalogEntry =
+          catalogLookup.get(`${cloud}:${type}`) ?? catalogLookup.get(type);
         // MongoDB _id used as node ID prefix — identical to onDrop convention
         const mongoId = catalogEntry?._id ?? type;
         const id = `${mongoId}-${uuidv4()}`;
@@ -484,9 +486,28 @@ const Chatbot: React.FC = () => {
           resourceName: catalogEntry?.resourceName ?? type,
         };
       });
-      // Build edge lookup keyed by __nodeType (the type string, e.g. "vpc")
-      const lookup = new Map<string, string>();
-      nodes.forEach((n) => lookup.set(n.__nodeType, n.id));
+
+      // Build two lookups for resolving a `dependencies` entry to a node:
+      //   1. idLookup: Maestro's per-resource `id` (e.g. "vpc_2") -> node.id
+      //      Preferred whenever the plan tags a specific instance.
+      //   2. typeLookup: normalized resourceType -> ALL node ids of that type
+      //      Fallback for legacy plans / single-instance types where a dependency
+      //      is just the bare resourceType (e.g. "vpc"). If more than one node of
+      //      that type exists, resolving by bare type is ambiguous — we warn and
+      //      use the first instance rather than silently collapsing every consumer
+      //      onto the same (last) provider node.
+      const idLookup = new Map<string, string>();
+      const typeLookup = new Map<string, string[]>();
+      plan.resources.forEach((res, idx) => {
+        const nodeId = nodes[idx].id;
+        if (res.id) {
+          idLookup.set(res.id, nodeId);
+        }
+        const typeKey = normalize(res.resourceType || "");
+        const existing = typeLookup.get(typeKey) ?? [];
+        existing.push(nodeId);
+        typeLookup.set(typeKey, existing);
+      });
 
       // Edge direction convention (matches the existing Orchestrator edge rules):
       //   source = the PROVIDER (the dependency)
@@ -496,8 +517,22 @@ const Chatbot: React.FC = () => {
       plan.resources.forEach((res, idx) => {
         const consumerId = nodes[idx].id; // the resource that has dependencies
         (res.dependencies || []).forEach((dep) => {
-          const depKey = normalize(dep);
-          const providerId = lookup.get(depKey); // the resource being depended on
+          // Prefer an exact match against another resource's explicit `id`.
+          let providerId = idLookup.get(dep);
+
+          if (!providerId) {
+            const candidates = typeLookup.get(normalize(dep)) ?? [];
+            if (candidates.length > 1) {
+              console.warn(
+                `[Maestro] Ambiguous dependency "${dep}" on resource #${idx} ` +
+                  `(${candidates.length} "${dep}" resources in plan, no matching id) — ` +
+                  "defaulting to the first instance. Ask Maestro to use unique ids " +
+                  "for duplicate resource types to avoid this.",
+              );
+            }
+            providerId = candidates[0];
+          }
+
           if (providerId && providerId !== consumerId) {
             edges.push({
               id: `${providerId}->${consumerId}`,
@@ -978,7 +1013,7 @@ const Chatbot: React.FC = () => {
                       onImplement={handleImplement}
                       onSubmitFeedback={handleSubmitMessageFeedback}
                       isImplementing={isImplementing}
-                      assistantAvatarState={'talking'}
+                      assistantAvatarState={"talking"}
                     />
                   );
                 })}
@@ -1090,7 +1125,7 @@ const Chatbot: React.FC = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Delete conversation</DialogTitle>
+        <DialogTitle color="error">Delete Conversation</DialogTitle>
         <DialogContent dividers>
           <Typography>
             Are you sure you want to delete this conversation? It will be
