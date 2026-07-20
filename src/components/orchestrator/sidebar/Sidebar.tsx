@@ -26,6 +26,7 @@ import { fetchResources } from "../../../store/resourcesSlice";
 import { fetchTopResources } from "../../../store/resourceAnalyticsSlice";
 import { CloudProvider } from "../../../types/clouds-info";
 import ResourceIconView from "@/components/shared/ResourceIconView";
+import OverflowTooltipText from "@/components/shared/OverflowTooltipText";
 
 const drawerWidth = 240;
 
@@ -112,8 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
       const ac = usageById[a.resourceId] || 0;
       const bc = usageById[b.resourceId] || 0;
       return (
-        bc - ac ||
-        (a.resourceName || "").localeCompare(b.resourceName || "")
+        bc - ac || (a.resourceName || "").localeCompare(b.resourceName || "")
       );
     });
   }, [resources, cloudProvider, usageById]);
@@ -257,21 +257,24 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
               />
               <ListItemText
                 primary={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <span>{resource.resourceName}</span>
-                    <Box
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    <OverflowTooltipText
+                      text={resource.resourceName}
                       component="span"
+                      tooltipPlacement="right"
                       sx={{
-                        fontSize: "0.8rem",
-                        color: theme.palette.text.secondary,
-                        backgroundColor: theme.palette.action.hover,
-                        px: 0.6,
-                        py: 0.1,
-                        borderRadius: "4px",
+                        maxWidth: 130,
+                        minWidth: 0,
+                        flexShrink: 1,
                       }}
-                    >
-                      v{resource.resourceVersion}
-                    </Box>
+                    />
                     {(usageById[resource.resourceId] || 0) >=
                       POPULAR_USAGE_THRESHOLD && (
                       <FontAwesomeIcon
@@ -286,7 +289,18 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
                     )}
                   </Box>
                 }
-                secondary={resource.resourceDescription}
+                secondary={
+                  <OverflowTooltipText
+                    text={resource.resourceDescription}
+                    component="span"
+                    tooltipPlacement="right"
+                    sx={{
+                      maxWidth: "100%",
+                      minWidth: 0,
+                      flexShrink: 1,
+                    }}
+                  />
+                }
                 slotProps={{
                   primary: {
                     sx: {
@@ -296,13 +310,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
                     },
                   },
                   secondary: {
-                    noWrap: true,
                     sx: {
                       fontSize: "0.85rem",
                       color: theme.palette.text.secondary,
-                      textOverflow: "ellipsis",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
                       maxWidth: "100%",
                     },
                   },

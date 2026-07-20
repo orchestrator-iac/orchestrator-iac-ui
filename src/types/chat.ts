@@ -12,6 +12,7 @@ export interface SecurityNote {
 }
 
 export interface PlanResource {
+  id?: string;
   resourceType: string;
   resourceName?: string;
   cloudProvider: string;

@@ -37,7 +37,9 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
 import { Box, Chip } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 import CustomNode from "./CustomNode";
 import ArchitectureNode from "./ArchitectureNode";
@@ -70,6 +72,20 @@ import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 const elk = new ELK();
+
+// Canvas node ids are always `${catalogId}-${uuidv4()}`. Older catalog ids are
+// plain Mongo ObjectIds (no hyphens), but newer catalog entries (all current
+// Azure/GCP resources, and some newer AWS ones) use hyphenated UUIDs — so
+// splitting on the first "-" truncates those catalog ids. A uuidv4 string is
+// always exactly 36 characters, so strip that fixed-length suffix (plus its
+// separating hyphen) instead of splitting on the first hyphen.
+const UUID_LENGTH = 36;
+const extractCatalogId = (nodeId: string): string => {
+  const id = String(nodeId);
+  return id.length > UUID_LENGTH + 1
+    ? id.slice(0, id.length - UUID_LENGTH - 1)
+    : id.split("-")[0];
+};
 const defaultOptions: Record<string, string> = {
   "elk.algorithm": "layered",
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
@@ -235,6 +251,8 @@ const OrchestratorReactFlow: React.FC = () => {
   >({});
   const [maestroReviewDraft, setMaestroReviewDraft] =
     useState<MaestroDraftPayload | null>(null);
+  const [isMaestroReviewDraftBannerDismissed, setIsMaestroReviewDraftBannerDismissed] =
+    useState(false);
   const [pendingMaestroDraft, setPendingMaestroDraft] =
     useState<MaestroDraftPayload | null>(null);
   const [replaceDraftDialogOpen, setReplaceDraftDialogOpen] = useState(false);
@@ -296,7 +314,7 @@ const OrchestratorReactFlow: React.FC = () => {
     ) =>
       runWithRouteLoading(async () => {
         const fetchPromises = (serializedNodes || []).map((dbNode) =>
-          dispatch(fetchResourceById(String(dbNode.id).split("-")[0])),
+          dispatch(fetchResourceById(extractCatalogId(dbNode.id))),
         );
 
         const results = await Promise.all(fetchPromises);
@@ -468,6 +486,7 @@ const OrchestratorReactFlow: React.FC = () => {
         draft.action === "update" ? (draft.targetOrchestratorId ?? null) : null,
       );
       setMaestroReviewDraft(draft);
+      setIsMaestroReviewDraftBannerDismissed(false);
       setPendingMaestroDraft(null);
       setReplaceDraftDialogOpen(false);
       setBaselineSnapshot(serializePersistedSnapshot(draft.saveRequest));
@@ -723,10 +742,10 @@ const OrchestratorReactFlow: React.FC = () => {
           setInitOpen(false);
 
           // Fetch the full resource template for each prefill node.
-          // Use the same id.split("-")[0] convention as the saved-orchestrator path:
-          // node.id = `${mongodb_catalog_id}-${uuid}`, split gives the catalog _id.
+          // Use the same extractCatalogId convention as the saved-orchestrator path:
+          // node.id = `${mongodb_catalog_id}-${uuid}`, this recovers the catalog _id.
           const fetchPromises = (prefill.nodes || []).map((dbNode: any) =>
-            dispatch(fetchResourceById(dbNode.id.split("-")[0])),
+            dispatch(fetchResourceById(extractCatalogId(dbNode.id))),
           );
 
           Promise.all(fetchPromises).then((results) => {
@@ -871,7 +890,7 @@ const OrchestratorReactFlow: React.FC = () => {
         const customNodes = [];
         const resourceNodes: Node[] = [];
         for (const node of orchestratorData?.nodes || []) {
-          const id = node.id.split("-")[0];
+          const id = extractCatalogId(node.id);
           customNodes.push(dispatch(fetchResourceById(id)));
         }
         Promise.all(customNodes).then((results) => {
@@ -1038,6 +1057,7 @@ const OrchestratorReactFlow: React.FC = () => {
     );
     setCurrentOrchestratorId(template_id);
     setMaestroReviewDraft(null);
+    setIsMaestroReviewDraftBannerDismissed(false);
     setPendingMaestroDraft(null);
     setReplaceDraftDialogOpen(false);
 
@@ -1569,6 +1589,10 @@ const OrchestratorReactFlow: React.FC = () => {
     setReplaceDraftDialogOpen(false);
   }, []);
 
+  const handleDismissMaestroReviewDraftBanner = useCallback(() => {
+    setIsMaestroReviewDraftBannerDismissed(true);
+  }, []);
+
   // Handler for when orchestrator is successfully saved
   const handleOrchestrationSaved = useCallback(
     (orchestratorId: string) => {
@@ -1839,8 +1863,21 @@ const OrchestratorReactFlow: React.FC = () => {
                   />
                 )}
               </Box>
-              {maestroReviewDraft && !isViewMode && (
-                <Alert severity="info" sx={{ maxWidth: 520 }}>
+              {maestroReviewDraft && !isViewMode && !isMaestroReviewDraftBannerDismissed && (
+                <Alert
+                  severity="info"
+                  sx={{ maxWidth: 520 }}
+                  action={
+                    <IconButton
+                      aria-label="Dismiss Maestro draft message"
+                      color="inherit"
+                      size="small"
+                      onClick={handleDismissMaestroReviewDraftBanner}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  }
+                >
                   {maestroReviewDraft.action === "update"
                     ? "Maestro loaded a workflow update draft. Review the proposed graph changes, then save to apply them to this workflow."
                     : "Maestro loaded a new workflow draft. Review it and save when you are ready to create the workflow."}

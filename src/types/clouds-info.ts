@@ -1,5 +1,10 @@
 export type CloudProvider = "aws" | "azure" | "gcp";
 
+export type RegionOption = {
+  code: string;
+  name: string;
+};
+
 export interface CloudConfig {
   templateName: string;
   description: string;
@@ -7,29 +12,36 @@ export interface CloudConfig {
   region: string;
 }
 
-export const cloudRegions: Record<string, { code: string; name: string }[]> = {
+export const cloudRegions: Record<CloudProvider, RegionOption[]> = {
   aws: [
     { code: "us-east-1", name: "US East (N. Virginia)" },
     { code: "us-east-2", name: "US East (Ohio)" },
     { code: "us-west-1", name: "US West (N. California)" },
     { code: "us-west-2", name: "US West (Oregon)" },
     { code: "ca-central-1", name: "Canada (Central)" },
+    { code: "ca-west-1", name: "Canada (Calgary)" },
     { code: "eu-west-1", name: "Europe (Ireland)" },
     { code: "eu-west-2", name: "Europe (London)" },
     { code: "eu-west-3", name: "Europe (Paris)" },
     { code: "eu-central-1", name: "Europe (Frankfurt)" },
+    { code: "eu-central-2", name: "Europe (Zurich)" },
     { code: "eu-north-1", name: "Europe (Stockholm)" },
     { code: "eu-south-1", name: "Europe (Milan)" },
+    { code: "eu-south-2", name: "Europe (Spain)" },
     { code: "ap-south-1", name: "Asia Pacific (Mumbai)" },
     { code: "ap-northeast-1", name: "Asia Pacific (Tokyo)" },
     { code: "ap-northeast-2", name: "Asia Pacific (Seoul)" },
     { code: "ap-northeast-3", name: "Asia Pacific (Osaka)" },
     { code: "ap-southeast-1", name: "Asia Pacific (Singapore)" },
     { code: "ap-southeast-2", name: "Asia Pacific (Sydney)" },
+    { code: "ap-southeast-3", name: "Asia Pacific (Jakarta)" },
+    { code: "ap-southeast-4", name: "Asia Pacific (Melbourne)" },
+    { code: "ap-east-1", name: "Asia Pacific (Hong Kong)" },
+    { code: "me-central-1", name: "Middle East (UAE)" },
+    { code: "il-central-1", name: "Israel (Tel Aviv)" },
     { code: "sa-east-1", name: "South America (São Paulo)" },
     { code: "af-south-1", name: "Africa (Cape Town)" },
     { code: "me-south-1", name: "Middle East (Bahrain)" },
-    // Add or update newer ones as needed
   ],
   azure: [
     { code: "eastus", name: "East US" },
@@ -37,6 +49,7 @@ export const cloudRegions: Record<string, { code: string; name: string }[]> = {
     { code: "centralus", name: "Central US" },
     { code: "northcentralus", name: "North Central US" },
     { code: "southcentralus", name: "South Central US" },
+    { code: "westcentralus", name: "West Central US" },
     { code: "westus", name: "West US" },
     { code: "westus2", name: "West US 2" },
     { code: "westus3", name: "West US 3" },
@@ -45,37 +58,52 @@ export const cloudRegions: Record<string, { code: string; name: string }[]> = {
     { code: "brazilsouth", name: "Brazil South" },
     { code: "northeurope", name: "North Europe (Ireland)" },
     { code: "westeurope", name: "West Europe (Netherlands)" },
+    { code: "ukwest", name: "UK West (Cardiff)" },
+    { code: "norwayeast", name: "Norway East (Oslo)" },
     { code: "francecentral", name: "France Central (Paris)" },
     { code: "francesouth", name: "France South (Marseille)" },
     { code: "uksouth", name: "UK South (London)" },
+    { code: "germanywestcentral", name: "Germany West Central (Frankfurt)" },
+    { code: "australiaeast", name: "Australia East (Sydney)" },
+    { code: "australiasoutheast", name: "Australia Southeast (Melbourne)" },
+    { code: "koreacentral", name: "Korea Central (Seoul)" },
     { code: "uaenorth", name: "UAE North (Dubai)" },
     { code: "eastasia", name: "East Asia (Hong Kong)" },
     { code: "southeastasia", name: "Southeast Asia (Singapore)" },
     { code: "centralindia", name: "Central India (Pune)" },
     { code: "southindia", name: "South India (Chennai)" },
+    { code: "westindia", name: "West India (Mumbai)" },
     { code: "japaneast", name: "Japan East (Tokyo)" },
     { code: "japanwest", name: "Japan West (Osaka)" },
-    { code: "germanynorth", name: "Germany North (Frankfurt)" },
+    { code: "southafricanorth", name: "South Africa North (Johannesburg)" },
     { code: "switzerlandnorth", name: "Switzerland North (Zurich)" },
-    // Add more as per the latest list :contentReference[oaicite:0]{index=0}
   ],
   gcp: [
     { code: "us-central1", name: "US Central (Iowa)" },
     { code: "us-east1", name: "US East (South Carolina)" },
     { code: "us-east4", name: "US East (Northern Virginia)" },
+    { code: "us-west4", name: "US West 4 (Las Vegas)" },
     { code: "us-west1", name: "US West (Oregon)" },
     { code: "us-west2", name: "US West (Los Angeles)" },
     { code: "us-west3", name: "US West (Salt Lake City)" },
+    { code: "us-south1", name: "US South 1 (Dallas)" },
     { code: "asia-east1", name: "Asia East (Taiwan)" },
     { code: "asia-east2", name: "Asia East (Hong Kong)" },
     { code: "asia-northeast1", name: "Asia Northeast (Tokyo)" },
     { code: "asia-southeast1", name: "Asia Southeast (Singapore)" },
     { code: "asia-south1", name: "Asia South (Mumbai)" },
     { code: "asia-south2", name: "Asia South 2 (Delhi)" },
+    { code: "asia-south3", name: "Asia South 3 (Bangalore)" },
+    { code: "asia-southeast2", name: "Asia Southeast 2 (Jakarta)" },
     { code: "europe-west1", name: "Europe West 1 (Belgium)" },
     { code: "europe-west2", name: "Europe West 2 (London)" },
     { code: "europe-west3", name: "Europe West 3 (Frankfurt)" },
     { code: "europe-west4", name: "Europe West 4 (Netherlands)" },
+    { code: "europe-north1", name: "Europe North 1 (Finland)" },
+    { code: "europe-west6", name: "Europe West 6 (Zurich)" },
+    { code: "europe-west8", name: "Europe West 8 (Milan)" },
+    { code: "europe-west9", name: "Europe West 9 (Paris)" },
+    { code: "europe-west12", name: "Europe West 12 (Turin)" },
     {
       code: "northamerica-northeast1",
       name: "North America Northeast 1 (Montreal)",
@@ -84,13 +112,17 @@ export const cloudRegions: Record<string, { code: string; name: string }[]> = {
       code: "northamerica-northeast2",
       name: "North America Northeast 2 (Toronto)",
     },
+    { code: "northamerica-south1", name: "North America South 1 (Queretaro)" },
     { code: "southamerica-east1", name: "South America East 1 (São Paulo)" },
-    // Add additional global regions as needed :contentReference[oaicite:1]{index=1}
+    { code: "southamerica-west1", name: "South America West 1 (Santiago)" },
+    { code: "australia-southeast1", name: "Australia Southeast 1 (Sydney)" },
+    { code: "australia-southeast2", name: "Australia Southeast 2 (Melbourne)" },
+    { code: "me-west1", name: "Middle East West 1 (Doha)" },
+    { code: "africa-south1", name: "Africa South 1 (Johannesburg)" },
   ],
 };
 
-// Comprehensive mapping of Availability Zones for each cloud provider and region
-export const availabilityZones: Record<string, Record<string, string[]>> = {
+export const availabilityZones: Record<CloudProvider, Record<string, string[]>> = {
   aws: {
     // US Regions
     "us-east-1": [
@@ -107,14 +139,17 @@ export const availabilityZones: Record<string, Record<string, string[]>> = {
 
     // Canada
     "ca-central-1": ["ca-central-1a", "ca-central-1b", "ca-central-1d"],
+    "ca-west-1": ["ca-west-1a", "ca-west-1b", "ca-west-1c"],
 
     // Europe Regions
     "eu-west-1": ["eu-west-1a", "eu-west-1b", "eu-west-1c"],
     "eu-west-2": ["eu-west-2a", "eu-west-2b", "eu-west-2c"],
     "eu-west-3": ["eu-west-3a", "eu-west-3b", "eu-west-3c"],
     "eu-central-1": ["eu-central-1a", "eu-central-1b", "eu-central-1c"],
+    "eu-central-2": ["eu-central-2a", "eu-central-2b", "eu-central-2c"],
     "eu-north-1": ["eu-north-1a", "eu-north-1b", "eu-north-1c"],
     "eu-south-1": ["eu-south-1a", "eu-south-1b", "eu-south-1c"],
+    "eu-south-2": ["eu-south-2a", "eu-south-2b", "eu-south-2c"],
 
     // Asia Pacific Regions
     "ap-south-1": ["ap-south-1a", "ap-south-1b", "ap-south-1c"],
@@ -133,6 +168,13 @@ export const availabilityZones: Record<string, Record<string, string[]>> = {
     "ap-northeast-3": ["ap-northeast-3a", "ap-northeast-3b", "ap-northeast-3c"],
     "ap-southeast-1": ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"],
     "ap-southeast-2": ["ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"],
+    "ap-southeast-3": ["ap-southeast-3a", "ap-southeast-3b", "ap-southeast-3c"],
+    "ap-southeast-4": ["ap-southeast-4a", "ap-southeast-4b", "ap-southeast-4c"],
+    "ap-east-1": ["ap-east-1a", "ap-east-1b", "ap-east-1c"],
+
+    // Middle East / Israel
+    "me-central-1": ["me-central-1a", "me-central-1b", "me-central-1c"],
+    "il-central-1": ["il-central-1a", "il-central-1b", "il-central-1c"],
 
     // South America
     "sa-east-1": ["sa-east-1a", "sa-east-1b", "sa-east-1c"],
@@ -160,6 +202,7 @@ export const availabilityZones: Record<string, Record<string, string[]>> = {
       "southcentralus-2",
       "southcentralus-3",
     ],
+    westcentralus: ["westcentralus-1", "westcentralus-2", "westcentralus-3"],
     westus: ["westus-1", "westus-2", "westus-3"],
     westus2: ["westus2-1", "westus2-2", "westus2-3"],
     westus3: ["westus3-1", "westus3-2", "westus3-3"],
@@ -168,17 +211,32 @@ export const availabilityZones: Record<string, Record<string, string[]>> = {
     brazilsouth: ["brazilsouth-1", "brazilsouth-2", "brazilsouth-3"],
     northeurope: ["northeurope-1", "northeurope-2", "northeurope-3"],
     westeurope: ["westeurope-1", "westeurope-2", "westeurope-3"],
+    ukwest: ["ukwest-1", "ukwest-2", "ukwest-3"],
+    norwayeast: ["norwayeast-1", "norwayeast-2", "norwayeast-3"],
     francecentral: ["francecentral-1", "francecentral-2", "francecentral-3"],
     francesouth: ["francesouth-1", "francesouth-2", "francesouth-3"],
     uksouth: ["uksouth-1", "uksouth-2", "uksouth-3"],
+    germanywestcentral: [
+      "germanywestcentral-1",
+      "germanywestcentral-2",
+      "germanywestcentral-3",
+    ],
+    australiaeast: ["australiaeast-1", "australiaeast-2", "australiaeast-3"],
+    australiasoutheast: [
+      "australiasoutheast-1",
+      "australiasoutheast-2",
+      "australiasoutheast-3",
+    ],
+    koreacentral: ["koreacentral-1", "koreacentral-2", "koreacentral-3"],
     uaenorth: ["uaenorth-1", "uaenorth-2", "uaenorth-3"],
     eastasia: ["eastasia-1", "eastasia-2", "eastasia-3"],
     southeastasia: ["southeastasia-1", "southeastasia-2", "southeastasia-3"],
     centralindia: ["centralindia-1", "centralindia-2", "centralindia-3"],
     southindia: ["southindia-1", "southindia-2", "southindia-3"],
+    westindia: ["westindia-1", "westindia-2", "westindia-3"],
     japaneast: ["japaneast-1", "japaneast-2", "japaneast-3"],
     japanwest: ["japanwest-1", "japanwest-2", "japanwest-3"],
-    germanynorth: ["germanynorth-1", "germanynorth-2", "germanynorth-3"],
+    southafricanorth: ["southafricanorth-1", "southafricanorth-2", "southafricanorth-3"],
     switzerlandnorth: [
       "switzerlandnorth-1",
       "switzerlandnorth-2",
@@ -196,9 +254,11 @@ export const availabilityZones: Record<string, Record<string, string[]>> = {
     ],
     "us-east1": ["us-east1-b", "us-east1-c", "us-east1-d"],
     "us-east4": ["us-east4-a", "us-east4-b", "us-east4-c"],
+    "us-west4": ["us-west4-a", "us-west4-b", "us-west4-c"],
     "us-west1": ["us-west1-a", "us-west1-b", "us-west1-c"],
     "us-west2": ["us-west2-a", "us-west2-b", "us-west2-c"],
     "us-west3": ["us-west3-a", "us-west3-b", "us-west3-c"],
+    "us-south1": ["us-south1-a", "us-south1-b", "us-south1-c"],
     "asia-east1": ["asia-east1-a", "asia-east1-b", "asia-east1-c"],
     "asia-east2": ["asia-east2-a", "asia-east2-b", "asia-east2-c"],
     "asia-northeast1": [
@@ -213,10 +273,17 @@ export const availabilityZones: Record<string, Record<string, string[]>> = {
     ],
     "asia-south1": ["asia-south1-a", "asia-south1-b", "asia-south1-c"],
     "asia-south2": ["asia-south2-a", "asia-south2-b", "asia-south2-c"],
+    "asia-south3": ["asia-south3-a", "asia-south3-b", "asia-south3-c"],
+    "asia-southeast2": ["asia-southeast2-a", "asia-southeast2-b", "asia-southeast2-c"],
     "europe-west1": ["europe-west1-b", "europe-west1-c", "europe-west1-d"],
     "europe-west2": ["europe-west2-a", "europe-west2-b", "europe-west2-c"],
     "europe-west3": ["europe-west3-a", "europe-west3-b", "europe-west3-c"],
     "europe-west4": ["europe-west4-a", "europe-west4-b", "europe-west4-c"],
+    "europe-north1": ["europe-north1-a", "europe-north1-b", "europe-north1-c"],
+    "europe-west6": ["europe-west6-a", "europe-west6-b", "europe-west6-c"],
+    "europe-west8": ["europe-west8-a", "europe-west8-b", "europe-west8-c"],
+    "europe-west9": ["europe-west9-a", "europe-west9-b", "europe-west9-c"],
+    "europe-west12": ["europe-west12-a", "europe-west12-b", "europe-west12-c"],
     "northamerica-northeast1": [
       "northamerica-northeast1-a",
       "northamerica-northeast1-b",
@@ -227,10 +294,32 @@ export const availabilityZones: Record<string, Record<string, string[]>> = {
       "northamerica-northeast2-b",
       "northamerica-northeast2-c",
     ],
+    "northamerica-south1": [
+      "northamerica-south1-a",
+      "northamerica-south1-b",
+      "northamerica-south1-c",
+    ],
     "southamerica-east1": [
       "southamerica-east1-a",
       "southamerica-east1-b",
       "southamerica-east1-c",
     ],
+    "southamerica-west1": [
+      "southamerica-west1-a",
+      "southamerica-west1-b",
+      "southamerica-west1-c",
+    ],
+    "australia-southeast1": [
+      "australia-southeast1-a",
+      "australia-southeast1-b",
+      "australia-southeast1-c",
+    ],
+    "australia-southeast2": [
+      "australia-southeast2-a",
+      "australia-southeast2-b",
+      "australia-southeast2-c",
+    ],
+    "me-west1": ["me-west1-a", "me-west1-b", "me-west1-c"],
+    "africa-south1": ["africa-south1-a", "africa-south1-b", "africa-south1-c"],
   },
 };
