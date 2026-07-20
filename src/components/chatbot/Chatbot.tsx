@@ -23,6 +23,7 @@ import {
   Snackbar,
   Alert,
   Button,
+  Checkbox,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -184,12 +185,8 @@ const Chatbot: React.FC = () => {
   const [dismissedDiff, setDismissedDiff] = useState<string | null>(null);
   const [isImplementing, setIsImplementing] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
-    null,
-  );
-  const [deletingSessionLabel, setDeletingSessionLabel] = useState<
-    string | null
-  >(null);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -305,6 +302,14 @@ const Chatbot: React.FC = () => {
       setTalkingMessageKey(null);
     }
   }, [showHistory]);
+
+  useEffect(() => {
+    if (selectedSessionIds.length === 0) return;
+    const sessionIdSet = new Set(sessions.map((session) => session.id));
+    setSelectedSessionIds((current) =>
+      current.filter((sessionId) => sessionIdSet.has(sessionId)),
+    );
+  }, [sessions, selectedSessionIds.length]);
 
   useEffect(() => {
     const sessionId = activeSession?.id ?? null;
@@ -618,33 +623,60 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  const openDeleteDialog = (
-    e: React.MouseEvent,
-    sessionId: string,
-    label?: string,
-  ) => {
+  const openDeleteDialog = (e: React.MouseEvent, sessionIds: string[]) => {
     e.stopPropagation();
-    setDeletingSessionId(sessionId);
-    setDeletingSessionLabel(label ?? null);
+    setDeleteTargetIds(sessionIds);
     setDeleteDialogOpen(true);
+  };
+
+  const openSingleDeleteDialog = (e: React.MouseEvent, sessionId: string) => {
+    openDeleteDialog(e, [sessionId]);
+  };
+
+  const openBulkDeleteDialog = () => {
+    if (selectedSessionIds.length === 0) return;
+    setDeleteTargetIds([...selectedSessionIds]);
+    setDeleteDialogOpen(true);
+  };
+
+  const toggleSessionSelection = (sessionId: string) => {
+    setSelectedSessionIds((current) =>
+      current.includes(sessionId)
+        ? current.filter((id) => id !== sessionId)
+        : [...current, sessionId],
+    );
+  };
+
+  const toggleSelectAllSessions = () => {
+    if (sessions.length === 0) return;
+    setSelectedSessionIds((current) =>
+      current.length === sessions.length
+        ? []
+        : sessions.map((session) => session.id),
+    );
   };
 
   const closeDeleteDialog = () => {
     setDeleteDialogOpen(false);
-    setDeletingSessionId(null);
-    setDeletingSessionLabel(null);
+    setDeleteTargetIds([]);
     setIsDeleting(false);
   };
 
   const confirmDelete = async () => {
-    if (!deletingSessionId) return;
+    if (deleteTargetIds.length === 0) return;
     setIsDeleting(true);
     try {
-      await dispatch(deleteSession(deletingSessionId)).unwrap();
-      if (activeSession?.id === deletingSessionId) {
+      for (const sessionId of deleteTargetIds) {
+        await dispatch(deleteSession(sessionId)).unwrap();
+      }
+
+      if (deleteTargetIds.includes(activeSession?.id ?? "")) {
         dispatch(clearActiveSession());
       }
       showToast("Conversation deleted", "success");
+      setSelectedSessionIds((current) =>
+        current.filter((sessionId) => !deleteTargetIds.includes(sessionId)),
+      );
       closeDeleteDialog();
     } catch (err) {
       console.error("Failed to delete conversation:", err);
@@ -893,14 +925,63 @@ const Chatbot: React.FC = () => {
             {/* ── Session history panel ── */}
             {showHistory ? (
               <Box flex={1} overflow="auto">
-                <Box px={2} py={1.5}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight={700}
-                    color="text.secondary"
+                <Box
+                  px={2}
+                  py={1.5}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  gap={1}
+                >
+                  <Box display="flex" alignItems="center" gap={1} minWidth={0}>
+                    {sessions.length > 0 && (
+                      <Tooltip title="Select or clear all conversations">
+                        <Checkbox
+                          size="small"
+                          checked={
+                            selectedSessionIds.length === sessions.length
+                          }
+                          indeterminate={
+                            selectedSessionIds.length > 0 &&
+                            selectedSessionIds.length < sessions.length
+                          }
+                          onChange={toggleSelectAllSessions}
+                          slotProps={{
+                            input: {
+                              "aria-label": "Select all conversations",
+                            },
+                          }}
+                        />
+                      </Tooltip>
+                    )}
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight={700}
+                      color="text.secondary"
+                    >
+                      Previous conversations
+                    </Typography>
+                  </Box>
+                  <Tooltip
+                    title={
+                      selectedSessionIds.length > 0
+                        ? `Delete ${selectedSessionIds.length} selected conversation${selectedSessionIds.length === 1 ? "" : "s"}`
+                        : "Select conversations to delete"
+                    }
                   >
-                    Previous conversations
-                  </Typography>
+                    <span>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        startIcon={<DeleteIcon />}
+                        onClick={openBulkDeleteDialog}
+                        disabled={selectedSessionIds.length === 0}
+                      >
+                        Delete selected
+                      </Button>
+                    </span>
+                  </Tooltip>
                 </Box>
                 <Divider />
                 {sessionsStatus === "loading" && (
@@ -919,6 +1000,7 @@ const Chatbot: React.FC = () => {
                   <List dense disablePadding>
                     {sessions.map((s) => {
                       const isActive = activeSession?.id === s.id;
+                      const isSelected = selectedSessionIds.includes(s.id);
                       const updated = new Date(s.updatedAt);
                       const dateLabel = updated.toLocaleDateString(undefined, {
                         month: "short",
@@ -952,7 +1034,7 @@ const Chatbot: React.FC = () => {
                             <IconButton
                               edge="end"
                               size="small"
-                              onClick={(e) => openDeleteDialog(e, s.id, label)}
+                              onClick={(e) => openSingleDeleteDialog(e, s.id)}
                               aria-label="Delete conversation"
                             >
                               <DeleteIcon fontSize="small" color="error" />
@@ -960,7 +1042,7 @@ const Chatbot: React.FC = () => {
                           }
                         >
                           <ListItemButton
-                            selected={isActive}
+                            selected={isActive || isSelected}
                             onClick={() => {
                               if (!isActive) {
                                 dispatch(fetchSession(s.id));
@@ -968,6 +1050,16 @@ const Chatbot: React.FC = () => {
                               setShowHistory(false);
                             }}
                           >
+                            <Checkbox
+                              size="small"
+                              checked={isSelected}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={() => toggleSessionSelection(s.id)}
+                              inputProps={{
+                                "aria-label": `Select conversation ${label}`,
+                              }}
+                              sx={{ mr: 1 }}
+                            />
                             <ListItemText
                               primary={
                                 <Typography
@@ -1125,17 +1217,36 @@ const Chatbot: React.FC = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle color="error">Delete Conversation</DialogTitle>
+        <DialogTitle color="error">
+          {deleteTargetIds.length > 1
+            ? "Delete Conversations"
+            : "Delete Conversation"}
+        </DialogTitle>
         <DialogContent dividers>
           <Typography>
-            Are you sure you want to delete this conversation? It will be
-            removed from your chat history.
+            {deleteTargetIds.length > 1
+              ? `Are you sure you want to delete ${deleteTargetIds.length} conversations? They will be removed from your chat history.`
+              : "Are you sure you want to delete this conversation? It will be removed from your chat history."}
           </Typography>
-          {deletingSessionLabel && (
+          {deleteTargetIds.length > 0 && (
             <Box mt={1}>
-              <Typography variant="body2" color="text.primary" noWrap>
-                {deletingSessionLabel}
-              </Typography>
+              {deleteTargetIds.map((sessionId) => {
+                const session = sessions.find((item) => item.id === sessionId);
+                const label =
+                  session?.title?.trim() ||
+                  session?.preview?.trim() ||
+                  "Untitled conversation";
+                return (
+                  <Typography
+                    key={sessionId}
+                    variant="body2"
+                    color="text.primary"
+                    noWrap
+                  >
+                    {label}
+                  </Typography>
+                );
+              })}
             </Box>
           )}
         </DialogContent>
