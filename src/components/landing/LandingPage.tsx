@@ -3332,7 +3332,20 @@ const FinalCta: React.FC<{
                 lineHeight: 1.06,
               }}
             >
-              Start with a blueprint. Leave with Terraform.
+              Start with a blueprint.
+            </Typography>
+             <Typography
+              id="final-cta-heading"
+              variant="h2"
+              sx={{
+                color: "text.primary",
+                fontSize: { xs: "2rem", md: "3rem" },
+                fontWeight: 850,
+                letterSpacing: 0,
+                lineHeight: 1.06,
+              }}
+            >
+              Leave with IaC.
             </Typography>
             <Typography
               variant="body1"
