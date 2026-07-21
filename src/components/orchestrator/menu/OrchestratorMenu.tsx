@@ -33,6 +33,7 @@ import { SaveButton } from "../save";
 import { DeleteButton } from "../delete";
 import {
   IaCValidationIssue,
+  SaveOrchestratorResponse,
   TemplateInfo,
 } from "../../../types/orchestrator";
 import { downloadFlowAsImage } from "../utils/downloadImage.ts";
@@ -41,6 +42,7 @@ import {
   orchestratorService,
 } from "../../../services/orchestratorService";
 import PublishTemplateDialog from "../publish-template/PublishTemplateDialog";
+import PolicyFindingsDialog from "./PolicyFindingsDialog";
 
 interface OrchestratorMenuProps {
   nodes: Node[];
@@ -88,6 +90,11 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   const [validationOrchestratorId, setValidationOrchestratorId] = useState<
     string | null
   >(null);
+  const [policyFindingsDialogOpen, setPolicyFindingsDialogOpen] =
+    useState(false);
+  const [policyFindings, setPolicyFindings] = useState<IaCValidationIssue[]>(
+    [],
+  );
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -158,12 +165,28 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
     setValidationOrchestratorId(null);
   }, []);
 
+  const showPolicyFindingsIfAny = useCallback(
+    (issues?: IaCValidationIssue[]) => {
+      if (issues && issues.length > 0) {
+        setPolicyFindings(issues);
+        setPolicyFindingsDialogOpen(true);
+      }
+    },
+    [],
+  );
+
+  const closePolicyFindingsDialog = useCallback(() => {
+    setPolicyFindingsDialogOpen(false);
+    setPolicyFindings([]);
+  }, []);
+
   const triggerGenerate = useCallback(
     async (id: string, mode: "strict" | "draft" = "strict") => {
       setIsGenerating(true);
       try {
         const response = await orchestratorService.generateIac(id, { mode });
         onValidationIssuesChange?.(response.iacValidationIssues ?? []);
+        showPolicyFindingsIfAny(response.policyValidationIssues);
         setSnackbar({
           open: true,
           message:
@@ -192,7 +215,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         setIsGenerating(false);
       }
     },
-    [onValidationIssuesChange, openValidationDialog],
+    [onValidationIssuesChange, openValidationDialog, showPolicyFindingsIfAny],
   );
 
   const triggerDownload = useCallback(
@@ -201,6 +224,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
       try {
         const resp = await orchestratorService.generateIac(id, { mode });
         onValidationIssuesChange?.(resp.iacValidationIssues ?? []);
+        showPolicyFindingsIfAny(resp.policyValidationIssues);
         const url = resp?.downloadIaCUrl;
       if (url) {
         try {
@@ -249,7 +273,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         setIsDownloading(false);
       }
     },
-    [onValidationIssuesChange, openValidationDialog],
+    [onValidationIssuesChange, openValidationDialog, showPolicyFindingsIfAny],
   );
 
   const handleProceedWithDraft = useCallback(async () => {
@@ -271,10 +295,11 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   ]);
 
   const handleSaveSuccessInternal = useCallback(
-    async (savedId: string) => {
+    async (response: SaveOrchestratorResponse) => {
+      const savedId = response?._id || response?.id;
       if (!savedId) {
         console.error("handleSaveSuccessInternal received empty id", {
-          savedId,
+          response,
           pendingAction,
         });
         setSnackbar({
@@ -287,6 +312,13 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
 
       onSaveSuccess(savedId);
 
+      if (pendingAction === "none") {
+        if (response.iacValidationIssues?.length) {
+          openValidationDialog(response.iacValidationIssues, "generate", savedId);
+        }
+        showPolicyFindingsIfAny(response.policyValidationIssues);
+      }
+
       const action = pendingAction;
       setPendingAction("none");
       if (action === "generate") {
@@ -295,7 +327,14 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         await triggerDownload(savedId);
       }
     },
-    [onSaveSuccess, pendingAction, triggerDownload, triggerGenerate],
+    [
+      onSaveSuccess,
+      openValidationDialog,
+      pendingAction,
+      showPolicyFindingsIfAny,
+      triggerDownload,
+      triggerGenerate,
+    ],
   );
 
   // If the save dialog is closed without saving (cancel), clear pending action
@@ -587,6 +626,12 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <PolicyFindingsDialog
+        open={policyFindingsDialogOpen}
+        issues={policyFindings}
+        onClose={closePolicyFindingsDialog}
+      />
     </>
   );
 };

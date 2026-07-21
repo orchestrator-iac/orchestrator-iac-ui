@@ -56,6 +56,7 @@ import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig, CloudProvider } from "../../types/clouds-info";
 import { IaCValidationIssue } from "../../types/orchestrator";
+import { orchestratorService } from "../../services/orchestratorService";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
 import {
   fetchOrchestratorById,
@@ -129,7 +130,7 @@ const buildValidationErrorMap = (issues: IaCValidationIssue[]) =>
   issues.reduce<Record<string, Record<string, string>>>((acc, issue) => {
     acc[issue.nodeId] = {
       ...(acc[issue.nodeId] ?? {}),
-      [issue.field]: issue.message,
+      [issue.field ?? ""]: issue.message,
     };
     return acc;
   }, {});
@@ -509,10 +510,54 @@ const OrchestratorReactFlow: React.FC = () => {
     );
   }, [isArchitectureMode, setNodes, setEdges]);
 
-  const handleInitSubmit = (data: any) => {
-    setTemplateInfo(data);
-    setInitOpen(false);
-  };
+  const handleInitSubmit = useCallback(
+    async (data: {
+      templateName: string;
+      description: string;
+      cloud: string;
+      region: string;
+      team: Array<{ id?: string; email: string; role?: string }>;
+    }) => {
+      const appliedTemplateInfo = {
+        templateName: data.templateName,
+        description: data.description,
+        cloud: data.cloud as CloudProvider,
+        region: data.region,
+      };
+
+      setTemplateInfo(appliedTemplateInfo);
+
+      if (template_id !== "new") {
+        setInitOpen(false);
+        return;
+      }
+
+      const saveRequest = prepareOrchestratorForSave(
+        [],
+        [],
+        appliedTemplateInfo,
+        user,
+      );
+
+      const response = await orchestratorService.saveOrchestrator(saveRequest);
+      const savedId = response._id || response.id;
+
+      if (!savedId) {
+        throw new Error("Backend did not return an orchestrator id");
+      }
+
+      setCurrentOrchestratorId(savedId);
+      setBaselineSnapshot(serializePersistedSnapshot(saveRequest));
+      setMaestroReviewDraft(null);
+      setPendingMaestroDraft(null);
+      setReplaceDraftDialogOpen(false);
+      setInitOpen(false);
+      navigate(`/orchestrator/${savedId}?template_type=custom`, {
+        replace: true,
+      });
+    },
+    [navigate, prepareOrchestratorForSave, setTemplateInfo, template_id, user],
+  );
 
   const onDrop = useCallback(
     async (event: React.DragEvent) => {

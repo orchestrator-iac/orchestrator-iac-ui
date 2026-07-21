@@ -43,9 +43,13 @@ export interface IaCValidationIssue {
   nodeId: string;
   resourceId: string;
   friendlyId?: string;
-  field: string;
+  field?: string;
   label: string;
   message: string;
+  source?: "field" | "policy";
+  category?: string;
+  ruleId?: string;
+  remediation?: string;
 }
 
 // Complete orchestrator state for saving
@@ -80,6 +84,7 @@ export interface SaveOrchestratorResponse {
   updatedAt?: string;
   downloadIaCUrl?: string;
   iacValidationIssues?: IaCValidationIssue[];
+  policyValidationIssues?: IaCValidationIssue[];
   iacGenerationSummary?: Record<string, any> | null;
 }
 
