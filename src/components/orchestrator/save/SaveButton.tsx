@@ -5,14 +5,14 @@ import { Node, Edge } from "@xyflow/react";
 
 import { validateOrchestratorData } from "../../../utils/orchestratorUtils";
 import { SaveOrchestratorDialog } from "./SaveOrchestratorDialog";
-import { TemplateInfo } from "../../../types/orchestrator";
+import { SaveOrchestratorResponse, TemplateInfo } from "../../../types/orchestrator";
 
 interface SaveButtonProps {
   nodes: Node[];
   edges: Edge[];
   templateInfo: TemplateInfo;
   currentOrchestratorId: string | null;
-  onSaveSuccess: (orchestratorId: string) => void;
+  onSaveSuccess: (response: SaveOrchestratorResponse) => void;
   disabled?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -67,8 +67,8 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   }, [onOpenChange]);
 
   const handleSaveSuccess = useCallback(
-    (orchestratorId: string) => {
-      onSaveSuccess(orchestratorId);
+    (response: SaveOrchestratorResponse) => {
+      onSaveSuccess(response);
       setDialogOpen(false);
     },
     [onSaveSuccess],

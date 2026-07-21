@@ -20,7 +20,7 @@ import {
   prepareOrchestratorForSave,
   validateOrchestratorData,
 } from "../../../utils/orchestratorUtils";
-import { TemplateInfo } from "../../../types/orchestrator";
+import { SaveOrchestratorResponse, TemplateInfo } from "../../../types/orchestrator";
 import { generateFlowImage } from "../utils/downloadImage";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -31,7 +31,7 @@ interface SaveOrchestratorDialogProps {
   edges: Edge[];
   templateInfo: TemplateInfo;
   currentOrchestratorId: string | null;
-  onSaveSuccess: (orchestratorId: string) => void;
+  onSaveSuccess: (response: SaveOrchestratorResponse) => void;
 }
 
 /**
@@ -158,7 +158,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
       }
 
       // Notify parent of successful save
-      onSaveSuccess(savedId);
+      onSaveSuccess(response);
 
       // Show success message
       setShowSuccess(true);

@@ -56,6 +56,7 @@ import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig, CloudProvider } from "../../types/clouds-info";
 import { IaCValidationIssue } from "../../types/orchestrator";
+import { orchestratorService } from "../../services/orchestratorService";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
 import {
   fetchOrchestratorById,
@@ -111,6 +112,8 @@ const EMPTY_TEMPLATE_INFO: CloudConfig = {
   region: "",
 };
 
+const AUTO_SAVE_STORAGE_KEY = "orchestrator-auto-save-enabled";
+
 const normalizeTemplateInfo = (
   templateInfo?: {
     templateName?: string;
@@ -129,7 +132,7 @@ const buildValidationErrorMap = (issues: IaCValidationIssue[]) =>
   issues.reduce<Record<string, Record<string, string>>>((acc, issue) => {
     acc[issue.nodeId] = {
       ...(acc[issue.nodeId] ?? {}),
-      [issue.field]: issue.message,
+      [issue.field ?? ""]: issue.message,
     };
     return acc;
   }, {});
@@ -257,6 +260,13 @@ const OrchestratorReactFlow: React.FC = () => {
     useState<MaestroDraftPayload | null>(null);
   const [replaceDraftDialogOpen, setReplaceDraftDialogOpen] = useState(false);
   const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.localStorage.getItem(AUTO_SAVE_STORAGE_KEY) === "true";
+  });
   const requestedOrchestratorIdsRef = useRef<Set<string>>(new Set());
   const routeLoadCountRef = useRef(0);
 
@@ -470,6 +480,59 @@ const OrchestratorReactFlow: React.FC = () => {
     return currentSnapshot !== baselineSnapshot;
   }, [baselineSnapshot, buildCurrentCanvasSnapshot]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      AUTO_SAVE_STORAGE_KEY,
+      autoSaveEnabled ? "true" : "false",
+    );
+  }, [autoSaveEnabled]);
+
+  useEffect(() => {
+    if (!autoSaveEnabled || isViewMode) {
+      return;
+    }
+
+    if (!currentOrchestratorId || !isCanvasDirty()) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const saveRequest = prepareOrchestratorForSave(
+        nodes,
+        edges,
+        templateInfo,
+        user,
+      );
+
+      void orchestratorService
+        .updateOrchestrator(currentOrchestratorId, saveRequest)
+        .then((response) => {
+          const savedId = response._id || response.id || currentOrchestratorId;
+          setCurrentOrchestratorId(savedId);
+          setBaselineSnapshot(serializePersistedSnapshot(saveRequest));
+          setValidationErrorsByNode({});
+        })
+        .catch((error) => {
+          console.error("Auto-save failed:", error);
+        });
+    }, 1500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    autoSaveEnabled,
+    currentOrchestratorId,
+    edges,
+    isCanvasDirty,
+    isViewMode,
+    nodes,
+    templateInfo,
+    user,
+  ]);
+
   const applyMaestroDraft = useCallback(
     async (draft: MaestroDraftPayload) => {
       const appliedTemplateInfo = normalizeTemplateInfo(
@@ -509,10 +572,37 @@ const OrchestratorReactFlow: React.FC = () => {
     );
   }, [isArchitectureMode, setNodes, setEdges]);
 
-  const handleInitSubmit = (data: any) => {
-    setTemplateInfo(data);
-    setInitOpen(false);
-  };
+  const handleInitSubmit = useCallback(
+    async (data: {
+      templateName: string;
+      description: string;
+      cloud: string;
+      region: string;
+      team: Array<{ id?: string; email: string; role?: string }>;
+    }) => {
+      const appliedTemplateInfo = {
+        templateName: data.templateName,
+        description: data.description,
+        cloud: data.cloud as CloudProvider,
+        region: data.region,
+      };
+
+      setTemplateInfo(appliedTemplateInfo);
+
+      if (template_id !== "new") {
+        setInitOpen(false);
+        return;
+      }
+
+      setCurrentOrchestratorId(null);
+      setBaselineSnapshot(null);
+      setMaestroReviewDraft(null);
+      setPendingMaestroDraft(null);
+      setReplaceDraftDialogOpen(false);
+      setInitOpen(false);
+    },
+    [setTemplateInfo, template_id],
+  );
 
   const onDrop = useCallback(
     async (event: React.DragEvent) => {
@@ -1907,6 +1997,8 @@ const OrchestratorReactFlow: React.FC = () => {
                     setIsArchitectureMode(value)
                   }
                   onValidationIssuesChange={handleValidationIssuesChange}
+                  autoSaveEnabled={autoSaveEnabled}
+                  onAutoSaveEnabledChange={setAutoSaveEnabled}
                 />
               )}
             </Box>

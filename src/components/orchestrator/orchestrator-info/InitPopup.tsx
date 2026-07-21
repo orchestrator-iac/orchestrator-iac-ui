@@ -3,6 +3,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Alert,
   TextField,
   Button,
   MenuItem,
@@ -36,10 +37,11 @@ type InitPopupProps = {
   onBackToHome?: () => void;
   onSubmit: (data: {
     templateName: string;
+    description: string;
     cloud: string;
     region: string;
     team: TeamMember[];
-  }) => void;
+  }) => Promise<void> | void;
 };
 
 const InitPopup = ({
@@ -66,6 +68,8 @@ const InitPopup = ({
   const [email, setEmail] = useState("");
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setTouched({
@@ -74,6 +78,7 @@ const InitPopup = ({
       cloud: false,
       region: false,
     });
+    setSubmitError("");
     setForm({
       templateName: templateInfo?.templateName || "",
       description: templateInfo?.description || "",
@@ -115,16 +120,27 @@ const InitPopup = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.templateName || !form.cloud || !form.region) return;
-    setTemplateInfo({
+    setIsSubmitting(true);
+    setSubmitError("");
+    const nextTemplateInfo = {
       templateName: form.templateName,
       description: form.description,
       cloud: form.cloud as CloudProvider,
       region: form.region,
-    });
-    onSubmit({ ...form, team });
-    setTimeout(() => onClose(), 0);
+    };
+
+    try {
+      setTemplateInfo(nextTemplateInfo);
+      await onSubmit({ ...form, team });
+      onClose();
+    } catch (error: any) {
+      console.error("Failed to initialize template", error);
+      setSubmitError(error?.message || "Failed to initialize template");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid = form.templateName && form.cloud && form.region;
@@ -320,6 +336,7 @@ const InitPopup = ({
           </Grid>
 
         </Grid>
+        {submitError ? <Alert severity="error">{submitError}</Alert> : null}
       </DialogContent>
       <DialogActions
         sx={{
@@ -353,9 +370,9 @@ const InitPopup = ({
               transform: "translateY(-2px)",
             },
           }}
-          disabled={!isFormValid}
+          disabled={!isFormValid || isSubmitting}
         >
-          Save
+          {isSubmitting ? "Creating..." : "Save"}
         </Button>
       </DialogActions>
     </Dialog>
