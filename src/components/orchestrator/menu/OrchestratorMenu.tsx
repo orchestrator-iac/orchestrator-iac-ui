@@ -53,6 +53,8 @@ interface OrchestratorMenuProps {
   orchestratorName?: string;
   isArchitectureMode: boolean;
   onArchitectureModeChange: (value: boolean) => void;
+  autoSaveEnabled: boolean;
+  onAutoSaveEnabledChange: (value: boolean) => void;
   onValidationIssuesChange?: (issues: IaCValidationIssue[]) => void;
   /** templateId set on the orchestrator if it has been published to the gallery */
   templateId?: string;
@@ -67,6 +69,8 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   orchestratorName,
   isArchitectureMode,
   onArchitectureModeChange,
+  autoSaveEnabled,
+  onAutoSaveEnabledChange,
   onValidationIssuesChange,
   templateId,
 }) => {
@@ -433,6 +437,48 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
               event.stopPropagation();
             }}
             slotProps={{ input: { "aria-label": "Toggle architecture mode" } }}
+          />
+        </MenuItem>
+
+        <MenuItem
+          disableRipple
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+          sx={{
+            alignItems: "center",
+            borderRadius: 1.5,
+            mx: 0.5,
+            "&:hover": {
+              bgcolor: "action.hover",
+            },
+          }}
+        >
+          <ListItemIcon>
+            <ArchiveIcon
+              fontSize="small"
+              color={autoSaveEnabled ? "primary" : "disabled"}
+            />
+          </ListItemIcon>
+          <ListItemText
+            primary="Auto-save"
+            secondary="Saves changes after you pause editing"
+            slotProps={{ primary: { sx: { fontWeight: 500 } } }}
+            sx={{ cursor: "pointer", mr: 1 }}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAutoSaveEnabledChange(!autoSaveEnabled);
+            }}
+          />
+          <Switch
+            edge="end"
+            size="small"
+            checked={autoSaveEnabled}
+            onChange={(_, checked) => onAutoSaveEnabledChange(checked)}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+            slotProps={{ input: { "aria-label": "Toggle auto-save" } }}
           />
         </MenuItem>
 

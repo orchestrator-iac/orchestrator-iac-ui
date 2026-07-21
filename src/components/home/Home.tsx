@@ -929,74 +929,46 @@ const Home: React.FC = () => {
                               <FontAwesomeIcon icon="sitemap" />
                             </Box>
                           )}
-                          <Typography
-                            variant="h6"
-                            className={styles.cardTitle}
+                          <Box
                             sx={{
-                              fontWeight: 600,
-                              fontSize: "1.1rem",
+                              display: "flex",
+                              alignItems: "flex-start",
+                              justifyContent: "space-between",
+                              gap: 1.5,
                               mt: 1.5,
                               mb: 0.75,
                             }}
                           >
-                            <Link
-                              to={`/orchestrator/${orchestrator._id}`}
-                              style={{
-                                textDecoration: "none",
-                                color: "inherit",
-                              }}
-                              aria-label={`View orchestrator ${orchestrator.templateInfo?.templateName || "Orchestrator"}`}
-                            >
-                              {orchestrator.templateInfo?.templateName ||
-                                "Unnamed Orchestrator"}
-                            </Link>
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            className={styles.cardDescription}
-                            sx={{ mb: 1.5, lineHeight: 1.5 }}
-                          >
-                            {orchestrator.templateInfo?.description ||
-                              "No description"}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              gap: 1,
-                              alignItems: "center",
-                              flexWrap: "wrap",
-                              justifyContent: "space-between",
-                            }}
-                          >
-                            <Box
-                              component="code"
+                            <Typography
+                              variant="h6"
+                              className={styles.cardTitle}
                               sx={{
-                                fontSize: "0.8rem",
-                                color: "text.secondary",
-                                backgroundColor:
-                                  theme.palette.mode === "dark"
-                                    ? "rgba(255, 255, 255, 0.05)"
-                                    : "rgba(0, 0, 0, 0.04)",
-                                px: 1.5,
-                                py: 0.75,
-                                borderRadius: 1,
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 0.5,
+                                fontWeight: 600,
+                                fontSize: "1.1rem",
+                                flex: 1,
+                                minWidth: 0,
+                                mb: 0,
                               }}
                             >
-                              <FontAwesomeIcon
-                                icon="circle-nodes"
-                                style={{ fontSize: "0.75rem" }}
-                              />
-                              {orchestrator.nodeCount} nodes •{" "}
-                              {orchestrator.edgeCount} connections
-                            </Box>
+                              <Link
+                                to={`/orchestrator/${orchestrator._id}`}
+                                style={{
+                                  textDecoration: "none",
+                                  color: "inherit",
+                                }}
+                                aria-label={`View orchestrator ${orchestrator.templateInfo?.templateName || "Orchestrator"}`}
+                              >
+                                {orchestrator.templateInfo?.templateName ||
+                                  "Unnamed Orchestrator"}
+                              </Link>
+                            </Typography>
                             <Box
                               sx={{
                                 display: "flex",
                                 gap: 0.5,
                                 alignItems: "center",
+                                flexShrink: 0,
+                                mt: -0.25,
                               }}
                             >
                               <Tooltip
@@ -1109,6 +1081,37 @@ const Home: React.FC = () => {
                                 </Tooltip>
                               )}
                             </Box>
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            className={styles.cardDescription}
+                            sx={{ mb: 1.5, lineHeight: 1.5 }}
+                          >
+                            {orchestrator.templateInfo?.description ||
+                              "No description"}
+                          </Typography>
+                          <Box
+                            component="code"
+                            sx={{
+                              fontSize: "0.8rem",
+                              color: "text.secondary",
+                              backgroundColor:
+                                theme.palette.mode === "dark"
+                                  ? "rgba(255, 255, 255, 0.05)"
+                                  : "rgba(0, 0, 0, 0.04)",
+                              px: 1.5,
+                              py: 0.75,
+                              borderRadius: 1,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <FontAwesomeIcon
+                              icon="circle-nodes"
+                              style={{ fontSize: "0.75rem" }}
+                            />
+                            {orchestrator.nodeCount} resources
                           </Box>
                         </Box>
                       </Fade>

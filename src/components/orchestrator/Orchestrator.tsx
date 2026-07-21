@@ -112,6 +112,8 @@ const EMPTY_TEMPLATE_INFO: CloudConfig = {
   region: "",
 };
 
+const AUTO_SAVE_STORAGE_KEY = "orchestrator-auto-save-enabled";
+
 const normalizeTemplateInfo = (
   templateInfo?: {
     templateName?: string;
@@ -258,6 +260,13 @@ const OrchestratorReactFlow: React.FC = () => {
     useState<MaestroDraftPayload | null>(null);
   const [replaceDraftDialogOpen, setReplaceDraftDialogOpen] = useState(false);
   const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.localStorage.getItem(AUTO_SAVE_STORAGE_KEY) === "true";
+  });
   const requestedOrchestratorIdsRef = useRef<Set<string>>(new Set());
   const routeLoadCountRef = useRef(0);
 
@@ -471,6 +480,59 @@ const OrchestratorReactFlow: React.FC = () => {
     return currentSnapshot !== baselineSnapshot;
   }, [baselineSnapshot, buildCurrentCanvasSnapshot]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      AUTO_SAVE_STORAGE_KEY,
+      autoSaveEnabled ? "true" : "false",
+    );
+  }, [autoSaveEnabled]);
+
+  useEffect(() => {
+    if (!autoSaveEnabled || isViewMode) {
+      return;
+    }
+
+    if (!currentOrchestratorId || !isCanvasDirty()) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const saveRequest = prepareOrchestratorForSave(
+        nodes,
+        edges,
+        templateInfo,
+        user,
+      );
+
+      void orchestratorService
+        .updateOrchestrator(currentOrchestratorId, saveRequest)
+        .then((response) => {
+          const savedId = response._id || response.id || currentOrchestratorId;
+          setCurrentOrchestratorId(savedId);
+          setBaselineSnapshot(serializePersistedSnapshot(saveRequest));
+          setValidationErrorsByNode({});
+        })
+        .catch((error) => {
+          console.error("Auto-save failed:", error);
+        });
+    }, 1500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    autoSaveEnabled,
+    currentOrchestratorId,
+    edges,
+    isCanvasDirty,
+    isViewMode,
+    nodes,
+    templateInfo,
+    user,
+  ]);
+
   const applyMaestroDraft = useCallback(
     async (draft: MaestroDraftPayload) => {
       const appliedTemplateInfo = normalizeTemplateInfo(
@@ -532,31 +594,14 @@ const OrchestratorReactFlow: React.FC = () => {
         return;
       }
 
-      const saveRequest = prepareOrchestratorForSave(
-        [],
-        [],
-        appliedTemplateInfo,
-        user,
-      );
-
-      const response = await orchestratorService.saveOrchestrator(saveRequest);
-      const savedId = response._id || response.id;
-
-      if (!savedId) {
-        throw new Error("Backend did not return an orchestrator id");
-      }
-
-      setCurrentOrchestratorId(savedId);
-      setBaselineSnapshot(serializePersistedSnapshot(saveRequest));
+      setCurrentOrchestratorId(null);
+      setBaselineSnapshot(null);
       setMaestroReviewDraft(null);
       setPendingMaestroDraft(null);
       setReplaceDraftDialogOpen(false);
       setInitOpen(false);
-      navigate(`/orchestrator/${savedId}?template_type=custom`, {
-        replace: true,
-      });
     },
-    [navigate, prepareOrchestratorForSave, setTemplateInfo, template_id, user],
+    [setTemplateInfo, template_id],
   );
 
   const onDrop = useCallback(
@@ -1952,6 +1997,8 @@ const OrchestratorReactFlow: React.FC = () => {
                     setIsArchitectureMode(value)
                   }
                   onValidationIssuesChange={handleValidationIssuesChange}
+                  autoSaveEnabled={autoSaveEnabled}
+                  onAutoSaveEnabledChange={setAutoSaveEnabled}
                 />
               )}
             </Box>
