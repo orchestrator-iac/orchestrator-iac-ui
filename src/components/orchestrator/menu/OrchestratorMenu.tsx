@@ -29,10 +29,13 @@ import ArchitectureIcon from "@mui/icons-material/Architecture";
 import DownloadIcon from "@mui/icons-material/Download";
 import ArchiveIcon from "@mui/icons-material/Archive";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import PolicyIcon from "@mui/icons-material/GppMaybe";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { SaveButton } from "../save";
 import { DeleteButton } from "../delete";
 import {
   IaCValidationIssue,
+  PolicyScanSettings,
   SaveOrchestratorResponse,
   TemplateInfo,
 } from "../../../types/orchestrator";
@@ -43,6 +46,7 @@ import {
 } from "../../../services/orchestratorService";
 import PublishTemplateDialog from "../publish-template/PublishTemplateDialog";
 import PolicyFindingsDialog from "./PolicyFindingsDialog";
+import PolicyScanSettingsDialog from "./PolicyScanSettingsDialog";
 
 interface OrchestratorMenuProps {
   nodes: Node[];
@@ -55,6 +59,8 @@ interface OrchestratorMenuProps {
   onArchitectureModeChange: (value: boolean) => void;
   autoSaveEnabled: boolean;
   onAutoSaveEnabledChange: (value: boolean) => void;
+  policyScan: PolicyScanSettings;
+  onPolicyScanChange: (value: PolicyScanSettings) => void;
   onValidationIssuesChange?: (issues: IaCValidationIssue[]) => void;
   /** templateId set on the orchestrator if it has been published to the gallery */
   templateId?: string;
@@ -71,6 +77,8 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   onArchitectureModeChange,
   autoSaveEnabled,
   onAutoSaveEnabledChange,
+  policyScan,
+  onPolicyScanChange,
   onValidationIssuesChange,
   templateId,
 }) => {
@@ -99,6 +107,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   const [policyFindings, setPolicyFindings] = useState<IaCValidationIssue[]>(
     [],
   );
+  const [policyScanSettingsOpen, setPolicyScanSettingsOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -132,6 +141,10 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
     setPendingAction("downloadZip");
     setSaveDialogOpen(true);
     handleMenuClose();
+  };
+
+  const handlePolicyScanToggle = (enabled: boolean) => {
+    onPolicyScanChange({ ...policyScan, enabled });
   };
 
   const handleDownloadImage = async () => {
@@ -483,6 +496,59 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         </MenuItem>
 
         <MenuItem
+          disableRipple
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+          sx={{
+            alignItems: "center",
+            borderRadius: 1.5,
+            mx: 0.5,
+            "&:hover": {
+              bgcolor: "action.hover",
+            },
+          }}
+        >
+          <ListItemIcon>
+            <PolicyIcon
+              fontSize="small"
+              color={policyScan.enabled ? "primary" : "disabled"}
+            />
+          </ListItemIcon>
+          <ListItemText
+            primary="Policy scan"
+            secondary="Advisory security/compliance checks on generate"
+            slotProps={{ primary: { sx: { fontWeight: 500 } } }}
+            sx={{ cursor: "pointer", mr: 1 }}
+            onClick={(event) => {
+              event.stopPropagation();
+              handlePolicyScanToggle(!policyScan.enabled);
+            }}
+          />
+          <Tooltip title="Policy scan settings" arrow>
+            <IconButton
+              size="small"
+              onClick={(event) => {
+                event.stopPropagation();
+                setPolicyScanSettingsOpen(true);
+              }}
+            >
+              <SettingsOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Switch
+            edge="end"
+            size="small"
+            checked={policyScan.enabled}
+            onChange={(_, checked) => handlePolicyScanToggle(checked)}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+            slotProps={{ input: { "aria-label": "Toggle policy scan" } }}
+          />
+        </MenuItem>
+
+        <MenuItem
           onClick={handleDownloadImage}
           sx={{
             borderRadius: 1.5,
@@ -592,6 +658,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           nodes={nodes}
           edges={edges}
           templateInfo={templateInfo}
+          policyScan={policyScan}
           currentOrchestratorId={currentOrchestratorId}
           onSaveSuccess={handleSaveSuccessInternal}
           disabled={!canSave}
@@ -677,6 +744,13 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         open={policyFindingsDialogOpen}
         issues={policyFindings}
         onClose={closePolicyFindingsDialog}
+      />
+
+      <PolicyScanSettingsDialog
+        open={policyScanSettingsOpen}
+        policyScan={policyScan}
+        onChange={onPolicyScanChange}
+        onClose={() => setPolicyScanSettingsOpen(false)}
       />
     </>
   );

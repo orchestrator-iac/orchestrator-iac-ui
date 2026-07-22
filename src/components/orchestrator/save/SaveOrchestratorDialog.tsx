@@ -20,7 +20,11 @@ import {
   prepareOrchestratorForSave,
   validateOrchestratorData,
 } from "../../../utils/orchestratorUtils";
-import { SaveOrchestratorResponse, TemplateInfo } from "../../../types/orchestrator";
+import {
+  PolicyScanSettings,
+  SaveOrchestratorResponse,
+  TemplateInfo,
+} from "../../../types/orchestrator";
 import { generateFlowImage } from "../utils/downloadImage";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -30,6 +34,7 @@ interface SaveOrchestratorDialogProps {
   nodes: Node[];
   edges: Edge[];
   templateInfo: TemplateInfo;
+  policyScan?: PolicyScanSettings;
   currentOrchestratorId: string | null;
   onSaveSuccess: (response: SaveOrchestratorResponse) => void;
 }
@@ -44,6 +49,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
   nodes,
   edges,
   templateInfo,
+  policyScan,
   currentOrchestratorId,
   onSaveSuccess,
 }) => {
@@ -116,6 +122,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
         edges,
         updatedTemplateInfo,
         user,
+        policyScan,
       );
 
       // Step 3: Add the image to the request if generated successfully
@@ -179,6 +186,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
     nodes,
     edges,
     templateInfo,
+    policyScan,
     templateName,
     templateDescription,
     currentOrchestratorId,

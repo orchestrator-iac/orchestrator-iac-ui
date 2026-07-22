@@ -2,6 +2,7 @@ import { Node, Edge } from "@xyflow/react";
 import {
   OrchestratorNode,
   OrchestratorEdge,
+  PolicyScanSettings,
   SaveOrchestratorRequest,
   TemplateInfo,
 } from "../types/orchestrator";
@@ -300,6 +301,7 @@ export const transformEdgeForDB = (edge: Edge): OrchestratorEdge => {
  * @param edges - Array of React Flow edges
  * @param templateInfo - Template configuration metadata (includes templateName and description)
  * @param userInfo - User information for template resolution
+ * @param policyScan - Policy-as-code scan preferences (on/off + selected categories)
  * @returns Complete orchestrator save request
  */
 export const prepareOrchestratorForSave = (
@@ -307,6 +309,7 @@ export const prepareOrchestratorForSave = (
   edges: Edge[],
   templateInfo: TemplateInfo,
   userInfo?: any,
+  policyScan?: PolicyScanSettings,
 ): SaveOrchestratorRequest => {
   const friendlyIdLookup = buildFriendlyIdLookup(nodes);
 
@@ -342,6 +345,7 @@ export const prepareOrchestratorForSave = (
       updatedAt: new Date(),
       version: "1.0",
     },
+    policyScan,
   };
 };
 

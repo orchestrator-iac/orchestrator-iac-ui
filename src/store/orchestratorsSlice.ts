@@ -22,6 +22,7 @@ const mapOrchestratorToListItem = (item: any): OrchestratorListItem => ({
   createdAt: item.metadata?.createdAt ?? item.createdAt ?? new Date().toISOString(),
   updatedAt: item.metadata?.updatedAt ?? item.updatedAt ?? new Date().toISOString(),
   metadata: item.metadata,
+  policyScan: item.policyScan,
 });
 
 export const fetchOrchestratorById = createAsyncThunk(

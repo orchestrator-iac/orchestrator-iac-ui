@@ -110,10 +110,8 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
               sx={{
                 width: 42,
                 height: 42,
-                borderRadius: "8px",
                 mr: 1.5,
                 objectFit: "contain",
-                boxShadow: `0 0 2px ${theme.palette.secondary.main}`,
               }}
             />
           )}

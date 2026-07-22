@@ -19,17 +19,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { IaCValidationIssue } from "../../../types/orchestrator";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  encryption: "Encryption",
-  "public-exposure": "Public exposure",
-  tagging: "Tagging",
-  naming: "Naming",
-  other: "Other",
-};
-
-const categoryLabel = (category?: string): string =>
-  CATEGORY_LABELS[category || "other"] || "Other";
+import { policyCategoryLabel } from "../../../utils/policyCategories";
 
 const groupByCategory = (
   issues: IaCValidationIssue[],
@@ -72,7 +62,7 @@ export const PolicyFindingsDialog: React.FC<PolicyFindingsDialogProps> = ({
           <Accordion key={category} defaultExpanded disableGutters>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography sx={{ fontWeight: 500 }}>
-                {categoryLabel(category)}
+                {policyCategoryLabel(category)}
               </Typography>
               <Chip label={categoryIssues.length} size="small" sx={{ ml: 1 }} />
             </AccordionSummary>
