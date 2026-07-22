@@ -12,9 +12,24 @@ export const POLICY_CATEGORY_LABELS: Record<string, string> = {
   other: "Other",
 };
 
+export const POLICY_CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  encryption:
+    "Checks for missing encryption controls, weak defaults, or unsafe storage configuration.",
+  "public-exposure":
+    "Flags resources or policies that may expose data, services, or network surfaces publicly.",
+  tagging:
+    "Looks for missing ownership, cost, environment, or lifecycle tags that support governance.",
+  naming:
+    "Validates naming patterns so resources stay consistent, searchable, and automation-friendly.",
+  other: "Additional advisory checks that do not fit one of the core categories.",
+};
+
 export const POLICY_CATEGORY_KEYS = Object.keys(POLICY_CATEGORY_LABELS).filter(
   (key) => key !== "other",
 );
 
 export const policyCategoryLabel = (category?: string): string =>
   POLICY_CATEGORY_LABELS[category || "other"] || "Other";
+
+export const policyCategoryDescription = (category?: string): string =>
+  POLICY_CATEGORY_DESCRIPTIONS[category || "other"] || POLICY_CATEGORY_DESCRIPTIONS.other;

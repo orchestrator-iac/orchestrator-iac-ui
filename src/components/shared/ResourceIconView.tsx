@@ -44,6 +44,10 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
   const normalized = normalizeResourceIcon(icon);
   const atlasCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const atlasHostRef = React.useRef<HTMLDivElement | null>(null);
+  const sxObject =
+    sx && typeof sx === "object" && !Array.isArray(sx)
+      ? (sx as Record<string, unknown>)
+      : {};
   if (!normalized) {
     return null;
   }
@@ -53,6 +57,18 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
     atlasSprite && atlasSprite.pixelRatio && atlasSprite.pixelRatio > 0
       ? atlasSprite.pixelRatio
       : 1;
+  const atlasWidth =
+    typeof sxObject.width === "number" || typeof sxObject.width === "string"
+      ? sxObject.width
+      : atlasSprite
+        ? atlasSprite.width / atlasDisplayScale
+        : undefined;
+  const atlasHeight =
+    typeof sxObject.height === "number" || typeof sxObject.height === "string"
+      ? sxObject.height
+      : atlasSprite
+        ? atlasSprite.height / atlasDisplayScale
+        : undefined;
 
   React.useEffect(() => {
     if (!atlasSprite) {
@@ -80,9 +96,11 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
       const fallbackHeight = atlasSprite.height / atlasDisplayScale;
       const width = Math.max(1, Math.round(rect.width || fallbackWidth));
       const height = Math.max(1, Math.round(rect.height || fallbackHeight));
-      const dpr = window.devicePixelRatio || 1;
-      currentCanvas.width = Math.round(width * dpr);
-      currentCanvas.height = Math.round(height * dpr);
+      const inset = Math.max(2, Math.round(Math.min(width, height) * 0.12));
+      const drawWidth = Math.max(1, width - inset * 2);
+      const drawHeight = Math.max(1, height - inset * 2);
+      currentCanvas.width = width;
+      currentCanvas.height = height;
       currentCanvas.style.width = `${width}px`;
       currentCanvas.style.height = `${height}px`;
 
@@ -91,7 +109,7 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
         return;
       }
 
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.setTransform(1, 0, 0, 1, 0, 0);
       context.clearRect(0, 0, width, height);
       context.imageSmoothingEnabled = true;
       context.drawImage(
@@ -100,10 +118,10 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
         atlasSprite.y,
         atlasSprite.width,
         atlasSprite.height,
-        0,
-        0,
-        width,
-        height,
+        inset,
+        inset,
+        drawWidth,
+        drawHeight,
       );
     };
 
@@ -124,11 +142,11 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
         aria-label={alt}
         className={className}
         ref={atlasHostRef}
+        style={{ width: atlasWidth, height: atlasHeight }}
         sx={{
           ...((sx as object) || {}),
-          width: (sx as any)?.width ?? atlasSprite.width / atlasDisplayScale,
-          height:
-            (sx as any)?.height ?? atlasSprite.height / atlasDisplayScale,
+          width: atlasWidth,
+          height: atlasHeight,
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
@@ -153,6 +171,13 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
         aria-label={alt}
         className={className}
         viewBox={normalized.sprite.viewBox}
+        style={{
+          width: typeof sxObject.width === "number" || typeof sxObject.width === "string" ? sxObject.width : undefined,
+          height:
+            typeof sxObject.height === "number" || typeof sxObject.height === "string"
+              ? sxObject.height
+              : undefined,
+        }}
         sx={{
           ...((sx as object) || {}),
           flexShrink: 0,
@@ -176,6 +201,13 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
       src={normalized.url}
       alt={alt}
       className={className}
+      style={{
+        width: typeof sxObject.width === "number" || typeof sxObject.width === "string" ? sxObject.width : undefined,
+        height:
+          typeof sxObject.height === "number" || typeof sxObject.height === "string"
+            ? sxObject.height
+            : undefined,
+      }}
       sx={{
         ...((sx as object) || {}),
         flexShrink: 0,
