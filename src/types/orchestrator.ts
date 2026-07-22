@@ -37,6 +37,11 @@ export interface TemplateInfo {
   region?: string;
 }
 
+export interface PolicyScanSettings {
+  enabled: boolean;
+  categories?: string[]; // undefined/empty = all curated categories
+}
+
 export interface IaCValidationIssue {
   severity: "error" | "warning";
   blocking: boolean;
@@ -64,6 +69,7 @@ export interface SaveOrchestratorRequest {
     version?: string;
     tags?: string[];
   };
+  policyScan?: PolicyScanSettings;
 }
 
 // Response from save operation
@@ -85,6 +91,7 @@ export interface SaveOrchestratorResponse {
   downloadIaCUrl?: string;
   iacValidationIssues?: IaCValidationIssue[];
   policyValidationIssues?: IaCValidationIssue[];
+  policyScan?: PolicyScanSettings;
   iacGenerationSummary?: Record<string, any> | null;
 }
 
@@ -107,6 +114,7 @@ export interface OrchestratorListItem {
   };
   /** ID of the published template derived from this orchestrator, if any. */
   templateId?: string;
+  policyScan?: PolicyScanSettings;
 }
 
 // Response for listing orchestrations

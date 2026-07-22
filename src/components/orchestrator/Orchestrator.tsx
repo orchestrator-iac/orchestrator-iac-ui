@@ -55,7 +55,10 @@ import { updateSession } from "../../store/chatSlice";
 import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig, CloudProvider } from "../../types/clouds-info";
-import { IaCValidationIssue } from "../../types/orchestrator";
+import {
+  IaCValidationIssue,
+  PolicyScanSettings,
+} from "../../types/orchestrator";
 import { orchestratorService } from "../../services/orchestratorService";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
 import {
@@ -103,7 +106,10 @@ type PersistedGraphLike = {
   } | null;
   nodes?: Array<Record<string, any>>;
   edges?: Array<Record<string, any>>;
+  policyScan?: PolicyScanSettings | null;
 };
+
+const DEFAULT_POLICY_SCAN: PolicyScanSettings = { enabled: true };
 
 const EMPTY_TEMPLATE_INFO: CloudConfig = {
   templateName: "",
@@ -165,6 +171,7 @@ const serializePersistedSnapshot = (graph: PersistedGraphLike): string => {
     templateInfo: normalizeTemplateInfo(graph.templateInfo),
     nodes,
     edges,
+    policyScan: graph.policyScan ?? DEFAULT_POLICY_SCAN,
   });
 };
 
@@ -245,6 +252,9 @@ const OrchestratorReactFlow: React.FC = () => {
   const [snackOpen, setSnackOpen] = useState(false);
   const [templateInfo, setTemplateInfo] =
     useState<CloudConfig>(EMPTY_TEMPLATE_INFO);
+  const [policyScan, setPolicyScan] = useState<PolicyScanSettings>(
+    DEFAULT_POLICY_SCAN,
+  );
   const [currentOrchestratorId, setCurrentOrchestratorId] = useState<
     string | null
   >(null);
@@ -468,9 +478,10 @@ const OrchestratorReactFlow: React.FC = () => {
       edges,
       templateInfo,
       user,
+      policyScan,
     );
     return serializePersistedSnapshot(saveRequest);
-  }, [edges, nodes, templateInfo, user]);
+  }, [edges, nodes, templateInfo, user, policyScan]);
 
   const isCanvasDirty = useCallback(() => {
     const currentSnapshot = buildCurrentCanvasSnapshot();
@@ -506,6 +517,7 @@ const OrchestratorReactFlow: React.FC = () => {
         edges,
         templateInfo,
         user,
+        policyScan,
       );
 
       void orchestratorService
@@ -530,6 +542,7 @@ const OrchestratorReactFlow: React.FC = () => {
     isViewMode,
     nodes,
     templateInfo,
+    policyScan,
     user,
   ]);
 
@@ -977,6 +990,7 @@ const OrchestratorReactFlow: React.FC = () => {
           region: orchestratorData.templateInfo?.region || "",
         };
         setTemplateInfo(templateInfo);
+        setPolicyScan(orchestratorData.policyScan || DEFAULT_POLICY_SCAN);
         const customNodes = [];
         const resourceNodes: Node[] = [];
         for (const node of orchestratorData?.nodes || []) {
@@ -1999,6 +2013,8 @@ const OrchestratorReactFlow: React.FC = () => {
                   onValidationIssuesChange={handleValidationIssuesChange}
                   autoSaveEnabled={autoSaveEnabled}
                   onAutoSaveEnabledChange={setAutoSaveEnabled}
+                  policyScan={policyScan}
+                  onPolicyScanChange={setPolicyScan}
                 />
               )}
             </Box>

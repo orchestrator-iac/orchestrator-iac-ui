@@ -5,12 +5,17 @@ import { Node, Edge } from "@xyflow/react";
 
 import { validateOrchestratorData } from "../../../utils/orchestratorUtils";
 import { SaveOrchestratorDialog } from "./SaveOrchestratorDialog";
-import { SaveOrchestratorResponse, TemplateInfo } from "../../../types/orchestrator";
+import {
+  PolicyScanSettings,
+  SaveOrchestratorResponse,
+  TemplateInfo,
+} from "../../../types/orchestrator";
 
 interface SaveButtonProps {
   nodes: Node[];
   edges: Edge[];
   templateInfo: TemplateInfo;
+  policyScan?: PolicyScanSettings;
   currentOrchestratorId: string | null;
   onSaveSuccess: (response: SaveOrchestratorResponse) => void;
   disabled?: boolean;
@@ -26,6 +31,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   nodes,
   edges,
   templateInfo,
+  policyScan,
   currentOrchestratorId,
   onSaveSuccess,
   disabled = false,
@@ -99,6 +105,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
         nodes={nodes}
         edges={edges}
         templateInfo={templateInfo}
+        policyScan={policyScan}
         currentOrchestratorId={currentOrchestratorId}
         onSaveSuccess={handleSaveSuccess}
       />

@@ -329,7 +329,7 @@ const Home: React.FC = () => {
                   <FontAwesomeIcon
                     icon="sitemap"
                     aria-hidden="true"
-                    style={{ fontSize: "0.85rem" }}
+                    style={{ fontSize: "0.85rem", paddingRight: 1 }}
                   />
                 }
                 label={`${filteredOrchestrators.length} Orchestrators`}
@@ -337,10 +337,11 @@ const Home: React.FC = () => {
                 sx={{
                   fontWeight: 600,
                   px: 0.5,
-                  letterSpacing: "0.01em",
                   backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
                   color: theme.palette.secondary.main,
                   border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
                 }}
               />
             )}
@@ -350,7 +351,7 @@ const Home: React.FC = () => {
                   <FontAwesomeIcon
                     icon="layer-group"
                     aria-hidden="true"
-                    style={{ fontSize: "0.85rem" }}
+                    style={{ fontSize: "0.85rem", paddingRight: 1 }}
                   />
                 }
                 label="Templates"
@@ -360,11 +361,12 @@ const Home: React.FC = () => {
                 sx={{
                   fontWeight: 600,
                   px: 0.5,
-                  letterSpacing: "0.01em",
                   backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
                   color: theme.palette.secondary.main,
                   border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
                   cursor: "pointer",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
                 }}
               />
             )}
@@ -374,7 +376,7 @@ const Home: React.FC = () => {
                   <FontAwesomeIcon
                     icon="cube"
                     aria-hidden="true"
-                    style={{ fontSize: "0.85rem" }}
+                    style={{ fontSize: "0.85rem", paddingRight: 1 }}
                   />
                 }
                 label="Resources"
@@ -384,11 +386,12 @@ const Home: React.FC = () => {
                 sx={{
                   fontWeight: 600,
                   px: 0.5,
-                  letterSpacing: "0.01em",
                   backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
                   color: theme.palette.secondary.main,
                   border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
                   cursor: "pointer",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
                 }}
               />
             )}
