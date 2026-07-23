@@ -787,7 +787,7 @@ const Home: React.FC = () => {
                   }}
                 >
                   <FontAwesomeIcon
-                    icon="sitemap"
+                    icon="diagram-project"
                     style={{ fontSize: "2rem" }}
                   />
                 </Box>
