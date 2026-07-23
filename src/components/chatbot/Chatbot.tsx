@@ -287,6 +287,19 @@ const Chatbot: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeSession?.messages.length, isSending]);
 
+  // ── Scroll to the latest message when Maestro opens ───────────────────────
+  useEffect(() => {
+    if ((openChat || isSplitView) && activeSession && !showHistory) {
+      const rafId = window.requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      });
+
+      return () => window.cancelAnimationFrame(rafId);
+    }
+
+    return undefined;
+  }, [openChat, isSplitView, activeSession?.id, showHistory]);
+
   // ── Focus input when chat opens ────────────────────────────────────────────
   useEffect(() => {
     if (openChat) {

@@ -110,7 +110,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         day: "numeric",
         hour: "numeric",
         minute: "2-digit",
-        timeZoneName: "short",
       }).format(new Date(message.timestamp)),
     [message.timestamp],
   );
