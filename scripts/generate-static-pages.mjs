@@ -52,6 +52,27 @@ function esc(str) {
     .replaceAll('"', "&quot;");
 }
 
+function stripBaseSeoTags(html) {
+  const patterns = [
+    /\n?\s*<meta name="description"[^>]*>\n?/i,
+    /\n?\s*<meta name="robots"[^>]*>\n?/i,
+    /\n?\s*<meta property="og:title"[^>]*>\n?/i,
+    /\n?\s*<meta property="og:description"[^>]*>\n?/i,
+    /\n?\s*<meta property="og:url"[^>]*>\n?/i,
+    /\n?\s*<meta property="og:type"[^>]*>\n?/i,
+    /\n?\s*<meta property="og:image"[^>]*>\n?/i,
+    /\n?\s*<meta property="og:image:width"[^>]*>\n?/i,
+    /\n?\s*<meta property="og:image:height"[^>]*>\n?/i,
+    /\n?\s*<meta name="twitter:card"[^>]*>\n?/i,
+    /\n?\s*<meta name="twitter:title"[^>]*>\n?/i,
+    /\n?\s*<meta name="twitter:description"[^>]*>\n?/i,
+    /\n?\s*<meta name="twitter:image"[^>]*>\n?/i,
+    /\n?\s*<link rel="canonical"[^>]*>\n?/i,
+  ];
+
+  return patterns.reduce((acc, pattern) => acc.replace(pattern, "\n"), html);
+}
+
 /**
  * Inject SEO tags into the SPA shell HTML.
  * Replaces the generic <title> and inserts <meta>/<link> tags before </head>.
@@ -64,16 +85,20 @@ function buildHtml(baseHtml, { title, description, url, image }) {
     `  <meta property="og:description" content="${esc(description)}">`,
     `  <meta property="og:url" content="${esc(url)}">`,
     `  <meta property="og:type" content="website">`,
+    `  <meta property="og:site_name" content="Orchestrator">`,
     image ? `  <meta property="og:image" content="${esc(image)}">` : "",
+    image ? `  <meta property="og:image:width" content="1200">` : "",
+    image ? `  <meta property="og:image:height" content="630">` : "",
     `  <meta name="twitter:card" content="summary_large_image">`,
     `  <meta name="twitter:title" content="${esc(title)}">`,
     `  <meta name="twitter:description" content="${esc(description)}">`,
+    image ? `  <meta name="twitter:image" content="${esc(image)}">` : "",
     `  <link rel="canonical" href="${esc(url)}">`,
   ]
     .filter(Boolean)
     .join("\n");
 
-  return baseHtml
+  return stripBaseSeoTags(baseHtml)
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`)
     .replace("</head>", `${tags}\n  </head>`);
 }

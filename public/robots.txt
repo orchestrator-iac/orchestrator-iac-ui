@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /register
+Disallow: /register-success
+Disallow: /confirm
+Disallow: /update-password
+Disallow: /email-verification/
+Disallow: /profile
+Disallow: /resources
+Disallow: /home
+Disallow: /dashboard
+Disallow: /orchestrator/
+
+Sitemap: https://orchestrator.next-zen.dev/sitemap.xml

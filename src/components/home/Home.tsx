@@ -712,7 +712,6 @@ const Home: React.FC = () => {
                                         height: 150,
                                         display: "block",
                                         objectFit: "cover",
-                                        borderRadius: "6px",
                                       }}
                                     />
                                   ) : (
@@ -721,7 +720,6 @@ const Home: React.FC = () => {
                                         width: "100%",
                                         height: 150,
                                         backgroundColor: "divider",
-                                        borderRadius: 1,
                                       }}
                                     />
                                   )}
@@ -789,7 +787,7 @@ const Home: React.FC = () => {
                   }}
                 >
                   <FontAwesomeIcon
-                    icon="sitemap"
+                    icon="diagram-project"
                     style={{ fontSize: "2rem" }}
                   />
                 </Box>
@@ -1104,17 +1102,59 @@ const Home: React.FC = () => {
                                   : "rgba(0, 0, 0, 0.04)",
                               px: 1.5,
                               py: 0.75,
-                              borderRadius: 1,
-                              display: "inline-flex",
+                              display: "flex",
                               alignItems: "center",
-                              gap: 0.5,
+                              justifyContent: "space-between",
+                              gap: 1.5,
                             }}
                           >
-                            <FontAwesomeIcon
-                              icon="circle-nodes"
-                              style={{ fontSize: "0.75rem" }}
-                            />
-                            {orchestrator.nodeCount} resources
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <FontAwesomeIcon
+                                icon="circle-nodes"
+                                style={{ fontSize: "0.75rem" }}
+                              />
+                              {orchestrator.nodeCount} resources
+                            </Box>
+                            <Tooltip
+                              title={
+                                orchestrator.updatedAt
+                                  ? new Date(
+                                      orchestrator.updatedAt,
+                                    ).toLocaleDateString(undefined, {
+                                      weekday: "long",
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    })
+                                  : "No last modified date"
+                              }
+                              arrow
+                            >
+                              <Box
+                                sx={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {orchestrator.updatedAt
+                                  ? new Date(
+                                      orchestrator.updatedAt,
+                                    ).toLocaleDateString(undefined, {
+                                      month: "2-digit",
+                                      day: "2-digit",
+                                      year: "2-digit",
+                                    })
+                                  : "N/A"}
+                              </Box>
+                            </Tooltip>
                           </Box>
                         </Box>
                       </Fade>
