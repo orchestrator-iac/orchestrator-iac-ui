@@ -6,6 +6,8 @@ import "@xyflow/react/dist/style.css";
 import "driver.js/dist/driver.css";
 import "./App.css";
 
+import React, { useEffect } from "react";
+
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
 import { fas } from "@fortawesome/free-solid-svg-icons";
@@ -40,6 +42,8 @@ import TemplatesGallery from "./components/templates/TemplatesGallery";
 import TemplateDetail from "./components/templates/TemplateDetail";
 import ResourcesGallery from "./components/resources/ResourcesGallery";
 
+const SITE_URL = "https://orchestrator.next-zen.dev";
+
 const NO_HEADER_ROUTES = [
   "/login",
   "/register",
@@ -66,6 +70,46 @@ const isMaestroDisabledRoute = (pathname: string) =>
   MAESTRO_DISABLED_ROUTES.has(pathname) ||
   pathname.startsWith("/email-verification/");
 
+const PRIVATE_ROUTES = new Set([
+  "/login",
+  "/register",
+  "/register-success",
+  "/confirm",
+  "/update-password",
+  "/night-sky",
+  "/black-hole",
+  "/profile",
+  "/resources",
+  "/home",
+  "/dashboard",
+]);
+
+const isPrivateSeoRoute = (pathname: string) =>
+  PRIVATE_ROUTES.has(pathname) ||
+  pathname.startsWith("/email-verification/") ||
+  pathname.startsWith("/resources/") ||
+  pathname.startsWith("/orchestrator/");
+
+const upsertMetaTag = (
+  selector: string,
+  tagName: "meta" | "link",
+  seedAttributes: Record<string, string>,
+  attribute: string,
+  value: string,
+) => {
+  let element = document.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
+
+  if (!element) {
+    element = document.createElement(tagName) as HTMLMetaElement | HTMLLinkElement;
+    Object.entries(seedAttributes).forEach(([name, seedValue]) => {
+      element?.setAttribute(name, seedValue);
+    });
+    document.head.appendChild(element);
+  }
+
+  element.setAttribute(attribute, value);
+};
+
 // Add FontAwesome icon packs
 library.add(fab, fas);
 
@@ -79,6 +123,28 @@ const AppShell: React.FC<{
   const hideHeader = NO_HEADER_ROUTES.includes(location.pathname);
   const showChatbot =
     !isInitializing && Boolean(token) && !isMaestroDisabledRoute(location.pathname);
+
+  useEffect(() => {
+    if (!isPrivateSeoRoute(location.pathname)) {
+      return;
+    }
+
+    document.title = "Orchestrator";
+    upsertMetaTag(
+      'meta[name="robots"]',
+      "meta",
+      { name: "robots" },
+      "content",
+      "noindex, nofollow",
+    );
+    upsertMetaTag(
+      'link[rel="canonical"]',
+      "link",
+      { rel: "canonical" },
+      "href",
+      `${SITE_URL}${location.pathname}`,
+    );
+  }, [location.pathname]);
 
   return (
     <Box
