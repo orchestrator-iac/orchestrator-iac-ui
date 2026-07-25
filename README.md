@@ -1,183 +1,69 @@
-# 🏗️ Landing Zone Orchestrator UI
+# Landing Zone Orchestrator UI
 
-A React TypeScript application for managing cloud infrastructure with an integrated notes system for documentation and collaboration.
+React + TypeScript frontend for the landing zone orchestrator. The app combines resource forms, graph-driven infrastructure editing, authentication, and the note-taking flows used for collaboration and documentation.
 
-## Features
+## What It Does
 
-- **Cloud Infrastructure Management**: Interactive UI for creating and managing landing zones
-- **Notes System**: Full-featured notes with rich text editing, search, and user-specific storage
-- **Authentication**: JWT-based authentication with token refresh
-- **Modern UI**: Material-UI components with dark/light theme support
+- Guides users through cloud infrastructure configuration.
+- Sends form and graph changes to the FastAPI backend.
+- Supports JWT-based authentication and token refresh.
+- Includes the notes experience built with TipTap and fuzzy search.
+- Generates static pages during production builds for deployment on GitHub Pages.
+
+## Local Development
+
+1. Install dependencies:
+
+```powershell
+npm install
+```
+
+2. Start the Vite dev server:
+
+```powershell
+npm run dev
+```
+
+3. Build for production:
+
+```powershell
+npm run build
+```
+
+4. Preview the production build locally:
+
+```powershell
+npm run preview
+```
+
+5. Run linting:
+
+```powershell
+npm run lint
+```
+
+## Environment Variables
+
+- `VITE_API_BASE_URL`: backend base URL used by the API client and auth refresh/logout calls.
+- `VITE_GOOGLE_CLIENT_ID`: optional Google OAuth client ID used by the login flow.
+
+## Build And Deploy
+
+- `npm run build` runs Vite and then `scripts/generate-static-pages.mjs` to inject route-specific metadata into the generated pages.
+- `npm run deploy` publishes the `dist` directory to GitHub Pages.
+- The production homepage is configured for `https://orchestrator.next-zen.dev`.
 
 ## Notes System
 
-### Frontend Features
+The notes UI uses TipTap for rich text editing, Fuse.js for search, and per-user persistence through the backend API. The backend is expected to provide note CRUD endpoints under `/api/notes`.
 
-- Rich text editor using TipTap with formatting options
-- Fuzzy search using Fuse.js for intelligent text matching
-- Real-time search as you type
-- Responsive Masonry layout for note cards
-- Loading states and error handling
-- User-specific note management
+## Related Backend Expectations
 
-### API Integration
+The UI expects the backend to expose the authentication and orchestration APIs consumed by the app, including login, refresh, logout, and resource/template routes.
 
-The notes system expects these backend endpoints:
+## Roadmap
 
-```typescript
-// GET /api/notes - Get all user notes (paginated)
-Response: {
-  notes: Note[],
-  total: number,
-  page: number,
-  size: number,
-  totalPages: number
-}
-
-// POST /api/notes - Create new note
-Body: { content: string, plainText?: string }
-
-// PUT /api/notes/:id - Update note
-Body: { content: string, plainText?: string }
-
-// DELETE /api/notes/:id - Delete note
-```
-
-### Note Interface
-
-```typescript
-interface Note {
-  id: string;
-  content: string; // HTML from TipTap editor
-  plainText?: string; // For search functionality
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
-## Purpose
-
-The **Orchestrator** is a platform that simplifies cloud landing zone creation.
-Instead of writing Terraform manually, users fill out a **form/UI** → the system generates validated Terraform templates → pushes them to Git and/or runs deployments.
-
----
-
-## 2. High-Level Flow
-
-**Step 1 – Input**
-
-- Users log in via the **UI** (React frontend).
-- Fill in forms (e.g. VPC, Subnets, IAM, Networking) or upload configuration.
-
-**Step 2 – Orchestration**
-
-- Input sent to **FastAPI backend**.
-- Backend stores requests in **DynamoDB** (primary); MongoDB-related code is retained only as a backup for future use.
-- Orchestrator generates Terraform code based on schema + templates.
-
-**Step 3 – Validation**
-
-- Code is validated (lint, policy checks, schema validation).
-- Feedback/errors are surfaced to the user in the UI.
-
-**Step 4 – Deployment (Future)**
-
-- Validated code is committed to Git.
-- CI/CD (e.g. GitHub Actions, Azure DevOps, GitLab CI) applies Terraform to provision resources.
-- Monitoring and status updates sent back to UI.
-
----
-
-## 3. Architecture Diagram (simplified)
-
-```
-+------------------+         +-----------------+         +-------------------------+
-|   React Frontend | <-----> | FastAPI Backend | <-----> |   DynamoDB (primary)    |
-+------------------+         +-----------------+         +-------------------------+
-     |                            |                            |
-     v                            v                            v
-   User Input                  Template Engine             Config Storage
- (Forms / Editor)            (Terraform Generator)        (Users, Projects)
-     |
-     v
-   Validation & Feedback
-     |
-     v
- Future: Git / CI/CD / Cloud
-```
-
----
-
-## 4. Components
-
-### **Frontend (React)**
-
-- Multi-step forms for resources (VPC, Subnets, IAM, etc.).
-- Schema-based editor (JSON + visual).
-- Validation per step.
-- Auth screens (login, registration).
-
-### **Backend (FastAPI)**
-
-- REST APIs for resources, wrappers, and templates.
-- Authentication (JWT).
-- Code generation module:
-  - Converts user schema → Terraform HCL.
-  - Manages versioning.
-
-### **Database (DynamoDB primary; MongoDB retained as backup)**
-
-- Stores projects, templates, and user configs in DynamoDB (primary). MongoDB-related code and scripts remain in the repository but are not used by default; they are kept as a backup for potential future needs.
-
-### **Terraform Engine**
-
-- Current: Generate TF code for user to download.
-- Future: Auto-commit to Git, trigger pipelines.
-
----
-
-## 5. Current Features
-
-- User authentication & role-based access.
-- Schema-driven form builder.
-- Terraform template generation.
-- Error feedback in UI.
-- Project storage in DynamoDB (primary). MongoDB-related code is retained in the repository as a backup and is not actively used by default.
-
----
-
-## 6. Roadmap 🚀
-
-**Near Term (3–6 months):**
-
-- ✅ Export Terraform as `.zip`.
-- ✅ Support multiple providers (AWS, Azure, GCP).
-- 🔄 Add reusable building blocks (modules library).
-- 🔄 Improve validation (policy as code, e.g. OPA/Conftest).
-
-**Mid Term (6–12 months):**
-
-- 🚀 GitOps integration: commit Terraform to Git automatically.
-- 🚀 CI/CD integration (GitHub Actions, GitLab, Azure DevOps).
-- 🚀 Automated apply/destroy workflows.
-- 📊 Add monitoring dashboards for deployments.
-
-**Long Term (12+ months):**
-
-- 🌐 Multi-cloud orchestration.
-- 🤖 Self-healing infra (auto-fix drift, auto-scale).
-- 🧩 Marketplace of templates/modules.
-- 🔐 Compliance & governance enforcement.
-
----
-
-## 7. Step-by-Step Explanation (for presentations)
-
-1. **User logs in** → sees dashboard.
-2. **Fills form** (e.g., VPC with 2 public & 2 private subnets).
-3. **Frontend sends config** → Backend via API.
-4. **Backend generates Terraform code** → stores config in DynamoDB (primary).
-5. **User reviews/edits code** in UI editor.
-6. **Validation runs** → errors shown in UI.
-7. **Future:** User clicks “Deploy” → Code pushed to Git → CI/CD runs `terraform apply`.
-8. **Cloud infra is provisioned** → status sent back to UI.
+- Improve the resource editing flow with stronger validation and clearer inline feedback.
+- Expand graph-driven infrastructure authoring with more reusable building blocks.
+- Continue tightening mobile responsiveness and accessibility across the main flows.
+- Add richer deployment status and audit visibility as backend capabilities land.
