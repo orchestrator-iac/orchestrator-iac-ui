@@ -36,6 +36,8 @@ import HistoryIcon from "@mui/icons-material/History";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import SendIcon from "@mui/icons-material/Send";
 import DeleteIcon from "@mui/icons-material/Delete";
+import MicIcon from "@mui/icons-material/Mic";
+import StopIcon from "@mui/icons-material/Stop";
 
 import NotesList from "@/components/notes/NotesList";
 import { useChatLayout } from "@/context/ChatLayoutContext";
@@ -53,6 +55,7 @@ import {
   updateSession,
 } from "@/store/chatSlice";
 import { fetchResources } from "@/store/resourcesSlice";
+import { chatService } from "@/services/chatService";
 import type {
   ChatMessageFeedbackRequest,
   PlanImplementationAction,
@@ -61,6 +64,7 @@ import type {
 import { writeMaestroDraft } from "@/utils/maestroDraft";
 import MessageBubble from "./MessageBubble";
 import DiffAlert from "./DiffAlert";
+import MicLevelVisualizer from "./MicLevelVisualizer";
 import usePageContext from "@/hooks/usePageContext";
 import MaestroRobot, { type MaestroRobotState } from "./MaestroRobot";
 import { IoMdClose } from "react-icons/io";
@@ -68,6 +72,28 @@ import { IoMdClose } from "react-icons/io";
 // ── Typing indicator ───────────────────────────────────────────────────────────
 
 const TALKING_STATE_MS = 1600;
+
+// Axios surfaces failed requests as a generic "Request failed with status
+// code 500"-style message, which hides the actual, user-friendly reason the
+// backend already computed (e.g. "no speech detected"). Prefer the FastAPI
+// error body's `detail` field whenever present.
+const getTranscriptionErrorMessage = (error: unknown): string => {
+  const axiosError = error as {
+    response?: { data?: { detail?: string }; status?: number };
+    message?: string;
+  };
+  const detail = axiosError?.response?.data?.detail;
+  if (typeof detail === "string" && detail.trim()) {
+    return detail;
+  }
+  if (axiosError?.response?.status === 413) {
+    return "That recording is too large to transcribe. Please try a shorter voice message.";
+  }
+  if (error instanceof Error && error.message === "Recorded audio was empty.") {
+    return "We didn't capture any audio. Please try recording again.";
+  }
+  return "We couldn't transcribe that recording. Please try again.";
+};
 
 const TypingIndicator: React.FC = () => {
   const theme = useTheme();
@@ -194,6 +220,9 @@ const Chatbot: React.FC = () => {
     "success" | "info" | "warning" | "error"
   >("info");
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [talkingMessageKey, setTalkingMessageKey] = useState<string | null>(
     null,
   );
@@ -205,6 +234,18 @@ const Chatbot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingMessageRef = useRef<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const skipTranscriptionRef = useRef(false);
+  // Created inside handleStartRecording (i.e. within the click gesture's call
+  // stack) so the AudioContext reliably starts "running" instead of
+  // "suspended" — creating it later inside a useEffect risks the browser's
+  // user-activation window having already expired, leaving resume() a no-op
+  // and the analyser permanently reading silence.
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const [micAnalyser, setMicAnalyser] = useState<AnalyserNode | null>(null);
   // Set to true when the user explicitly clicks "New chat" so the session-load
   // effect creates a fresh session instead of reloading the latest one.
   const wantsNewSessionRef = useRef(false);
@@ -224,6 +265,17 @@ const Chatbot: React.FC = () => {
       setSplitView(false);
     }
   }, [isMobile, isSplitView, setSplitView]);
+
+  useEffect(() => {
+    return () => {
+      mediaRecorderRef.current?.stop();
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      analyserRef.current?.disconnect();
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        audioContextRef.current.close().catch(() => undefined);
+      }
+    };
+  }, []);
 
   const handleToggleSplitView = () => {
     if (!isSplitView) {
@@ -386,6 +438,134 @@ const Chatbot: React.FC = () => {
         pageContext: pageContext,
       }),
     );
+  };
+
+  const stopRecordingAudio = () => {
+    mediaRecorderRef.current?.stop();
+  };
+
+  const handleCancelRecording = () => {
+    skipTranscriptionRef.current = true;
+    mediaRecorderRef.current?.stop();
+  };
+
+  const clearAudioResources = () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+    mediaRecorderRef.current = null;
+    audioChunksRef.current = [];
+    analyserRef.current?.disconnect();
+    analyserRef.current = null;
+    setMicAnalyser(null);
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close().catch(() => undefined);
+    }
+    audioContextRef.current = null;
+  };
+
+  const handleTranscribeBlob = async (audioBlob: Blob) => {
+    if (!audioBlob.size) {
+      throw new Error("Recorded audio was empty.");
+    }
+
+    const file = new File([audioBlob], `maestro-voice-${Date.now()}.webm`, {
+      type: audioBlob.type || "audio/webm",
+    });
+
+    const response = await chatService.transcribeAudio(file);
+    setInput(response.transcript);
+    setTranscriptionError(null);
+    inputRef.current?.focus();
+  };
+
+  const handleStartRecording = async () => {
+    if (isRecordingAudio || isTranscribingAudio || isSending) return;
+
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setTranscriptionError("Audio recording is not supported in this browser.");
+      return;
+    }
+
+    try {
+      setTranscriptionError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      audioChunksRef.current = [];
+
+      // Build the analyser graph here, still within the click handler's async
+      // chain, so the AudioContext starts "running" rather than "suspended".
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 1024;
+      audioContext.createMediaStreamSource(stream).connect(analyser);
+      if (audioContext.state === "suspended") {
+        await audioContext.resume().catch(() => undefined);
+      }
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      setMicAnalyser(analyser);
+
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      setIsRecordingAudio(true);
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onerror = () => {
+        setTranscriptionError("Audio recording failed.");
+        setIsRecordingAudio(false);
+        clearAudioResources();
+      };
+
+      recorder.onstop = async () => {
+        setIsRecordingAudio(false);
+
+        if (skipTranscriptionRef.current) {
+          skipTranscriptionRef.current = false;
+          clearAudioResources();
+          return;
+        }
+
+        setIsTranscribingAudio(true);
+
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: recorder.mimeType || "audio/webm",
+        });
+
+        try {
+          await handleTranscribeBlob(audioBlob);
+          setToastMessage("Voice note transcribed and added to the message box.");
+          setToastSeverity("success");
+          setToastOpen(true);
+        } catch (error) {
+          const message = getTranscriptionErrorMessage(error);
+          setTranscriptionError(message);
+          setToastMessage(message);
+          setToastSeverity("error");
+          setToastOpen(true);
+        } finally {
+          setIsTranscribingAudio(false);
+          clearAudioResources();
+        }
+      };
+
+      recorder.start();
+      setToastMessage("Recording started. Click stop when you're done speaking.");
+      setToastSeverity("info");
+      setToastOpen(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to start recording.";
+      setTranscriptionError(message);
+      setToastMessage(message);
+      setToastSeverity("error");
+      setToastOpen(true);
+      clearAudioResources();
+      setIsRecordingAudio(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -1172,55 +1352,148 @@ const Chatbot: React.FC = () => {
             {/* ── Input bar (hidden when browsing history) ── */}
             {showHistory ? null : (
               <Box sx={{ bgcolor: "background.paper" }}>
-                <TextField
-                  inputRef={inputRef}
-                  fullWidth
-                  multiline
-                  maxRows={5}
-                  size="small"
-                  placeholder="Ask Maestro to plan your infrastructure…"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => setIsInputFocused(true)}
-                  onBlur={() => setIsInputFocused(false)}
-                  disabled={isSending || isWaitingForSessionSend}
-                  sx={{
-                    px: 0,
-                    py: 1,
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      border: "none",
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      border: "none",
-                    },
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                      border: "none",
-                    },
-                  }}
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={handleSend}
-                            disabled={
-                              !input.trim() || isSending || isCreatingSession
-                            }
-                          >
-                            {isSending ? (
-                              <CircularProgress size={18} />
-                            ) : (
-                              <SendIcon fontSize="small" />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
+                {isRecordingAudio ? (
+                  /* ── Dictation mode: textbox + send icon are replaced by a
+                     ChatGPT-dictate-style bar — cancel (X), live waveform,
+                     stop-and-transcribe button. ── */
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      px: 1.5,
+                      py: 1.25,
+                    }}
+                  >
+                    <Tooltip title="Cancel recording">
+                      <IconButton
+                        size="small"
+                        onClick={handleCancelRecording}
+                        sx={{
+                          color: theme.palette.text.secondary,
+                          border: `1px solid ${theme.palette.divider}`,
+                        }}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <MicLevelVisualizer
+                        analyser={micAnalyser}
+                        active={isRecordingAudio}
+                      />
+                    </Box>
+
+                    <Tooltip title="Stop and transcribe">
+                      <IconButton
+                        size="small"
+                        onClick={stopRecordingAudio}
+                        sx={{
+                          bgcolor: theme.palette.primary.main,
+                          color: theme.palette.primary.contrastText,
+                          "&:hover": {
+                            bgcolor: theme.palette.primary.dark,
+                          },
+                        }}
+                      >
+                        <StopIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                ) : (
+                  <TextField
+                    inputRef={inputRef}
+                    fullWidth
+                    multiline
+                    maxRows={5}
+                    size="small"
+                    placeholder="Ask Maestro to plan your infrastructure…"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setIsInputFocused(true)}
+                    onBlur={() => setIsInputFocused(false)}
+                    disabled={isSending || isWaitingForSessionSend || isTranscribingAudio}
+                    sx={{
+                      px: 0,
+                      py: 1,
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        border: "none",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        border: "none",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        border: "none",
+                      },
+                    }}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.75,
+                                mr: 0.5,
+                              }}
+                            >
+                              <Tooltip title="Record voice message">
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={handleStartRecording}
+                                    disabled={
+                                      isWaitingForSessionSend ||
+                                      isSending ||
+                                      isTranscribingAudio
+                                    }
+                                    sx={{
+                                      border: `1px solid ${theme.palette.divider}`,
+                                      ml: 0.25,
+                                    }}
+                                  >
+                                    <MicIcon fontSize="small" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleSend}
+                                disabled={
+                                  !input.trim() ||
+                                  isSending ||
+                                  isCreatingSession ||
+                                  isTranscribingAudio
+                                }
+                                sx={{
+                                  border: `1px solid ${theme.palette.divider}`,
+                                }}
+                              >
+                                {isSending || isTranscribingAudio ? (
+                                  <CircularProgress size={18} />
+                                ) : (
+                                  <SendIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </Box>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+                {transcriptionError && (
+                  <Box px={2} pb={1}>
+                    <Typography variant="caption" color="error">
+                      {transcriptionError}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             )}
           </Paper>
