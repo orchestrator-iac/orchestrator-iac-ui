@@ -36,6 +36,8 @@ import HistoryIcon from "@mui/icons-material/History";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import SendIcon from "@mui/icons-material/Send";
 import DeleteIcon from "@mui/icons-material/Delete";
+import MicIcon from "@mui/icons-material/Mic";
+import StopIcon from "@mui/icons-material/Stop";
 
 import NotesList from "@/components/notes/NotesList";
 import { useChatLayout } from "@/context/ChatLayoutContext";
@@ -53,6 +55,7 @@ import {
   updateSession,
 } from "@/store/chatSlice";
 import { fetchResources } from "@/store/resourcesSlice";
+import { chatService } from "@/services/chatService";
 import type {
   ChatMessageFeedbackRequest,
   PlanImplementationAction,
@@ -194,6 +197,9 @@ const Chatbot: React.FC = () => {
     "success" | "info" | "warning" | "error"
   >("info");
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [talkingMessageKey, setTalkingMessageKey] = useState<string | null>(
     null,
   );
@@ -205,6 +211,9 @@ const Chatbot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingMessageRef = useRef<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
   // Set to true when the user explicitly clicks "New chat" so the session-load
   // effect creates a fresh session instead of reloading the latest one.
   const wantsNewSessionRef = useRef(false);
@@ -224,6 +233,13 @@ const Chatbot: React.FC = () => {
       setSplitView(false);
     }
   }, [isMobile, isSplitView, setSplitView]);
+
+  useEffect(() => {
+    return () => {
+      mediaRecorderRef.current?.stop();
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
 
   const handleToggleSplitView = () => {
     if (!isSplitView) {
@@ -386,6 +402,102 @@ const Chatbot: React.FC = () => {
         pageContext: pageContext,
       }),
     );
+  };
+
+  const stopRecordingAudio = () => {
+    mediaRecorderRef.current?.stop();
+  };
+
+  const clearAudioResources = () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+    mediaRecorderRef.current = null;
+    audioChunksRef.current = [];
+  };
+
+  const handleTranscribeBlob = async (audioBlob: Blob) => {
+    if (!audioBlob.size) {
+      throw new Error("Recorded audio was empty.");
+    }
+
+    const file = new File([audioBlob], `maestro-voice-${Date.now()}.webm`, {
+      type: audioBlob.type || "audio/webm",
+    });
+
+    const response = await chatService.transcribeAudio(file);
+    setInput(response.transcript);
+    setTranscriptionError(null);
+    inputRef.current?.focus();
+  };
+
+  const handleStartRecording = async () => {
+    if (isRecordingAudio || isTranscribingAudio || isSending) return;
+
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setTranscriptionError("Audio recording is not supported in this browser.");
+      return;
+    }
+
+    try {
+      setTranscriptionError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      audioChunksRef.current = [];
+
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      setIsRecordingAudio(true);
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onerror = () => {
+        setTranscriptionError("Audio recording failed.");
+        setIsRecordingAudio(false);
+        clearAudioResources();
+      };
+
+      recorder.onstop = async () => {
+        setIsRecordingAudio(false);
+        setIsTranscribingAudio(true);
+
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: recorder.mimeType || "audio/webm",
+        });
+
+        try {
+          await handleTranscribeBlob(audioBlob);
+          setToastMessage("Voice note transcribed and added to the message box.");
+          setToastSeverity("success");
+          setToastOpen(true);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Failed to transcribe audio.";
+          setTranscriptionError(message);
+          setToastMessage(message);
+          setToastSeverity("error");
+          setToastOpen(true);
+        } finally {
+          setIsTranscribingAudio(false);
+          clearAudioResources();
+        }
+      };
+
+      recorder.start();
+      setToastMessage("Recording started. Click stop when you're done speaking.");
+      setToastSeverity("info");
+      setToastOpen(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to start recording.";
+      setTranscriptionError(message);
+      setToastMessage(message);
+      setToastSeverity("error");
+      setToastOpen(true);
+      clearAudioResources();
+      setIsRecordingAudio(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -1184,7 +1296,7 @@ const Chatbot: React.FC = () => {
                   onKeyDown={handleKeyDown}
                   onFocus={() => setIsInputFocused(true)}
                   onBlur={() => setIsInputFocused(false)}
-                  disabled={isSending || isWaitingForSessionSend}
+                  disabled={isSending || isWaitingForSessionSend || isTranscribingAudio}
                   sx={{
                     px: 0,
                     py: 1,
@@ -1202,15 +1314,28 @@ const Chatbot: React.FC = () => {
                     input: {
                       endAdornment: (
                         <InputAdornment position="end">
+                          <Tooltip title={isRecordingAudio ? "Stop recording" : "Record voice message"}>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color={isRecordingAudio ? "error" : "primary"}
+                                onClick={isRecordingAudio ? stopRecordingAudio : handleStartRecording}
+                                disabled={isWaitingForSessionSend || isSending || isTranscribingAudio}
+                                sx={{ mr: 0.5 }}
+                              >
+                                {isRecordingAudio ? <StopIcon fontSize="small" /> : <MicIcon fontSize="small" />}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
                           <IconButton
                             size="small"
                             color="primary"
                             onClick={handleSend}
                             disabled={
-                              !input.trim() || isSending || isCreatingSession
+                              !input.trim() || isSending || isCreatingSession || isRecordingAudio || isTranscribingAudio
                             }
                           >
-                            {isSending ? (
+                            {isSending || isTranscribingAudio ? (
                               <CircularProgress size={18} />
                             ) : (
                               <SendIcon fontSize="small" />
@@ -1221,6 +1346,13 @@ const Chatbot: React.FC = () => {
                     },
                   }}
                 />
+                {transcriptionError && (
+                  <Box px={2} pb={1}>
+                    <Typography variant="caption" color="error">
+                      {transcriptionError}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             )}
           </Paper>

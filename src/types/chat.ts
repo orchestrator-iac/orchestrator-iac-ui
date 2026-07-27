@@ -98,6 +98,13 @@ export interface ChatSendResponse {
   guardrailReason?: string;
 }
 
+export interface TranscriptionResponse {
+  transcript: string;
+  modelName: string;
+  language?: string | null;
+  languageProbability?: number | null;
+}
+
 export interface ChatSessionsListResponse {
   sessions: ChatSessionListItem[];
   total: number;
