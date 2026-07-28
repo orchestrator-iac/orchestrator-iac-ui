@@ -474,8 +474,8 @@ const Chatbot: React.FC = () => {
     audioContextRef.current = null;
   };
 
-  const TRANSCRIPTION_POLL_INTERVAL_MS = 1500;
-  const TRANSCRIPTION_MAX_POLL_ATTEMPTS = 40; // ~60s of polling
+  const TRANSCRIPTION_POLL_INTERVAL_MS = 5000;
+  const TRANSCRIPTION_MAX_POLL_ATTEMPTS = 60; // ~5m of polling
 
   const handleTranscribeBlob = async (audioBlob: Blob) => {
     if (!audioBlob.size) {
