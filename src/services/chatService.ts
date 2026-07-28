@@ -6,7 +6,8 @@ import type {
   ChatSessionResponse,
   ChatSendResponse,
   ChatSessionsListResponse,
-  TranscriptionResponse,
+  TranscriptionJobResponse,
+  TranscriptionStatusResponse,
 } from "@/types/chat";
 
 const BASE = "/maestro";
@@ -43,17 +44,20 @@ export const chatService = {
       { timeout: 200_000 },
     ),
 
-  transcribeAudio: (audio: File): Promise<TranscriptionResponse> => {
+  submitTranscriptionJob: (audio: File): Promise<TranscriptionJobResponse> => {
     const formData = new FormData();
     formData.append("audio", audio);
 
     return apiService.post(`${BASE}/transcriptions`, formData, {
-      timeout: 200_000,
+      timeout: 30_000,
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
   },
+
+  getTranscriptionJob: (jobId: string): Promise<TranscriptionStatusResponse> =>
+    apiService.get(`${BASE}/transcriptions/${jobId}`),
 
   closeSession: (id: string): Promise<void> =>
     apiService.delete(`${BASE}/sessions/${id}`),

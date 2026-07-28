@@ -98,11 +98,19 @@ export interface ChatSendResponse {
   guardrailReason?: string;
 }
 
-export interface TranscriptionResponse {
-  transcript: string;
-  modelName: string;
+export interface TranscriptionJobResponse {
+  jobId: string;
+  status: "processing" | "done" | "error";
+}
+
+export interface TranscriptionStatusResponse {
+  jobId: string;
+  status: "processing" | "done" | "error";
+  transcript?: string | null;
+  modelName?: string | null;
   language?: string | null;
   languageProbability?: number | null;
+  detail?: string | null;
 }
 
 export interface ChatSessionsListResponse {

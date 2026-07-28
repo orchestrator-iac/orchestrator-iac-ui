@@ -73,11 +73,22 @@ import { IoMdClose } from "react-icons/io";
 
 const TALKING_STATE_MS = 1600;
 
+// Transcription now runs as an async job on the whisper service: submit,
+// then poll until the job reports "done" or "error". This error carries the
+// backend's own failure reason (e.g. "no speech detected") through to the
+// UI without axios's generic "Request failed with status code 500" noise.
+class TranscriptionJobFailedError extends Error {}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Axios surfaces failed requests as a generic "Request failed with status
 // code 500"-style message, which hides the actual, user-friendly reason the
 // backend already computed (e.g. "no speech detected"). Prefer the FastAPI
 // error body's `detail` field whenever present.
 const getTranscriptionErrorMessage = (error: unknown): string => {
+  if (error instanceof TranscriptionJobFailedError && error.message.trim()) {
+    return error.message;
+  }
   const axiosError = error as {
     response?: { data?: { detail?: string }; status?: number };
     message?: string;
@@ -463,6 +474,9 @@ const Chatbot: React.FC = () => {
     audioContextRef.current = null;
   };
 
+  const TRANSCRIPTION_POLL_INTERVAL_MS = 1500;
+  const TRANSCRIPTION_MAX_POLL_ATTEMPTS = 40; // ~60s of polling
+
   const handleTranscribeBlob = async (audioBlob: Blob) => {
     if (!audioBlob.size) {
       throw new Error("Recorded audio was empty.");
@@ -472,10 +486,35 @@ const Chatbot: React.FC = () => {
       type: audioBlob.type || "audio/webm",
     });
 
-    const response = await chatService.transcribeAudio(file);
-    setInput(response.transcript);
-    setTranscriptionError(null);
-    inputRef.current?.focus();
+    const job = await chatService.submitTranscriptionJob(file);
+
+    for (
+      let attempt = 0;
+      attempt < TRANSCRIPTION_MAX_POLL_ATTEMPTS;
+      attempt += 1
+    ) {
+      const jobStatus = await chatService.getTranscriptionJob(job.jobId);
+
+      if (jobStatus.status === "done") {
+        setInput(jobStatus.transcript ?? "");
+        setTranscriptionError(null);
+        inputRef.current?.focus();
+        return;
+      }
+
+      if (jobStatus.status === "error") {
+        throw new TranscriptionJobFailedError(
+          jobStatus.detail ||
+            "We couldn't transcribe that recording. Please try again.",
+        );
+      }
+
+      await sleep(TRANSCRIPTION_POLL_INTERVAL_MS);
+    }
+
+    throw new TranscriptionJobFailedError(
+      "Transcription is taking longer than expected. Please try again.",
+    );
   };
 
   const handleStartRecording = async () => {
