@@ -2,6 +2,7 @@ import { NodeProps } from "@xyflow/react";
 import { NodeData } from "../../types/node-info";
 import { UserProfile } from "../../types/auth";
 import { CloudConfig } from "../../types/clouds-info";
+import { DriftFinding, DriftStatus } from "../../types/orchestrator";
 
 export interface OrchestratorNodeHelpers {
   allNodes?: any[];
@@ -24,6 +25,8 @@ export type OrchestratorNodeData = NodeData & {
   templateInfo?: CloudConfig;
   __viewMode?: "architecture" | "detailed";
   __validationErrors?: Record<string, string>;
+  __driftStatus?: DriftStatus;
+  __driftFindings?: DriftFinding[];
 };
 
 export type OrchestratorNodeProps = NodeProps & {

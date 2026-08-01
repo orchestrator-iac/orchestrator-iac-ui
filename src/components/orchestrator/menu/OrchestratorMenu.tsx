@@ -31,11 +31,13 @@ import ArchiveIcon from "@mui/icons-material/Archive";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import PolicyIcon from "@mui/icons-material/GppMaybe";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import { SaveButton } from "../save";
 import { DeleteButton } from "../delete";
 import {
   IaCValidationIssue,
   PolicyScanSettings,
+  ReconciliationResult,
   SaveOrchestratorResponse,
   TemplateInfo,
 } from "../../../types/orchestrator";
@@ -47,6 +49,8 @@ import {
 import PublishTemplateDialog from "../publish-template/PublishTemplateDialog";
 import PolicyFindingsDialog from "./PolicyFindingsDialog";
 import PolicyScanSettingsDialog from "./PolicyScanSettingsDialog";
+import ReconcileDialog from "./ReconcileDialog";
+import DriftReportDialog from "./DriftReportDialog";
 
 interface OrchestratorMenuProps {
   nodes: Node[];
@@ -64,6 +68,7 @@ interface OrchestratorMenuProps {
   onValidationIssuesChange?: (issues: IaCValidationIssue[]) => void;
   /** templateId set on the orchestrator if it has been published to the gallery */
   templateId?: string;
+  onReconciliationChange?: (result: ReconciliationResult | null) => void;
 }
 
 export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
@@ -81,6 +86,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
   onPolicyScanChange,
   onValidationIssuesChange,
   templateId,
+  onReconciliationChange,
 }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -108,6 +114,11 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
     [],
   );
   const [policyScanSettingsOpen, setPolicyScanSettingsOpen] = useState(false);
+  const [reconcileDialogOpen, setReconcileDialogOpen] = useState(false);
+  const [driftReportOpen, setDriftReportOpen] = useState(false);
+  const [driftResult, setDriftResult] = useState<ReconciliationResult | null>(
+    null,
+  );
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -117,6 +128,10 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
 
   const canSave = nodes.length > 0;
   const canDelete = !!currentOrchestratorId;
+  // Publishing requires at least one resource - a zero-node orchestrator can
+  // exist now (created immediately on Initialize Template), but shouldn't be
+  // publishable as an empty template.
+  const canPublish = canDelete && nodes.length > 0;
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -142,6 +157,23 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
     setSaveDialogOpen(true);
     handleMenuClose();
   };
+
+  const handleReconcileClick = () => {
+    setReconcileDialogOpen(true);
+    handleMenuClose();
+  };
+
+  const handleReconciled = useCallback(
+    (response: SaveOrchestratorResponse) => {
+      const result = response.reconciliation ?? null;
+      setDriftResult(result);
+      onReconciliationChange?.(result);
+      if (result) {
+        setDriftReportOpen(true);
+      }
+    },
+    [onReconciliationChange],
+  );
 
   const handlePolicyScanToggle = (enabled: boolean) => {
     onPolicyScanChange({ ...policyScan, enabled });
@@ -565,7 +597,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         
         <MenuItem
           onClick={() => { setPublishDialogOpen(true); handleMenuClose(); }}
-          disabled={!canDelete}
+          disabled={!canPublish}
           sx={{
             borderRadius: 1.5,
             mx: 0.5,
@@ -577,7 +609,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
               icon={templateId ? "pen" : "layer-group"}
               style={{
                 fontSize: 16,
-                color: canDelete
+                color: canPublish
                   ? theme.palette.primary.main
                   : theme.palette.action.disabled,
               }}
@@ -628,6 +660,24 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           <ListItemText>
             {isDownloading ? "Preparing Zip…" : "Download IaC (zip)"}
           </ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={handleReconcileClick}
+          disabled={!canSave || !currentOrchestratorId}
+          sx={{
+            borderRadius: 1.5,
+            mx: 0.5,
+            "&:hover": { bgcolor: "action.hover" },
+          }}
+        >
+          <ListItemIcon>
+            <FactCheckOutlinedIcon
+              fontSize="small"
+              color={canSave && currentOrchestratorId ? "primary" : "disabled"}
+            />
+          </ListItemIcon>
+          <ListItemText>Reconcile State</ListItemText>
         </MenuItem>
 
         <MenuItem
@@ -744,6 +794,19 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         open={policyFindingsDialogOpen}
         issues={policyFindings}
         onClose={closePolicyFindingsDialog}
+      />
+
+      <ReconcileDialog
+        open={reconcileDialogOpen}
+        onClose={() => setReconcileDialogOpen(false)}
+        orchestratorId={currentOrchestratorId}
+        onReconciled={handleReconciled}
+      />
+
+      <DriftReportDialog
+        open={driftReportOpen}
+        result={driftResult}
+        onClose={() => setDriftReportOpen(false)}
       />
 
       <PolicyScanSettingsDialog

@@ -59,6 +59,7 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_API_HOST_URL: ${{ secrets.VITE_API_HOST_URL }}
+          VITE_SITE_URL: ${{ secrets.VITE_SITE_URL || 'https://orchestrator.next-zen.dev' }}
 
       - name: Verify build output
         run: |

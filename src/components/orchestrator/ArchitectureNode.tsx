@@ -14,6 +14,36 @@ import { useTheme } from "@mui/material/styles";
 import { getFriendlyId, resolveValueByPath } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
 import ResourceIconView from "../shared/ResourceIconView";
+import { DriftStatus } from "../../types/orchestrator";
+
+/** Border treatment for the drift status attached by Tier 1 state reconciliation. */
+const getDriftBorder = (status: DriftStatus | undefined, fallback: string): string => {
+  switch (status) {
+    case "drifted":
+      return "0 0 0 2px #ed6c02";
+    case "unable_to_compare":
+      return "0 0 0 2px #0288d1";
+    case "not_applied":
+      return "0 0 0 2px #9e9e9e";
+    default:
+      return `0 0 6px ${fallback}`;
+  }
+};
+
+const getDriftBadge = (
+  status: DriftStatus | undefined,
+): { label: string; color: "warning" | "info" | "default" } | null => {
+  switch (status) {
+    case "drifted":
+      return { label: "Drifted", color: "warning" };
+    case "not_applied":
+      return { label: "Not applied", color: "default" };
+    case "unable_to_compare":
+      return { label: "Unable to compare", color: "info" };
+    default:
+      return null;
+  }
+};
 
 const asDisplayString = (value: any): string => {
   if (value == null) {
@@ -42,6 +72,10 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
     () => getFriendlyId(id, data?.__nodeType, data?.__helpers?.allNodes),
     [id, data?.__nodeType, data?.__helpers?.allNodes],
   );
+
+  const driftStatus = data?.__driftStatus;
+  const driftBorder = getDriftBorder(driftStatus, theme.palette.divider);
+  const driftBadge = getDriftBadge(driftStatus);
 
   const iconValue = React.useMemo(() => {
     return data?.header?.icon;
@@ -163,7 +197,7 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
         maxWidth: 320,
         borderRadius: 2,
         backgroundColor: theme.palette.background.paper,
-        boxShadow: `0 0 6px ${theme.palette.divider}`,
+        boxShadow: driftBorder,
       }}
     >
       <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
@@ -228,6 +262,15 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
               }}
             />
           </Tooltip>
+        )}
+
+        {driftBadge && (
+          <Chip
+            size="small"
+            label={driftBadge.label}
+            color={driftBadge.color}
+            sx={{ height: 20, fontSize: "0.65rem" }}
+          />
         )}
       </Box>
 

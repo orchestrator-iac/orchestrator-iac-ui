@@ -21,7 +21,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const API_BASE = process.env.VITE_API_BASE_URL;
 
-const SITE_BASE = process.env.VITE_SITE_URL;
+const SITE_BASE =
+  process.env.VITE_SITE_URL || "https://orchestrator.next-zen.dev";
 
 const today = new Date().toISOString().slice(0, 10);
 

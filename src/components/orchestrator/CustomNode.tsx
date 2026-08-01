@@ -22,6 +22,36 @@ import ResourceIconView from "../shared/ResourceIconView";
 import DynamicForm from "./DynamicForm";
 import { getFriendlyId } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
+import { DriftStatus } from "../../types/orchestrator";
+
+/** Border treatment for the drift status attached by Tier 1 state reconciliation. */
+const getDriftBorder = (status: DriftStatus | undefined, fallback: string): string => {
+  switch (status) {
+    case "drifted":
+      return "0 0 0 2px #ed6c02";
+    case "unable_to_compare":
+      return "0 0 0 2px #0288d1";
+    case "not_applied":
+      return "0 0 0 2px #9e9e9e";
+    default:
+      return `0 0 3px ${fallback}`;
+  }
+};
+
+const getDriftBadge = (
+  status: DriftStatus | undefined,
+): { label: string; color: "warning" | "info" | "default" } | null => {
+  switch (status) {
+    case "drifted":
+      return { label: "Drifted", color: "warning" };
+    case "not_applied":
+      return { label: "Not applied", color: "default" };
+    case "unable_to_compare":
+      return { label: "Unable to compare", color: "info" };
+    default:
+      return null;
+  }
+};
 
 const CustomNode: React.FC<OrchestratorNodeProps> = ({
   id,
@@ -68,6 +98,10 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
     [id, data?.__nodeType, data?.__helpers?.allNodes],
   );
 
+  const driftStatus = data?.__driftStatus;
+  const driftBorder = getDriftBorder(driftStatus, theme.palette.background.paper);
+  const driftBadge = getDriftBadge(driftStatus);
+
   const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) =>
     setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -84,7 +118,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   return (
     <Accordion
       sx={{
-        boxShadow: `0 0 3px ${theme.palette.background.paper}`,
+        boxShadow: driftBorder,
         width: "400px",
       }}
       expanded={expanded}
@@ -233,6 +267,17 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
                   variant="filled"
                 />
               </Tooltip>
+            )}
+
+            {driftBadge && (
+              <Chip
+                size="small"
+                label={driftBadge.label}
+                color={driftBadge.color}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
+                sx={{ height: 20, fontSize: "0.65rem" }}
+              />
             )}
 
             <Box
