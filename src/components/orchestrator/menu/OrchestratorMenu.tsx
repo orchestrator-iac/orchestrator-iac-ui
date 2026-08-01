@@ -664,7 +664,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
 
         <MenuItem
           onClick={handleReconcileClick}
-          disabled={!canSave || !currentOrchestratorId}
+          disabled={!currentOrchestratorId}
           sx={{
             borderRadius: 1.5,
             mx: 0.5,
@@ -674,7 +674,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           <ListItemIcon>
             <FactCheckOutlinedIcon
               fontSize="small"
-              color={canSave && currentOrchestratorId ? "primary" : "disabled"}
+              color={currentOrchestratorId ? "primary" : "disabled"}
             />
           </ListItemIcon>
           <ListItemText>Reconcile State</ListItemText>
