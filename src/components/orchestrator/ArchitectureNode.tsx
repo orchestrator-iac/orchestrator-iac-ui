@@ -208,9 +208,7 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
             sx={{
               width: 44,
               height: 44,
-              borderRadius: "10px",
               objectFit: "contain",
-              boxShadow: `0 0 3px ${theme.palette.secondary.main}`,
             }}
           />
         )}

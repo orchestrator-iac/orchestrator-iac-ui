@@ -241,7 +241,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const navigate = useNavigate();
   const { template_id } = useParams<{ template_id: string }>();
   const { getLayoutElements } = useLayoutElements();
-  const { fitView } = useReactFlow();
+  const { fitView, screenToFlowPosition } = useReactFlow();
   const [searchParams, setSearchParams] = useSearchParams();
   const template_type = searchParams.get("template_type");
   const maestroDraftToken = searchParams.get("maestro_draft");
@@ -289,6 +289,7 @@ const OrchestratorReactFlow: React.FC = () => {
     return window.localStorage.getItem(AUTO_SAVE_STORAGE_KEY) === "true";
   });
   const requestedOrchestratorIdsRef = useRef<Set<string>>(new Set());
+  const loadedOrchestratorIdRef = useRef<string | null>(null);
   const routeLoadCountRef = useRef(0);
 
   useGuidedTour(
@@ -666,11 +667,16 @@ const OrchestratorReactFlow: React.FC = () => {
       if (fetchResourceById.fulfilled.match(resultAction)) {
         const resourceData = resultAction.payload;
 
+        const dropPosition = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+
         // node from backend
         let newNode: any = {
           ...resourceData?.data?.resourceNode,
           id: `${id}-${uuidv4()}`,
-          position: { x: 100, y: 100 },
+          position: dropPosition,
         };
 
         // use resourceId as canonical domain type
@@ -714,6 +720,7 @@ const OrchestratorReactFlow: React.FC = () => {
       getLayoutElements,
       templateInfo,
       user,
+      screenToFlowPosition,
     ],
   );
 
@@ -1157,21 +1164,50 @@ const OrchestratorReactFlow: React.FC = () => {
     template_type,
   ]);
 
+  // "New" template route: show the init dialog when the canvas is still
+  // empty. This intentionally reacts to nodes.length/edges.length so the
+  // dialog opens/closes as the user starts building on a blank canvas.
+  useEffect(() => {
+    if (!template_id || !template_type || maestroDraftToken) {
+      return;
+    }
+
+    if (template_id !== "new") {
+      return;
+    }
+
+    setCurrentOrchestratorId(null);
+    if (
+      nodes.length === 0 &&
+      edges.length === 0 &&
+      !templateInfo.templateName &&
+      !templateInfo.cloud
+    ) {
+      setInitOpen(true);
+    }
+  }, [
+    edges.length,
+    maestroDraftToken,
+    nodes.length,
+    templateInfo.cloud,
+    templateInfo.templateName,
+    template_id,
+    template_type,
+  ]);
+
+  // Load an existing orchestrator's saved graph when navigating to its
+  // route. This must NOT depend on nodes.length/edges.length: those change
+  // on every local edit (e.g. dropping a resource onto the canvas), and
+  // re-running loadSerializedGraph would overwrite in-progress edits with
+  // the last-saved snapshot, making just-dropped nodes vanish. Guard with
+  // loadedOrchestratorIdRef so the graph is (re)loaded only on an actual
+  // route/template change, not on every canvas mutation.
   useEffect(() => {
     if (!template_id || !template_type || maestroDraftToken) {
       return;
     }
 
     if (template_id === "new") {
-      setCurrentOrchestratorId(null);
-      if (
-        nodes.length === 0 &&
-        edges.length === 0 &&
-        !templateInfo.templateName &&
-        !templateInfo.cloud
-      ) {
-        setInitOpen(true);
-      }
       return;
     }
 
@@ -1194,6 +1230,11 @@ const OrchestratorReactFlow: React.FC = () => {
     }
 
     requestedOrchestratorIdsRef.current.delete(template_id);
+
+    if (loadedOrchestratorIdRef.current === template_id) {
+      return;
+    }
+    loadedOrchestratorIdRef.current = template_id;
 
     const appliedTemplateInfo = normalizeTemplateInfo(
       orchestratorData.templateInfo,
@@ -1223,13 +1264,10 @@ const OrchestratorReactFlow: React.FC = () => {
       });
   }, [
     dispatch,
-    edges.length,
     loadSerializedGraph,
     maestroDraftToken,
-    nodes.length,
     orchestrators,
-    templateInfo.cloud,
-    templateInfo.templateName,
+    runWithRouteLoading,
     template_id,
     template_type,
   ]);
