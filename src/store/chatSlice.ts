@@ -4,6 +4,7 @@ import {
   type PayloadAction,
 } from "@reduxjs/toolkit";
 import { chatService } from "@/services/chatService";
+import { getApiErrorMessage } from "@/utils/apiError";
 import type {
   ChatMessage,
   ChatMessageFeedbackRequest,
@@ -53,8 +54,7 @@ export const fetchSessions = createAsyncThunk(
       const data = await chatService.listSessions();
       return data.sessions;
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to load sessions";
+      const msg = getApiErrorMessage(err, "Failed to load sessions");
       return rejectWithValue(msg);
     }
   },
@@ -66,8 +66,7 @@ export const createSession = createAsyncThunk(
     try {
       return await chatService.createSession(title);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to create session";
+      const msg = getApiErrorMessage(err, "Failed to create session");
       return rejectWithValue(msg);
     }
   },
@@ -79,8 +78,7 @@ export const fetchSession = createAsyncThunk(
     try {
       return await chatService.getSession(id);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to load session";
+      const msg = getApiErrorMessage(err, "Failed to load session");
       return rejectWithValue(msg);
     }
   },
@@ -95,8 +93,7 @@ export const updateSession = createAsyncThunk(
     try {
       return await chatService.updateSession(id, updates);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to update session";
+      const msg = getApiErrorMessage(err, "Failed to update session");
       return rejectWithValue(msg);
     }
   },
@@ -124,8 +121,7 @@ export const upsertMessageFeedback = createAsyncThunk(
       );
       return { sessionId, updatedMessage };
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to save feedback";
+      const msg = getApiErrorMessage(err, "Failed to save feedback");
       return rejectWithValue(msg);
     }
   },
@@ -140,8 +136,7 @@ export const sendMessage = createAsyncThunk(
     try {
       return await chatService.sendMessage(sessionId, message, pageContext);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to send message";
+      const msg = getApiErrorMessage(err, "Failed to send message");
       return rejectWithValue(msg);
     }
   },
@@ -154,7 +149,7 @@ export const deleteSession = createAsyncThunk(
       await chatService.closeSession(id);
       return id;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to delete session";
+      const msg = getApiErrorMessage(err, "Failed to delete session");
       return rejectWithValue(msg);
     }
   },
