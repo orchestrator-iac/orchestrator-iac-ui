@@ -56,8 +56,10 @@ import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig, CloudProvider } from "../../types/clouds-info";
 import {
+  DriftFinding,
   IaCValidationIssue,
   PolicyScanSettings,
+  ReconciliationResult,
 } from "../../types/orchestrator";
 import { orchestratorService } from "../../services/orchestratorService";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
@@ -140,6 +142,12 @@ const buildValidationErrorMap = (issues: IaCValidationIssue[]) =>
       ...(acc[issue.nodeId] ?? {}),
       [issue.field ?? ""]: issue.message,
     };
+    return acc;
+  }, {});
+
+const buildDriftMap = (findings: DriftFinding[]) =>
+  findings.reduce<Record<string, DriftFinding>>((acc, finding) => {
+    acc[finding.nodeId] = finding;
     return acc;
   }, {});
 
@@ -233,7 +241,7 @@ const OrchestratorReactFlow: React.FC = () => {
   const navigate = useNavigate();
   const { template_id } = useParams<{ template_id: string }>();
   const { getLayoutElements } = useLayoutElements();
-  const { fitView } = useReactFlow();
+  const { fitView, screenToFlowPosition } = useReactFlow();
   const [searchParams, setSearchParams] = useSearchParams();
   const template_type = searchParams.get("template_type");
   const maestroDraftToken = searchParams.get("maestro_draft");
@@ -262,6 +270,9 @@ const OrchestratorReactFlow: React.FC = () => {
   const [validationErrorsByNode, setValidationErrorsByNode] = useState<
     Record<string, Record<string, string>>
   >({});
+  const [driftByNode, setDriftByNode] = useState<Record<string, DriftFinding>>(
+    {},
+  );
   const [maestroReviewDraft, setMaestroReviewDraft] =
     useState<MaestroDraftPayload | null>(null);
   const [isMaestroReviewDraftBannerDismissed, setIsMaestroReviewDraftBannerDismissed] =
@@ -278,6 +289,7 @@ const OrchestratorReactFlow: React.FC = () => {
     return window.localStorage.getItem(AUTO_SAVE_STORAGE_KEY) === "true";
   });
   const requestedOrchestratorIdsRef = useRef<Set<string>>(new Set());
+  const loadedOrchestratorIdRef = useRef<string | null>(null);
   const routeLoadCountRef = useRef(0);
 
   useGuidedTour(
@@ -607,14 +619,42 @@ const OrchestratorReactFlow: React.FC = () => {
         return;
       }
 
-      setCurrentOrchestratorId(null);
-      setBaselineSnapshot(null);
+      // Create the orchestrator in the backend right away, even with zero
+      // nodes, so currentOrchestratorId is available immediately instead of
+      // waiting for the user's first manual Save (this unblocks actions like
+      // Reconcile State and Delete that depend on a saved id).
+      const saveRequest = prepareOrchestratorForSave(
+        nodes,
+        edges,
+        appliedTemplateInfo,
+        user,
+        policyScan,
+      );
+      const response = await orchestratorService.saveOrchestrator(saveRequest);
+      const newId = response._id || response.id;
+      if (!newId) {
+        throw new Error("Backend did not return an orchestrator id");
+      }
+
+      setCurrentOrchestratorId(newId);
+      // Must mirror handleOrchestrationSaved's baseline-snapshot update, or
+      // autosave's isCanvasDirty() check stays permanently false (it
+      // short-circuits whenever baselineSnapshot is falsy) for this
+      // orchestrator's entire lifetime.
+      setBaselineSnapshot(serializePersistedSnapshot(saveRequest));
       setMaestroReviewDraft(null);
       setPendingMaestroDraft(null);
       setReplaceDraftDialogOpen(false);
       setInitOpen(false);
+
+      // Must navigate off the "new" route sentinel now: the route-driven
+      // effect that watches template_id === "new" unconditionally resets
+      // currentOrchestratorId back to null otherwise.
+      navigate(`/orchestrator/${newId}?template_type=custom`, {
+        replace: true,
+      });
     },
-    [setTemplateInfo, template_id],
+    [setTemplateInfo, template_id, nodes, edges, user, policyScan, navigate],
   );
 
   const onDrop = useCallback(
@@ -627,11 +667,16 @@ const OrchestratorReactFlow: React.FC = () => {
       if (fetchResourceById.fulfilled.match(resultAction)) {
         const resourceData = resultAction.payload;
 
+        const dropPosition = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+
         // node from backend
         let newNode: any = {
           ...resourceData?.data?.resourceNode,
           id: `${id}-${uuidv4()}`,
-          position: { x: 100, y: 100 },
+          position: dropPosition,
         };
 
         // use resourceId as canonical domain type
@@ -675,6 +720,7 @@ const OrchestratorReactFlow: React.FC = () => {
       getLayoutElements,
       templateInfo,
       user,
+      screenToFlowPosition,
     ],
   );
 
@@ -1118,21 +1164,50 @@ const OrchestratorReactFlow: React.FC = () => {
     template_type,
   ]);
 
+  // "New" template route: show the init dialog when the canvas is still
+  // empty. This intentionally reacts to nodes.length/edges.length so the
+  // dialog opens/closes as the user starts building on a blank canvas.
+  useEffect(() => {
+    if (!template_id || !template_type || maestroDraftToken) {
+      return;
+    }
+
+    if (template_id !== "new") {
+      return;
+    }
+
+    setCurrentOrchestratorId(null);
+    if (
+      nodes.length === 0 &&
+      edges.length === 0 &&
+      !templateInfo.templateName &&
+      !templateInfo.cloud
+    ) {
+      setInitOpen(true);
+    }
+  }, [
+    edges.length,
+    maestroDraftToken,
+    nodes.length,
+    templateInfo.cloud,
+    templateInfo.templateName,
+    template_id,
+    template_type,
+  ]);
+
+  // Load an existing orchestrator's saved graph when navigating to its
+  // route. This must NOT depend on nodes.length/edges.length: those change
+  // on every local edit (e.g. dropping a resource onto the canvas), and
+  // re-running loadSerializedGraph would overwrite in-progress edits with
+  // the last-saved snapshot, making just-dropped nodes vanish. Guard with
+  // loadedOrchestratorIdRef so the graph is (re)loaded only on an actual
+  // route/template change, not on every canvas mutation.
   useEffect(() => {
     if (!template_id || !template_type || maestroDraftToken) {
       return;
     }
 
     if (template_id === "new") {
-      setCurrentOrchestratorId(null);
-      if (
-        nodes.length === 0 &&
-        edges.length === 0 &&
-        !templateInfo.templateName &&
-        !templateInfo.cloud
-      ) {
-        setInitOpen(true);
-      }
       return;
     }
 
@@ -1155,6 +1230,11 @@ const OrchestratorReactFlow: React.FC = () => {
     }
 
     requestedOrchestratorIdsRef.current.delete(template_id);
+
+    if (loadedOrchestratorIdRef.current === template_id) {
+      return;
+    }
+    loadedOrchestratorIdRef.current = template_id;
 
     const appliedTemplateInfo = normalizeTemplateInfo(
       orchestratorData.templateInfo,
@@ -1184,13 +1264,10 @@ const OrchestratorReactFlow: React.FC = () => {
       });
   }, [
     dispatch,
-    edges.length,
     loadSerializedGraph,
     maestroDraftToken,
-    nodes.length,
     orchestrators,
-    templateInfo.cloud,
-    templateInfo.templateName,
+    runWithRouteLoading,
     template_id,
     template_type,
   ]);
@@ -1677,6 +1754,13 @@ const OrchestratorReactFlow: React.FC = () => {
     [setNodes],
   );
 
+  const handleReconciliationChange = useCallback(
+    (result: ReconciliationResult | null) => {
+      setDriftByNode(buildDriftMap(result?.findings ?? []));
+    },
+    [],
+  );
+
   const handleConfirmDraftReplace = useCallback(() => {
     if (!pendingMaestroDraft) {
       setReplaceDraftDialogOpen(false);
@@ -1802,6 +1886,8 @@ const OrchestratorReactFlow: React.FC = () => {
             },
             __viewMode: isArchitectureMode ? "architecture" : "detailed",
             __validationErrors: validationErrorsByNode[n.id],
+            __driftStatus: driftByNode[n.id]?.status,
+            __driftFindings: driftByNode[n.id] ? [driftByNode[n.id]] : undefined,
           },
         };
       }),
@@ -1814,6 +1900,7 @@ const OrchestratorReactFlow: React.FC = () => {
       onCloneNode,
       onDeleteNode,
       validationErrorsByNode,
+      driftByNode,
     ],
   );
 
@@ -2011,6 +2098,7 @@ const OrchestratorReactFlow: React.FC = () => {
                     setIsArchitectureMode(value)
                   }
                   onValidationIssuesChange={handleValidationIssuesChange}
+                  onReconciliationChange={handleReconciliationChange}
                   autoSaveEnabled={autoSaveEnabled}
                   onAutoSaveEnabledChange={setAutoSaveEnabled}
                   policyScan={policyScan}

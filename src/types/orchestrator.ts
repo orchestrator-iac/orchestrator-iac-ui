@@ -57,6 +57,50 @@ export interface IaCValidationIssue {
   remediation?: string;
 }
 
+// Tier 1 drift reconciliation (manual .tfstate upload, no credentials/persistence)
+export type DriftStatus =
+  | "in_sync"
+  | "drifted"
+  | "not_applied"
+  | "unmanaged"
+  | "unable_to_compare";
+
+export interface DriftFieldDiff {
+  name: string;
+  expected: unknown;
+  actual: unknown;
+}
+
+export interface DriftFinding {
+  nodeId: string;
+  resourceId: string;
+  friendlyId?: string;
+  status: Exclude<DriftStatus, "unmanaged">;
+  fields: DriftFieldDiff[];
+  reason?: string | null;
+}
+
+export interface UnmanagedResource {
+  type: string;
+  name: string;
+  address: string;
+}
+
+export interface ReconciliationSummary {
+  inSync: number;
+  drifted: number;
+  notApplied: number;
+  unmanaged: number;
+  unableToCompare: number;
+}
+
+export interface ReconciliationResult {
+  generatedAt: string;
+  summary: ReconciliationSummary;
+  findings: DriftFinding[];
+  unmanagedResources: UnmanagedResource[];
+}
+
 // Complete orchestrator state for saving
 export interface SaveOrchestratorRequest {
   templateInfo: TemplateInfo;
@@ -93,6 +137,7 @@ export interface SaveOrchestratorResponse {
   policyValidationIssues?: IaCValidationIssue[];
   policyScan?: PolicyScanSettings;
   iacGenerationSummary?: Record<string, any> | null;
+  reconciliation?: ReconciliationResult | null;
 }
 
 // List view for saved orchestrations

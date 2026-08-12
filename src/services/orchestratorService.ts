@@ -71,6 +71,16 @@ export class IacValidationError extends Error {
   }
 }
 
+export class ReconciliationError extends Error {
+  detail?: Record<string, unknown>;
+
+  constructor(message: string, detail?: Record<string, unknown>) {
+    super(message);
+    this.name = "ReconciliationError";
+    this.detail = detail;
+  }
+}
+
 /**
  * Service for managing orchestrator configurations (nodes, edges, metadata)
  * Handles CRUD operations for infrastructure templates
@@ -266,6 +276,46 @@ export const orchestratorService = {
         });
       }
       throw new Error("Failed to generate infrastructure as code");
+    }
+  },
+
+  /**
+   * Tier 1 drift reconciliation: upload a Terraform `.tfstate` file for a
+   * saved orchestrator and get back a one-off comparison against the
+   * generated Terraform. No credentials, no persistence of the uploaded
+   * file — only the computed result is stored.
+   * @param id - Orchestrator ID to reconcile
+   * @param stateFile - The uploaded `.tfstate` JSON file
+   * @returns Updated orchestrator with `reconciliation` populated
+   */
+  reconcileState: async (
+    id: string,
+    stateFile: File,
+  ): Promise<SaveOrchestratorResponse> => {
+    try {
+      const formData = new FormData();
+      formData.append("state_file", stateFile);
+
+      const response = await apiService.post(
+        `/orchestrators/${id}/reconcile-state`,
+        formData,
+        {
+          timeout: 60_000,
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
+      return withNormalizedDates(response);
+    } catch (error: any) {
+      console.error("Failed to reconcile Terraform state:", error);
+      const detail = error?.response?.data?.detail;
+      const message =
+        (typeof detail === "string" && detail) ||
+        detail?.message ||
+        "Failed to reconcile Terraform state";
+      throw new ReconciliationError(
+        message,
+        typeof detail === "object" ? detail : undefined,
+      );
     }
   },
 };

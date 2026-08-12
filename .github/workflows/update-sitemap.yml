@@ -36,10 +36,8 @@ jobs:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
         run: node scripts/generate-sitemap.mjs
-        working-directory: orchestrator-iac-ui
 
       - name: Commit and push sitemap (if changed)
-        working-directory: orchestrator-iac-ui
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -53,6 +51,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "sitemap.xml is up to date — no commit needed."
           else
-            git commit -m "chore: update sitemap.xml [skip ci]"
+            git commit -m "chore: update sitemap.xml"
             git push origin HEAD:main
           fi
