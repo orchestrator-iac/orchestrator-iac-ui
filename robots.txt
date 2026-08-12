@@ -12,5 +12,7 @@ Disallow: /resources
 Disallow: /home
 Disallow: /dashboard
 Disallow: /orchestrator/
+Disallow: /night-sky
+Disallow: /black-hole
 
 Sitemap: https://orchestrator.next-zen.dev/sitemap.xml
