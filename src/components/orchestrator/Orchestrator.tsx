@@ -139,7 +139,7 @@ const normalizeTemplateInfo = (
 const buildValidationErrorMap = (issues: IaCValidationIssue[]) =>
   issues.reduce<Record<string, Record<string, string>>>((acc, issue) => {
     acc[issue.nodeId] = {
-      ...(acc[issue.nodeId] ?? {}),
+      ...acc[issue.nodeId],
       [issue.field ?? ""]: issue.message,
     };
     return acc;
@@ -233,6 +233,510 @@ const useLayoutElements = () => {
 
   return { getLayoutElements };
 };
+
+// Compares two arrays of plain objects (used to decide whether the
+// "array of objects" bind value actually changed before triggering a
+// state update). Extracted verbatim from the link-rule sync effect below.
+const isEqualObjectArray = (
+  left: Array<Record<string, any>>,
+  right: Array<Record<string, any>>,
+) => {
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    const a = left[i] ?? {};
+    const b = right[i] ?? {};
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    for (const key of keys) {
+      if ((a as any)[key] !== (b as any)[key]) return false;
+    }
+  }
+  return true;
+};
+
+// "many" cardinality, array-of-objects case (fieldName[index].key syntax).
+// Mutates nextValues[rule.bind] in place when the derived array changes and
+// reports whether a change occurred, mirroring the original inline logic.
+const applyManyObjectCardinalityRule = (
+  rule: any,
+  incomingWithBindKey: Edge[],
+  existingValue: any,
+  nextValues: Record<string, any>,
+): boolean => {
+  const baseArray: Array<Record<string, any>> = Array.isArray(existingValue)
+    ? existingValue.map((item) =>
+        item != null && typeof item === "object" && !Array.isArray(item)
+          ? { ...item }
+          : {},
+      )
+    : [];
+
+  for (const edge of incomingWithBindKey) {
+    const bindKey = edge.data?.bindKey as string | undefined;
+    if (!bindKey) return false;
+    const match = /^(.+)\[(\d+)\]\.([^.]+)$/.exec(bindKey);
+    if (!match) return false;
+    const idx = Number.parseInt(match[2], 10);
+    const key = match[3];
+    while (baseArray.length <= idx) baseArray.push({});
+    const currentObj = { ...baseArray[idx] };
+    if (currentObj[key] !== edge.source) {
+      currentObj[key] = edge.source;
+      baseArray[idx] = currentObj;
+    }
+  }
+
+  const snapshotArray = Array.isArray(existingValue)
+    ? existingValue.map((item) =>
+        item != null && typeof item === "object" && !Array.isArray(item)
+          ? { ...item }
+          : {},
+      )
+    : [];
+
+  if (!isEqualObjectArray(snapshotArray, baseArray)) {
+    nextValues[rule.bind] = baseArray;
+    return true;
+  }
+  return false;
+};
+
+// "many" cardinality, scalar array case (plain list of source ids).
+const applyManyScalarCardinalityRule = (
+  rule: any,
+  incoming: Edge[],
+  existingValue: any,
+  nextValues: Record<string, any>,
+): boolean => {
+  const srcs = incoming.map((e) => e.source); // keep order of addition
+  const existingList: string[] = Array.isArray(existingValue)
+    ? existingValue
+    : [];
+  // Merge: keep all current edge sources first, then retain any blanks or manual placeholders not yet connected
+  const merged = [
+    ...srcs,
+    ...existingList.filter((v) => v === "" || !srcs.includes(v)),
+  ];
+  const same =
+    existingList.length === merged.length &&
+    existingList.every((v, i) => v === merged[i]);
+  if (!same) {
+    nextValues[rule.bind] = merged;
+    return true;
+  }
+  return false;
+};
+
+// Dispatches to the object-array or scalar-array handling for "many"
+// cardinality rules, matching the original nested if/else exactly.
+const applyManyCardinalityRule = (
+  rule: any,
+  incoming: Edge[],
+  nextValues: Record<string, any>,
+): boolean => {
+  const incomingWithBindKey = incoming.filter(
+    (edge) => typeof edge.data?.bindKey === "string",
+  );
+  const hasObjectSyntax = incomingWithBindKey.some((edge) =>
+    /\[\d+\]\.[^.]+$/.test(edge.data?.bindKey as string),
+  );
+  const existingValue = nextValues[rule.bind];
+  const existingHasObjects = Array.isArray(existingValue)
+    ? existingValue.some(
+        (item) =>
+          item != null && typeof item === "object" && !Array.isArray(item),
+      )
+    : false;
+
+  if (hasObjectSyntax || existingHasObjects) {
+    return applyManyObjectCardinalityRule(
+      rule,
+      incomingWithBindKey,
+      existingValue,
+      nextValues,
+    );
+  }
+  return applyManyScalarCardinalityRule(
+    rule,
+    incoming,
+    existingValue,
+    nextValues,
+  );
+};
+
+// "1" cardinality case: the bound field mirrors the single incoming edge's source.
+const applySingleCardinalityRule = (
+  rule: any,
+  incoming: Edge[],
+  nextValues: Record<string, any>,
+): boolean => {
+  const src = incoming[0]?.source ?? "";
+  if (nextValues[rule.bind] !== src) {
+    nextValues[rule.bind] = src;
+    return true;
+  }
+  return false;
+};
+
+// Processes a single link rule against the current edges for one node,
+// mutating nextValues and reporting whether it changed.
+const applyLinkRuleToValues = (
+  rule: any,
+  edges: Edge[],
+  nodeId: string,
+  nextValues: Record<string, any>,
+): boolean => {
+  const edgeKind = rule?.edgeData?.kind ?? rule.bind;
+  const incoming = edges.filter(
+    (e) => e.target === nodeId && (e.data?.kind ?? rule.bind) === edgeKind,
+  );
+
+  if ((rule.cardinality ?? "1") === "many") {
+    return applyManyCardinalityRule(rule, incoming, nextValues);
+  }
+  return applySingleCardinalityRule(rule, incoming, nextValues);
+};
+
+// Recomputes a node's link-bound values from the current edges. Extracted
+// from the "sync edge-driven values" effect to keep nesting/cognitive
+// complexity within limits; logic is unchanged from the original inline code.
+const applyLinkRulesToNode = (node: Node, edges: Edge[]): Node => {
+  const rules = (node.data as any)?.links ?? [];
+  if (!Array.isArray(rules) || rules.length === 0) return node;
+
+  const current = (node.data as any)?.values ?? {};
+  const nextValues: Record<string, any> = { ...current };
+  let changed = false;
+
+  rules.forEach((rule: any) => {
+    if (applyLinkRuleToValues(rule, edges, node.id, nextValues)) {
+      changed = true;
+    }
+  });
+
+  return changed
+    ? { ...node, data: { ...node.data, values: nextValues } }
+    : node;
+};
+
+// Removes duplicate occurrences of `sourceId` under `key` from every object
+// in `arr` other than `keepIndex`, mutating the array's entries in place.
+// Extracted verbatim from the array-of-objects bind-change branch below.
+const clearDuplicateObjectBindOccurrences = (
+  arr: Array<Record<string, any>>,
+  keepIndex: number,
+  key: string,
+  sourceId: string,
+): void => {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (i !== keepIndex) {
+      const item = arr[i] ?? {};
+      if (item?.[key] === sourceId) {
+        const rest = { ...item };
+        delete rest[key];
+        arr[i] = rest;
+      }
+    }
+  }
+};
+
+// Handles the "many" cardinality, array-of-objects bind case
+// (fieldName[index].key syntax) for onLinkFieldChange.
+const applyManyObjectIndexBind = (
+  node: Node,
+  current: Record<string, any>,
+  baseBind: string,
+  objIndex: number,
+  objKey: string,
+  sourceId: string,
+  context?: { objectSnapshot?: Record<string, any> },
+): Node => {
+  const prevArrObjs: Array<Record<string, any>> = Array.isArray(
+    current[baseBind],
+  )
+    ? [...current[baseBind]]
+    : [];
+
+  // Ensure array and object at index exist
+  while (prevArrObjs.length <= objIndex) prevArrObjs.push({});
+  const objAtIndexBase = context?.objectSnapshot
+    ? { ...context.objectSnapshot }
+    : { ...prevArrObjs[objIndex] };
+  const objAtIndex = { ...objAtIndexBase };
+
+  if (sourceId) {
+    objAtIndex[objKey] = sourceId;
+    prevArrObjs[objIndex] = objAtIndex;
+
+    // Remove duplicate occurrences of the same id for this key across other indices
+    clearDuplicateObjectBindOccurrences(prevArrObjs, objIndex, objKey, sourceId);
+  } else {
+    // Clearing this field keeps placeholder so UI row persists
+    objAtIndex[objKey] = "";
+    prevArrObjs[objIndex] = objAtIndex;
+  }
+
+  return {
+    ...node,
+    data: {
+      ...node.data,
+      values: { ...current, [baseBind]: prevArrObjs },
+    },
+  };
+};
+
+// Removes duplicate occurrences of `sourceId` from `arr` other than
+// `keepIndex`, mutating the array in place.
+const clearDuplicateScalarBindOccurrences = (
+  arr: string[],
+  keepIndex: number,
+  sourceId: string,
+): void => {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (i !== keepIndex && arr[i] === sourceId) arr.splice(i, 1);
+  }
+};
+
+// Handles the "many" cardinality, scalar array bind case (indexed or
+// append-unique semantics) for onLinkFieldChange.
+const applyManySyntheticIndexBind = (
+  node: Node,
+  current: Record<string, any>,
+  baseBind: string,
+  syntheticIndex: number | null,
+  sourceId: string,
+): Node => {
+  const prevArr: string[] = Array.isArray(current[baseBind])
+    ? [...current[baseBind]]
+    : [];
+
+  if (syntheticIndex === null) {
+    // Fallback (no index provided): behave like set/append unique
+    if (sourceId) {
+      if (!prevArr.includes(sourceId)) prevArr.push(sourceId);
+    }
+  } else {
+    // Ensure array large enough
+    while (prevArr.length <= syntheticIndex) prevArr.push("");
+    if (sourceId) {
+      // Replace value at index (respect ordering)
+      prevArr[syntheticIndex] = sourceId;
+      // Remove duplicate occurrences of same id beyond this index
+      clearDuplicateScalarBindOccurrences(prevArr, syntheticIndex, sourceId);
+    } else {
+      // Clearing this slot keeps placeholder so UI row persists
+      prevArr[syntheticIndex] = "";
+    }
+  }
+
+  return {
+    ...node,
+    data: { ...node.data, values: { ...current, [baseBind]: prevArr } },
+  };
+};
+
+// Recomputes a single node's values in response to a dropdown/link field
+// change. Extracted from onLinkFieldChange's setNodes updater to keep
+// nesting/cognitive complexity within limits; logic is unchanged from the
+// original inline code.
+const computeNodeValuesForLinkChange = (
+  node: Node,
+  params: {
+    nodeId: string;
+    cardinality: "1" | "many";
+    baseBind: string;
+    sourceId: string;
+    objIndex: number | null;
+    objKey: string | null;
+    syntheticIndex: number | null;
+    context?: { objectSnapshot?: Record<string, any> };
+  },
+): Node => {
+  const {
+    nodeId,
+    cardinality,
+    baseBind,
+    sourceId,
+    objIndex,
+    objKey,
+    syntheticIndex,
+    context,
+  } = params;
+
+  if (node.id !== nodeId) return node;
+  const current = (node.data as any)?.values ?? {};
+
+  if (cardinality === "1") {
+    // Single relation: set or clear directly
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        values: {
+          ...current,
+          [baseBind]: sourceId || "",
+        },
+      },
+    };
+  }
+
+  // MANY cardinality
+  // Case 1: array of objects with key path: fieldName[index].key
+  if (objIndex !== null && objKey) {
+    return applyManyObjectIndexBind(
+      node,
+      current,
+      baseBind,
+      objIndex,
+      objKey,
+      sourceId,
+      context,
+    );
+  }
+
+  // Case 2: array of scalar values with indexed semantics
+  return applyManySyntheticIndexBind(
+    node,
+    current,
+    baseBind,
+    syntheticIndex,
+    sourceId,
+  );
+};
+
+// Full-canvas loading overlay shown while a route-driven orchestrator load
+// is in flight. Extracted from OrchestratorReactFlow's render to keep the
+// component's own cognitive complexity within limits; markup is unchanged.
+const RouteLoadingOverlay: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <Box
+      aria-live="polite"
+      role="status"
+      sx={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 10,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 3,
+        bgcolor:
+          theme.palette.mode === "dark"
+            ? "rgba(7, 10, 18, 0.24)"
+            : "rgba(244, 247, 251, 0.28)",
+        backdropFilter: "blur(8px) saturate(120%)",
+        WebkitBackdropFilter: "blur(8px) saturate(120%)",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 1.25,
+          textAlign: "center",
+          px: 2,
+          py: 1,
+          transform: "translateY(-2%)",
+        }}
+      >
+        <LumaSpin size={72} />
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Loading orchestrator
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            maxWidth: 320,
+            fontSize: "0.95rem",
+          }}
+        >
+          Preparing your resources and canvas so the workflow opens cleanly.
+        </Typography>
+      </Box>
+    </Box>
+  );
+};
+
+// Template name/cloud/region chips (+ read-only badge) shown on the canvas.
+// Extracted from OrchestratorReactFlow's render; markup/conditions unchanged.
+const TemplateInfoChips: React.FC<{
+  templateInfo: CloudConfig;
+  isViewMode: boolean;
+  onOpenInit: () => void;
+}> = ({ templateInfo, isViewMode, onOpenInit }) => (
+  <Box
+    sx={{
+      display: "flex",
+      gap: 2,
+      alignItems: "center",
+      flexWrap: "wrap",
+    }}
+  >
+    {templateInfo?.templateName && (
+      <Chip
+        icon={<DeblurIcon />}
+        label={templateInfo?.templateName}
+        onClick={isViewMode ? undefined : onOpenInit}
+      />
+    )}
+    {templateInfo?.cloud && (
+      <Chip
+        icon={<CloudCircleIcon />}
+        label={templateInfo?.cloud.toUpperCase()}
+        onClick={isViewMode ? undefined : onOpenInit}
+      />
+    )}
+    {templateInfo?.region && (
+      <Chip
+        icon={<SouthAmericaIcon />}
+        label={templateInfo?.region}
+        onClick={isViewMode ? undefined : onOpenInit}
+      />
+    )}
+    {isViewMode && (
+      <Chip
+        label="Read-only preview"
+        size="small"
+        variant="outlined"
+        sx={{ opacity: 0.7, fontSize: "0.75rem" }}
+      />
+    )}
+  </Box>
+);
+
+// Banner shown when a Maestro draft has been loaded onto the canvas.
+// Extracted from OrchestratorReactFlow's render; markup/conditions unchanged.
+const MaestroDraftBanner: React.FC<{
+  draft: MaestroDraftPayload;
+  onDismiss: () => void;
+}> = ({ draft, onDismiss }) => (
+  <Alert
+    severity="info"
+    sx={{ maxWidth: 520 }}
+    action={
+      <IconButton
+        aria-label="Dismiss Maestro draft message"
+        color="inherit"
+        size="small"
+        onClick={onDismiss}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    }
+  >
+    {draft.action === "update"
+      ? "Maestro loaded a workflow update draft. Review the proposed graph changes, then save to apply them to this workflow."
+      : "Maestro loaded a new workflow draft. Review it and save when you are ready to create the workflow."}
+  </Alert>
+);
 
 const OrchestratorReactFlow: React.FC = () => {
   const { user } = useAuth();
@@ -527,11 +1031,13 @@ const OrchestratorReactFlow: React.FC = () => {
       .map(([label, count]) => (count > 1 ? `${count}x ${label}` : label))
       .join(", ");
 
+    const nodesCountSuffix = nodes.length === 1 ? "" : "s";
+    const edgesCountSuffix = edges.length === 1 ? "" : "s";
+    const edgesSummary = edges.length
+      ? ` ${edges.length} connection${edgesCountSuffix} between them.`
+      : "";
     const resourceSummary = resourceList
-      ? `${nodes.length} resource${nodes.length === 1 ? "" : "s"} on canvas: ${resourceList}.` +
-        (edges.length
-          ? ` ${edges.length} connection${edges.length === 1 ? "" : "s"} between them.`
-          : "")
+      ? `${nodes.length} resource${nodesCountSuffix} on canvas: ${resourceList}.${edgesSummary}`
       : undefined;
 
     dispatch(
@@ -805,127 +1311,7 @@ const OrchestratorReactFlow: React.FC = () => {
   }, [theme.palette.mode]);
 
   useEffect(() => {
-    setNodes((nds) =>
-      nds.map((n) => {
-        const rules = (n.data as any)?.links ?? [];
-        if (!Array.isArray(rules) || rules.length === 0) return n;
-
-        const current = (n.data as any)?.values ?? {};
-        const nextValues: Record<string, any> = { ...current };
-        let changed = false;
-
-        const isEqualObjectArray = (
-          left: Array<Record<string, any>>,
-          right: Array<Record<string, any>>,
-        ) => {
-          if (left.length !== right.length) return false;
-          for (let i = 0; i < left.length; i += 1) {
-            const a = left[i] ?? {};
-            const b = right[i] ?? {};
-            const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-            for (const key of keys) {
-              if ((a as any)[key] !== (b as any)[key]) return false;
-            }
-          }
-          return true;
-        };
-
-        rules.forEach((rule: any) => {
-          const edgeKind = rule?.edgeData?.kind ?? rule.bind;
-          const incoming = edges.filter(
-            (e) =>
-              e.target === n.id && (e.data?.kind ?? rule.bind) === edgeKind,
-          );
-
-          if ((rule.cardinality ?? "1") === "many") {
-            const incomingWithBindKey = incoming.filter(
-              (edge) => typeof edge.data?.bindKey === "string",
-            );
-            const hasObjectSyntax = incomingWithBindKey.some((edge) =>
-              /\[\d+\]\.[^.]+$/.test(edge.data?.bindKey as string),
-            );
-            const existingValue = nextValues[rule.bind];
-            const existingHasObjects = Array.isArray(existingValue)
-              ? existingValue.some(
-                  (item) =>
-                    item != null &&
-                    typeof item === "object" &&
-                    !Array.isArray(item),
-                )
-              : false;
-
-            if (hasObjectSyntax || existingHasObjects) {
-              const baseArray: Array<Record<string, any>> = Array.isArray(
-                existingValue,
-              )
-                ? existingValue.map((item) =>
-                    item != null &&
-                    typeof item === "object" &&
-                    !Array.isArray(item)
-                      ? { ...item }
-                      : {},
-                  )
-                : [];
-
-              for (const edge of incomingWithBindKey) {
-                const bindKey = edge.data?.bindKey as string | undefined;
-                if (!bindKey) return;
-                const match = /^(.+)\[(\d+)\]\.([^.]+)$/.exec(bindKey);
-                if (!match) return;
-                const idx = Number.parseInt(match[2], 10);
-                const key = match[3];
-                while (baseArray.length <= idx) baseArray.push({});
-                const currentObj = { ...baseArray[idx] };
-                if (currentObj[key] !== edge.source) {
-                  currentObj[key] = edge.source;
-                  baseArray[idx] = currentObj;
-                }
-              }
-
-              const snapshotArray = Array.isArray(existingValue)
-                ? existingValue.map((item) =>
-                    item != null &&
-                    typeof item === "object" &&
-                    !Array.isArray(item)
-                      ? { ...item }
-                      : {},
-                  )
-                : [];
-
-              if (!isEqualObjectArray(snapshotArray, baseArray)) {
-                nextValues[rule.bind] = baseArray;
-                changed = true;
-              }
-            } else {
-              const srcs = incoming.map((e) => e.source); // keep order of addition
-              const existingList: string[] = Array.isArray(existingValue)
-                ? existingValue
-                : [];
-              // Merge: keep all current edge sources first, then retain any blanks or manual placeholders not yet connected
-              const merged = [
-                ...srcs,
-                ...existingList.filter((v) => v === "" || !srcs.includes(v)),
-              ];
-              const same =
-                existingList.length === merged.length &&
-                existingList.every((v, i) => v === merged[i]);
-              if (!same) {
-                nextValues[rule.bind] = merged;
-                changed = true;
-              }
-            }
-          } else {
-            const src = incoming[0]?.source ?? "";
-            if (nextValues[rule.bind] !== src) {
-              nextValues[rule.bind] = src;
-              changed = true;
-            }
-          }
-        });
-
-        return changed ? { ...n, data: { ...n.data, values: nextValues } } : n;
-      }),
-    );
+    setNodes((nds) => nds.map((n) => applyLinkRulesToNode(n, edges)));
   }, [edges, setNodes]);
 
   useEffect(() => {
@@ -1477,102 +1863,18 @@ const OrchestratorReactFlow: React.FC = () => {
         : null;
 
       setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== nodeId) return n;
-          const current = (n.data as any)?.values ?? {};
-
-          if (cardinality === "1") {
-            // Single relation: set or clear directly
-            return {
-              ...n,
-              data: {
-                ...n.data,
-                values: {
-                  ...current,
-                  [baseBind]: sourceId || "",
-                },
-              },
-            };
-          }
-
-          // MANY cardinality
-          // Case 1: array of objects with key path: fieldName[index].key
-          if (objIndex !== null && objKey) {
-            const prevArrObjs: Array<Record<string, any>> = Array.isArray(
-              current[baseBind],
-            )
-              ? [...current[baseBind]]
-              : [];
-
-            // Ensure array and object at index exist
-            while (prevArrObjs.length <= objIndex) prevArrObjs.push({});
-            const objAtIndexBase = context?.objectSnapshot
-              ? { ...context.objectSnapshot }
-              : { ...prevArrObjs[objIndex] };
-            const objAtIndex = { ...objAtIndexBase };
-
-            if (sourceId) {
-              objAtIndex[objKey] = sourceId;
-              prevArrObjs[objIndex] = objAtIndex;
-
-              // Remove duplicate occurrences of the same id for this key across other indices
-              for (let i = prevArrObjs.length - 1; i >= 0; i--) {
-                if (i !== objIndex) {
-                  const item = prevArrObjs[i] ?? {};
-                  if (item?.[objKey] === sourceId) {
-                    const rest = { ...item };
-                    delete rest[objKey];
-                    prevArrObjs[i] = rest;
-                  }
-                }
-              }
-            } else {
-              // Clearing this field keeps placeholder so UI row persists
-              objAtIndex[objKey] = "";
-              prevArrObjs[objIndex] = objAtIndex;
-            }
-
-            return {
-              ...n,
-              data: {
-                ...n.data,
-                values: { ...current, [baseBind]: prevArrObjs },
-              },
-            };
-          }
-
-          // Case 2: array of scalar values with indexed semantics
-          const prevArr: string[] = Array.isArray(current[baseBind])
-            ? [...current[baseBind]]
-            : [];
-
-          if (syntheticIndex === null) {
-            // Fallback (no index provided): behave like set/append unique
-            if (sourceId) {
-              if (!prevArr.includes(sourceId)) prevArr.push(sourceId);
-            }
-          } else {
-            // Ensure array large enough
-            while (prevArr.length <= syntheticIndex) prevArr.push("");
-            if (sourceId) {
-              // Replace value at index (respect ordering)
-              prevArr[syntheticIndex] = sourceId;
-              // Remove duplicate occurrences of same id beyond this index
-              for (let i = prevArr.length - 1; i >= 0; i--) {
-                if (i !== syntheticIndex && prevArr[i] === sourceId)
-                  prevArr.splice(i, 1);
-              }
-            } else {
-              // Clearing this slot keeps placeholder so UI row persists
-              prevArr[syntheticIndex] = "";
-            }
-          }
-
-          return {
-            ...n,
-            data: { ...n.data, values: { ...current, [baseBind]: prevArr } },
-          };
-        }),
+        nds.map((n) =>
+          computeNodeValuesForLinkChange(n, {
+            nodeId,
+            cardinality,
+            baseBind,
+            sourceId,
+            objIndex,
+            objKey,
+            syntheticIndex,
+            context,
+          }),
+        ),
       );
 
       setEdges((eds) => {
@@ -1588,7 +1890,7 @@ const OrchestratorReactFlow: React.FC = () => {
             if (e.target !== nodeId) return true;
             const sameKind = (e.data?.kind ?? baseBind) === edgeKind;
             if (!sameKind) return true;
-            if (e.data?.bindKey && e.data.bindKey === bindStr) return false;
+            if (e.data?.bindKey === bindStr) return false;
             return true;
           });
 
@@ -1995,62 +2297,7 @@ const OrchestratorReactFlow: React.FC = () => {
         data-tour="orchestrator-canvas"
         position="relative"
       >
-        {isRouteLoading && (
-          <Box
-            aria-live="polite"
-            role="status"
-            sx={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: 3,
-              bgcolor:
-                theme.palette.mode === "dark"
-                  ? "rgba(7, 10, 18, 0.24)"
-                  : "rgba(244, 247, 251, 0.28)",
-              backdropFilter: "blur(8px) saturate(120%)",
-              WebkitBackdropFilter: "blur(8px) saturate(120%)",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 1.25,
-                textAlign: "center",
-                px: 2,
-                py: 1,
-                transform: "translateY(-2%)",
-              }}
-            >
-              <LumaSpin size={72} />
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 700,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Loading orchestrator
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  maxWidth: 320,
-                  fontSize: "0.95rem",
-                }}
-              >
-                Preparing your resources and canvas so the workflow opens
-                cleanly.
-              </Typography>
-            </Box>
-          </Box>
-        )}
+        {isRouteLoading && <RouteLoadingOverlay />}
         <ReactFlow
           nodes={nodesWithHelpers}
           edges={edges}
@@ -2075,64 +2322,19 @@ const OrchestratorReactFlow: React.FC = () => {
         >
           <Panel position="top-left">
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 2,
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                }}
-              >
-                {templateInfo?.templateName && (
-                  <Chip
-                    icon={<DeblurIcon />}
-                    label={templateInfo?.templateName}
-                    onClick={isViewMode ? undefined : () => setInitOpen(true)}
+              <TemplateInfoChips
+                templateInfo={templateInfo}
+                isViewMode={isViewMode}
+                onOpenInit={() => setInitOpen(true)}
+              />
+              {maestroReviewDraft &&
+                !isViewMode &&
+                !isMaestroReviewDraftBannerDismissed && (
+                  <MaestroDraftBanner
+                    draft={maestroReviewDraft}
+                    onDismiss={handleDismissMaestroReviewDraftBanner}
                   />
                 )}
-                {templateInfo?.cloud && (
-                  <Chip
-                    icon={<CloudCircleIcon />}
-                    label={templateInfo?.cloud.toUpperCase()}
-                    onClick={isViewMode ? undefined : () => setInitOpen(true)}
-                  />
-                )}
-                {templateInfo?.region && (
-                  <Chip
-                    icon={<SouthAmericaIcon />}
-                    label={templateInfo?.region}
-                    onClick={isViewMode ? undefined : () => setInitOpen(true)}
-                  />
-                )}
-                {isViewMode && (
-                  <Chip
-                    label="Read-only preview"
-                    size="small"
-                    variant="outlined"
-                    sx={{ opacity: 0.7, fontSize: "0.75rem" }}
-                  />
-                )}
-              </Box>
-              {maestroReviewDraft && !isViewMode && !isMaestroReviewDraftBannerDismissed && (
-                <Alert
-                  severity="info"
-                  sx={{ maxWidth: 520 }}
-                  action={
-                    <IconButton
-                      aria-label="Dismiss Maestro draft message"
-                      color="inherit"
-                      size="small"
-                      onClick={handleDismissMaestroReviewDraftBanner}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  }
-                >
-                  {maestroReviewDraft.action === "update"
-                    ? "Maestro loaded a workflow update draft. Review the proposed graph changes, then save to apply them to this workflow."
-                    : "Maestro loaded a new workflow draft. Review it and save when you are ready to create the workflow."}
-                </Alert>
-              )}
             </Box>
           </Panel>
           <Panel position="top-right">

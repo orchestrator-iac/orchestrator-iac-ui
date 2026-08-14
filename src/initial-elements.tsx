@@ -1194,9 +1194,9 @@ export const components = {
                     </li>
 
                     <li>
-                      General purpose bucket names can consist only of lowercase
-                      letters, numbers, periods (<code>.</code>), and hyphens (
-                      <code>-</code>).
+                      General purpose bucket names can consist only of
+                      lowercase letters, numbers, periods (<code>.</code>),
+                      and hyphens (<code>-</code>).
                     </li>
 
                     <li>
@@ -1294,7 +1294,7 @@ export const components = {
                 writer. Objects that are uploaded without this canned ACL are
                 owned by the object writer. All other ACL behaviors remain in
                 place. This setting does not affect ownership of existing
-                objects. To require all Amazon S3
+                objects. To require all Amazon S3{" "}
                 <code>PUT</code> operations to include the{" "}
                 <code>bucket-owner-full-control</code> canned ACL, add a bucket
                 policy that allows only object uploads that use this ACL.

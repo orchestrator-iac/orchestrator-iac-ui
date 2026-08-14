@@ -36,6 +36,15 @@ const README_PLACEHOLDER_HTML =
   "<h2>Usage</h2><p>Steps to configure after forking:</p><ol><li><p></p></li><li><p></p></li></ol>" +
   "<h2>Prerequisites</h2><ul><li><p></p></li></ul>";
 
+// Resolves the primary action button's label based on loading/update state.
+// Extracted to avoid nested ternary operators (see rule typescript:S3358).
+const resolvePublishButtonLabel = (loading: boolean, isUpdate: boolean): string => {
+  if (loading) {
+    return isUpdate ? "Saving..." : "Publishing...";
+  }
+  return isUpdate ? "Save Changes" : "Publish Template";
+};
+
 const PublishTemplateDialog: React.FC<PublishTemplateDialogProps> = ({
   open,
   onClose,
@@ -303,9 +312,7 @@ const PublishTemplateDialog: React.FC<PublishTemplateDialogProps> = ({
               },
             }}
           >
-            {loading
-              ? isUpdate ? "Saving..." : "Publishing..."
-              : isUpdate ? "Save Changes" : "Publish Template"}
+            {resolvePublishButtonLabel(loading, isUpdate)}
           </Button>
         </Box>
       </DialogActions>

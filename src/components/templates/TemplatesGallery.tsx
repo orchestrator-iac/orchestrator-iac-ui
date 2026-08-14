@@ -34,6 +34,10 @@ import TemplateCard from "./TemplateCard";
 
 const PAGE_SIZE = 20;
 
+// Feature flag: the first-visit welcome banner is built but currently disabled
+// pending first-visit detection (nothing sets `showWelcome` to true yet).
+const SHOW_WELCOME_BANNER: boolean = false;
+
 const TemplatesGallery: React.FC = () => {
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
@@ -188,6 +192,429 @@ const TemplatesGallery: React.FC = () => {
 
   const isLoading = status === "loading" && items.length === 0;
 
+  // Extracted so the isLoading / empty-state / results branching lives in its
+  // own function scope instead of a nested ternary in the JSX below.
+  const renderGalleryContent = (): React.ReactNode => {
+    if (isLoading) {
+      return Array.from({ length: 8 }).map((_, i) => (
+        <Grid
+          key={`sk-${i}`}
+          size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+          display="flex"
+        >
+          <Box
+            sx={{
+              width: "100%",
+              borderRadius: "12px",
+              padding: "20px",
+              position: "relative",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? alpha(theme.palette.common.white, 0.03)
+                  : theme.palette.common.white,
+              boxShadow:
+                "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
+              border: `1px solid ${
+                theme.palette.mode === "dark"
+                  ? alpha(theme.palette.common.white, 0.06)
+                  : alpha(theme.palette.common.black, 0.06)
+              }`,
+              animation: `sk-rise 0.5s ease ${i * 70}ms both`,
+              "@keyframes sk-rise": {
+                from: { opacity: 0, transform: "translateY(14px)" },
+                to: { opacity: 1, transform: "translateY(0)" },
+              },
+            }}
+          >
+            {/* Cloud logo badge placeholder */}
+            <Skeleton
+              variant="rounded"
+              animation="wave"
+              sx={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                width: 40,
+                height: 40,
+                borderRadius: "8px",
+                flexShrink: 0,
+              }}
+            />
+
+            {/* Preview image */}
+            <Skeleton
+              variant="rectangular"
+              animation="wave"
+              height={140}
+              sx={{ borderRadius: "8px", mb: 1.5, flexShrink: 0 }}
+            />
+
+            {/* Title */}
+            <Skeleton
+              variant="text"
+              animation="wave"
+              width="68%"
+              sx={{ fontSize: "1.05rem", mb: 0.5 }}
+            />
+
+            {/* Description — 2 lines */}
+            <Skeleton
+              variant="text"
+              animation="wave"
+              width="100%"
+              sx={{ fontSize: "0.875rem" }}
+            />
+            <Skeleton
+              variant="text"
+              animation="wave"
+              width="82%"
+              sx={{ fontSize: "0.875rem", mb: 1 }}
+            />
+
+            {/* Author */}
+            <Skeleton
+              variant="text"
+              animation="wave"
+              width="42%"
+              sx={{ fontSize: "0.75rem", mb: 1.5 }}
+            />
+
+            {/* Analytics row: views / likes / uses / nodes badge */}
+            <Box sx={{ display: "flex", gap: 1.5, mb: 1.5, flexWrap: "wrap" }}>
+              <Skeleton variant="rounded" animation="wave" width={34} height={18} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rounded" animation="wave" width={26} height={18} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rounded" animation="wave" width={26} height={18} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rounded" animation="wave" width={68} height={18} sx={{ borderRadius: 1 }} />
+            </Box>
+
+            {/* Use Template button */}
+            <Skeleton
+              variant="rounded"
+              animation="wave"
+              width={112}
+              height={30}
+              sx={{ borderRadius: 1, mt: "auto" }}
+            />
+          </Box>
+        </Grid>
+      ));
+    }
+
+    if (items.length === 0 && status === "succeeded") {
+      return (
+        <Grid size={12}>
+          <Fade in timeout={800}>
+            {localSearch ? (
+              /* ── Search empty state ───────────────────────────────── */
+              <Box
+                role="status"
+                aria-live="polite"
+                sx={{
+                  p: { xs: 5, sm: 8 },
+                  textAlign: "center",
+                  borderRadius: 3,
+                  border: "1px dashed",
+                  borderColor:
+                    theme.palette.mode === "dark"
+                      ? alpha(theme.palette.common.white, 0.1)
+                      : alpha(theme.palette.common.black, 0.1),
+                }}
+              >
+                <Box
+                  aria-hidden="true"
+                  sx={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: "50%",
+                    mx: "auto",
+                    mb: 2.5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: alpha(theme.palette.primary.main, 0.08),
+                    color: theme.palette.primary.main,
+                    fontSize: "1.75rem",
+                  }}
+                >
+                  <FontAwesomeIcon icon="search" />
+                </Box>
+
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.75 }}>
+                  No results for &ldquo;{localSearch}&rdquo;
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "text.secondary", mb: 3, lineHeight: 1.6 }}
+                >
+                  Try a cloud service, pattern, or architecture keyword.
+                </Typography>
+
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: "text.disabled",
+                    letterSpacing: "0.1em",
+                    display: "block",
+                    mb: 1.5,
+                    fontSize: "0.68rem",
+                  }}
+                >
+                  Popular searches
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                    gap: 1,
+                    mb: 3,
+                    maxWidth: 480,
+                    mx: "auto",
+                  }}
+                >
+                  {[
+                    "VPC",
+                    "EKS",
+                    "Lambda",
+                    "S3",
+                    "Aurora",
+                    "Redis",
+                    "Terraform",
+                    "Azure",
+                  ].map((term) => (
+                    <Chip
+                      key={term}
+                      label={term}
+                      size="small"
+                      onClick={() => handleQuickSearch(term)}
+                      sx={{
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        bgcolor: alpha(theme.palette.primary.main, 0.06),
+                        color: theme.palette.primary.main,
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+                        "&:hover": {
+                          bgcolor: alpha(theme.palette.primary.main, 0.15),
+                        },
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => handleQuickSearch("")}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    borderColor: alpha(theme.palette.primary.main, 0.28),
+                    color: theme.palette.primary.main,
+                    "&:hover": {
+                      borderColor: theme.palette.primary.main,
+                      background: alpha(theme.palette.primary.main, 0.06),
+                    },
+                  }}
+                >
+                  Clear search
+                </Button>
+              </Box>
+            ) : (
+              /* ── No templates yet — onboarding empty state ─────────── */
+              <Box
+                role="status"
+                aria-live="polite"
+                sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}
+              >
+                <Box
+                  aria-hidden="true"
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: "50%",
+                    mx: "auto",
+                    mb: 3,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)}, ${alpha(theme.palette.primary.main, 0.05)})`,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                    color: theme.palette.primary.main,
+                    fontSize: "2rem",
+                  }}
+                >
+                  <FontAwesomeIcon icon="layer-group" />
+                </Box>
+
+                <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
+                  No templates yet — be the first!
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "text.secondary",
+                    mb: 5,
+                    maxWidth: 440,
+                    mx: "auto",
+                    lineHeight: 1.65,
+                  }}
+                >
+                  Design your cloud architecture on the canvas, then publish
+                  it as a reusable template for the whole community.
+                </Typography>
+
+                {/* 3-step guide */}
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2}
+                  justifyContent="center"
+                  sx={{ mb: 5, maxWidth: 680, mx: "auto" }}
+                >
+                  {(
+                    [
+                      {
+                        num: "01",
+                        icon: "layer-group",
+                        title: "Design",
+                        desc: "Build your architecture visually on the canvas",
+                      },
+                      {
+                        num: "02",
+                        icon: "code-branch",
+                        title: "Publish",
+                        desc: "Share it as a community template in one click",
+                      },
+                      {
+                        num: "03",
+                        icon: "rocket",
+                        title: "Impact",
+                        desc: "Others fork and deploy your pattern instantly",
+                      },
+                    ] as const
+                  ).map(({ num, icon, title, desc }) => (
+                    <Box
+                      key={num}
+                      sx={{
+                        flex: 1,
+                        p: 2.5,
+                        borderRadius: 3,
+                        textAlign: "left",
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
+                        background: alpha(theme.palette.primary.main, 0.04),
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <Typography
+                        aria-hidden="true"
+                        sx={{
+                          position: "absolute",
+                          top: 6,
+                          right: 10,
+                          fontWeight: 900,
+                          fontSize: "2.4rem",
+                          lineHeight: 1,
+                          color: alpha(theme.palette.primary.main, 0.08),
+                          userSelect: "none",
+                        }}
+                      >
+                        {num}
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          mb: 1.5,
+                          background: alpha(theme.palette.primary.main, 0.1),
+                          color: theme.palette.primary.main,
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        <FontAwesomeIcon icon={icon} aria-hidden="true" />
+                      </Box>
+
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ fontWeight: 700, mb: 0.5 }}
+                      >
+                        {title}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          lineHeight: 1.5,
+                          display: "block",
+                        }}
+                      >
+                        {desc}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate("/home")}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    borderRadius: 3,
+                    px: 5,
+                    py: 1.5,
+                    fontSize: "1rem",
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                    boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.35)}`,
+                    "&:hover": {
+                      transform: "translateY(-2px)",
+                      boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.5)}`,
+                    },
+                    transition: "all 0.25s ease",
+                  }}
+                >
+                  Start Building Free
+                </Button>
+              </Box>
+            )}
+          </Fade>
+        </Grid>
+      );
+    }
+
+    return items.map((template, index) => (
+      <Grid
+        key={template.id}
+        size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+        display="flex"
+      >
+        <Box
+          sx={{
+            width: "100%",
+            animation: `card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(index * 55, 550)}ms both`,
+            "@keyframes card-enter": {
+              from: { opacity: 0, transform: "translateY(18px) scale(0.97)" },
+              to: { opacity: 1, transform: "translateY(0) scale(1)" },
+            },
+          }}
+        >
+          <TemplateCard template={template} />
+        </Box>
+      </Grid>
+    ));
+  };
+
   return (
     <Box
       sx={{
@@ -252,7 +679,7 @@ const TemplatesGallery: React.FC = () => {
         </Box>
       </Fade>
 
-      {false && (
+      {SHOW_WELCOME_BANNER && (
       /* First-visit Welcome Banner */
       <Collapse in={showWelcome} timeout={500}>
         <Box
@@ -407,7 +834,6 @@ const TemplatesGallery: React.FC = () => {
             onChange={handleSearchChange}
             size="small"
             data-tour="templates-search"
-            inputProps={{ "aria-label": "Search templates" }}
             sx={{
               flexGrow: 1,
               minWidth: 240,
@@ -435,6 +861,7 @@ const TemplatesGallery: React.FC = () => {
               },
             }}
             slotProps={{
+              htmlInput: { "aria-label": "Search templates" },
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
@@ -512,420 +939,7 @@ const TemplatesGallery: React.FC = () => {
         spacing={{ xs: 2, sm: 2.5, md: 3 }}
         alignItems="stretch"
       >
-        {isLoading ? (
-          Array.from({ length: 8 }).map((_, i) => (
-            <Grid
-              key={`sk-${i}`}
-              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
-              display="flex"
-            >
-              <Box
-                sx={{
-                  width: "100%",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  position: "relative",
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                  backgroundColor:
-                    theme.palette.mode === "dark"
-                      ? alpha(theme.palette.common.white, 0.03)
-                      : theme.palette.common.white,
-                  boxShadow:
-                    "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
-                  border: `1px solid ${
-                    theme.palette.mode === "dark"
-                      ? alpha(theme.palette.common.white, 0.06)
-                      : alpha(theme.palette.common.black, 0.06)
-                  }`,
-                  animation: `sk-rise 0.5s ease ${i * 70}ms both`,
-                  "@keyframes sk-rise": {
-                    from: { opacity: 0, transform: "translateY(14px)" },
-                    to: { opacity: 1, transform: "translateY(0)" },
-                  },
-                }}
-              >
-                {/* Cloud logo badge placeholder */}
-                <Skeleton
-                  variant="rounded"
-                  animation="wave"
-                  sx={{
-                    position: "absolute",
-                    top: 16,
-                    right: 16,
-                    width: 40,
-                    height: 40,
-                    borderRadius: "8px",
-                    flexShrink: 0,
-                  }}
-                />
-
-                {/* Preview image */}
-                <Skeleton
-                  variant="rectangular"
-                  animation="wave"
-                  height={140}
-                  sx={{ borderRadius: "8px", mb: 1.5, flexShrink: 0 }}
-                />
-
-                {/* Title */}
-                <Skeleton
-                  variant="text"
-                  animation="wave"
-                  width="68%"
-                  sx={{ fontSize: "1.05rem", mb: 0.5 }}
-                />
-
-                {/* Description — 2 lines */}
-                <Skeleton
-                  variant="text"
-                  animation="wave"
-                  width="100%"
-                  sx={{ fontSize: "0.875rem" }}
-                />
-                <Skeleton
-                  variant="text"
-                  animation="wave"
-                  width="82%"
-                  sx={{ fontSize: "0.875rem", mb: 1 }}
-                />
-
-                {/* Author */}
-                <Skeleton
-                  variant="text"
-                  animation="wave"
-                  width="42%"
-                  sx={{ fontSize: "0.75rem", mb: 1.5 }}
-                />
-
-                {/* Analytics row: views / likes / uses / nodes badge */}
-                <Box sx={{ display: "flex", gap: 1.5, mb: 1.5, flexWrap: "wrap" }}>
-                  <Skeleton variant="rounded" animation="wave" width={34} height={18} sx={{ borderRadius: 1 }} />
-                  <Skeleton variant="rounded" animation="wave" width={26} height={18} sx={{ borderRadius: 1 }} />
-                  <Skeleton variant="rounded" animation="wave" width={26} height={18} sx={{ borderRadius: 1 }} />
-                  <Skeleton variant="rounded" animation="wave" width={68} height={18} sx={{ borderRadius: 1 }} />
-                </Box>
-
-                {/* Use Template button */}
-                <Skeleton
-                  variant="rounded"
-                  animation="wave"
-                  width={112}
-                  height={30}
-                  sx={{ borderRadius: 1, mt: "auto" }}
-                />
-              </Box>
-            </Grid>
-          ))
-        ) : items.length === 0 && status === "succeeded" ? (
-          <Grid size={12}>
-            <Fade in timeout={800}>
-              {localSearch ? (
-                /* ── Search empty state ───────────────────────────────── */
-                <Box
-                  role="status"
-                  aria-live="polite"
-                  sx={{
-                    p: { xs: 5, sm: 8 },
-                    textAlign: "center",
-                    borderRadius: 3,
-                    border: "1px dashed",
-                    borderColor:
-                      theme.palette.mode === "dark"
-                        ? alpha(theme.palette.common.white, 0.1)
-                        : alpha(theme.palette.common.black, 0.1),
-                  }}
-                >
-                  <Box
-                    aria-hidden="true"
-                    sx={{
-                      width: 72,
-                      height: 72,
-                      borderRadius: "50%",
-                      mx: "auto",
-                      mb: 2.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: alpha(theme.palette.primary.main, 0.08),
-                      color: theme.palette.primary.main,
-                      fontSize: "1.75rem",
-                    }}
-                  >
-                    <FontAwesomeIcon icon="search" />
-                  </Box>
-
-                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.75 }}>
-                    No results for &ldquo;{localSearch}&rdquo;
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "text.secondary", mb: 3, lineHeight: 1.6 }}
-                  >
-                    Try a cloud service, pattern, or architecture keyword.
-                  </Typography>
-
-                  <Typography
-                    variant="overline"
-                    sx={{
-                      color: "text.disabled",
-                      letterSpacing: "0.1em",
-                      display: "block",
-                      mb: 1.5,
-                      fontSize: "0.68rem",
-                    }}
-                  >
-                    Popular searches
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      justifyContent: "center",
-                      gap: 1,
-                      mb: 3,
-                      maxWidth: 480,
-                      mx: "auto",
-                    }}
-                  >
-                    {[
-                      "VPC",
-                      "EKS",
-                      "Lambda",
-                      "S3",
-                      "Aurora",
-                      "Redis",
-                      "Terraform",
-                      "Azure",
-                    ].map((term) => (
-                      <Chip
-                        key={term}
-                        label={term}
-                        size="small"
-                        onClick={() => handleQuickSearch(term)}
-                        sx={{
-                          borderRadius: 2,
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          bgcolor: alpha(theme.palette.primary.main, 0.06),
-                          color: theme.palette.primary.main,
-                          border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-                          "&:hover": {
-                            bgcolor: alpha(theme.palette.primary.main, 0.15),
-                          },
-                        }}
-                      />
-                    ))}
-                  </Box>
-
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => handleQuickSearch("")}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 600,
-                      borderRadius: 2,
-                      borderColor: alpha(theme.palette.primary.main, 0.28),
-                      color: theme.palette.primary.main,
-                      "&:hover": {
-                        borderColor: theme.palette.primary.main,
-                        background: alpha(theme.palette.primary.main, 0.06),
-                      },
-                    }}
-                  >
-                    Clear search
-                  </Button>
-                </Box>
-              ) : (
-                /* ── No templates yet — onboarding empty state ─────────── */
-                <Box
-                  role="status"
-                  aria-live="polite"
-                  sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}
-                >
-                  <Box
-                    aria-hidden="true"
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: "50%",
-                      mx: "auto",
-                      mb: 3,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)}, ${alpha(theme.palette.primary.main, 0.05)})`,
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                      color: theme.palette.primary.main,
-                      fontSize: "2rem",
-                    }}
-                  >
-                    <FontAwesomeIcon icon="layer-group" />
-                  </Box>
-
-                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
-                    No templates yet — be the first!
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: "text.secondary",
-                      mb: 5,
-                      maxWidth: 440,
-                      mx: "auto",
-                      lineHeight: 1.65,
-                    }}
-                  >
-                    Design your cloud architecture on the canvas, then publish
-                    it as a reusable template for the whole community.
-                  </Typography>
-
-                  {/* 3-step guide */}
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    justifyContent="center"
-                    sx={{ mb: 5, maxWidth: 680, mx: "auto" }}
-                  >
-                    {(
-                      [
-                        {
-                          num: "01",
-                          icon: "layer-group",
-                          title: "Design",
-                          desc: "Build your architecture visually on the canvas",
-                        },
-                        {
-                          num: "02",
-                          icon: "code-branch",
-                          title: "Publish",
-                          desc: "Share it as a community template in one click",
-                        },
-                        {
-                          num: "03",
-                          icon: "rocket",
-                          title: "Impact",
-                          desc: "Others fork and deploy your pattern instantly",
-                        },
-                      ] as const
-                    ).map(({ num, icon, title, desc }) => (
-                      <Box
-                        key={num}
-                        sx={{
-                          flex: 1,
-                          p: 2.5,
-                          borderRadius: 3,
-                          textAlign: "left",
-                          border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-                          background: alpha(theme.palette.primary.main, 0.04),
-                          position: "relative",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <Typography
-                          aria-hidden="true"
-                          sx={{
-                            position: "absolute",
-                            top: 6,
-                            right: 10,
-                            fontWeight: 900,
-                            fontSize: "2.4rem",
-                            lineHeight: 1,
-                            color: alpha(theme.palette.primary.main, 0.08),
-                            userSelect: "none",
-                          }}
-                        >
-                          {num}
-                        </Typography>
-
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 2,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            mb: 1.5,
-                            background: alpha(theme.palette.primary.main, 0.1),
-                            color: theme.palette.primary.main,
-                            fontSize: "0.9rem",
-                          }}
-                        >
-                          <FontAwesomeIcon icon={icon} aria-hidden="true" />
-                        </Box>
-
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ fontWeight: 700, mb: 0.5 }}
-                        >
-                          {title}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "text.secondary",
-                            lineHeight: 1.5,
-                            display: "block",
-                          }}
-                        >
-                          {desc}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={() => navigate("/home")}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 700,
-                      borderRadius: 3,
-                      px: 5,
-                      py: 1.5,
-                      fontSize: "1rem",
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                      boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.35)}`,
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.5)}`,
-                      },
-                      transition: "all 0.25s ease",
-                    }}
-                  >
-                    Start Building Free
-                  </Button>
-                </Box>
-              )}
-            </Fade>
-          </Grid>
-        ) : (
-          items.map((template, index) => (
-            <Grid
-              key={template.id}
-              size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
-              display="flex"
-            >
-              <Box
-                sx={{
-                  width: "100%",
-                  animation: `card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(index * 55, 550)}ms both`,
-                  "@keyframes card-enter": {
-                    from: { opacity: 0, transform: "translateY(18px) scale(0.97)" },
-                    to: { opacity: 1, transform: "translateY(0) scale(1)" },
-                  },
-                }}
-              >
-                <TemplateCard template={template} />
-              </Box>
-            </Grid>
-          ))
-        )}
+        {renderGalleryContent()}
 
         {/* Infinite scroll loading indicator */}
         {status === "loading" &&
@@ -999,12 +1013,3 @@ const TemplatesGallery: React.FC = () => {
 };
 
 export default TemplatesGallery;
-
-
-
-
-
-
-
-
-

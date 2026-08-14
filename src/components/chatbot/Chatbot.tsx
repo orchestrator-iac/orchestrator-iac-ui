@@ -27,6 +27,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material/styles";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
@@ -58,6 +59,8 @@ import { fetchResources } from "@/store/resourcesSlice";
 import { chatService } from "@/services/chatService";
 import type {
   ChatMessageFeedbackRequest,
+  ChatSessionListItem,
+  ChatSessionResponse,
   PlanImplementationAction,
   PlanSchema,
 } from "@/types/chat";
@@ -192,6 +195,700 @@ const DragHandle: React.FC = () => {
     />
   );
 };
+
+// ── Derived Maestro avatar state ────────────────────────────────────────────────
+// Pulled out of the main component so the priority chain (thinking > talking >
+// listening > idle) is expressed as simple early returns instead of a nested
+// if/else-if ladder inline in the component body.
+
+interface MaestroStateInputs {
+  showHistory: boolean;
+  isSending: boolean;
+  isWaitingForSessionSend: boolean;
+  talkingMessageKey: string | null;
+  isInputFocused: boolean;
+  hasDraftInput: boolean;
+}
+
+const computeMaestroState = ({
+  showHistory,
+  isSending,
+  isWaitingForSessionSend,
+  talkingMessageKey,
+  isInputFocused,
+  hasDraftInput,
+}: MaestroStateInputs): MaestroRobotState => {
+  if (showHistory) return "idle";
+  if (isSending || isWaitingForSessionSend) return "thinking";
+  if (talkingMessageKey) return "talking";
+  if (isInputFocused || hasDraftInput) return "listening";
+  return "idle";
+};
+
+// ── Floating launcher button ────────────────────────────────────────────────────
+
+interface MaestroLauncherButtonProps {
+  openChat: boolean;
+  maestroState: MaestroRobotState;
+  launcherRobotColor: string | undefined;
+  onToggle: () => void;
+}
+
+const MaestroLauncherButton: React.FC<MaestroLauncherButtonProps> = ({
+  openChat,
+  maestroState,
+  launcherRobotColor,
+  onToggle,
+}) => (
+  <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1300 }}>
+    <Tooltip title={openChat ? "Close Maestro" : "Open Maestro"}>
+      <IconButton
+        aria-label={openChat ? "Close Maestro" : "Open Maestro"}
+        color="primary"
+        onClick={onToggle}
+        size="large"
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 4,
+          "&:hover": { boxShadow: 6 },
+        }}
+      >
+        {openChat ? (
+          <IoMdClose size={36} />
+        ) : (
+          <MaestroRobot
+            state={maestroState}
+            size={36}
+            decorative
+            robotColor={launcherRobotColor}
+          />
+        )}
+      </IconButton>
+    </Tooltip>
+  </Box>
+);
+
+// ── Chat panel header ────────────────────────────────────────────────────────────
+
+interface ChatHeaderProps {
+  isSplitView: boolean;
+  isMobile: boolean;
+  maestroState: MaestroRobotState;
+  headerAvatarBg: string;
+  headerRobotColor: string | undefined;
+  showHistory: boolean;
+  onNewChat: () => void;
+  onToggleHistory: () => void;
+  onOpenNotes: () => void;
+  onToggleSplitView: () => void;
+  onClose: () => void;
+}
+
+const ChatHeader: React.FC<ChatHeaderProps> = ({
+  isSplitView,
+  isMobile,
+  maestroState,
+  headerAvatarBg,
+  headerRobotColor,
+  showHistory,
+  onNewChat,
+  onToggleHistory,
+  onOpenNotes,
+  onToggleSplitView,
+  onClose,
+}) => (
+  // In split view the app header already shows branding, so this row is
+  // reduced to just the action icons rather than duplicating it.
+  <Box
+    sx={
+      isSplitView
+        ? {
+            bgcolor: "background.paper",
+            borderBottom: 1,
+            borderColor: "divider",
+            px: 1,
+            py: 0.75,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+          }
+        : {
+            bgcolor: "primary.main",
+            color: "primary.contrastText",
+            px: 2,
+            py: 1.25,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }
+    }
+  >
+    {!isSplitView && (
+      <>
+        <Avatar
+          sx={{
+            width: 50,
+            height: 50,
+            bgcolor: headerAvatarBg,
+          }}
+        >
+          <MaestroRobot
+            state={maestroState}
+            size={38}
+            decorative
+            robotColor={headerRobotColor}
+          />
+        </Avatar>
+        <Box flex={1}>
+          <Typography variant="body1" fontWeight={700}>
+            Maestro
+          </Typography>
+          <Typography variant="caption">
+            Infrastructure planning assistant
+          </Typography>
+        </Box>
+      </>
+    )}
+    {isSplitView && <Box flex={1} />}
+    <Tooltip title="New chat">
+      <IconButton size="small" color="inherit" onClick={onNewChat}>
+        <AddCommentIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+    <Tooltip title={showHistory ? "Back to chat" : "Chat history"}>
+      <IconButton size="small" color="inherit" onClick={onToggleHistory}>
+        {showHistory ? (
+          <ArrowBackIcon fontSize="small" />
+        ) : (
+          <HistoryIcon fontSize="small" />
+        )}
+      </IconButton>
+    </Tooltip>
+    <Tooltip title="Notes">
+      <IconButton size="small" color="inherit" onClick={onOpenNotes}>
+        <DescriptionIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+    {!isMobile && (
+      <Tooltip
+        title={
+          isSplitView ? "Restore floating chat" : "Expand to split view"
+        }
+      >
+        <IconButton size="small" color="inherit" onClick={onToggleSplitView}>
+          {isSplitView ? (
+            <CloseFullscreenIcon fontSize="small" />
+          ) : (
+            <OpenInFullIcon fontSize="small" />
+          )}
+        </IconButton>
+      </Tooltip>
+    )}
+    <IconButton size="small" color="inherit" onClick={onClose}>
+      <CloseIcon fontSize="small" />
+    </IconButton>
+  </Box>
+);
+
+// ── Session history panel ────────────────────────────────────────────────────────
+
+type FetchStatus = "idle" | "loading" | "succeeded" | "failed";
+
+interface SessionHistoryPanelProps {
+  sessions: ChatSessionListItem[];
+  sessionsStatus: FetchStatus;
+  activeSessionId: string | undefined;
+  selectedSessionIds: string[];
+  onToggleSelectAll: () => void;
+  onToggleSelect: (sessionId: string) => void;
+  onOpenBulkDelete: () => void;
+  onOpenSingleDelete: (e: React.MouseEvent, sessionId: string) => void;
+  onSelectSession: (sessionId: string) => void;
+}
+
+const SessionHistoryPanel: React.FC<SessionHistoryPanelProps> = ({
+  sessions,
+  sessionsStatus,
+  activeSessionId,
+  selectedSessionIds,
+  onToggleSelectAll,
+  onToggleSelect,
+  onOpenBulkDelete,
+  onOpenSingleDelete,
+  onSelectSession,
+}) => {
+  // Extracted into a local variable (instead of a nested ternary) so the
+  // pluralization logic reads as a plain if/else.
+  let bulkDeleteTooltipTitle: string;
+  if (selectedSessionIds.length > 0) {
+    const plural = selectedSessionIds.length === 1 ? "" : "s";
+    bulkDeleteTooltipTitle = `Delete ${selectedSessionIds.length} selected conversation${plural}`;
+  } else {
+    bulkDeleteTooltipTitle = "Select conversations to delete";
+  }
+
+  return (
+    <Box flex={1} overflow="auto">
+      <Box
+        px={2}
+        py={1.5}
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        gap={1}
+      >
+        <Box display="flex" alignItems="center" gap={1} minWidth={0}>
+          {sessions.length > 0 && (
+            <Tooltip title="Select or clear all conversations">
+              <Checkbox
+                size="small"
+                checked={selectedSessionIds.length === sessions.length}
+                indeterminate={
+                  selectedSessionIds.length > 0 &&
+                  selectedSessionIds.length < sessions.length
+                }
+                onChange={onToggleSelectAll}
+                slotProps={{
+                  input: {
+                    "aria-label": "Select all conversations",
+                  },
+                }}
+              />
+            </Tooltip>
+          )}
+          <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+            Previous conversations
+          </Typography>
+        </Box>
+        <Tooltip title={bulkDeleteTooltipTitle}>
+          <span>
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              startIcon={<DeleteIcon />}
+              onClick={onOpenBulkDelete}
+              disabled={selectedSessionIds.length === 0}
+            >
+              Delete selected
+            </Button>
+          </span>
+        </Tooltip>
+      </Box>
+      <Divider />
+      {sessionsStatus === "loading" && (
+        <Box display="flex" justifyContent="center" pt={4}>
+          <CircularProgress size={24} />
+        </Box>
+      )}
+      {sessionsStatus === "succeeded" && sessions.length === 0 && (
+        <Box textAlign="center" px={3} mt={4}>
+          <Typography variant="body2" color="text.secondary">
+            No previous conversations.
+          </Typography>
+        </Box>
+      )}
+      {sessionsStatus === "succeeded" && sessions.length > 0 && (
+        <List dense disablePadding>
+          {sessions.map((s) => {
+            const isActive = activeSessionId === s.id;
+            const isSelected = selectedSessionIds.includes(s.id);
+            const updated = new Date(s.updatedAt);
+            const dateLabel = updated.toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+            const timeLabel = updated.toLocaleTimeString(undefined, {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            const label =
+              s.title?.trim() || s.preview?.trim() || `Chat — ${dateLabel}`;
+            const secondaryNode = (
+              <Typography variant="caption" color="text.secondary" component="div">
+                {`${s.messageCount} message${s.messageCount === 1 ? "" : "s"}`}{" "}
+                · {dateLabel} at {timeLabel}
+              </Typography>
+            );
+            return (
+              <ListItem
+                key={s.id}
+                disablePadding
+                divider
+                secondaryAction={
+                  <IconButton
+                    edge="end"
+                    size="small"
+                    onClick={(e) => onOpenSingleDelete(e, s.id)}
+                    aria-label="Delete conversation"
+                  >
+                    <DeleteIcon fontSize="small" color="error" />
+                  </IconButton>
+                }
+              >
+                <ListItemButton
+                  selected={isActive || isSelected}
+                  onClick={() => onSelectSession(s.id)}
+                >
+                  <Checkbox
+                    size="small"
+                    checked={isSelected}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={() => onToggleSelect(s.id)}
+                    slotProps={{
+                      input: {
+                        "aria-label": `Select conversation ${label}`,
+                      },
+                    }}
+                    sx={{ mr: 1 }}
+                  />
+                  <ListItemText
+                    primary={
+                      <Typography
+                        variant="body2"
+                        fontWeight={isActive ? 700 : 400}
+                        noWrap
+                      >
+                        {label}
+                      </Typography>
+                    }
+                    secondary={secondaryNode}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
+      )}
+    </Box>
+  );
+};
+
+// ── Message list ──────────────────────────────────────────────────────────────────
+
+interface MessageListProps {
+  activeSession: ChatSessionResponse | null;
+  isSending: boolean;
+  isWaitingForSessionSend: boolean;
+  sendError: string | null;
+  onImplement: (
+    sessionId: string,
+    action: PlanImplementationAction,
+    planOverride?: PlanSchema,
+  ) => Promise<void>;
+  onSubmitFeedback: (
+    messageId: string,
+    feedback: ChatMessageFeedbackRequest,
+  ) => Promise<void>;
+  isImplementing: boolean;
+  onClearSendError: () => void;
+  messagesEndRef: React.RefObject<HTMLDivElement>;
+}
+
+const MessageList: React.FC<MessageListProps> = ({
+  activeSession,
+  isSending,
+  isWaitingForSessionSend,
+  sendError,
+  onImplement,
+  onSubmitFeedback,
+  isImplementing,
+  onClearSendError,
+  messagesEndRef,
+}) => (
+  <Box flex={1} overflow="auto" py={1}>
+    {(!activeSession || activeSession.messages.length === 0) &&
+      !isSending &&
+      !isWaitingForSessionSend && (
+        <Box textAlign="center" px={3} mt={3}>
+          <Typography variant="body2" color="text.secondary">
+            Hi! I'm <strong>Maestro</strong>. Describe the cloud
+            infrastructure you'd like to build and I'll create a plan for
+            you.
+          </Typography>
+        </Box>
+      )}
+
+    {activeSession?.messages.map((msg) => {
+      const messageKey = msg.id;
+      return (
+        <MessageBubble
+          key={messageKey}
+          message={msg}
+          sessionId={activeSession.id}
+          linkedOrchestratorId={activeSession.orchestratorId}
+          onImplement={onImplement}
+          onSubmitFeedback={onSubmitFeedback}
+          isImplementing={isImplementing}
+          assistantAvatarState={"talking"}
+        />
+      );
+    })}
+
+    {(isSending || isWaitingForSessionSend) && <TypingIndicator />}
+
+    {sendError && (
+      <Box px={2} py={0.5}>
+        <Typography
+          variant="caption"
+          color="error"
+          sx={{ cursor: "pointer" }}
+          onClick={onClearSendError}
+        >
+          ⚠ {sendError} (click to dismiss)
+        </Typography>
+      </Box>
+    )}
+
+    <div ref={messagesEndRef} />
+  </Box>
+);
+
+// ── Message input bar ──────────────────────────────────────────────────────────────
+
+interface ChatInputBarProps {
+  isRecordingAudio: boolean;
+  micAnalyser: AnalyserNode | null;
+  onCancelRecording: () => void;
+  onStopRecording: () => void;
+  inputRef: React.RefObject<HTMLInputElement>;
+  input: string;
+  onInputChange: (value: string) => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  onFocus: () => void;
+  onBlur: () => void;
+  isSending: boolean;
+  isWaitingForSessionSend: boolean;
+  isTranscribingAudio: boolean;
+  isCreatingSession: boolean;
+  onStartRecording: () => void;
+  onSend: () => void;
+  transcriptionError: string | null;
+}
+
+const ChatInputBar: React.FC<ChatInputBarProps> = ({
+  isRecordingAudio,
+  micAnalyser,
+  onCancelRecording,
+  onStopRecording,
+  inputRef,
+  input,
+  onInputChange,
+  onKeyDown,
+  onFocus,
+  onBlur,
+  isSending,
+  isWaitingForSessionSend,
+  isTranscribingAudio,
+  isCreatingSession,
+  onStartRecording,
+  onSend,
+  transcriptionError,
+}) => {
+  const theme = useTheme();
+  const isTextFieldDisabled =
+    isSending || isWaitingForSessionSend || isTranscribingAudio;
+  const isMicDisabled =
+    isWaitingForSessionSend || isSending || isTranscribingAudio;
+  const isSendDisabled =
+    !input.trim() || isSending || isCreatingSession || isTranscribingAudio;
+
+  let sendButtonIcon: React.ReactNode;
+  if (isSending || isTranscribingAudio) {
+    sendButtonIcon = <CircularProgress size={18} />;
+  } else {
+    sendButtonIcon = <SendIcon fontSize="small" />;
+  }
+
+  return (
+    <Box sx={{ bgcolor: "background.paper" }}>
+      {isRecordingAudio ? (
+        /* ── Dictation mode: textbox + send icon are replaced by a
+           ChatGPT-dictate-style bar — cancel (X), live waveform,
+           stop-and-transcribe button. ── */
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            px: 1.5,
+            py: 1.25,
+          }}
+        >
+          <Tooltip title="Cancel recording">
+            <IconButton
+              size="small"
+              onClick={onCancelRecording}
+              sx={{
+                color: theme.palette.text.secondary,
+                border: `1px solid ${theme.palette.divider}`,
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <MicLevelVisualizer analyser={micAnalyser} active={isRecordingAudio} />
+          </Box>
+
+          <Tooltip title="Stop and transcribe">
+            <IconButton
+              size="small"
+              onClick={onStopRecording}
+              sx={{
+                bgcolor: theme.palette.primary.main,
+                color: theme.palette.primary.contrastText,
+                "&:hover": {
+                  bgcolor: theme.palette.primary.dark,
+                },
+              }}
+            >
+              <StopIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ) : (
+        <TextField
+          inputRef={inputRef}
+          fullWidth
+          multiline
+          maxRows={5}
+          size="small"
+          placeholder="Ask Maestro to plan your infrastructure…"
+          value={input}
+          onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          disabled={isTextFieldDisabled}
+          sx={{
+            px: 0,
+            py: 1,
+            "& .MuiOutlinedInput-notchedOutline": {
+              border: "none",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              border: "none",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              border: "none",
+            },
+          }}
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      mr: 0.5,
+                    }}
+                  >
+                    <Tooltip title="Record voice message">
+                      <span>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={onStartRecording}
+                          disabled={isMicDisabled}
+                          sx={{
+                            border: `1px solid ${theme.palette.divider}`,
+                            ml: 0.25,
+                          }}
+                        >
+                          <MicIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={onSend}
+                      disabled={isSendDisabled}
+                      sx={{
+                        border: `1px solid ${theme.palette.divider}`,
+                      }}
+                    >
+                      {sendButtonIcon}
+                    </IconButton>
+                  </Box>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      )}
+      {transcriptionError && (
+        <Box px={2} pb={1}>
+          <Typography variant="caption" color="error">
+            {transcriptionError}
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+// ── Delete confirmation dialog ─────────────────────────────────────────────────────
+
+interface DeleteConfirmDialogProps {
+  open: boolean;
+  deleteTargetIds: string[];
+  sessions: ChatSessionListItem[];
+  isDeleting: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
+  open,
+  deleteTargetIds,
+  sessions,
+  isDeleting,
+  onClose,
+  onConfirm,
+}) => (
+  <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <DialogTitle color="error">
+      {deleteTargetIds.length > 1 ? "Delete Conversations" : "Delete Conversation"}
+    </DialogTitle>
+    <DialogContent dividers>
+      <Typography>
+        {deleteTargetIds.length > 1
+          ? `Are you sure you want to delete ${deleteTargetIds.length} conversations? They will be removed from your chat history.`
+          : "Are you sure you want to delete this conversation? It will be removed from your chat history."}
+      </Typography>
+      {deleteTargetIds.length > 0 && (
+        <Box mt={1}>
+          {deleteTargetIds.map((sessionId) => {
+            const session = sessions.find((item) => item.id === sessionId);
+            const label =
+              session?.title?.trim() ||
+              session?.preview?.trim() ||
+              "Untitled conversation";
+            return (
+              <Typography key={sessionId} variant="body2" color="text.primary" noWrap>
+                {label}
+              </Typography>
+            );
+          })}
+        </Box>
+      )}
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose} disabled={isDeleting}>
+        Cancel
+      </Button>
+      <Button color="error" variant="contained" onClick={onConfirm} disabled={isDeleting}>
+        {isDeleting ? <CircularProgress size={18} color="inherit" /> : "Delete"}
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
@@ -942,6 +1639,33 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  const handleToggleLauncher = () => setOpenChat((o) => !o);
+
+  const handleNewChat = () => {
+    wantsNewSessionRef.current = true;
+    setShowHistory(false);
+    dispatch(clearActiveSession());
+  };
+
+  const handleToggleHistory = () => {
+    if (!showHistory && sessionsStatus !== "loading") {
+      dispatch(fetchSessions());
+    }
+    setShowHistory((v) => !v);
+  };
+
+  const handleCloseChat = () => {
+    if (isSplitView) setSplitView(false);
+    setOpenChat(false);
+  };
+
+  const handleSelectSession = (sessionId: string) => {
+    if (activeSession?.id !== sessionId) {
+      dispatch(fetchSession(sessionId));
+    }
+    setShowHistory(false);
+  };
+
   // ── Diff alert — show the latest diff message not yet dismissed ────────────
   const lastDiffMsg = activeSession?.messages
     .slice()
@@ -960,11 +1684,48 @@ const Chatbot: React.FC = () => {
     ? theme.palette.secondary.light
     : theme.palette.primary.light;
 
-  let maestroState: MaestroRobotState = "idle";
-  if (!showHistory) {
-    if (isSending || isWaitingForSessionSend) maestroState = "thinking";
-    else if (talkingMessageKey) maestroState = "talking";
-    else if (isInputFocused || hasDraftInput) maestroState = "listening";
+  const maestroState = computeMaestroState({
+    showHistory,
+    isSending,
+    isWaitingForSessionSend,
+    talkingMessageKey,
+    isInputFocused,
+    hasDraftInput,
+  });
+
+  // The chat panel's own Paper styling depends on split vs floating mode —
+  // computed once here (rather than inline in the JSX below) to keep the
+  // ternary from being nested inside the panel's conditional-render block.
+  let chatPanelElevation: number;
+  let chatPanelSx: SxProps<Theme>;
+  if (isSplitView) {
+    chatPanelElevation = 0;
+    chatPanelSx = {
+      position: "relative",
+      height: "100%",
+      width: "100%",
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      borderRadius: 0,
+      overflow: "hidden",
+      boxShadow: "none",
+      borderLeft: (t) => `1px solid ${t.palette.divider}`,
+    };
+  } else {
+    chatPanelElevation = 8;
+    chatPanelSx = {
+      position: "fixed",
+      bottom: 90,
+      right: 24,
+      width: 560,
+      height: 640,
+      display: "flex",
+      flexDirection: "column",
+      borderRadius: 3,
+      overflow: "hidden",
+      zIndex: 1299,
+    };
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -973,32 +1734,12 @@ const Chatbot: React.FC = () => {
     <>
       {/* Floating launcher */}
       {!isSplitView && (
-        <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1300 }}>
-          <Tooltip title={openChat ? "Close Maestro" : "Open Maestro"}>
-            <IconButton
-              aria-label={openChat ? "Close Maestro" : "Open Maestro"}
-              color="primary"
-              onClick={() => setOpenChat((o) => !o)}
-              size="large"
-              sx={{
-                bgcolor: "background.paper",
-                boxShadow: 4,
-                "&:hover": { boxShadow: 6 },
-              }}
-            >
-              {openChat ? (
-                <IoMdClose size={36} />
-              ) : (
-                <MaestroRobot
-                  state={maestroState}
-                  size={36}
-                  decorative
-                  robotColor={launcherRobotColor}
-                />
-              )}
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <MaestroLauncherButton
+          openChat={openChat}
+          maestroState={maestroState}
+          launcherRobotColor={launcherRobotColor}
+          onToggle={handleToggleLauncher}
+        />
       )}
 
       {/* Chat panel */}
@@ -1012,162 +1753,20 @@ const Chatbot: React.FC = () => {
           }}
         >
           {isSplitView && <DragHandle />}
-          <Paper
-            elevation={isSplitView ? 0 : 8}
-            sx={
-              isSplitView
-                ? {
-                    position: "relative",
-                    height: "100%",
-                    width: "100%",
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    borderRadius: 0,
-                    overflow: "hidden",
-                    boxShadow: "none",
-                    borderLeft: (t) => `1px solid ${t.palette.divider}`,
-                  }
-                : {
-                    position: "fixed",
-                    bottom: 90,
-                    right: 24,
-                    width: 560,
-                    height: 640,
-                    display: "flex",
-                    flexDirection: "column",
-                    borderRadius: 3,
-                    overflow: "hidden",
-                    zIndex: 1299,
-                  }
-            }
-          >
-            {/* ── Header ── */}
-            {/* In split view the app header already shows branding, so this row
-              is reduced to just the action icons rather than duplicating it. */}
-            <Box
-              sx={
-                isSplitView
-                  ? {
-                      bgcolor: "background.paper",
-                      borderBottom: 1,
-                      borderColor: "divider",
-                      px: 1,
-                      py: 0.75,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                    }
-                  : {
-                      bgcolor: "primary.main",
-                      color: "primary.contrastText",
-                      px: 2,
-                      py: 1.25,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                    }
-              }
-            >
-              {!isSplitView && (
-                <>
-                  <Avatar
-                    sx={{
-                      width: 50,
-                      height: 50,
-                      bgcolor: headerAvatarBg,
-                    }}
-                  >
-                    <MaestroRobot
-                      state={maestroState}
-                      size={38}
-                      decorative
-                      robotColor={headerRobotColor}
-                    />
-                  </Avatar>
-                  <Box flex={1}>
-                    <Typography variant="body1" fontWeight={700}>
-                      Maestro
-                    </Typography>
-                    <Typography variant="caption">
-                      Infrastructure planning assistant
-                    </Typography>
-                  </Box>
-                </>
-              )}
-              {isSplitView && <Box flex={1} />}
-              <Tooltip title="New chat">
-                <IconButton
-                  size="small"
-                  color="inherit"
-                  onClick={() => {
-                    wantsNewSessionRef.current = true;
-                    setShowHistory(false);
-                    dispatch(clearActiveSession());
-                  }}
-                >
-                  <AddCommentIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={showHistory ? "Back to chat" : "Chat history"}>
-                <IconButton
-                  size="small"
-                  color="inherit"
-                  onClick={() => {
-                    if (!showHistory && sessionsStatus !== "loading") {
-                      dispatch(fetchSessions());
-                    }
-                    setShowHistory((v) => !v);
-                  }}
-                >
-                  {showHistory ? (
-                    <ArrowBackIcon fontSize="small" />
-                  ) : (
-                    <HistoryIcon fontSize="small" />
-                  )}
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Notes">
-                <IconButton
-                  size="small"
-                  color="inherit"
-                  onClick={() => setNotesOpen(true)}
-                >
-                  <DescriptionIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              {!isMobile && (
-                <Tooltip
-                  title={
-                    isSplitView
-                      ? "Restore floating chat"
-                      : "Expand to split view"
-                  }
-                >
-                  <IconButton
-                    size="small"
-                    color="inherit"
-                    onClick={handleToggleSplitView}
-                  >
-                    {isSplitView ? (
-                      <CloseFullscreenIcon fontSize="small" />
-                    ) : (
-                      <OpenInFullIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Tooltip>
-              )}
-              <IconButton
-                size="small"
-                color="inherit"
-                onClick={() => {
-                  if (isSplitView) setSplitView(false);
-                  setOpenChat(false);
-                }}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
+          <Paper elevation={chatPanelElevation} sx={chatPanelSx}>
+            <ChatHeader
+              isSplitView={isSplitView}
+              isMobile={isMobile}
+              maestroState={maestroState}
+              headerAvatarBg={headerAvatarBg}
+              headerRobotColor={headerRobotColor}
+              showHistory={showHistory}
+              onNewChat={handleNewChat}
+              onToggleHistory={handleToggleHistory}
+              onOpenNotes={() => setNotesOpen(true)}
+              onToggleSplitView={handleToggleSplitView}
+              onClose={handleCloseChat}
+            />
 
             <Divider />
 
@@ -1179,361 +1778,56 @@ const Chatbot: React.FC = () => {
               />
             )}
 
-            {/* ── Session history panel ── */}
+            {/* ── Session history panel / message list ── */}
             {showHistory ? (
-              <Box flex={1} overflow="auto">
-                <Box
-                  px={2}
-                  py={1.5}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  gap={1}
-                >
-                  <Box display="flex" alignItems="center" gap={1} minWidth={0}>
-                    {sessions.length > 0 && (
-                      <Tooltip title="Select or clear all conversations">
-                        <Checkbox
-                          size="small"
-                          checked={
-                            selectedSessionIds.length === sessions.length
-                          }
-                          indeterminate={
-                            selectedSessionIds.length > 0 &&
-                            selectedSessionIds.length < sessions.length
-                          }
-                          onChange={toggleSelectAllSessions}
-                          slotProps={{
-                            input: {
-                              "aria-label": "Select all conversations",
-                            },
-                          }}
-                        />
-                      </Tooltip>
-                    )}
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={700}
-                      color="text.secondary"
-                    >
-                      Previous conversations
-                    </Typography>
-                  </Box>
-                  <Tooltip
-                    title={
-                      selectedSessionIds.length > 0
-                        ? `Delete ${selectedSessionIds.length} selected conversation${selectedSessionIds.length === 1 ? "" : "s"}`
-                        : "Select conversations to delete"
-                    }
-                  >
-                    <span>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        startIcon={<DeleteIcon />}
-                        onClick={openBulkDeleteDialog}
-                        disabled={selectedSessionIds.length === 0}
-                      >
-                        Delete selected
-                      </Button>
-                    </span>
-                  </Tooltip>
-                </Box>
-                <Divider />
-                {sessionsStatus === "loading" && (
-                  <Box display="flex" justifyContent="center" pt={4}>
-                    <CircularProgress size={24} />
-                  </Box>
-                )}
-                {sessionsStatus === "succeeded" && sessions.length === 0 && (
-                  <Box textAlign="center" px={3} mt={4}>
-                    <Typography variant="body2" color="text.secondary">
-                      No previous conversations.
-                    </Typography>
-                  </Box>
-                )}
-                {sessionsStatus === "succeeded" && sessions.length > 0 && (
-                  <List dense disablePadding>
-                    {sessions.map((s) => {
-                      const isActive = activeSession?.id === s.id;
-                      const isSelected = selectedSessionIds.includes(s.id);
-                      const updated = new Date(s.updatedAt);
-                      const dateLabel = updated.toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      });
-                      const timeLabel = updated.toLocaleTimeString(undefined, {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      });
-                      const label =
-                        s.title?.trim() ||
-                        s.preview?.trim() ||
-                        `Chat — ${dateLabel}`;
-                      const secondaryNode = (
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          component="div"
-                        >
-                          {`${s.messageCount} message${s.messageCount === 1 ? "" : "s"}`}{" "}
-                          · {dateLabel} at {timeLabel}
-                        </Typography>
-                      );
-                      return (
-                        <ListItem
-                          key={s.id}
-                          disablePadding
-                          divider
-                          secondaryAction={
-                            <IconButton
-                              edge="end"
-                              size="small"
-                              onClick={(e) => openSingleDeleteDialog(e, s.id)}
-                              aria-label="Delete conversation"
-                            >
-                              <DeleteIcon fontSize="small" color="error" />
-                            </IconButton>
-                          }
-                        >
-                          <ListItemButton
-                            selected={isActive || isSelected}
-                            onClick={() => {
-                              if (!isActive) {
-                                dispatch(fetchSession(s.id));
-                              }
-                              setShowHistory(false);
-                            }}
-                          >
-                            <Checkbox
-                              size="small"
-                              checked={isSelected}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={() => toggleSessionSelection(s.id)}
-                              inputProps={{
-                                "aria-label": `Select conversation ${label}`,
-                              }}
-                              sx={{ mr: 1 }}
-                            />
-                            <ListItemText
-                              primary={
-                                <Typography
-                                  variant="body2"
-                                  fontWeight={isActive ? 700 : 400}
-                                  noWrap
-                                >
-                                  {label}
-                                </Typography>
-                              }
-                              secondary={secondaryNode}
-                            />
-                          </ListItemButton>
-                        </ListItem>
-                      );
-                    })}
-                  </List>
-                )}
-              </Box>
+              <SessionHistoryPanel
+                sessions={sessions}
+                sessionsStatus={sessionsStatus}
+                activeSessionId={activeSession?.id}
+                selectedSessionIds={selectedSessionIds}
+                onToggleSelectAll={toggleSelectAllSessions}
+                onToggleSelect={toggleSessionSelection}
+                onOpenBulkDelete={openBulkDeleteDialog}
+                onOpenSingleDelete={openSingleDeleteDialog}
+                onSelectSession={handleSelectSession}
+              />
             ) : (
-              /* ── Message list ── */
-              <Box flex={1} overflow="auto" py={1}>
-                {(!activeSession || activeSession.messages.length === 0) &&
-                  !isSending &&
-                  !isWaitingForSessionSend && (
-                    <Box textAlign="center" px={3} mt={3}>
-                      <Typography variant="body2" color="text.secondary">
-                        Hi! I'm <strong>Maestro</strong>. Describe the cloud
-                        infrastructure you'd like to build and I'll create a
-                        plan for you.
-                      </Typography>
-                    </Box>
-                  )}
-
-                {activeSession?.messages.map((msg) => {
-                  const messageKey = msg.id;
-                  return (
-                    <MessageBubble
-                      key={messageKey}
-                      message={msg}
-                      sessionId={activeSession.id}
-                      linkedOrchestratorId={activeSession.orchestratorId}
-                      onImplement={handleImplement}
-                      onSubmitFeedback={handleSubmitMessageFeedback}
-                      isImplementing={isImplementing}
-                      assistantAvatarState={"talking"}
-                    />
-                  );
-                })}
-
-                {(isSending || isWaitingForSessionSend) && <TypingIndicator />}
-
-                {sendError && (
-                  <Box px={2} py={0.5}>
-                    <Typography
-                      variant="caption"
-                      color="error"
-                      sx={{ cursor: "pointer" }}
-                      onClick={() => dispatch(clearSendError())}
-                    >
-                      ⚠ {sendError} (click to dismiss)
-                    </Typography>
-                  </Box>
-                )}
-
-                <div ref={messagesEndRef} />
-              </Box>
+              <MessageList
+                activeSession={activeSession}
+                isSending={isSending}
+                isWaitingForSessionSend={isWaitingForSessionSend}
+                sendError={sendError}
+                onImplement={handleImplement}
+                onSubmitFeedback={handleSubmitMessageFeedback}
+                isImplementing={isImplementing}
+                onClearSendError={() => dispatch(clearSendError())}
+                messagesEndRef={messagesEndRef}
+              />
             )}
 
             <Divider />
 
             {/* ── Input bar (hidden when browsing history) ── */}
             {showHistory ? null : (
-              <Box sx={{ bgcolor: "background.paper" }}>
-                {isRecordingAudio ? (
-                  /* ── Dictation mode: textbox + send icon are replaced by a
-                     ChatGPT-dictate-style bar — cancel (X), live waveform,
-                     stop-and-transcribe button. ── */
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      px: 1.5,
-                      py: 1.25,
-                    }}
-                  >
-                    <Tooltip title="Cancel recording">
-                      <IconButton
-                        size="small"
-                        onClick={handleCancelRecording}
-                        sx={{
-                          color: theme.palette.text.secondary,
-                          border: `1px solid ${theme.palette.divider}`,
-                        }}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <MicLevelVisualizer
-                        analyser={micAnalyser}
-                        active={isRecordingAudio}
-                      />
-                    </Box>
-
-                    <Tooltip title="Stop and transcribe">
-                      <IconButton
-                        size="small"
-                        onClick={stopRecordingAudio}
-                        sx={{
-                          bgcolor: theme.palette.primary.main,
-                          color: theme.palette.primary.contrastText,
-                          "&:hover": {
-                            bgcolor: theme.palette.primary.dark,
-                          },
-                        }}
-                      >
-                        <StopIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                ) : (
-                  <TextField
-                    inputRef={inputRef}
-                    fullWidth
-                    multiline
-                    maxRows={5}
-                    size="small"
-                    placeholder="Ask Maestro to plan your infrastructure…"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => setIsInputFocused(true)}
-                    onBlur={() => setIsInputFocused(false)}
-                    disabled={isSending || isWaitingForSessionSend || isTranscribingAudio}
-                    sx={{
-                      px: 0,
-                      py: 1,
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        border: "none",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        border: "none",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        border: "none",
-                      },
-                    }}
-                    slotProps={{
-                      input: {
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.75,
-                                mr: 0.5,
-                              }}
-                            >
-                              <Tooltip title="Record voice message">
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={handleStartRecording}
-                                    disabled={
-                                      isWaitingForSessionSend ||
-                                      isSending ||
-                                      isTranscribingAudio
-                                    }
-                                    sx={{
-                                      border: `1px solid ${theme.palette.divider}`,
-                                      ml: 0.25,
-                                    }}
-                                  >
-                                    <MicIcon fontSize="small" />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleSend}
-                                disabled={
-                                  !input.trim() ||
-                                  isSending ||
-                                  isCreatingSession ||
-                                  isTranscribingAudio
-                                }
-                                sx={{
-                                  border: `1px solid ${theme.palette.divider}`,
-                                }}
-                              >
-                                {isSending || isTranscribingAudio ? (
-                                  <CircularProgress size={18} />
-                                ) : (
-                                  <SendIcon fontSize="small" />
-                                )}
-                              </IconButton>
-                            </Box>
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-                )}
-                {transcriptionError && (
-                  <Box px={2} pb={1}>
-                    <Typography variant="caption" color="error">
-                      {transcriptionError}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
+              <ChatInputBar
+                isRecordingAudio={isRecordingAudio}
+                micAnalyser={micAnalyser}
+                onCancelRecording={handleCancelRecording}
+                onStopRecording={stopRecordingAudio}
+                inputRef={inputRef}
+                input={input}
+                onInputChange={setInput}
+                onKeyDown={handleKeyDown}
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setIsInputFocused(false)}
+                isSending={isSending}
+                isWaitingForSessionSend={isWaitingForSessionSend}
+                isTranscribingAudio={isTranscribingAudio}
+                isCreatingSession={isCreatingSession}
+                onStartRecording={handleStartRecording}
+                onSend={handleSend}
+                transcriptionError={transcriptionError}
+              />
             )}
           </Paper>
         </Box>
@@ -1561,63 +1855,14 @@ const Chatbot: React.FC = () => {
       </Dialog>
 
       {/* Delete confirmation dialog */}
-      <Dialog
+      <DeleteConfirmDialog
         open={deleteDialogOpen}
+        deleteTargetIds={deleteTargetIds}
+        sessions={sessions}
+        isDeleting={isDeleting}
         onClose={closeDeleteDialog}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle color="error">
-          {deleteTargetIds.length > 1
-            ? "Delete Conversations"
-            : "Delete Conversation"}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Typography>
-            {deleteTargetIds.length > 1
-              ? `Are you sure you want to delete ${deleteTargetIds.length} conversations? They will be removed from your chat history.`
-              : "Are you sure you want to delete this conversation? It will be removed from your chat history."}
-          </Typography>
-          {deleteTargetIds.length > 0 && (
-            <Box mt={1}>
-              {deleteTargetIds.map((sessionId) => {
-                const session = sessions.find((item) => item.id === sessionId);
-                const label =
-                  session?.title?.trim() ||
-                  session?.preview?.trim() ||
-                  "Untitled conversation";
-                return (
-                  <Typography
-                    key={sessionId}
-                    variant="body2"
-                    color="text.primary"
-                    noWrap
-                  >
-                    {label}
-                  </Typography>
-                );
-              })}
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDeleteDialog} disabled={isDeleting}>
-            Cancel
-          </Button>
-          <Button
-            color="error"
-            variant="contained"
-            onClick={confirmDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? (
-              <CircularProgress size={18} color="inherit" />
-            ) : (
-              "Delete"
-            )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={confirmDelete}
+      />
       <Snackbar
         open={toastOpen}
         autoHideDuration={6000}

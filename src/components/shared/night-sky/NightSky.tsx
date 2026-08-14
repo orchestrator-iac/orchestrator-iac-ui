@@ -17,6 +17,7 @@ export default function NightSky({ starCount = 480 }: Readonly<NightSkyProps>) {
     for (let i = 0; i < starCount; i++) {
       const star = document.createElement("div");
       star.className = styles.star;
+      // Math.random is safe here: used only for decorative star positions, not security-sensitive
       star.style.top = `${Math.random() * 100}%`;
       star.style.left = `${Math.random() * 100}%`;
 

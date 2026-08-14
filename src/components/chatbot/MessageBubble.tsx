@@ -12,7 +12,7 @@ import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import ThumbDownAltOutlinedIcon from "@mui/icons-material/ThumbDownAltOutlined";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
-import { useTheme, alpha } from "@mui/material/styles";
+import { useTheme, alpha, type Theme } from "@mui/material/styles";
 import ReactMarkdown from "react-markdown";
 import type {
   ChatMessage,
@@ -24,6 +24,105 @@ import type {
 import PlanCard from "./PlanCard";
 import MaestroRobot, { type MaestroRobotState } from "./MaestroRobot";
 import MessageFeedbackDialog from "./MessageFeedbackDialog";
+
+/** Bubble background: system notice > diff highlight > default assistant background. */
+const getBubbleBackground = (
+  isDiff: boolean,
+  isSystem: boolean,
+  theme: Theme,
+  dark: boolean,
+): string => {
+  if (isDiff) return alpha(theme.palette.warning.main, dark ? 0.13 : 0.1);
+  if (isSystem) return alpha(theme.palette.error.main, dark ? 0.12 : 0.08);
+  return theme.palette.background.paper;
+};
+
+/** Left accent border: system notice > diff highlight > none. */
+const getBubbleBorderLeft = (
+  isDiff: boolean,
+  isSystem: boolean,
+  theme: Theme,
+): string => {
+  if (isSystem) return `3px solid ${theme.palette.error.main}`;
+  if (isDiff) return `3px solid ${theme.palette.warning.main}`;
+  return "none";
+};
+
+/** The feedback row (timestamp + thumbs) is revealed on hover/focus, or once feedback exists. */
+const computeShowMetaRow = (
+  canCollectFeedback: boolean,
+  prefersNoHover: boolean,
+  isHovered: boolean,
+  isFocusWithin: boolean,
+  feedbackDialogOpen: boolean,
+  hasFeedback: boolean,
+): boolean =>
+  canCollectFeedback &&
+  (prefersNoHover ||
+    isHovered ||
+    isFocusWithin ||
+    feedbackDialogOpen ||
+    hasFeedback);
+
+/** Expand/collapse styling for the feedback meta row. */
+const getMetaRowRevealSx = (showMetaRow: boolean) => ({
+  maxHeight: showMetaRow ? 56 : 0,
+  opacity: showMetaRow ? 1 : 0,
+  overflow: "hidden" as const,
+  transition: "max-height 0.2s ease, opacity 0.2s ease",
+  mt: showMetaRow ? 0.5 : 0,
+});
+
+const FEEDBACK_THUMB_CONFIG = {
+  positive: {
+    tooltip: "Good response",
+    ariaLabel: "Mark response as good",
+    color: "success" as const,
+    FilledIcon: ThumbUpAltIcon,
+    OutlinedIcon: ThumbUpAltOutlinedIcon,
+  },
+  negative: {
+    tooltip: "Bad response",
+    ariaLabel: "Mark response as bad",
+    color: "error" as const,
+    FilledIcon: ThumbDownAltIcon,
+    OutlinedIcon: ThumbDownAltOutlinedIcon,
+  },
+};
+
+interface FeedbackThumbButtonProps {
+  sentiment: MessageFeedbackSentiment;
+  selected: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+/** A single thumbs-up/down feedback button, filled when it's the selected sentiment. */
+const FeedbackThumbButton: React.FC<FeedbackThumbButtonProps> = ({
+  sentiment,
+  selected,
+  disabled,
+  onClick,
+}) => {
+  const config = FEEDBACK_THUMB_CONFIG[sentiment];
+  const Icon = selected ? config.FilledIcon : config.OutlinedIcon;
+  return (
+    <Tooltip title={config.tooltip}>
+      <span>
+        <IconButton
+          size="small"
+          aria-label={config.ariaLabel}
+          aria-pressed={selected}
+          onClick={onClick}
+          disabled={disabled}
+          color={selected ? config.color : "default"}
+        >
+          <Icon fontSize="small" />
+        </IconButton>
+      </span>
+    </Tooltip>
+  );
+};
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -69,26 +168,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const isPlan = message.messageType === "plan";
   const canCollectFeedback = !isUser && !isSystem;
 
-  const assistantBg = theme.palette.background.paper;
-  const diffBg = alpha(theme.palette.warning.main, dark ? 0.13 : 0.1);
-  const systemBg = alpha(theme.palette.error.main, dark ? 0.12 : 0.08);
-
-  let bubbleBg = assistantBg;
-  if (isDiff) bubbleBg = diffBg;
-  else if (isSystem) bubbleBg = systemBg;
-
-  let borderLeft = "none";
-  if (isSystem) borderLeft = `3px solid ${theme.palette.error.main}`;
-  else if (isDiff) borderLeft = `3px solid ${theme.palette.warning.main}`;
+  const bubbleBg = getBubbleBackground(isDiff, isSystem, theme, dark);
+  const borderLeft = getBubbleBorderLeft(isDiff, isSystem, theme);
 
   const selectedSentiment = message.feedback?.sentiment;
-  const showMetaRow =
-    canCollectFeedback &&
-    (prefersNoHover ||
-      isHovered ||
-      isFocusWithin ||
-      feedbackDialogOpen ||
-      Boolean(message.feedback));
+  const showMetaRow = computeShowMetaRow(
+    canCollectFeedback,
+    prefersNoHover,
+    isHovered,
+    isFocusWithin,
+    feedbackDialogOpen,
+    Boolean(message.feedback),
+  );
 
   const shortTimestamp = useMemo(
     () =>
@@ -276,15 +367,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           )}
 
           {canCollectFeedback && (
-            <Box
-              sx={{
-                maxHeight: showMetaRow ? 56 : 0,
-                opacity: showMetaRow ? 1 : 0,
-                overflow: "hidden",
-                transition: "max-height 0.2s ease, opacity 0.2s ease",
-                mt: showMetaRow ? 0.5 : 0,
-              }}
-            >
+            <Box sx={getMetaRowRevealSx(showMetaRow)}>
               <Stack
                 direction="row"
                 alignItems="center"
@@ -297,50 +380,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   </Typography>
                 </Tooltip>
                 <Stack direction="row" spacing={0.25}>
-                  <Tooltip title="Good response">
-                    <span>
-                      <IconButton
-                        size="small"
-                        aria-label="Mark response as good"
-                        aria-pressed={selectedSentiment === "positive"}
-                        onClick={() => handleFeedbackButtonClick("positive")}
-                        disabled={!onSubmitFeedback}
-                        color={
-                          selectedSentiment === "positive"
-                            ? "success"
-                            : "default"
-                        }
-                      >
-                        {selectedSentiment === "positive" ? (
-                          <ThumbUpAltIcon fontSize="small" />
-                        ) : (
-                          <ThumbUpAltOutlinedIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Bad response">
-                    <span>
-                      <IconButton
-                        size="small"
-                        aria-label="Mark response as bad"
-                        aria-pressed={selectedSentiment === "negative"}
-                        onClick={() => handleFeedbackButtonClick("negative")}
-                        disabled={!onSubmitFeedback}
-                        color={
-                          selectedSentiment === "negative"
-                            ? "error"
-                            : "default"
-                        }
-                      >
-                        {selectedSentiment === "negative" ? (
-                          <ThumbDownAltIcon fontSize="small" />
-                        ) : (
-                          <ThumbDownAltOutlinedIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </span>
-                  </Tooltip>
+                  <FeedbackThumbButton
+                    sentiment="positive"
+                    selected={selectedSentiment === "positive"}
+                    disabled={!onSubmitFeedback}
+                    onClick={() => handleFeedbackButtonClick("positive")}
+                  />
+                  <FeedbackThumbButton
+                    sentiment="negative"
+                    selected={selectedSentiment === "negative"}
+                    disabled={!onSubmitFeedback}
+                    onClick={() => handleFeedbackButtonClick("negative")}
+                  />
                 </Stack>
               </Stack>
             </Box>

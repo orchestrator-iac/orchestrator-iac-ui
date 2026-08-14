@@ -11,6 +11,7 @@ import {
   alpha,
   useMediaQuery,
   useTheme,
+  type Theme,
 } from "@mui/material";
 import {
   AccountTree as DiagramIcon,
@@ -36,6 +37,10 @@ import MaestroRobot, {
 } from "@/components/chatbot/MaestroRobot";
 
 const SITE_URL = "https://orchestrator.next-zen.dev";
+
+/** Picks a dark- or light-mode value without adding a branch to the caller's complexity. */
+const pickByMode = <T,>(mode: "light" | "dark", dark: T, light: T): T =>
+  mode === "dark" ? dark : light;
 
 interface ProductNode {
   icon: React.ReactNode;
@@ -108,6 +113,9 @@ const templateRows: TemplateItem[] = [
   },
 ];
 
+// NOTE: the CIDR/IP values in this file (e.g. "10.0.0.0/16") are decorative
+// example text shown in marketing diagrams/animations, not real network
+// configuration or credentials — safe to display as static copy.
 const architectureNodes: ProductNode[] = [
   {
     icon: <NetworkIcon fontSize="small" />,
@@ -503,57 +511,72 @@ const HeroProductScene: React.FC = () => {
   const [sceneRotation, setSceneRotation] = useState({ rx: 0, ry: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const accent = theme.palette.secondary.main;
-  const canvasBg =
-    theme.palette.mode === "dark"
-      ? "rgba(15,23,26,0.94)"
-      : "rgba(250, 253, 253, 0.96)";
-  const panelBg =
-    theme.palette.mode === "dark"
-      ? "rgba(26,36,40,0.92)"
-      : "rgba(255,255,255,0.94)";
-  const codePanelBg =
-    theme.palette.mode === "dark"
-      ? "rgba(15,20,23,0.97)"
-      : "rgba(14, 28, 33, 0.96)";
-  const shellBorder =
-    theme.palette.mode === "dark"
-      ? alpha(theme.palette.common.white, 0.08)
-      : alpha(theme.palette.primary.dark, 0.14);
-  const shellDivider =
-    theme.palette.mode === "dark"
-      ? alpha(theme.palette.common.white, 0.07)
-      : alpha(theme.palette.primary.dark, 0.1);
-  const shellText =
-    theme.palette.mode === "dark"
-      ? alpha(theme.palette.common.white, 0.55)
-      : alpha(theme.palette.primary.dark, 0.58);
-  const sceneTitleColor =
-    theme.palette.mode === "dark" ? "#EAFBFA" : theme.palette.primary.dark;
-  const sceneSubtleText =
-    theme.palette.mode === "dark"
-      ? alpha(theme.palette.common.white, 0.5)
-      : alpha(theme.palette.primary.dark, 0.52);
-  const sceneTokenText = theme.palette.mode === "dark" ? "#EAFBFA" : "#D7F4F3";
-  const sceneTokenMuted =
-    theme.palette.mode === "dark"
-      ? alpha(theme.palette.common.white, 0.45)
-      : alpha("#D7F4F3", 0.55);
-  const sceneCardBorder =
-    theme.palette.mode === "dark"
-      ? alpha(theme.palette.common.white, 0.09)
-      : alpha(theme.palette.primary.dark, 0.12);
-  const sceneCardShadow =
-    theme.palette.mode === "dark"
-      ? "0 14px 28px -12px rgba(0,0,0,0.5)"
-      : "0 18px 36px -18px rgba(16, 44, 48, 0.22)";
-  const scenePanelShadow =
-    theme.palette.mode === "dark"
-      ? "0 30px 60px -24px rgba(0,0,0,0.55)"
-      : "0 28px 56px -26px rgba(16, 44, 48, 0.18)";
-  const sceneCodeShadow =
-    theme.palette.mode === "dark"
-      ? "0 34px 70px -26px rgba(0,0,0,0.6)"
-      : "0 34px 70px -28px rgba(9, 38, 43, 0.26)";
+  const canvasBg = pickByMode(
+    theme.palette.mode,
+    "rgba(15,23,26,0.94)",
+    "rgba(250, 253, 253, 0.96)",
+  );
+  const panelBg = pickByMode(
+    theme.palette.mode,
+    "rgba(26,36,40,0.92)",
+    "rgba(255,255,255,0.94)",
+  );
+  const codePanelBg = pickByMode(
+    theme.palette.mode,
+    "rgba(15,20,23,0.97)",
+    "rgba(14, 28, 33, 0.96)",
+  );
+  const shellBorder = pickByMode(
+    theme.palette.mode,
+    alpha(theme.palette.common.white, 0.08),
+    alpha(theme.palette.primary.dark, 0.14),
+  );
+  const shellDivider = pickByMode(
+    theme.palette.mode,
+    alpha(theme.palette.common.white, 0.07),
+    alpha(theme.palette.primary.dark, 0.1),
+  );
+  const shellText = pickByMode(
+    theme.palette.mode,
+    alpha(theme.palette.common.white, 0.55),
+    alpha(theme.palette.primary.dark, 0.58),
+  );
+  const sceneTitleColor = pickByMode(
+    theme.palette.mode,
+    "#EAFBFA",
+    theme.palette.primary.dark,
+  );
+  const sceneSubtleText = pickByMode(
+    theme.palette.mode,
+    alpha(theme.palette.common.white, 0.5),
+    alpha(theme.palette.primary.dark, 0.52),
+  );
+  const sceneTokenText = pickByMode(theme.palette.mode, "#EAFBFA", "#D7F4F3");
+  const sceneTokenMuted = pickByMode(
+    theme.palette.mode,
+    alpha(theme.palette.common.white, 0.45),
+    alpha("#D7F4F3", 0.55),
+  );
+  const sceneCardBorder = pickByMode(
+    theme.palette.mode,
+    alpha(theme.palette.common.white, 0.09),
+    alpha(theme.palette.primary.dark, 0.12),
+  );
+  const sceneCardShadow = pickByMode(
+    theme.palette.mode,
+    "0 14px 28px -12px rgba(0,0,0,0.5)",
+    "0 18px 36px -18px rgba(16, 44, 48, 0.22)",
+  );
+  const scenePanelShadow = pickByMode(
+    theme.palette.mode,
+    "0 30px 60px -24px rgba(0,0,0,0.55)",
+    "0 28px 56px -26px rgba(16, 44, 48, 0.18)",
+  );
+  const sceneCodeShadow = pickByMode(
+    theme.palette.mode,
+    "0 34px 70px -26px rgba(0,0,0,0.6)",
+    "0 34px 70px -28px rgba(9, 38, 43, 0.26)",
+  );
   const sceneItems = [
     {
       label: "VPC",
@@ -605,39 +628,57 @@ const HeroProductScene: React.FC = () => {
     { label: "Kubernetes Platform Base", sub: "18 nodes - AWS" },
   ] as const;
   const codeTokens = [
-    [
-      { text: "module ", color: accent },
-      { text: '"network" ', color: "#FCD34D" },
-      { text: "{", color: sceneTokenMuted },
-    ],
-    [
-      { text: "  source", color: sceneTokenText },
-      { text: " = ", color: sceneTokenMuted },
-      { text: '"./modules/vpc"', color: "#FCD34D" },
-    ],
-    [
-      { text: "  cidr", color: sceneTokenText },
-      { text: "   = ", color: sceneTokenMuted },
-      { text: '"10.0.0.0/16"', color: "#FCD34D" },
-    ],
-    [{ text: "}", color: sceneTokenMuted }],
-    [{ text: "", color: sceneTokenMuted }],
-    [
-      { text: "module ", color: accent },
-      { text: '"database" ', color: "#FCD34D" },
-      { text: "{", color: sceneTokenMuted },
-    ],
-    [
-      { text: "  source", color: sceneTokenText },
-      { text: "    = ", color: sceneTokenMuted },
-      { text: '"./modules/rds"', color: "#FCD34D" },
-    ],
-    [
-      { text: "  subnet_ids", color: sceneTokenText },
-      { text: " = ", color: sceneTokenMuted },
-      { text: "module.network.private_subnets", color: sceneTokenText },
-    ],
-    [{ text: "}", color: sceneTokenMuted }],
+    {
+      id: "network-open",
+      tokens: [
+        { text: "module ", color: accent },
+        { text: '"network" ', color: "#FCD34D" },
+        { text: "{", color: sceneTokenMuted },
+      ],
+    },
+    {
+      id: "network-source",
+      tokens: [
+        { text: "  source", color: sceneTokenText },
+        { text: " = ", color: sceneTokenMuted },
+        { text: '"./modules/vpc"', color: "#FCD34D" },
+      ],
+    },
+    {
+      id: "network-cidr",
+      tokens: [
+        { text: "  cidr", color: sceneTokenText },
+        { text: "   = ", color: sceneTokenMuted },
+        { text: '"10.0.0.0/16"', color: "#FCD34D" }, // decorative example CIDR shown in a generated-code preview, not a real network value
+      ],
+    },
+    { id: "network-close", tokens: [{ text: "}", color: sceneTokenMuted }] },
+    { id: "spacer", tokens: [{ text: "", color: sceneTokenMuted }] },
+    {
+      id: "database-open",
+      tokens: [
+        { text: "module ", color: accent },
+        { text: '"database" ', color: "#FCD34D" },
+        { text: "{", color: sceneTokenMuted },
+      ],
+    },
+    {
+      id: "database-source",
+      tokens: [
+        { text: "  source", color: sceneTokenText },
+        { text: "    = ", color: sceneTokenMuted },
+        { text: '"./modules/rds"', color: "#FCD34D" },
+      ],
+    },
+    {
+      id: "database-subnet",
+      tokens: [
+        { text: "  subnet_ids", color: sceneTokenText },
+        { text: " = ", color: sceneTokenMuted },
+        { text: "module.network.private_subnets", color: sceneTokenText },
+      ],
+    },
+    { id: "database-close", tokens: [{ text: "}", color: sceneTokenMuted }] },
   ] as const;
 
   const handleSceneMove = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -673,16 +714,17 @@ const HeroProductScene: React.FC = () => {
           inset: 0,
           maskImage:
             "linear-gradient(90deg, transparent 0%, black 18%, black 100%)",
-          background:
-            theme.palette.mode === "dark"
-              ? `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
-                  theme.palette.background.default,
-                  0.92,
-                )} 32%, ${alpha(theme.palette.background.default, 0.18)} 72%, ${alpha(theme.palette.background.default, 0.04)} 100%)`
-              : `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
-                  theme.palette.background.default,
-                  0.94,
-                )} 34%, ${alpha(theme.palette.background.default, 0.18)} 72%, ${alpha(theme.palette.background.default, 0.04)} 100%)`,
+          background: pickByMode(
+            theme.palette.mode,
+            `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
+              theme.palette.background.default,
+              0.92,
+            )} 32%, ${alpha(theme.palette.background.default, 0.18)} 72%, ${alpha(theme.palette.background.default, 0.04)} 100%)`,
+            `linear-gradient(90deg, ${theme.palette.background.default} 0%, ${alpha(
+              theme.palette.background.default,
+              0.94,
+            )} 34%, ${alpha(theme.palette.background.default, 0.18)} 72%, ${alpha(theme.palette.background.default, 0.04)} 100%)`,
+          ),
         }}
       />
 
@@ -773,7 +815,7 @@ const HeroProductScene: React.FC = () => {
                 sx={{
                   position: "absolute",
                   inset: "42px 0 0 0",
-                  backgroundImage: `radial-gradient(circle, ${theme.palette.mode === "dark" ? alpha(theme.palette.common.white, 0.055) : alpha(theme.palette.primary.dark, 0.08)} 1px, transparent 1px)`,
+                  backgroundImage: `radial-gradient(circle, ${pickByMode(theme.palette.mode, alpha(theme.palette.common.white, 0.055), alpha(theme.palette.primary.dark, 0.08))} 1px, transparent 1px)`,
                   backgroundSize: "26px 26px",
                 }}
               />
@@ -903,10 +945,11 @@ const HeroProductScene: React.FC = () => {
                 sx={{
                   p: 2.25,
                   borderRadius: 2,
-                  background:
-                    theme.palette.mode === "dark"
-                      ? alpha("#141c1f", 0.95)
-                      : "rgba(255,255,255,0.95)",
+                  background: pickByMode(
+                    theme.palette.mode,
+                    alpha("#141c1f", 0.95),
+                    "rgba(255,255,255,0.95)",
+                  ),
                   border: `1px solid ${shellBorder}`,
                   boxShadow: scenePanelShadow,
                   animation:
@@ -933,11 +976,12 @@ const HeroProductScene: React.FC = () => {
                       sx={{
                         p: 1.5,
                         borderRadius: 1.25,
-                        border: `1px solid ${theme.palette.mode === "dark" ? alpha(theme.palette.common.white, 0.07) : alpha(theme.palette.primary.dark, 0.08)}`,
-                        backgroundColor:
-                          theme.palette.mode === "dark"
-                            ? alpha(theme.palette.common.white, 0.02)
-                            : alpha(theme.palette.tertiary.main, 0.14),
+                        border: `1px solid ${pickByMode(theme.palette.mode, alpha(theme.palette.common.white, 0.07), alpha(theme.palette.primary.dark, 0.08))}`,
+                        backgroundColor: pickByMode(
+                          theme.palette.mode,
+                          alpha(theme.palette.common.white, 0.02),
+                          alpha(theme.palette.tertiary.main, 0.14),
+                        ),
                       }}
                     >
                       <Box
@@ -1061,16 +1105,16 @@ const HeroProductScene: React.FC = () => {
                 >
                   {codeTokens.map((line, index) => (
                     <Box
-                      key={index}
+                      key={line.id}
                       sx={{
                         display: "flex",
                         minHeight: "1.2em",
                         animation: `heroLineIn 350ms ease-out ${620 + index * 55}ms both`,
                       }}
                     >
-                      {line.map((token, tokenIndex) => (
+                      {line.tokens.map((token, tokenIndex) => (
                         <Box
-                          key={`${index}-${tokenIndex}`}
+                          key={`${line.id}-${tokenIndex}`}
                           component="span"
                           sx={{ color: token.color, whiteSpace: "pre" }}
                         >
@@ -1192,9 +1236,13 @@ const MobileProductPreview: React.FC = () => {
             mb: 1.5,
           }}
         >
-          {["Template", "Canvas", "Code"].map((label, index) => (
+          {[
+            { label: "Template", detail: "AWS VPC" },
+            { label: "Canvas", detail: "5 nodes" },
+            { label: "Code", detail: "tf plan" },
+          ].map((step, index) => (
             <Box
-              key={label}
+              key={step.label}
               sx={{
                 p: 1,
                 minWidth: 0,
@@ -1216,7 +1264,7 @@ const MobileProductPreview: React.FC = () => {
                   lineHeight: 1.2,
                 }}
               >
-                {label}
+                {step.label}
               </Typography>
               <Typography
                 sx={{
@@ -1226,7 +1274,7 @@ const MobileProductPreview: React.FC = () => {
                   lineHeight: 1.25,
                 }}
               >
-                {index === 0 ? "AWS VPC" : index === 1 ? "5 nodes" : "tf plan"}
+                {step.detail}
               </Typography>
             </Box>
           ))}
@@ -1259,15 +1307,8 @@ const MobileProductPreview: React.FC = () => {
   );
 };
 
-const ProductLoopMockup: React.FC<{
-  visual: ProductLoopItem["visual"];
-  reverseLayout?: boolean;
-}> = ({ visual, reverseLayout = false }) => {
-  const theme = useTheme();
-
-  const renderMainContent = () => {
-    if (visual === "templates") {
-      return (
+const renderTemplatesMockup = (theme: Theme) => {
+  return (
         <Stack spacing={1.15} sx={{ p: { xs: 1.6, sm: 2 } }}>
           {templateRows.map((template, index) => (
             <Box
@@ -1363,11 +1404,11 @@ const ProductLoopMockup: React.FC<{
             </Stack>
           </Box>
         </Stack>
-      );
-    }
+  );
+};
 
-    if (visual === "canvas") {
-      return (
+const renderCanvasMockup = (theme: Theme) => {
+  return (
         <Box
           sx={{
             position: "relative",
@@ -1403,11 +1444,11 @@ const ProductLoopMockup: React.FC<{
             <ProductNodeCard key={node.label} {...node} />
           ))}
         </Box>
-      );
-    }
+  );
+};
 
-    if (visual === "validation") {
-      return (
+const renderValidationMockup = (theme: Theme) => {
+  return (
         <Stack spacing={1.1} sx={{ p: { xs: 1.6, sm: 2 } }}>
           <Stack spacing={0.7}>
             {[
@@ -1526,10 +1567,11 @@ const ProductLoopMockup: React.FC<{
             </Box>
           </Box>
         </Stack>
-      );
-    }
+  );
+};
 
-    return (
+const renderTerraformMockup = (theme: Theme) => {
+  return (
       <Box
         sx={{
           height: "100%",
@@ -1617,8 +1659,42 @@ const ProductLoopMockup: React.FC<{
           </Stack>
         </Stack>
       </Box>
-    );
-  };
+  );
+};
+
+const MOCKUP_RENDERERS: Record<
+  ProductLoopItem["visual"],
+  (theme: Theme) => React.ReactNode
+> = {
+  templates: renderTemplatesMockup,
+  canvas: renderCanvasMockup,
+  validation: renderValidationMockup,
+  terraform: renderTerraformMockup,
+};
+
+const VISUAL_HEADER_LABELS: Record<ProductLoopItem["visual"], string> = {
+  templates: "Template gallery",
+  canvas: "Editable architecture",
+  validation: "Configuration review",
+  terraform: "Terraform bundle",
+};
+
+const VISUAL_MIN_HEIGHT: Record<
+  ProductLoopItem["visual"],
+  { xs: number | string; md: number | string }
+> = {
+  templates: { xs: "auto", md: "auto" },
+  canvas: { xs: 276, md: 316 },
+  validation: { xs: "auto", md: "auto" },
+  terraform: { xs: 250, md: 292 },
+};
+
+const ProductLoopMockup: React.FC<{
+  visual: ProductLoopItem["visual"];
+  reverseLayout?: boolean;
+}> = ({ visual, reverseLayout = false }) => {
+  const theme = useTheme();
+  const minHeight = VISUAL_MIN_HEIGHT[visual];
 
   return (
     <Box
@@ -1694,34 +1770,15 @@ const ProductLoopMockup: React.FC<{
               fontWeight: 800,
             }}
           >
-            {visual === "templates"
-              ? "Template gallery"
-              : visual === "canvas"
-                ? "Editable architecture"
-                : visual === "validation"
-                  ? "Configuration review"
-                  : "Terraform bundle"}
+            {VISUAL_HEADER_LABELS[visual]}
           </Typography>
         </Stack>
         <Box
           sx={{
-            minHeight: {
-              xs:
-                visual === "canvas"
-                  ? 276
-                  : visual === "terraform"
-                    ? 250
-                    : "auto",
-              md:
-                visual === "canvas"
-                  ? 316
-                  : visual === "terraform"
-                    ? 292
-                    : "auto",
-            },
+            minHeight,
           }}
         >
-          {renderMainContent()}
+          {MOCKUP_RENDERERS[visual](theme)}
         </Box>
       </SurfaceBox>
     </Box>
@@ -1735,6 +1792,7 @@ const MaestroSection: React.FC = () => {
   );
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const activeStep = maestroJourney[activeStepIndex] ?? maestroJourney[0];
+  const activeStepBadgeOpacity = pickByMode(theme.palette.mode, 0.16, 0.08);
 
   useEffect(() => {
     if (prefersReducedMotion) {
@@ -1812,7 +1870,7 @@ const MaestroSection: React.FC = () => {
                           backgroundColor: isActive
                             ? alpha(
                                 theme.palette.secondary.main,
-                                theme.palette.mode === "dark" ? 0.16 : 0.08,
+                                activeStepBadgeOpacity,
                               )
                             : "transparent",
                           color: isActive
@@ -3175,7 +3233,7 @@ const CapabilityMatrixSection: React.FC = () => {
         <Box sx={{ mt: { xs: 4, md: 5 }, display: "grid", gap: 1 }}>
           {signalRows.map((row, index) => (
             <CapabilitySignalRail
-              key={index}
+              key={row[0]}
               items={row}
               reverse={index % 2 === 1}
             />

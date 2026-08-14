@@ -64,6 +64,590 @@ const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className, mode }) => {
   return <img src={logoSrc} alt={`${cloudType} logo`} className={className} />;
 };
 
+// ── Pure helpers extracted from the main component to keep its cognitive
+// complexity down and to avoid nested ternaries inline in JSX/sx props. ──
+
+const getLikeTooltip = (hasUser: boolean, liked: boolean): string => {
+  if (!hasUser) return "Login to like";
+  return liked ? "Unlike" : "Like this template";
+};
+
+const getLikeAriaLabel = (hasUser: boolean, liked: boolean): string => {
+  if (!hasUser) return "Login to like this template";
+  return liked ? "Unlike this template" : "Like this template";
+};
+
+const getLikeBorderColor = (liked: boolean, isDarkMode: boolean): string => {
+  if (!liked) return "divider";
+  return isDarkMode ? "rgba(255,100,120,0.5)" : "rgba(220,50,80,0.4)";
+};
+
+// ── Small presentational subcomponents extracted from TemplateDetail's JSX.
+// Each keeps its own (small) branching logic in its own function scope. ──
+
+interface TemplateMetaRowProps {
+  template: ITemplateDetail;
+}
+
+const TemplateMetaRow: React.FC<TemplateMetaRowProps> = ({ template }) => {
+  const theme = useTheme();
+  const navigate = useNavigate();
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        gap: 1.5,
+        flexWrap: "wrap",
+        alignItems: "center",
+      }}
+    >
+      {template.cloud &&
+        <CardLogo cloudType={template.cloud} mode={theme.palette.mode} className={styles.cloudLogo} />
+      }
+      {template.cloud && (
+        <Box component="span" sx={{ color: "text.disabled" }}>
+          .
+        </Box>
+      )}
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          fontSize: "1rem",
+        }}
+      >
+        {template.nodeCount ?? 0} Resources
+      </Typography>
+      {template.authorName && (
+        <>
+          <Box component="span" sx={{ color: "text.disabled" }}>
+            .
+          </Box>
+          <Typography
+            variant="caption"
+            component="span"
+            onClick={() =>
+              navigate(`/templates?author=${template.userId}`)
+            }
+            sx={{
+              color: "text.secondary",
+              cursor: "pointer",
+              "&:hover": { color: "text.primary" },
+            }}
+          >
+            by <strong>{template.authorName}</strong>
+          </Typography>
+        </>
+      )}
+    </Box>
+  );
+};
+
+interface TemplateStatsRowProps {
+  template: ITemplateDetail;
+  likeCount: number;
+}
+
+const TemplateStatsRow: React.FC<TemplateStatsRowProps> = ({
+  template,
+  likeCount,
+}) => (
+  <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+    {[
+      {
+        icon: "eye",
+        val: template.analytics?.viewCount ?? 0,
+        label: "views",
+      },
+      { icon: "heart", val: likeCount, label: "likes" },
+      {
+        icon: "copy",
+        val: template.analytics?.usageCount ?? 0,
+        label: "uses",
+      },
+    ].map(({ icon, val, label }) => (
+      <Box
+        key={label}
+        aria-label={`${val} ${label}`}
+        sx={{
+          textAlign: "center",
+          px: 2,
+          py: 1.25,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+          minWidth: 68,
+        }}
+      >
+        <Typography
+          sx={{
+            fontWeight: 800,
+            lineHeight: 1,
+            fontSize: "1.5rem",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {val}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 0.5,
+            mt: 0.5,
+          }}
+        >
+          <FontAwesomeIcon
+            icon={icon as any}
+            aria-hidden="true"
+            style={{ fontSize: "0.6rem" }}
+          />
+          {label}
+        </Typography>
+      </Box>
+    ))}
+  </Box>
+);
+
+interface TemplateLikeButtonProps {
+  liked: boolean;
+  likeLoading: boolean;
+  onLike: () => void;
+}
+
+const TemplateLikeButton: React.FC<TemplateLikeButtonProps> = ({
+  liked,
+  likeLoading,
+  onLike,
+}) => {
+  const theme = useTheme();
+  const { user } = useAuth();
+  const hasUser = !!user;
+  const likeTooltip = getLikeTooltip(hasUser, liked);
+  const likeAriaLabel = getLikeAriaLabel(hasUser, liked);
+
+  return (
+    <Tooltip title={likeTooltip}>
+      <span>
+        <IconButton
+          onClick={onLike}
+          disabled={likeLoading}
+          aria-label={likeAriaLabel}
+          aria-pressed={liked}
+          sx={{
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: getLikeBorderColor(liked, theme.palette.mode === "dark"),
+            color: liked ? "error.main" : "text.secondary",
+            backgroundColor: liked
+              ? alpha(theme.palette.error.main, 0.06)
+              : "transparent",
+            gap: 0.75,
+            px: 1.5,
+            py: 0.85,
+            transition: "all 0.2s",
+            "&:hover": {
+              color: "error.main",
+              borderColor: "error.main",
+              backgroundColor: alpha(theme.palette.error.main, 0.06),
+            },
+            "&:focus-visible": {
+              outline: "2px solid",
+              outlineColor: "error.main",
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <FontAwesomeIcon
+            aria-hidden="true"
+            icon={liked ? "heart" : (["far", "heart"] as any)}
+          />
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 600, fontSize: "0.8rem" }}
+          >
+            {liked ? "Liked" : "Like"}
+          </Typography>
+        </IconButton>
+      </span>
+    </Tooltip>
+  );
+};
+
+interface TemplateUseButtonProps {
+  useLoading: boolean;
+  templateName: string;
+  onUseTemplate: () => void;
+}
+
+const TemplateUseButton: React.FC<TemplateUseButtonProps> = ({
+  useLoading,
+  templateName,
+  onUseTemplate,
+}) => {
+  const theme = useTheme();
+  return (
+    <Tooltip title="Creates your own editable copy" arrow>
+      <span>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={onUseTemplate}
+          disabled={useLoading}
+          aria-label={
+            useLoading
+              ? "Forking template, please wait"
+              : `Use template: ${templateName}`
+          }
+          sx={{
+            borderRadius: 2,
+            fontWeight: 700,
+            textTransform: "none",
+            px: 3,
+            py: 1.1,
+            backgroundColor: theme.palette.primary.main,
+            color: theme.palette.primary.contrastText,
+            boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.35)}`,
+            "&:hover": {
+              backgroundColor: theme.palette.primary.dark,
+              boxShadow: `0 6px 22px ${alpha(theme.palette.primary.main, 0.5)}`,
+              transform: "translateY(-1px)",
+            },
+            "&:focus-visible": {
+              outline: "2px solid",
+              outlineColor: theme.palette.primary.main,
+              outlineOffset: 3,
+            },
+          }}
+        >
+          {useLoading ? (
+            <FontAwesomeIcon
+              aria-hidden="true"
+              icon="spinner"
+              spin
+              style={{ marginRight: 8 }}
+            />
+          ) : (
+            <FontAwesomeIcon
+              aria-hidden="true"
+              icon="copy"
+              style={{ marginRight: 8 }}
+            />
+          )}
+          {useLoading ? "Forking..." : "Use Template"}
+        </Button>
+      </span>
+    </Tooltip>
+  );
+};
+
+interface TemplateOwnerActionsProps {
+  onEditClick: () => void;
+  onUnpublishClick: () => void;
+}
+
+const TemplateOwnerActions: React.FC<TemplateOwnerActionsProps> = ({
+  onEditClick,
+  onUnpublishClick,
+}) => (
+  <Box sx={{ display: "flex", gap: 1 }}>
+    <Button
+      variant="outlined"
+      size="small"
+      startIcon={
+        <FontAwesomeIcon icon="pen" style={{ fontSize: "0.75rem" }} />
+      }
+      onClick={onEditClick}
+      sx={{
+        borderRadius: 2,
+        textTransform: "none",
+        fontWeight: 600,
+      }}
+    >
+      Edit
+    </Button>
+    <Button
+      variant="outlined"
+      color="error"
+      size="small"
+      startIcon={
+        <FontAwesomeIcon icon="eye-slash" style={{ fontSize: "0.75rem" }} />
+      }
+      onClick={onUnpublishClick}
+      sx={{
+        borderRadius: 2,
+        textTransform: "none",
+        fontWeight: 600,
+      }}
+    >
+      Unpublish
+    </Button>
+  </Box>
+);
+
+interface TemplateCanvasPreviewProps {
+  template: ITemplateDetail;
+  onOpenPreview: () => void;
+}
+
+const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
+  template,
+  onOpenPreview,
+}) => {
+  const theme = useTheme();
+  const { user } = useAuth();
+  const isDark = theme.palette.mode === "dark";
+
+  return (
+    <>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+        <Box
+          sx={{
+            width: 5,
+            height: 28,
+            borderRadius: 2,
+            background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.25)})`,
+            flexShrink: 0,
+          }}
+        />
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 800,
+            color: theme.palette.primary.main,
+            textTransform: "uppercase",
+            fontSize: "0.78rem",
+            letterSpacing: "0.14em",
+          }}
+        >
+          Canvas Preview
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          mb: 4,
+          position: "relative",
+          minHeight: 480,
+          maxHeight: 620,
+          borderRadius: 4,
+          overflow: "hidden",
+          background: isDark
+            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`
+            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, ${alpha(theme.palette.secondary.main, 0.06)} 100%)`,
+          border: "1.5px solid",
+          borderColor: alpha(theme.palette.primary.main, 0.25),
+          boxShadow: isDark
+            ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}, 0 24px 60px rgba(0,0,0,0.35)`
+            : `0 0 0 1px ${alpha(theme.palette.primary.main, 0.06)}, 0 20px 50px rgba(0,0,0,0.1)`,
+
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* Preview image */}
+        {template.previewImageUrl ? (
+          <Box
+            component="img"
+            src={template.previewImageUrl}
+            alt="Canvas preview"
+            sx={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              display: "block",
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 1.5,
+              opacity: 0.35,
+            }}
+          >
+            <FontAwesomeIcon
+              icon="sitemap"
+              aria-hidden="true"
+              style={{
+                fontSize: "3.5rem",
+                color: theme.palette.primary.main,
+              }}
+            />
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", fontWeight: 500 }}
+            >
+              {template.nodeCount
+                ? `${template.nodeCount} nodes`
+                : "No preview available"}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Gradient overlay */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: isDark
+              ? "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.82) 100%)"
+              : "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.52) 100%)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Open button */}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          <Button
+            variant="contained"
+            size="medium"
+            onClick={onOpenPreview}
+            startIcon={
+              <FontAwesomeIcon
+                icon="up-right-from-square"
+                style={{ fontSize: "0.8rem" }}
+              />
+            }
+            sx={{
+              borderRadius: 2.5,
+              textTransform: "none",
+              fontWeight: 700,
+              px: 3.5,
+              py: 1.1,
+              fontSize: "0.9rem",
+              backgroundColor: isDark
+                ? alpha(theme.palette.primary.main, 0.18)
+                : alpha(theme.palette.primary.main, 0.75),
+              backdropFilter: "blur(12px)",
+              color: theme.palette.common.white,
+              border: "1px solid",
+              borderColor: isDark
+                ? alpha(theme.palette.primary.main, 0.4)
+                : alpha(theme.palette.common.white, 0.25),
+              boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                backgroundColor: isDark
+                  ? alpha(theme.palette.primary.main, 0.32)
+                  : alpha(theme.palette.primary.main, 0.92),
+                boxShadow: "0 6px 28px rgba(0,0,0,0.4)",
+                transform: "translateY(-1px)",
+              },
+            }}
+          >
+            {user ? "Preview (Read Only)" : "Login to Preview"}
+          </Button>
+        </Box>
+      </Box>
+    </>
+  );
+};
+
+interface TemplateReadmeSectionProps {
+  readme?: string;
+}
+
+const TemplateReadmeSection: React.FC<TemplateReadmeSectionProps> = ({
+  readme,
+}) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  return (
+    <>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+        <Box
+          sx={{
+            width: 5,
+            height: 28,
+            borderRadius: 2,
+            background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.25)})`,
+            flexShrink: 0,
+          }}
+        />
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 800,
+            color: theme.palette.primary.main,
+            textTransform: "uppercase",
+            fontSize: "0.78rem",
+            letterSpacing: "0.14em",
+          }}
+        >
+          README
+        </Typography>
+      </Box>
+      <Box
+        className={styles.readmeContent}
+        sx={{
+          background: isDark
+            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, rgba(0,0,0,0) 60%)`
+            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.025)} 0%, ${alpha(theme.palette.common.white, 0)} 60%)`,
+          border: "1.5px solid",
+          borderColor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.1),
+          borderRadius: 4,
+          p: { xs: 3, sm: 4 },
+          minHeight: 220,
+          mb: 4,
+          boxShadow: `inset 0 1px 0 ${alpha(theme.palette.primary.main, 0.08)}`,
+        }}
+      >
+        {readme ? (
+          <Box
+            className="note-rich-editor note-readonly"
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(readme),
+            }}
+            sx={{
+              fontSize: "0.95rem",
+              lineHeight: 1.75,
+              wordBreak: "break-word",
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 160,
+              gap: 1,
+              opacity: 0.45,
+            }}
+          >
+            <FontAwesomeIcon
+              icon="file-lines"
+              aria-hidden="true"
+              style={{ fontSize: "2rem", color: theme.palette.primary.main }}
+            />
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", fontStyle: "italic" }}
+            >
+              No readme provided.
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </>
+  );
+};
+
 const TemplateDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -221,18 +805,6 @@ const TemplateDetail: React.FC = () => {
     user._id &&
     user._id === template.userId
   );
-  let likeTooltip: string;
-  if (user) {
-    likeTooltip = liked ? "Unlike" : "Like this template";
-  } else {
-    likeTooltip = "Login to like";
-  }
-  let likeAriaLabel: string;
-  if (user) {
-    likeAriaLabel = liked ? "Unlike this template" : "Like this template";
-  } else {
-    likeAriaLabel = "Login to like this template";
-  }
 
   if (loading) {
     return (
@@ -344,53 +916,7 @@ const TemplateDetail: React.FC = () => {
             </Box>
 
             {/* Meta row */}
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1.5,
-                flexWrap: "wrap",
-                alignItems: "center",
-              }}
-            >
-              {template.cloud &&
-                <CardLogo cloudType={template.cloud} mode={theme.palette.mode} className={styles.cloudLogo} />
-              }
-              {template.cloud && (
-                <Box component="span" sx={{ color: "text.disabled" }}>
-                  .
-                </Box>
-              )}
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "1rem",
-                }}
-              >
-                {template.nodeCount ?? 0} Resources
-              </Typography>
-              {template.authorName && (
-                <>
-                  <Box component="span" sx={{ color: "text.disabled" }}>
-                    .
-                  </Box>
-                  <Typography
-                    variant="caption"
-                    component="span"
-                    onClick={() =>
-                      navigate(`/templates?author=${template.userId}`)
-                    }
-                    sx={{
-                      color: "text.secondary",
-                      cursor: "pointer",
-                      "&:hover": { color: "text.primary" },
-                    }}
-                  >
-                    by <strong>{template.authorName}</strong>
-                  </Typography>
-                </>
-              )}
-            </Box>
+            <TemplateMetaRow template={template} />
 
             <Typography
               variant="body1"
@@ -411,210 +937,28 @@ const TemplateDetail: React.FC = () => {
             }}
           >
             {/* Stats row */}
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {[
-                {
-                  icon: "eye",
-                  val: template.analytics?.viewCount ?? 0,
-                  label: "views",
-                },
-                { icon: "heart", val: likeCount, label: "likes" },
-                {
-                  icon: "copy",
-                  val: template.analytics?.usageCount ?? 0,
-                  label: "uses",
-                },
-              ].map(({ icon, val, label }) => (
-                <Box
-                  key={label}
-                  aria-label={`${val} ${label}`}
-                  sx={{
-                    textAlign: "center",
-                    px: 2,
-                    py: 1.25,
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    minWidth: 68,
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: 800,
-                      lineHeight: 1,
-                      fontSize: "1.5rem",
-                      letterSpacing: "-0.02em",
-                    }}
-                  >
-                    {val}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 0.5,
-                      mt: 0.5,
-                    }}
-                  >
-                    <FontAwesomeIcon
-                      icon={icon as any}
-                      aria-hidden="true"
-                      style={{ fontSize: "0.6rem" }}
-                    />
-                    {label}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
+            <TemplateStatsRow template={template} likeCount={likeCount} />
 
             {/* Like + Use Template */}
             <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-              <Tooltip title={likeTooltip}>
-                <span>
-                  <IconButton
-                    onClick={handleLike}
-                    disabled={likeLoading}
-                    aria-label={likeAriaLabel}
-                    aria-pressed={liked}
-                    sx={{
-                      borderRadius: 2,
-                      border: "1px solid",
-                      borderColor: liked
-                        ? theme.palette.mode === "dark"
-                          ? "rgba(255,100,120,0.5)"
-                          : "rgba(220,50,80,0.4)"
-                        : "divider",
-                      color: liked ? "error.main" : "text.secondary",
-                      backgroundColor: liked
-                        ? alpha(theme.palette.error.main, 0.06)
-                        : "transparent",
-                      gap: 0.75,
-                      px: 1.5,
-                      py: 0.85,
-                      transition: "all 0.2s",
-                      "&:hover": {
-                        color: "error.main",
-                        borderColor: "error.main",
-                        backgroundColor: alpha(theme.palette.error.main, 0.06),
-                      },
-                      "&:focus-visible": {
-                        outline: "2px solid",
-                        outlineColor: "error.main",
-                        outlineOffset: 2,
-                      },
-                    }}
-                  >
-                    <FontAwesomeIcon
-                      aria-hidden="true"
-                      icon={liked ? "heart" : (["far", "heart"] as any)}
-                    />
-                    <Typography
-                      variant="caption"
-                      sx={{ fontWeight: 600, fontSize: "0.8rem" }}
-                    >
-                      {liked ? "Liked" : "Like"}
-                    </Typography>
-                  </IconButton>
-                </span>
-              </Tooltip>
-
-              <Tooltip title="Creates your own editable copy" arrow>
-                <span>
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={handleUseTemplate}
-                    disabled={useLoading}
-                    aria-label={
-                      useLoading
-                        ? "Forking template, please wait"
-                        : `Use template: ${template.templateName}`
-                    }
-                    sx={{
-                      borderRadius: 2,
-                      fontWeight: 700,
-                      textTransform: "none",
-                      px: 3,
-                      py: 1.1,
-                      backgroundColor: theme.palette.primary.main,
-                      color: theme.palette.primary.contrastText,
-                      boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.35)}`,
-                      "&:hover": {
-                        backgroundColor: theme.palette.primary.dark,
-                        boxShadow: `0 6px 22px ${alpha(theme.palette.primary.main, 0.5)}`,
-                        transform: "translateY(-1px)",
-                      },
-                      "&:focus-visible": {
-                        outline: "2px solid",
-                        outlineColor: theme.palette.primary.main,
-                        outlineOffset: 3,
-                      },
-                    }}
-                  >
-                    {useLoading ? (
-                      <FontAwesomeIcon
-                        aria-hidden="true"
-                        icon="spinner"
-                        spin
-                        style={{ marginRight: 8 }}
-                      />
-                    ) : (
-                      <FontAwesomeIcon
-                        aria-hidden="true"
-                        icon="copy"
-                        style={{ marginRight: 8 }}
-                      />
-                    )}
-                    {useLoading ? "Forking..." : "Use Template"}
-                  </Button>
-                </span>
-              </Tooltip>
+              <TemplateLikeButton
+                liked={liked}
+                likeLoading={likeLoading}
+                onLike={handleLike}
+              />
+              <TemplateUseButton
+                useLoading={useLoading}
+                templateName={template.templateName}
+                onUseTemplate={handleUseTemplate}
+              />
             </Box>
 
             {/* Owner actions */}
             {isOwner && (
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={
-                    <FontAwesomeIcon
-                      icon="pen"
-                      style={{ fontSize: "0.75rem" }}
-                    />
-                  }
-                  onClick={() => setEditDialogOpen(true)}
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: "none",
-                    fontWeight: 600,
-                  }}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  startIcon={
-                    <FontAwesomeIcon
-                      icon="eye-slash"
-                      style={{ fontSize: "0.75rem" }}
-                    />
-                  }
-                  onClick={() => setUnpublishDialogOpen(true)}
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: "none",
-                    fontWeight: 600,
-                  }}
-                >
-                  Unpublish
-                </Button>
-              </Box>
+              <TemplateOwnerActions
+                onEditClick={() => setEditDialogOpen(true)}
+                onUnpublishClick={() => setUnpublishDialogOpen(true)}
+              />
             )}
           </Box>
         </Box>
@@ -622,245 +966,15 @@ const TemplateDetail: React.FC = () => {
         <Divider sx={{ mb: 3 }} />
 
         {/* Canvas Preview — static image + open button */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-          <Box
-            sx={{
-              width: 5,
-              height: 28,
-              borderRadius: 2,
-              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.25)})`,
-              flexShrink: 0,
-            }}
-          />
-          <Typography
-            variant="subtitle2"
-            sx={{
-              fontWeight: 800,
-              color: theme.palette.primary.main,
-              textTransform: "uppercase",
-              fontSize: "0.78rem",
-              letterSpacing: "0.14em",
-            }}
-          >
-            Canvas Preview
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            mb: 4,
-            position: "relative",
-            minHeight: 480,
-            maxHeight: 620,
-            borderRadius: 4,
-            overflow: "hidden",
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`
-                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, ${alpha(theme.palette.secondary.main, 0.06)} 100%)`,
-            border: "1.5px solid",
-            borderColor: alpha(theme.palette.primary.main, 0.25),
-            boxShadow:
-              theme.palette.mode === "dark"
-                ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}, 0 24px 60px rgba(0,0,0,0.35)`
-                : `0 0 0 1px ${alpha(theme.palette.primary.main, 0.06)}, 0 20px 50px rgba(0,0,0,0.1)`,
-
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {/* Preview image */}
-          {template.previewImageUrl ? (
-            <Box
-              component="img"
-              src={template.previewImageUrl}
-              alt="Canvas preview"
-              sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                display: "block",
-              }}
-            />
-          ) : (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 1.5,
-                opacity: 0.35,
-              }}
-            >
-              <FontAwesomeIcon
-                icon="sitemap"
-                aria-hidden="true"
-                style={{
-                  fontSize: "3.5rem",
-                  color: theme.palette.primary.main,
-                }}
-              />
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", fontWeight: 500 }}
-              >
-                {template.nodeCount
-                  ? `${template.nodeCount} nodes`
-                  : "No preview available"}
-              </Typography>
-            </Box>
-          )}
-
-          {/* Gradient overlay */}
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background:
-                theme.palette.mode === "dark"
-                  ? "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.82) 100%)"
-                  : "linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.52) 100%)",
-              pointerEvents: "none",
-            }}
-          />
-
-          {/* Open button */}
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 24,
-              left: "50%",
-              transform: "translateX(-50%)",
-            }}
-          >
-            <Button
-              variant="contained"
-              size="medium"
-              onClick={handleViewInCanvas}
-              startIcon={
-                <FontAwesomeIcon
-                  icon="up-right-from-square"
-                  style={{ fontSize: "0.8rem" }}
-                />
-              }
-              sx={{
-                borderRadius: 2.5,
-                textTransform: "none",
-                fontWeight: 700,
-                px: 3.5,
-                py: 1.1,
-                fontSize: "0.9rem",
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha(theme.palette.primary.main, 0.18)
-                    : alpha(theme.palette.primary.main, 0.75),
-                backdropFilter: "blur(12px)",
-                color: theme.palette.common.white,
-                border: "1px solid",
-                borderColor:
-                  theme.palette.mode === "dark"
-                    ? alpha(theme.palette.primary.main, 0.4)
-                    : alpha(theme.palette.common.white, 0.25),
-                boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  backgroundColor:
-                    theme.palette.mode === "dark"
-                      ? alpha(theme.palette.primary.main, 0.32)
-                      : alpha(theme.palette.primary.main, 0.92),
-                  boxShadow: "0 6px 28px rgba(0,0,0,0.4)",
-                  transform: "translateY(-1px)",
-                },
-              }}
-            >
-              {user ? "Preview (Read Only)" : "Login to Preview"}
-            </Button>
-          </Box>
-        </Box>
+        <TemplateCanvasPreview
+          template={template}
+          onOpenPreview={handleViewInCanvas}
+        />
 
         <Divider sx={{ mb: 3 }} />
 
         {/* README — full width */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-          <Box
-            sx={{
-              width: 5,
-              height: 28,
-              borderRadius: 2,
-              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.25)})`,
-              flexShrink: 0,
-            }}
-          />
-          <Typography
-            variant="subtitle2"
-            sx={{
-              fontWeight: 800,
-              color: theme.palette.primary.main,
-              textTransform: "uppercase",
-              fontSize: "0.78rem",
-              letterSpacing: "0.14em",
-            }}
-          >
-            README
-          </Typography>
-        </Box>
-        <Box
-          className={styles.readmeContent}
-          sx={{
-            background:
-              theme.palette.mode === "dark"
-                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, rgba(0,0,0,0) 60%)`
-                  : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.025)} 0%, ${alpha(theme.palette.common.white, 0)} 60%)`,
-            border: "1.5px solid",
-            borderColor: alpha(
-              theme.palette.primary.main,
-              theme.palette.mode === "dark" ? 0.15 : 0.1,
-            ),
-            borderRadius: 4,
-            p: { xs: 3, sm: 4 },
-            minHeight: 220,
-            mb: 4,
-            boxShadow: `inset 0 1px 0 ${alpha(theme.palette.primary.main, 0.08)}`,
-          }}
-        >
-          {template.readme ? (
-            <Box
-              className="note-rich-editor note-readonly"
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(template.readme),
-              }}
-              sx={{
-                fontSize: "0.95rem",
-                lineHeight: 1.75,
-                wordBreak: "break-word",
-              }}
-            />
-          ) : (
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 160,
-                gap: 1,
-                opacity: 0.45,
-              }}
-            >
-              <FontAwesomeIcon
-                icon="file-lines"
-                aria-hidden="true"
-                style={{ fontSize: "2rem", color: theme.palette.primary.main }}
-              />
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", fontStyle: "italic" }}
-              >
-                No readme provided.
-              </Typography>
-            </Box>
-          )}
-        </Box>
+        <TemplateReadmeSection readme={template.readme} />
 
         {/* Edit dialog (owner only) */}
         {isOwner && editDialogOpen && (

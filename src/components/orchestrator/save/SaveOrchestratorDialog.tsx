@@ -194,6 +194,15 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
     handleClose,
   ]);
 
+  let saveButtonLabel: string;
+  if (isSaving) {
+    saveButtonLabel = "Saving...";
+  } else if (currentOrchestratorId) {
+    saveButtonLabel = "Update";
+  } else {
+    saveButtonLabel = "Save";
+  }
+
   return (
     <>
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -239,7 +248,7 @@ export const SaveOrchestratorDialog: React.FC<SaveOrchestratorDialogProps> = ({
             startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
             sx={{ marginRight: 2 }}
           >
-            {isSaving ? "Saving..." : currentOrchestratorId ? "Update" : "Save"}
+            {saveButtonLabel}
           </Button>
         </DialogActions>
       </Dialog>

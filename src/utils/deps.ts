@@ -36,41 +36,61 @@ export const getPath = (vals: Values, path: string): any => {
     .reduce((acc, key) => (acc == null ? acc : acc[key]), vals);
 };
 
+/** Coerces `lhs`/`rhs` to booleans when `rhs` is a boolean, otherwise leaves them as-is. */
+const coerceForComparison = (lhs: any, rhs: any): [any, any] =>
+  typeof rhs === "boolean" ? [toBool(lhs), Boolean(rhs)] : [lhs, rhs];
+
+/** True when `v` is present and, if a string, non-blank. */
+const hasMeaningfulValue = (v: unknown): boolean =>
+  v !== undefined && v !== null && !(typeof v === "string" && v.trim() === "");
+
 /**
  * Evaluate a safe JSON predicate expression against values.
  */
 export const evalJsonPredicate = (expr: DepExpr, vals: Values): boolean => {
   if ("eq" in expr) {
     const [path, rhs] = expr.eq;
-    const lhs = getPath(vals, path);
-    const L = typeof rhs === "boolean" ? toBool(lhs) : lhs;
-    const R = typeof rhs === "boolean" ? Boolean(rhs) : rhs;
+    const [L, R] = coerceForComparison(getPath(vals, path), rhs);
     return L === R;
   }
   if ("ne" in expr) {
     const [path, rhs] = expr.ne;
-    const lhs = getPath(vals, path);
-    const L = typeof rhs === "boolean" ? toBool(lhs) : lhs;
-    const R = typeof rhs === "boolean" ? Boolean(rhs) : rhs;
+    const [L, R] = coerceForComparison(getPath(vals, path), rhs);
     return L !== R;
   }
   if ("in" in expr) {
     const [path, arr] = expr.in;
-    const lhs = getPath(vals, path);
-    return (arr ?? []).includes(lhs);
+    return (arr ?? []).includes(getPath(vals, path));
   }
   if ("exists" in expr) {
-    const v = getPath(vals, expr.exists);
-    return (
-      v !== undefined &&
-      v !== null &&
-      !(typeof v === "string" && v.trim() === "")
-    );
+    return hasMeaningfulValue(getPath(vals, expr.exists));
   }
   if ("all" in expr) return expr.all.every((e) => evalJsonPredicate(e, vals));
   if ("any" in expr) return expr.any.some((e) => evalJsonPredicate(e, vals));
   if ("not" in expr) return !evalJsonPredicate(expr.not, vals);
   return true;
+};
+
+// Split from the (formerly single, overly complex) legacy-expression regex:
+// the outer pattern just locates `values.<path> <op> <literal text>`, and
+// `parseLegacyLiteral` below decides whether that literal text is one of the
+// supported shapes (bool/null/number/quoted string).
+const LEGACY_EXPR_PATTERN =
+  /^\s*values\.([a-zA-Z0-9_.]+)\s*(===|==|!==|!=)\s*(.+)$/;
+const NUMBER_LITERAL_PATTERN = /^\d+(\.\d+)?$/;
+
+/** Parses a legacy literal token (`true`, `false`, `null`, a number, or a quoted string). */
+const parseLegacyLiteral = (raw: string): unknown => {
+  const lit = raw.trim();
+  if (lit === "true" || lit === "false") return lit === "true";
+  if (lit === "null") return null;
+  if (NUMBER_LITERAL_PATTERN.test(lit)) return Number(lit);
+
+  const isQuoted =
+    lit.length >= 2 &&
+    ((lit.startsWith("'") && lit.endsWith("'")) ||
+      (lit.startsWith('"') && lit.endsWith('"')));
+  return isQuoted ? lit.slice(1, -1) : undefined;
 };
 
 /**
@@ -79,21 +99,14 @@ export const evalJsonPredicate = (expr: DepExpr, vals: Values): boolean => {
  * Literals: true|false|null|number|'string'|"string"
  */
 export const evalLegacyString = (dep: string, vals: Values): boolean => {
-  const m =
-    dep.match(
-      /^\s*values\.([a-zA-Z0-9_.]+)\s*(===|==|!==|!=)\s*(true|false|null|\d+(\.\d+)?|'[^']*'|"[^"]*")\s*$/,
-    ) || [];
-  const path = m[1];
-  const op = m[2] as "===" | "==" | "!==" | "!=";
-  const lit = m[3];
+  const match = LEGACY_EXPR_PATTERN.exec(dep);
+  if (!match) return false;
 
-  if (!path || !op || lit == null) return false;
+  const [, path, opRaw, rawLiteral] = match;
+  const op = opRaw as "===" | "==" | "!==" | "!=";
+  const rhs = parseLegacyLiteral(rawLiteral);
 
-  let rhs: any;
-  if (lit === "true" || lit === "false") rhs = lit === "true";
-  else if (lit === "null") rhs = null;
-  else if (/^\d+(\.\d+)?$/.test(lit)) rhs = Number(lit);
-  else rhs = String(lit.slice(1, -1)); // strip quotes
+  if (!path || !op || rhs === undefined) return false;
 
   const lhsRaw = getPath(vals, path);
   const lhs = typeof rhs === "boolean" ? toBool(lhsRaw) : lhsRaw;

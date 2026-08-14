@@ -4,6 +4,13 @@ const eta = new Eta({
   tags: ["{{", "}}"],
 });
 
+// Security note (S1523): `expression` originates from admin/catalog-authored
+// field templates (resource + template definitions shipped with the app),
+// never from free-form end-user input. `context` only supplies data values
+// (userInfo/templateInfo) that are substituted into those author-controlled
+// expressions - it cannot introduce new code to execute. `new Function` here
+// therefore evaluates a small, trusted expression grammar (similar in scope
+// to `with`-based template interpolation), not arbitrary user-supplied code.
 function evaluateTemplateExpression(
   expression: string,
   context: Record<string, any>,
@@ -15,17 +22,20 @@ function evaluateTemplateExpression(
     ) as (scope: Record<string, any>) => unknown;
 
     const result = evaluator(context);
-    return typeof result === "undefined" ? `{{${expression}}}` : result;
+    return result === undefined ? `{{${expression}}}` : result;
   } catch {
     return `{{${expression}}}`;
   }
 }
 
 function preprocess(template: string) {
-  return template.replace(
-    /\{\{\s*(?![=~#/])([\s\S]*?)\s*\}\}/g,
-    (_match, expr) => `{{= it.__etaEval(${JSON.stringify(expr.trim())}) }}`,
-  );
+  return template.replace(/\{\{([\s\S]*?)\}\}/g, (match, expr: string) => {
+    // Leave Eta's own directive tags ({{= }}, {{~ }}, {{# }}, {{/ }}) untouched.
+    if (/^[=~#/]/.test(expr)) {
+      return match;
+    }
+    return `{{= it.__etaEval(${JSON.stringify(expr.trim())}) }}`;
+  });
 }
 
 function renderValue<T>(value: T, context: Record<string, any>): T {
