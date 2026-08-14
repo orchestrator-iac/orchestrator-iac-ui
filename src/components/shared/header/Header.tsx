@@ -84,6 +84,11 @@ const Header: React.FC = () => {
     openAnnouncements();
   };
 
+  const announcementsSecondaryText =
+    unreadAnnouncementCount > 0
+      ? `${unreadAnnouncementCount} update${unreadAnnouncementCount === 1 ? "" : "s"} available`
+      : "No unread announcements";
+
   const menuSurface = theme.palette.background.paper;
   const brandLogoSrc =
     theme.palette.mode === "dark"
@@ -256,11 +261,7 @@ const Header: React.FC = () => {
               </ListItemIcon>
               <ListItemText
                 primary="What's new"
-                secondary={
-                  unreadAnnouncementCount > 0
-                    ? `${unreadAnnouncementCount} update${unreadAnnouncementCount === 1 ? "" : "s"} available`
-                    : "No unread announcements"
-                }
+                secondary={announcementsSecondaryText}
                 slotProps={{
                   primary: { sx: { fontWeight: 600 } },
                   secondary: { sx: { fontSize: "0.78rem" } },

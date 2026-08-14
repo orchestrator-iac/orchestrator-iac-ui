@@ -31,6 +31,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 import ResourceIconView from "../shared/ResourceIconView";
 import { hasRenderableResourceIcon } from "@/types/resourceIcon";
+import type { OrchestratorListItem } from "@/types/orchestrator";
 
 import styles from "./Home.module.css";
 import awsLogo from "./../../assets/aws_logo.svg";
@@ -70,6 +71,1137 @@ const CardLogo: React.FC<CardLogoProps> = ({ cloudType, className, mode }) => {
   const logoSrc =
     logoMap[cloudType]?.[mode] || logoMap[cloudType]?.default || awsLogo;
   return <img src={logoSrc} alt={`${cloudType} logo`} className={className} />;
+};
+
+// ── Data shapes for the "Top Templates" / "Top Resources" insight carousels.
+// The backing state on Home stays untyped (existing `any[]`) so these
+// interfaces only describe the fields the presentational carousels read. ──
+
+interface TopTemplateItem {
+  id: string;
+  templateName: string;
+  previewImageUrl?: string;
+  analytics?: {
+    usageCount?: number;
+    viewCount?: number;
+  };
+}
+
+interface TopResourceItem {
+  resourceId: string;
+  _id?: string;
+  resourceName?: string;
+  resourceIcon?: unknown;
+  count?: number;
+}
+
+// ── Presentational subcomponents extracted from Home's JSX to keep the
+// main component's cognitive complexity down. Each owns its own hooks
+// (useTheme/useNavigate) rather than receiving every value via props,
+// matching the pattern used in ResourcesGallery.tsx / TemplateDetail.tsx. ──
+
+interface HomeSearchBarProps {
+  showContent: boolean;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  orchestratorsCount: number;
+  canViewOrchestrators: boolean;
+  canViewTemplates: boolean;
+  canViewResources: boolean;
+}
+
+const HomeSearchBar: React.FC<HomeSearchBarProps> = ({
+  showContent,
+  searchQuery,
+  onSearchChange,
+  orchestratorsCount,
+  canViewOrchestrators,
+  canViewTemplates,
+  canViewResources,
+}) => {
+  const theme = useTheme();
+  const navigate = useNavigate();
+
+  return (
+    <Fade in={showContent} timeout={600}>
+      <Box
+        component="search"
+        aria-label="Search orchestrators"
+        sx={{
+          mb: 4,
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          gap: 2,
+          alignItems: { xs: "stretch", md: "center" },
+          justifyContent: "space-between",
+        }}
+      >
+        <TextField
+          placeholder="Search orchestrators…"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          variant="outlined"
+          size="small"
+          data-tour="home-search"
+          sx={{
+            flex: { xs: "1", md: "0 1 420px" },
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 3,
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? alpha(theme.palette.common.white, 0.03)
+                  : alpha(theme.palette.common.black, 0.02),
+              transition: "all 0.2s ease",
+              "&:hover": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.common.white, 0.05)
+                    : alpha(theme.palette.common.black, 0.04),
+              },
+              "&.Mui-focused": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? alpha(theme.palette.common.white, 0.07)
+                    : theme.palette.common.white,
+                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+              },
+            },
+          }}
+          slotProps={{
+            htmlInput: {
+              "aria-label": "Search orchestrators",
+            },
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FontAwesomeIcon
+                    icon="search"
+                    aria-hidden="true"
+                    style={{ fontSize: "0.9rem", opacity: 0.45 }}
+                  />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+          {canViewOrchestrators && (
+            <Chip
+              icon={
+                <FontAwesomeIcon
+                  icon="sitemap"
+                  aria-hidden="true"
+                  style={{ fontSize: "0.85rem", paddingRight: 1 }}
+                />
+              }
+              label={`${orchestratorsCount} Orchestrators`}
+              size="small"
+              sx={{
+                fontWeight: 600,
+                px: 0.5,
+                backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                color: theme.palette.secondary.main,
+                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+              }}
+            />
+          )}
+          {canViewTemplates && (
+            <Chip
+              icon={
+                <FontAwesomeIcon
+                  icon="layer-group"
+                  aria-hidden="true"
+                  style={{ fontSize: "0.85rem", paddingRight: 1 }}
+                />
+              }
+              label="Templates"
+              size="small"
+              onClick={() => navigate("/templates")}
+              data-tour="home-templates-chip"
+              sx={{
+                fontWeight: 600,
+                px: 0.5,
+                backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                color: theme.palette.secondary.main,
+                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
+                cursor: "pointer",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+              }}
+            />
+          )}
+          {canViewResources && (
+            <Chip
+              icon={
+                <FontAwesomeIcon
+                  icon="cube"
+                  aria-hidden="true"
+                  style={{ fontSize: "0.85rem", paddingRight: 1 }}
+                />
+              }
+              label="Resources"
+              size="small"
+              onClick={() => navigate("/resources")}
+              data-tour="home-resources-chip"
+              sx={{
+                fontWeight: 600,
+                px: 0.5,
+                backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
+                color: theme.palette.secondary.main,
+                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
+                cursor: "pointer",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+              }}
+            />
+          )}
+        </Box>
+      </Box>
+    </Fade>
+  );
+};
+
+interface HomeTopTemplatesCarouselProps {
+  templates: TopTemplateItem[];
+  loading: boolean;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  canScrollLeft: boolean;
+  canScrollRight: boolean;
+  onScrollLeft: () => void;
+  onScrollRight: () => void;
+  onSelect: (id: string) => void;
+}
+
+const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
+  templates,
+  loading,
+  scrollRef,
+  canScrollLeft,
+  canScrollRight,
+  onScrollLeft,
+  onScrollRight,
+  onSelect,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      component="section"
+      data-tour="home-top-templates"
+      aria-labelledby="home-top-templates-heading"
+    >
+      <Typography
+        id="home-top-templates-heading"
+        variant="h5"
+        sx={{
+          fontWeight: 700,
+          mb: 1,
+          textTransform: "uppercase",
+          color: theme.palette.secondary.main,
+          letterSpacing: "0.1em",
+        }}
+      >
+        Top Templates
+      </Typography>
+      <Box sx={{ position: "relative" }}>
+        {!loading && templates.length > 4 && (
+          <IconButton
+            aria-label="Previous templates"
+            size="small"
+            onClick={onScrollLeft}
+            disabled={!canScrollLeft}
+            sx={{
+              position: "absolute",
+              left: 6,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 10,
+              boxShadow: 1,
+              p: 0.6,
+              height: 50,
+              width: 50,
+              opacity: 0.9,
+              backgroundColor: theme.palette.background.paper,
+              "&:hover": {
+                opacity: 1,
+                backgroundColor: theme.palette.background.paper,
+              },
+            }}
+          >
+            <FontAwesomeIcon
+              icon="chevron-left"
+              style={{ fontSize: "1.5rem" }}
+            />
+          </IconButton>
+        )}
+        {!loading && templates.length > 4 && (
+          <IconButton
+            aria-label="Next templates"
+            size="small"
+            onClick={onScrollRight}
+            disabled={!canScrollRight}
+            sx={{
+              position: "absolute",
+              right: 6,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 10,
+              boxShadow: 1,
+              p: 0.6,
+              height: 50,
+              width: 50,
+              opacity: 0.9,
+              backgroundColor: theme.palette.background.paper,
+              "&:hover": {
+                opacity: 1,
+                backgroundColor: theme.palette.background.paper,
+              },
+            }}
+          >
+            <FontAwesomeIcon
+              icon="chevron-right"
+              style={{ fontSize: "1.5rem" }}
+            />
+          </IconButton>
+        )}
+
+        <Box
+          ref={scrollRef}
+          sx={{
+            display: "flex",
+            gap: 1,
+            overflowX: "auto",
+            scrollBehavior: "smooth",
+            pb: 0.5,
+            "&::-webkit-scrollbar": { display: "none" },
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+        >
+          {loading
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <Box key={`tmpl-skel-${i}`} sx={{ width: 250, p: 1 }}>
+                  <Skeleton variant="rectangular" height={150} />
+                  <Skeleton variant="text" />
+                  <Skeleton variant="text" />
+                </Box>
+              ))
+            : templates.map((t) => (
+                <Box
+                  key={t.id}
+                  onClick={() => onSelect(t.id)}
+                  sx={{
+                    minWidth: 250,
+                    p: 1,
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    cursor: "pointer",
+                    transition:
+                      "box-shadow 0.2s ease, border-color 0.2s ease",
+                    "&:hover": {
+                      borderColor: "primary.main",
+                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                    },
+                  }}
+                >
+                  <img
+                    src={t.previewImageUrl}
+                    alt={t.templateName}
+                    style={{
+                      width: "100%",
+                      height: 150,
+                      objectFit: "cover",
+                      borderRadius: 6,
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
+                    {t.templateName}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    {t.analytics?.usageCount || t.analytics?.viewCount || 0}{" "}
+                    uses
+                  </Typography>
+                </Box>
+              ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+interface HomeTopResourcesCarouselProps {
+  resources: TopResourceItem[];
+  loading: boolean;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  canScrollLeft: boolean;
+  canScrollRight: boolean;
+  onScrollLeft: () => void;
+  onScrollRight: () => void;
+  onSelect: (id: string) => void;
+}
+
+const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
+  resources,
+  loading,
+  scrollRef,
+  canScrollLeft,
+  canScrollRight,
+  onScrollLeft,
+  onScrollRight,
+  onSelect,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <Box
+      component="section"
+      data-tour="home-top-resources"
+      aria-labelledby="home-top-resources-heading"
+    >
+      <Typography
+        id="home-top-resources-heading"
+        variant="h5"
+        sx={{
+          fontWeight: 700,
+          mb: 1,
+          textTransform: "uppercase",
+          color: theme.palette.secondary.main,
+          letterSpacing: "0.1em",
+        }}
+      >
+        Top Resources
+      </Typography>
+      <Box sx={{ position: "relative" }}>
+        {!loading && resources.length > 0 && (
+          <IconButton
+            aria-label="Previous resources"
+            size="small"
+            onClick={onScrollLeft}
+            disabled={!canScrollLeft}
+            sx={{
+              position: "absolute",
+              left: 6,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 10,
+              boxShadow: 1,
+              p: 0.6,
+              height: 50,
+              width: 50,
+              opacity: 0.9,
+              backgroundColor: theme.palette.background.paper,
+              "&:hover": {
+                opacity: 1,
+                backgroundColor: theme.palette.background.paper,
+              },
+            }}
+          >
+            <FontAwesomeIcon
+              icon="chevron-left"
+              style={{ fontSize: "1.5rem" }}
+            />
+          </IconButton>
+        )}
+        {!loading && resources.length > 6 && (
+          <IconButton
+            aria-label="Next resources"
+            size="small"
+            onClick={onScrollRight}
+            disabled={!canScrollRight}
+            sx={{
+              position: "absolute",
+              right: 6,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 10,
+              boxShadow: 1,
+              p: 0.6,
+              height: 50,
+              width: 50,
+              opacity: 0.9,
+              backgroundColor: theme.palette.background.paper,
+              "&:hover": {
+                opacity: 1,
+                backgroundColor: theme.palette.background.paper,
+              },
+            }}
+          >
+            <FontAwesomeIcon
+              icon="chevron-right"
+              style={{ fontSize: "1.5rem" }}
+            />
+          </IconButton>
+        )}
+
+        <Box
+          ref={scrollRef}
+          sx={{
+            display: "flex",
+            gap: 1,
+            overflowX: "auto",
+            scrollBehavior: "smooth",
+            pb: 0.5,
+            "&::-webkit-scrollbar": { display: "none" },
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+        >
+          {loading
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <Box key={`res-skel-${i}`} sx={{ width: 250, p: 1 }}>
+                  <Skeleton variant="rectangular" height={150} />
+                  <Skeleton variant="text" />
+                  <Skeleton variant="text" />
+                </Box>
+              ))
+            : resources.map((r) => (
+                <Box
+                  key={r.resourceId}
+                  onClick={() => onSelect(r._id || r.resourceId)}
+                  sx={{
+                    minWidth: 200,
+                    p: 1,
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    cursor: "pointer",
+                    transition:
+                      "box-shadow 0.2s ease, border-color 0.2s ease",
+                    "&:hover": {
+                      borderColor: "primary.main",
+                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                    },
+                  }}
+                >
+                  {hasRenderableResourceIcon(r.resourceIcon) ? (
+                    <ResourceIconView
+                      icon={r.resourceIcon}
+                      alt={r.resourceName || r.resourceId}
+                      sx={{
+                        width: "100%",
+                        height: 150,
+                        display: "block",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: "100%",
+                        height: 150,
+                        backgroundColor: "divider",
+                      }}
+                    />
+                  )}
+                  <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
+                    {r.resourceName || r.resourceId}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    {r.count} uses
+                  </Typography>
+                </Box>
+              ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+interface HomeInsightsSectionProps {
+  showContent: boolean;
+  canViewOrchestrators: boolean;
+  canViewResources: boolean;
+  loadingInsights: boolean;
+  topTemplates: TopTemplateItem[];
+  topResources: TopResourceItem[];
+  templatesScrollRef: React.RefObject<HTMLDivElement | null>;
+  resourcesScrollRef: React.RefObject<HTMLDivElement | null>;
+  tmplCanLeft: boolean;
+  tmplCanRight: boolean;
+  resCanLeft: boolean;
+  resCanRight: boolean;
+  onScrollTemplates: (dir: number) => void;
+  onScrollResources: (dir: number) => void;
+  onSelectTemplate: (id: string) => void;
+  onSelectResource: (id: string) => void;
+}
+
+const HomeInsightsSection: React.FC<HomeInsightsSectionProps> = ({
+  showContent,
+  canViewOrchestrators,
+  canViewResources,
+  loadingInsights,
+  topTemplates,
+  topResources,
+  templatesScrollRef,
+  resourcesScrollRef,
+  tmplCanLeft,
+  tmplCanRight,
+  resCanLeft,
+  resCanRight,
+  onScrollTemplates,
+  onScrollResources,
+  onSelectTemplate,
+  onSelectResource,
+}) => {
+  const showSection =
+    (canViewOrchestrators || canViewResources) &&
+    (loadingInsights || topTemplates.length > 0 || topResources.length > 0);
+
+  if (!showSection) return null;
+
+  return (
+    <Fade in={showContent} timeout={700}>
+      <Box component="section" data-tour="home-top-sections" sx={{ mb: 3 }}>
+        <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
+          {(loadingInsights || topTemplates.length > 0) && (
+            <Grid>
+              <HomeTopTemplatesCarousel
+                templates={topTemplates}
+                loading={loadingInsights}
+                scrollRef={templatesScrollRef}
+                canScrollLeft={tmplCanLeft}
+                canScrollRight={tmplCanRight}
+                onScrollLeft={() => onScrollTemplates(-1)}
+                onScrollRight={() => onScrollTemplates(1)}
+                onSelect={onSelectTemplate}
+              />
+            </Grid>
+          )}
+          {(loadingInsights || topResources.length > 6) && (
+            <Grid>
+              <HomeTopResourcesCarousel
+                resources={topResources}
+                loading={loadingInsights}
+                scrollRef={resourcesScrollRef}
+                canScrollLeft={resCanLeft}
+                canScrollRight={resCanRight}
+                onScrollLeft={() => onScrollResources(-1)}
+                onScrollRight={() => onScrollResources(1)}
+                onSelect={onSelectResource}
+              />
+            </Grid>
+          )}
+        </Grid>
+      </Box>
+    </Fade>
+  );
+};
+
+interface OrchestratorCardProps {
+  orchestrator: OrchestratorListItem;
+  index: number;
+  showContent: boolean;
+  onOpen: (id: string | undefined) => void;
+  onPublishClick: (orchestrator: OrchestratorListItem) => void;
+  onUnpublishClick: (orchestrator: OrchestratorListItem) => void;
+}
+
+const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
+  orchestrator,
+  index,
+  showContent,
+  onOpen,
+  onPublishClick,
+  onUnpublishClick,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <Box sx={{ display: "flex" }}>
+      <Fade in={showContent} timeout={1000 + index * 100}>
+        <Box className={styles.card} onClick={() => onOpen(orchestrator._id)}>
+          <CardLogo
+            cloudType={orchestrator.templateInfo?.cloud || "aws"}
+            className={styles.cloudTypeLogo}
+            mode={theme.palette.mode}
+          />
+          {orchestrator.previewImageUrl ? (
+            <img
+              src={orchestrator.previewImageUrl}
+              alt={orchestrator.templateInfo?.templateName || "Orchestrator"}
+              className={styles.orchestratorCardImage}
+            />
+          ) : (
+            <Box
+              className={styles.orchestratorCardImage}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "2.5rem",
+                color: alpha(theme.palette.primary.main, 0.5),
+                backgroundColor: alpha(theme.palette.primary.main, 0.04),
+              }}
+            >
+              <FontAwesomeIcon icon="sitemap" />
+            </Box>
+          )}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 1.5,
+              mt: 1.5,
+              mb: 0.75,
+            }}
+          >
+            <Typography
+              variant="h6"
+              className={styles.cardTitle}
+              sx={{
+                fontWeight: 600,
+                fontSize: "1.1rem",
+                flex: 1,
+                minWidth: 0,
+                mb: 0,
+              }}
+            >
+              <Link
+                to={`/orchestrator/${orchestrator._id}`}
+                style={{
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
+                aria-label={`View orchestrator ${orchestrator.templateInfo?.templateName || "Orchestrator"}`}
+              >
+                {orchestrator.templateInfo?.templateName ||
+                  "Unnamed Orchestrator"}
+              </Link>
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 0.5,
+                alignItems: "center",
+                flexShrink: 0,
+                mt: -0.25,
+              }}
+            >
+              <Tooltip
+                title={
+                  orchestrator.templateId
+                    ? "Manage Template"
+                    : "Publish as Template"
+                }
+              >
+                <span>
+                  <IconButton
+                    size="small"
+                    aria-label={
+                      orchestrator.templateId
+                        ? `Manage template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`
+                        : `Publish ${orchestrator.templateInfo?.templateName || "orchestrator"} as template`
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPublishClick(orchestrator);
+                    }}
+                    sx={{
+                      color: orchestrator.templateId
+                        ? theme.palette.primary.main
+                        : "text.secondary",
+                      fontSize: "0.8rem",
+                      p: 0.5,
+                      borderRadius: 1.5,
+                      opacity: orchestrator.templateId ? 1 : 0.55,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        opacity: 1,
+                        backgroundColor: alpha(
+                          theme.palette.primary.main,
+                          0.2,
+                        ),
+                      },
+                      "&:focus-visible": {
+                        outline: `2px solid ${theme.palette.primary.main}`,
+                        outlineOffset: 2,
+                      },
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      aria-hidden="true"
+                      icon={orchestrator.templateId ? "pen" : "layer-group"}
+                    />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              {orchestrator.templateId && (
+                <Tooltip title="Unpublish Template">
+                  <span>
+                    <IconButton
+                      size="small"
+                      aria-label={`Unpublish template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUnpublishClick(orchestrator);
+                      }}
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.8rem",
+                        p: 0.5,
+                        borderRadius: 1.5,
+                        opacity: 0.5,
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          opacity: 1,
+                          color: "error.main",
+                          backgroundColor: alpha(
+                            theme.palette.error.main,
+                            0.08,
+                          ),
+                        },
+                        "&:focus-visible": {
+                          outline: "2px solid",
+                          outlineColor: "error.main",
+                          outlineOffset: 2,
+                        },
+                      }}
+                    >
+                      <FontAwesomeIcon aria-hidden="true" icon="eye-slash" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
+            </Box>
+          </Box>
+          <Typography
+            variant="body2"
+            className={styles.cardDescription}
+            sx={{ mb: 1.5, lineHeight: 1.5 }}
+          >
+            {orchestrator.templateInfo?.description || "No description"}
+          </Typography>
+          <Box
+            component="code"
+            sx={{
+              fontSize: "0.8rem",
+              color: "text.secondary",
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255, 255, 255, 0.05)"
+                  : "rgba(0, 0, 0, 0.04)",
+              px: 1.5,
+              py: 0.75,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1.5,
+            }}
+          >
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+              }}
+            >
+              <FontAwesomeIcon
+                icon="circle-nodes"
+                style={{ fontSize: "0.75rem" }}
+              />
+              {orchestrator.nodeCount} resources
+            </Box>
+            <Tooltip
+              title={
+                orchestrator.updatedAt
+                  ? new Date(orchestrator.updatedAt).toLocaleDateString(
+                      undefined,
+                      {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )
+                  : "No last modified date"
+              }
+              arrow
+            >
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {orchestrator.updatedAt
+                  ? new Date(orchestrator.updatedAt).toLocaleDateString(
+                      undefined,
+                      {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "2-digit",
+                      },
+                    )
+                  : "N/A"}
+              </Box>
+            </Tooltip>
+          </Box>
+        </Box>
+      </Fade>
+    </Box>
+  );
+};
+
+interface OrchestratorsEmptyStateProps {
+  showContent: boolean;
+  searchQuery: string;
+}
+
+const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
+  showContent,
+  searchQuery,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <Box sx={{ gridColumn: "1 / -1" }}>
+      <Fade in={showContent} timeout={1200}>
+        <Box
+          role="status"
+          aria-live="polite"
+          sx={{
+            p: { xs: 5, sm: 7 },
+            textAlign: "center",
+            color: "text.secondary",
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? alpha(theme.palette.common.white, 0.02)
+                : alpha(theme.palette.common.black, 0.02),
+            borderRadius: 3,
+            border: "1px dashed",
+            borderColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.1)"
+                : "rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <FontAwesomeIcon
+            icon="sitemap"
+            size="3x"
+            aria-hidden="true"
+            style={{
+              opacity: 0.25,
+              marginBottom: "16px",
+              color: theme.palette.primary.main,
+            }}
+          />
+          <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+            {searchQuery ? "No orchestrators found" : "No orchestrators yet"}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
+          >
+            {searchQuery
+              ? "Try adjusting your search query"
+              : 'Click "New Orchestrator" to create your first infrastructure workflow!'}
+          </Typography>
+        </Box>
+      </Fade>
+    </Box>
+  );
+};
+
+interface HomeOrchestratorsSectionProps {
+  showContent: boolean;
+  isLoading: boolean;
+  canCreateOrchestrators: boolean;
+  filteredOrchestrators: OrchestratorListItem[];
+  searchQuery: string;
+  onCreateNew: () => void;
+  onOpenOrchestrator: (id: string | undefined) => void;
+  onPublishClick: (orchestrator: OrchestratorListItem) => void;
+  onUnpublishClick: (orchestrator: OrchestratorListItem) => void;
+}
+
+const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
+  showContent,
+  isLoading,
+  canCreateOrchestrators,
+  filteredOrchestrators,
+  searchQuery,
+  onCreateNew,
+  onOpenOrchestrator,
+  onPublishClick,
+  onUnpublishClick,
+}) => {
+  const theme = useTheme();
+  const hasOrchestrators = filteredOrchestrators.length > 0;
+
+  return (
+    <>
+      <Fade in={showContent} timeout={800}>
+        <Box
+          component="section"
+          aria-labelledby="orchestrators-heading"
+          sx={{ mb: 3 }}
+        >
+          <Typography
+            id="orchestrators-heading"
+            variant="h4"
+            className={styles.wrapperHeader}
+            sx={{
+              fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
+              fontWeight: 700,
+              mb: 0.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              textTransform: "uppercase",
+              color: theme.palette.secondary.main,
+              letterSpacing: "0.1em",
+            }}
+          >
+            <Box
+              aria-hidden="true"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 64,
+                height: 64,
+                borderRadius: 2,
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
+                color: theme.palette.primary.main,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+              }}
+            >
+              <FontAwesomeIcon icon="diagram-project" style={{ fontSize: "2rem" }} />
+            </Box>
+            <Box>
+              Orchestrators
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.925rem",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                Manage your infrastructure orchestration workflows
+              </Typography>
+            </Box>
+          </Typography>
+        </Box>
+      </Fade>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+          gap: { xs: 2, sm: 2.5, md: 3 },
+          alignItems: "stretch",
+        }}
+      >
+        {isLoading ? (
+          // Loading Skeletons
+          Array.from({ length: 4 }).map((_, index) => (
+            <Box key={`skeleton-orch-${index}`} sx={{ display: "flex" }}>
+              <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
+                <Skeleton
+                  variant="rectangular"
+                  height={160}
+                  sx={{ borderRadius: 2, mb: 2 }}
+                />
+                <Skeleton
+                  variant="text"
+                  width="70%"
+                  height={32}
+                  sx={{ mb: 1 }}
+                />
+                <Skeleton variant="text" width="100%" height={20} />
+                <Skeleton
+                  variant="text"
+                  width="90%"
+                  height={20}
+                  sx={{ mb: 1.5 }}
+                />
+                <Skeleton variant="rounded" width={150} height={28} />
+              </Box>
+            </Box>
+          ))
+        ) : (
+          <>
+            {canCreateOrchestrators && (
+              <Box sx={{ display: "flex" }}>
+                <Fade in={showContent} timeout={1000}>
+                  <Box
+                    className={styles.card}
+                    onClick={onCreateNew}
+                    data-tour="home-new-orchestrator"
+                    sx={{
+                      border: "2px dashed",
+                      borderColor: alpha(theme.palette.primary.main, 0.3),
+                      backgroundColor: "transparent !important",
+                      "&:hover": {
+                        borderColor: alpha(theme.palette.primary.main, 0.6),
+                        backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
+                      },
+                    }}
+                  >
+                    <div className={styles.cardBlank}>
+                      <FontAwesomeIcon
+                        icon="plus"
+                        size="3x"
+                        style={{
+                          color: theme.palette.primary.main,
+                          opacity: 0.7,
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          mt: 2,
+                          fontWeight: 500,
+                          fontSize: "0.95rem",
+                          textTransform: "uppercase",
+                          color: theme.palette.secondary.main,
+                          letterSpacing: "0.1em",
+                        }}
+                      >
+                        New Orchestrator
+                      </Typography>
+                    </div>
+                  </Box>
+                </Fade>
+              </Box>
+            )}
+
+            {hasOrchestrators ? (
+              filteredOrchestrators.map((orchestrator, index) => (
+                <OrchestratorCard
+                  key={orchestrator._id}
+                  orchestrator={orchestrator}
+                  index={index}
+                  showContent={showContent}
+                  onOpen={onOpenOrchestrator}
+                  onPublishClick={onPublishClick}
+                  onUnpublishClick={onUnpublishClick}
+                />
+              ))
+            ) : (
+              <OrchestratorsEmptyState
+                showContent={showContent}
+                searchQuery={searchQuery}
+              />
+            )}
+          </>
+        )}
+      </Box>
+    </>
+  );
 };
 
 const Home: React.FC = () => {
@@ -261,961 +1393,60 @@ const Home: React.FC = () => {
       }}
     >
       {/* Search and Stats Bar */}
-      <Fade in={showContent} timeout={600}>
-        <Box
-          component="search"
-          aria-label="Search orchestrators"
-          sx={{
-            mb: 4,
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            gap: 2,
-            alignItems: { xs: "stretch", md: "center" },
-            justifyContent: "space-between",
-          }}
-        >
-          <TextField
-            placeholder="Search orchestrators…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            variant="outlined"
-            size="small"
-            data-tour="home-search"
-            sx={{
-              flex: { xs: "1", md: "0 1 420px" },
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 3,
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha(theme.palette.common.white, 0.03)
-                    : alpha(theme.palette.common.black, 0.02),
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  backgroundColor:
-                    theme.palette.mode === "dark"
-                      ? alpha(theme.palette.common.white, 0.05)
-                      : alpha(theme.palette.common.black, 0.04),
-                },
-                "&.Mui-focused": {
-                  backgroundColor:
-                    theme.palette.mode === "dark"
-                      ? alpha(theme.palette.common.white, 0.07)
-                      : theme.palette.common.white,
-                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
-                },
-              },
-            }}
-            slotProps={{
-              htmlInput: {
-                "aria-label": "Search orchestrators",
-              },
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FontAwesomeIcon
-                      icon="search"
-                      aria-hidden="true"
-                      style={{ fontSize: "0.9rem", opacity: 0.45 }}
-                    />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            {canViewOrchestrators && (
-              <Chip
-                icon={
-                  <FontAwesomeIcon
-                    icon="sitemap"
-                    aria-hidden="true"
-                    style={{ fontSize: "0.85rem", paddingRight: 1 }}
-                  />
-                }
-                label={`${filteredOrchestrators.length} Orchestrators`}
-                size="small"
-                sx={{
-                  fontWeight: 600,
-                  px: 0.5,
-                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
-                  color: theme.palette.secondary.main,
-                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                }}
-              />
-            )}
-            {canViewTemplates && (
-              <Chip
-                icon={
-                  <FontAwesomeIcon
-                    icon="layer-group"
-                    aria-hidden="true"
-                    style={{ fontSize: "0.85rem", paddingRight: 1 }}
-                  />
-                }
-                label="Templates"
-                size="small"
-                onClick={() => navigate("/templates")}
-                data-tour="home-templates-chip"
-                sx={{
-                  fontWeight: 600,
-                  px: 0.5,
-                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
-                  color: theme.palette.secondary.main,
-                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
-                  cursor: "pointer",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                }}
-              />
-            )}
-            {canViewResources && (
-              <Chip
-                icon={
-                  <FontAwesomeIcon
-                    icon="cube"
-                    aria-hidden="true"
-                    style={{ fontSize: "0.85rem", paddingRight: 1 }}
-                  />
-                }
-                label="Resources"
-                size="small"
-                onClick={() => navigate("/resources")}
-                data-tour="home-resources-chip"
-                sx={{
-                  fontWeight: 600,
-                  px: 0.5,
-                  backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
-                  color: theme.palette.secondary.main,
-                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
-                  cursor: "pointer",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                }}
-              />
-            )}
-          </Box>
-        </Box>
-      </Fade>
+      <HomeSearchBar
+        showContent={showContent}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        orchestratorsCount={filteredOrchestrators.length}
+        canViewOrchestrators={canViewOrchestrators}
+        canViewTemplates={canViewTemplates}
+        canViewResources={canViewResources}
+      />
 
       {/* ===== INSIGHTS (Top Templates / Top Resources) ===== */}
-      {(canViewOrchestrators || canViewResources) &&
-        (loadingInsights ||
-          topTemplates.length > 0 ||
-          topResources.length > 0) && (
-          <Fade in={showContent} timeout={700}>
-            <Box
-              component="section"
-              data-tour="home-top-sections"
-              sx={{ mb: 3 }}
-            >
-              <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
-                {(loadingInsights || topTemplates.length > 0) && (
-                  <Grid>
-                    <Box
-                      component="section"
-                      data-tour="home-top-templates"
-                      aria-labelledby="home-top-templates-heading"
-                    >
-                      <Typography
-                        id="home-top-templates-heading"
-                        variant="h5"
-                        sx={{
-                          fontWeight: 700,
-                          mb: 1,
-                          textTransform: "uppercase",
-                          color: theme.palette.secondary.main,
-                          letterSpacing: "0.1em",
-                        }}
-                      >
-                        Top Templates
-                      </Typography>
-                      <Box sx={{ position: "relative" }}>
-                        {!loadingInsights && topTemplates.length > 4 && (
-                          <IconButton
-                            aria-label="Previous templates"
-                            size="small"
-                            onClick={() => scrollTemplatesByPage(-1)}
-                            disabled={!tmplCanLeft}
-                            sx={{
-                              position: "absolute",
-                              left: 6,
-                              top: "50%",
-                              transform: "translateY(-50%)",
-                              zIndex: 10,
-                              boxShadow: 1,
-                              p: 0.6,
-                              height: 50,
-                              width: 50,
-                              opacity: 0.9,
-                              backgroundColor: theme.palette.background.paper,
-                              "&:hover": {
-                                opacity: 1,
-                                backgroundColor: theme.palette.background.paper,
-                              },
-                            }}
-                          >
-                            <FontAwesomeIcon
-                              icon="chevron-left"
-                              style={{ fontSize: "1.5rem" }}
-                            />
-                          </IconButton>
-                        )}
-                        {!loadingInsights && topTemplates.length > 4 && (
-                          <IconButton
-                            aria-label="Next templates"
-                            size="small"
-                            onClick={() => scrollTemplatesByPage(1)}
-                            disabled={!tmplCanRight}
-                            sx={{
-                              position: "absolute",
-                              right: 6,
-                              top: "50%",
-                              transform: "translateY(-50%)",
-                              zIndex: 10,
-                              boxShadow: 1,
-                              p: 0.6,
-                              height: 50,
-                              width: 50,
-                              opacity: 0.9,
-                              backgroundColor: theme.palette.background.paper,
-                              "&:hover": {
-                                opacity: 1,
-                                backgroundColor: theme.palette.background.paper,
-                              },
-                            }}
-                          >
-                            <FontAwesomeIcon
-                              icon="chevron-right"
-                              style={{ fontSize: "1.5rem" }}
-                            />
-                          </IconButton>
-                        )}
-
-                        <Box
-                          ref={templatesRef}
-                          sx={{
-                            display: "flex",
-                            gap: 1,
-                            overflowX: "auto",
-                            scrollBehavior: "smooth",
-                            pb: 0.5,
-                            "&::-webkit-scrollbar": { display: "none" },
-                            msOverflowStyle: "none",
-                            scrollbarWidth: "none",
-                          }}
-                        >
-                          {loadingInsights
-                            ? Array.from({ length: 5 }).map((_, i) => (
-                                <Box
-                                  key={`tmpl-skel-${i}`}
-                                  sx={{ width: 250, p: 1 }}
-                                >
-                                  <Skeleton
-                                    variant="rectangular"
-                                    height={150}
-                                  />
-                                  <Skeleton variant="text" />
-                                  <Skeleton variant="text" />
-                                </Box>
-                              ))
-                            : topTemplates.map((t) => (
-                                <Box
-                                  key={t.id}
-                                  onClick={() => navigate(`/templates/${t.id}`)}
-                                  sx={{
-                                    minWidth: 250,
-                                    p: 1,
-                                    borderRadius: 2,
-                                    border: "1px solid",
-                                    borderColor: "divider",
-                                    cursor: "pointer",
-                                    transition:
-                                      "box-shadow 0.2s ease, border-color 0.2s ease",
-                                    "&:hover": {
-                                      borderColor: "primary.main",
-                                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-                                    },
-                                  }}
-                                >
-                                  <img
-                                    src={t.previewImageUrl}
-                                    alt={t.templateName}
-                                    style={{
-                                      width: "100%",
-                                      height: 150,
-                                      objectFit: "cover",
-                                      borderRadius: 6,
-                                    }}
-                                  />
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ mt: 1, fontWeight: 600 }}
-                                  >
-                                    {t.templateName}
-                                  </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    sx={{ color: "text.secondary" }}
-                                  >
-                                    {t.analytics?.usageCount ||
-                                      t.analytics?.viewCount ||
-                                      0}{" "}
-                                    uses
-                                  </Typography>
-                                </Box>
-                              ))}
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
-                {(loadingInsights || topResources.length > 6) && (
-                  <Grid>
-                    <Box
-                      component="section"
-                      data-tour="home-top-resources"
-                      aria-labelledby="home-top-resources-heading"
-                    >
-                      <Typography
-                        id="home-top-resources-heading"
-                        variant="h5"
-                        sx={{
-                          fontWeight: 700,
-                          mb: 1,
-                          textTransform: "uppercase",
-                          color: theme.palette.secondary.main,
-                          letterSpacing: "0.1em",
-                        }}
-                      >
-                        Top Resources
-                      </Typography>
-                      <Box sx={{ position: "relative" }}>
-                        {!loadingInsights && topResources.length > 0 && (
-                          <IconButton
-                            aria-label="Previous resources"
-                            size="small"
-                            onClick={() => scrollResourcesByPage(-1)}
-                            disabled={!resCanLeft}
-                            sx={{
-                              position: "absolute",
-                              left: 6,
-                              top: "50%",
-                              transform: "translateY(-50%)",
-                              zIndex: 10,
-                              boxShadow: 1,
-                              p: 0.6,
-                              height: 50,
-                              width: 50,
-                              opacity: 0.9,
-                              backgroundColor: theme.palette.background.paper,
-                              "&:hover": {
-                                opacity: 1,
-                                backgroundColor: theme.palette.background.paper,
-                              },
-                            }}
-                          >
-                            <FontAwesomeIcon
-                              icon="chevron-left"
-                              style={{ fontSize: "1.5rem" }}
-                            />
-                          </IconButton>
-                        )}
-                        {!loadingInsights && topResources.length > 6 && (
-                          <IconButton
-                            aria-label="Next resources"
-                            size="small"
-                            onClick={() => scrollResourcesByPage(1)}
-                            disabled={!resCanRight}
-                            sx={{
-                              position: "absolute",
-                              right: 6,
-                              top: "50%",
-                              transform: "translateY(-50%)",
-                              zIndex: 10,
-                              boxShadow: 1,
-                              p: 0.6,
-                              height: 50,
-                              width: 50,
-                              opacity: 0.9,
-                              backgroundColor: theme.palette.background.paper,
-                              "&:hover": {
-                                opacity: 1,
-                                backgroundColor: theme.palette.background.paper,
-                              },
-                            }}
-                          >
-                            <FontAwesomeIcon
-                              icon="chevron-right"
-                              style={{ fontSize: "1.5rem" }}
-                            />
-                          </IconButton>
-                        )}
-
-                        <Box
-                          ref={resourcesRef}
-                          sx={{
-                            display: "flex",
-                            gap: 1,
-                            overflowX: "auto",
-                            scrollBehavior: "smooth",
-                            pb: 0.5,
-                            "&::-webkit-scrollbar": { display: "none" },
-                            msOverflowStyle: "none",
-                            scrollbarWidth: "none",
-                          }}
-                        >
-                          {loadingInsights
-                            ? Array.from({ length: 5 }).map((_, i) => (
-                                <Box
-                                  key={`res-skel-${i}`}
-                                  sx={{ width: 250, p: 1 }}
-                                >
-                                  <Skeleton
-                                    variant="rectangular"
-                                    height={150}
-                                  />
-                                  <Skeleton variant="text" />
-                                  <Skeleton variant="text" />
-                                </Box>
-                              ))
-                            : topResources.map((r) => (
-                                <Box
-                                  key={r.resourceId}
-                                  onClick={() =>
-                                    navigate(
-                                      `/resources/${r._id || r.resourceId}`,
-                                    )
-                                  }
-                                  sx={{
-                                    minWidth: 200,
-                                    p: 1,
-                                    borderRadius: 2,
-                                    border: "1px solid",
-                                    borderColor: "divider",
-                                    cursor: "pointer",
-                                    transition:
-                                      "box-shadow 0.2s ease, border-color 0.2s ease",
-                                    "&:hover": {
-                                      borderColor: "primary.main",
-                                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-                                    },
-                                  }}
-                                >
-                                  {hasRenderableResourceIcon(r.resourceIcon) ? (
-                                    <ResourceIconView
-                                      icon={r.resourceIcon}
-                                      alt={r.resourceName || r.resourceId}
-                                      sx={{
-                                        width: "100%",
-                                        height: 150,
-                                        display: "block",
-                                        objectFit: "cover",
-                                      }}
-                                    />
-                                  ) : (
-                                    <Box
-                                      sx={{
-                                        width: "100%",
-                                        height: 150,
-                                        backgroundColor: "divider",
-                                      }}
-                                    />
-                                  )}
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ mt: 1, fontWeight: 600 }}
-                                  >
-                                    {r.resourceName || r.resourceId}
-                                  </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    sx={{ color: "text.secondary" }}
-                                  >
-                                    {r.count} uses
-                                  </Typography>
-                                </Box>
-                              ))}
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Grid>
-                )}
-              </Grid>
-            </Box>
-          </Fade>
-        )}
+      <HomeInsightsSection
+        showContent={showContent}
+        canViewOrchestrators={canViewOrchestrators}
+        canViewResources={canViewResources}
+        loadingInsights={loadingInsights}
+        topTemplates={topTemplates}
+        topResources={topResources}
+        templatesScrollRef={templatesRef}
+        resourcesScrollRef={resourcesRef}
+        tmplCanLeft={tmplCanLeft}
+        tmplCanRight={tmplCanRight}
+        resCanLeft={resCanLeft}
+        resCanRight={resCanRight}
+        onScrollTemplates={scrollTemplatesByPage}
+        onScrollResources={scrollResourcesByPage}
+        onSelectTemplate={(id) => navigate(`/templates/${id}`)}
+        onSelectResource={(id) => navigate(`/resources/${id}`)}
+      />
 
       {/* ===== ORCHESTRATORS ===== */}
       {canViewOrchestrators && (
-        <>
-          <Fade in={showContent} timeout={800}>
-            <Box
-              component="section"
-              aria-labelledby="orchestrators-heading"
-              sx={{ mb: 3 }}
-            >
-              <Typography
-                id="orchestrators-heading"
-                variant="h4"
-                className={styles.wrapperHeader}
-                sx={{
-                  fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
-                  fontWeight: 700,
-                  mb: 0.5,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  textTransform: "uppercase",
-                  color: theme.palette.secondary.main,
-                  letterSpacing: "0.1em",
-                }}
-              >
-                <Box
-                  aria-hidden="true"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: 64,
-                    height: 64,
-                    borderRadius: 2,
-                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
-                    color: theme.palette.primary.main,
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                  }}
-                >
-                  <FontAwesomeIcon
-                    icon="diagram-project"
-                    style={{ fontSize: "2rem" }}
-                  />
-                </Box>
-                <Box>
-                  Orchestrators
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "text.secondary",
-                      fontSize: "0.925rem",
-                      letterSpacing: "0.01em",
-                    }}
-                  >
-                    Manage your infrastructure orchestration workflows
-                  </Typography>
-                </Box>
-              </Typography>
-            </Box>
-          </Fade>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-              gap: { xs: 2, sm: 2.5, md: 3 },
-              alignItems: "stretch",
-            }}
-          >
-            {isLoading ? (
-              // Loading Skeletons
-              Array.from({ length: 4 }).map((_, index) => (
-                <Box key={`skeleton-orch-${index}`} sx={{ display: "flex" }}>
-                  <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
-                    <Skeleton
-                      variant="rectangular"
-                      height={160}
-                      sx={{ borderRadius: 2, mb: 2 }}
-                    />
-                    <Skeleton
-                      variant="text"
-                      width="70%"
-                      height={32}
-                      sx={{ mb: 1 }}
-                    />
-                    <Skeleton variant="text" width="100%" height={20} />
-                    <Skeleton
-                      variant="text"
-                      width="90%"
-                      height={20}
-                      sx={{ mb: 1.5 }}
-                    />
-                    <Skeleton variant="rounded" width={150} height={28} />
-                  </Box>
-                </Box>
-              ))
-            ) : (
-              <>
-                {canCreateOrchestrators && (
-                  <Box sx={{ display: "flex" }}>
-                    <Fade in={showContent} timeout={1000}>
-                      <Box
-                        className={styles.card}
-                        onClick={() => navigateOrchestrator("new")}
-                        data-tour="home-new-orchestrator"
-                        sx={{
-                          border: "2px dashed",
-                          borderColor: alpha(theme.palette.primary.main, 0.3),
-                          backgroundColor: "transparent !important",
-                          "&:hover": {
-                            borderColor: alpha(theme.palette.primary.main, 0.6),
-                            backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
-                          },
-                        }}
-                      >
-                        <div className={styles.cardBlank}>
-                          <FontAwesomeIcon
-                            icon="plus"
-                            size="3x"
-                            style={{
-                              color: theme.palette.primary.main,
-                              opacity: 0.7,
-                            }}
-                          />
-                          <Typography
-                            sx={{
-                              mt: 2,
-                              fontWeight: 500,
-                              fontSize: "0.95rem",
-                              textTransform: "uppercase",
-                              color: theme.palette.secondary.main,
-                              letterSpacing: "0.1em",
-                            }}
-                          >
-                            New Orchestrator
-                          </Typography>
-                        </div>
-                      </Box>
-                    </Fade>
-                  </Box>
-                )}
-
-                {filteredOrchestrators && filteredOrchestrators.length > 0 ? (
-                  filteredOrchestrators.map((orchestrator, index) => (
-                    <Box key={orchestrator._id} sx={{ display: "flex" }}>
-                      <Fade in={showContent} timeout={1000 + index * 100}>
-                        <Box
-                          className={styles.card}
-                          onClick={() => navigateOrchestrator(orchestrator._id)}
-                        >
-                          <CardLogo
-                            cloudType={
-                              orchestrator.templateInfo?.cloud || "aws"
-                            }
-                            className={styles.cloudTypeLogo}
-                            mode={theme.palette.mode}
-                          />
-                          {orchestrator.previewImageUrl ? (
-                            <img
-                              src={orchestrator.previewImageUrl}
-                              alt={
-                                orchestrator.templateInfo?.templateName ||
-                                "Orchestrator"
-                              }
-                              className={styles.orchestratorCardImage}
-                            />
-                          ) : (
-                            <Box
-                              className={styles.orchestratorCardImage}
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "2.5rem",
-                                color: alpha(theme.palette.primary.main, 0.5),
-                                backgroundColor: alpha(
-                                  theme.palette.primary.main,
-                                  0.04,
-                                ),
-                              }}
-                            >
-                              <FontAwesomeIcon icon="sitemap" />
-                            </Box>
-                          )}
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              justifyContent: "space-between",
-                              gap: 1.5,
-                              mt: 1.5,
-                              mb: 0.75,
-                            }}
-                          >
-                            <Typography
-                              variant="h6"
-                              className={styles.cardTitle}
-                              sx={{
-                                fontWeight: 600,
-                                fontSize: "1.1rem",
-                                flex: 1,
-                                minWidth: 0,
-                                mb: 0,
-                              }}
-                            >
-                              <Link
-                                to={`/orchestrator/${orchestrator._id}`}
-                                style={{
-                                  textDecoration: "none",
-                                  color: "inherit",
-                                }}
-                                aria-label={`View orchestrator ${orchestrator.templateInfo?.templateName || "Orchestrator"}`}
-                              >
-                                {orchestrator.templateInfo?.templateName ||
-                                  "Unnamed Orchestrator"}
-                              </Link>
-                            </Typography>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                gap: 0.5,
-                                alignItems: "center",
-                                flexShrink: 0,
-                                mt: -0.25,
-                              }}
-                            >
-                              <Tooltip
-                                title={
-                                  orchestrator.templateId
-                                    ? "Manage Template"
-                                    : "Publish as Template"
-                                }
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    aria-label={
-                                      orchestrator.templateId
-                                        ? `Manage template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`
-                                        : `Publish ${orchestrator.templateInfo?.templateName || "orchestrator"} as template`
-                                    }
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setPublishTarget({
-                                        orchestratorId: orchestrator._id || "",
-                                        orchestratorName:
-                                          orchestrator.templateInfo
-                                            ?.templateName,
-                                        templateId: orchestrator.templateId,
-                                      });
-                                    }}
-                                    sx={{
-                                      color: orchestrator.templateId
-                                        ? theme.palette.primary.main
-                                        : "text.secondary",
-                                      fontSize: "0.8rem",
-                                      p: 0.5,
-                                      borderRadius: 1.5,
-                                      opacity: orchestrator.templateId
-                                        ? 1
-                                        : 0.55,
-                                      backgroundColor: alpha(
-                                        theme.palette.primary.main,
-                                        0.1,
-                                      ),
-                                      transition: "all 0.2s ease",
-                                      "&:hover": {
-                                        opacity: 1,
-                                        backgroundColor: alpha(
-                                          theme.palette.primary.main,
-                                          0.2,
-                                        ),
-                                      },
-                                      "&:focus-visible": {
-                                        outline: `2px solid ${theme.palette.primary.main}`,
-                                        outlineOffset: 2,
-                                      },
-                                    }}
-                                  >
-                                    <FontAwesomeIcon
-                                      aria-hidden="true"
-                                      icon={
-                                        orchestrator.templateId
-                                          ? "pen"
-                                          : "layer-group"
-                                      }
-                                    />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-                              {orchestrator.templateId && (
-                                <Tooltip title="Unpublish Template">
-                                  <span>
-                                    <IconButton
-                                      size="small"
-                                      aria-label={`Unpublish template for ${orchestrator.templateInfo?.templateName || "orchestrator"}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setUnpublishTarget({
-                                          templateId: orchestrator.templateId!,
-                                          name:
-                                            orchestrator.templateInfo
-                                              ?.templateName || "this template",
-                                        });
-                                      }}
-                                      sx={{
-                                        color: "text.secondary",
-                                        fontSize: "0.8rem",
-                                        p: 0.5,
-                                        borderRadius: 1.5,
-                                        opacity: 0.5,
-                                        transition: "all 0.2s ease",
-                                        "&:hover": {
-                                          opacity: 1,
-                                          color: "error.main",
-                                          backgroundColor: alpha(
-                                            theme.palette.error.main,
-                                            0.08,
-                                          ),
-                                        },
-                                        "&:focus-visible": {
-                                          outline: "2px solid",
-                                          outlineColor: "error.main",
-                                          outlineOffset: 2,
-                                        },
-                                      }}
-                                    >
-                                      <FontAwesomeIcon
-                                        aria-hidden="true"
-                                        icon="eye-slash"
-                                      />
-                                    </IconButton>
-                                  </span>
-                                </Tooltip>
-                              )}
-                            </Box>
-                          </Box>
-                          <Typography
-                            variant="body2"
-                            className={styles.cardDescription}
-                            sx={{ mb: 1.5, lineHeight: 1.5 }}
-                          >
-                            {orchestrator.templateInfo?.description ||
-                              "No description"}
-                          </Typography>
-                          <Box
-                            component="code"
-                            sx={{
-                              fontSize: "0.8rem",
-                              color: "text.secondary",
-                              backgroundColor:
-                                theme.palette.mode === "dark"
-                                  ? "rgba(255, 255, 255, 0.05)"
-                                  : "rgba(0, 0, 0, 0.04)",
-                              px: 1.5,
-                              py: 0.75,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 1.5,
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                              }}
-                            >
-                              <FontAwesomeIcon
-                                icon="circle-nodes"
-                                style={{ fontSize: "0.75rem" }}
-                              />
-                              {orchestrator.nodeCount} resources
-                            </Box>
-                            <Tooltip
-                              title={
-                                orchestrator.updatedAt
-                                  ? new Date(
-                                      orchestrator.updatedAt,
-                                    ).toLocaleDateString(undefined, {
-                                      weekday: "long",
-                                      year: "numeric",
-                                      month: "long",
-                                      day: "numeric",
-                                    })
-                                  : "No last modified date"
-                              }
-                              arrow
-                            >
-                              <Box
-                                sx={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 0.5,
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {orchestrator.updatedAt
-                                  ? new Date(
-                                      orchestrator.updatedAt,
-                                    ).toLocaleDateString(undefined, {
-                                      month: "2-digit",
-                                      day: "2-digit",
-                                      year: "2-digit",
-                                    })
-                                  : "N/A"}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      </Fade>
-                    </Box>
-                  ))
-                ) : (
-                  <Box sx={{ gridColumn: "1 / -1" }}>
-                    <Fade in={showContent} timeout={1200}>
-                      <Box
-                        role="status"
-                        aria-live="polite"
-                        sx={{
-                          p: { xs: 5, sm: 7 },
-                          textAlign: "center",
-                          color: "text.secondary",
-                          backgroundColor:
-                            theme.palette.mode === "dark"
-                              ? alpha(theme.palette.common.white, 0.02)
-                              : alpha(theme.palette.common.black, 0.02),
-                          borderRadius: 3,
-                          border: "1px dashed",
-                          borderColor:
-                            theme.palette.mode === "dark"
-                              ? "rgba(255, 255, 255, 0.1)"
-                              : "rgba(0, 0, 0, 0.1)",
-                        }}
-                      >
-                        <FontAwesomeIcon
-                          icon="sitemap"
-                          size="3x"
-                          aria-hidden="true"
-                          style={{
-                            opacity: 0.25,
-                            marginBottom: "16px",
-                            color: theme.palette.primary.main,
-                          }}
-                        />
-                        <Typography
-                          variant="h6"
-                          sx={{ mb: 1, fontWeight: 600 }}
-                        >
-                          {searchQuery
-                            ? "No orchestrators found"
-                            : "No orchestrators yet"}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
-                        >
-                          {searchQuery
-                            ? "Try adjusting your search query"
-                            : 'Click "New Orchestrator" to create your first infrastructure workflow!'}
-                        </Typography>
-                      </Box>
-                    </Fade>
-                  </Box>
-                )}
-              </>
-            )}
-          </Box>
-        </>
+        <HomeOrchestratorsSection
+          showContent={showContent}
+          isLoading={isLoading}
+          canCreateOrchestrators={canCreateOrchestrators}
+          filteredOrchestrators={filteredOrchestrators}
+          searchQuery={searchQuery}
+          onCreateNew={() => navigateOrchestrator("new")}
+          onOpenOrchestrator={navigateOrchestrator}
+          onPublishClick={(orchestrator) =>
+            setPublishTarget({
+              orchestratorId: orchestrator._id || "",
+              orchestratorName: orchestrator.templateInfo?.templateName,
+              templateId: orchestrator.templateId,
+            })
+          }
+          onUnpublishClick={(orchestrator) =>
+            setUnpublishTarget({
+              templateId: orchestrator.templateId!,
+              name: orchestrator.templateInfo?.templateName || "this template",
+            })
+          }
+        />
       )}
 
       {/* Publish as Template dialog */}

@@ -38,6 +38,17 @@ type ListSelectTextFieldProps = {
   allowDuplicates?: boolean;
 };
 
+const toDisplayString = (value: unknown): string => {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return String(value);
+  }
+  return "";
+};
+
 const normalizeListSelectTextValue = (rawValue: unknown): string[] => {
   if (Array.isArray(rawValue)) {
     return rawValue.map((item) => {
@@ -45,7 +56,7 @@ const normalizeListSelectTextValue = (rawValue: unknown): string[] => {
         return item;
       }
       if (item && typeof item === "object") {
-        const candidate = item as { id?: unknown; value?: unknown };
+        const candidate = item as { id?: string | number; value?: string | number };
         return String(candidate.id ?? candidate.value ?? "");
       }
       return String(item ?? "");
@@ -57,7 +68,10 @@ const normalizeListSelectTextValue = (rawValue: unknown): string[] => {
   }
 
   if (rawValue && typeof rawValue === "object") {
-    const record = rawValue as Record<string, unknown>;
+    const record = rawValue as Record<string, unknown> & {
+      id?: string | number;
+      value?: string | number;
+    };
     if ("id" in record || "value" in record) {
       return [String(record.id ?? record.value ?? "")];
     }
@@ -69,10 +83,10 @@ const normalizeListSelectTextValue = (rawValue: unknown): string[] => {
           return item;
         }
         if (item && typeof item === "object") {
-          const candidate = item as { id?: unknown; value?: unknown };
+          const candidate = item as { id?: string | number; value?: string | number };
           return String(candidate.id ?? candidate.value ?? "");
         }
-        return String(item ?? "");
+        return toDisplayString(item);
       });
   }
 

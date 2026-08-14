@@ -227,8 +227,8 @@ export const ProductGuidanceProvider = ({
   const requestAutoTour = useCallback(
     (tourId: GuidanceTourId) => {
       const tour = catalog.tours[tourId];
-      if (!tour || !tour.autoStart) return false;
-      if (!currentTour || currentTour.id !== tour.id) return false;
+      if (!tour?.autoStart) return false;
+      if (currentTour?.id !== tour.id) return false;
       if (hasSeenTour(guidanceState, tourId)) return false;
       if (activeSessionRef.current) return false;
       return startTour(tourId, { auto: true });
@@ -621,6 +621,6 @@ export const useGuidedTour = (tourId: GuidanceTourId, enabled: boolean) => {
   useEffect(() => {
     if (!enabled || requestedRef.current) return;
     requestedRef.current = true;
-    void requestAutoTour(tourId);
+    requestAutoTour(tourId);
   }, [enabled, requestAutoTour, tourId]);
 };

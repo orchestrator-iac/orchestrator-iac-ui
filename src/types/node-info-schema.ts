@@ -37,7 +37,7 @@ const validateValueShapeForType = (
   if (fieldType === "list<text>" || fieldType === "list<select+text>") {
     if (!Array.isArray(value)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path,
         message: `${fieldType} fields require an array value.`,
       });
@@ -47,7 +47,7 @@ const validateValueShapeForType = (
 
   if (fieldType === "select" && Array.isArray(value)) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path,
       message: "select fields require a scalar value.",
     });
@@ -56,7 +56,7 @@ const validateValueShapeForType = (
 
   if (fieldType === "switch" && typeof value !== "boolean") {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path,
       message: "switch fields require a boolean value.",
     });
@@ -65,7 +65,7 @@ const validateValueShapeForType = (
 
   if (fieldType === "number" && typeof value !== "number" && value !== "") {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: "custom",
       path,
       message: "number fields require a numeric value.",
     });

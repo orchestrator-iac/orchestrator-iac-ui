@@ -39,6 +39,13 @@ const NEGATIVE_REASONS = [
   "Other",
 ] as const;
 
+/** Resolves a user-facing message from a caught submit error. */
+const resolveErrorMessage = (err: unknown): string => {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Failed to save feedback.";
+};
+
 interface MessageFeedbackDialogProps {
   open: boolean;
   sentiment: MessageFeedbackSentiment;
@@ -65,6 +72,7 @@ const MessageFeedbackDialog: React.FC<MessageFeedbackDialogProps> = ({
     () => (sentiment === "positive" ? POSITIVE_REASONS : NEGATIVE_REASONS),
     [sentiment],
   );
+  const chipUnselectedBg = alpha(theme.palette.text.primary, dark ? 0.08 : 0.03);
 
   useEffect(() => {
     if (!open) return;
@@ -107,13 +115,7 @@ const MessageFeedbackDialog: React.FC<MessageFeedbackDialogProps> = ({
       });
       onClose();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : typeof err === "string"
-            ? err
-            : "Failed to save feedback.",
-      );
+      setError(resolveErrorMessage(err));
       setIsSubmitting(false);
     }
   };
@@ -153,9 +155,7 @@ const MessageFeedbackDialog: React.FC<MessageFeedbackDialogProps> = ({
                 disabled={isSubmitting}
                 sx={{
                   borderRadius: 999,
-                  bgcolor: selected
-                    ? undefined
-                    : alpha(theme.palette.text.primary, dark ? 0.08 : 0.03),
+                  bgcolor: selected ? undefined : chipUnselectedBg,
                 }}
               />
             );

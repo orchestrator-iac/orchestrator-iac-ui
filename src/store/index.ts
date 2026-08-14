@@ -1,5 +1,5 @@
 import {
-  AnyAction,
+  UnknownAction,
   combineReducers,
   configureStore,
 } from "@reduxjs/toolkit";
@@ -30,7 +30,7 @@ const appReducer = combineReducers({
 
 const rootReducer = (
   state: ReturnType<typeof appReducer> | undefined,
-  action: AnyAction,
+  action: UnknownAction,
 ) => {
   if (resetAppState.match(action)) {
     return appReducer(undefined, action);

@@ -63,7 +63,7 @@ const scoreCatalogIcon = (
     .filter((value): value is string => typeof value === "string" && value.trim())
     .map(normalizeToken);
 
-  if (candidates.some((value) => value === normalizedQuery)) {
+  if (candidates.includes(normalizedQuery)) {
     return 4;
   }
 
@@ -136,11 +136,14 @@ const fetchSearchResults = (
   const promise = apiService
     .get(buildSearchEndpoint(query, cloudProvider))
     .then((response) => {
-      const icons = Array.isArray(response?.value)
-        ? (response.value as CatalogIconRecord[])
-        : Array.isArray(response)
-          ? (response as CatalogIconRecord[])
-          : [];
+      let icons: CatalogIconRecord[];
+      if (Array.isArray(response?.value)) {
+        icons = response.value as CatalogIconRecord[];
+      } else if (Array.isArray(response)) {
+        icons = response as CatalogIconRecord[];
+      } else {
+        icons = [];
+      }
       return icons;
     })
     .catch(() => []);

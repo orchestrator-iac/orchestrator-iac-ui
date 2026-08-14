@@ -97,8 +97,12 @@ const PlanCard: React.FC<PlanCardProps> = ({
       <Divider />
 
       <List dense disablePadding>
-        {plan.resources.map((res, idx) => (
-          <ListItem key={idx} alignItems="flex-start" sx={{ px: 2, py: 0.75 }}>
+        {plan.resources.map((res) => (
+          <ListItem
+            key={res.id ?? `${res.resourceType}-${res.resourceName ?? "unnamed"}-${res.cloudProvider}`}
+            alignItems="flex-start"
+            sx={{ px: 2, py: 0.75 }}
+          >
             <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
               <CheckCircleOutlineIcon fontSize="small" color="success" />
             </ListItemIcon>
@@ -144,11 +148,11 @@ const PlanCard: React.FC<PlanCardProps> = ({
               SECURITY NOTES
             </Typography>
             <Stack spacing={0.5} mt={0.5}>
-              {plan.securityNotes.map((note, idx) => {
+              {plan.securityNotes.map((note) => {
                 const meta = SEVERITY_META[note.severity];
                 return (
                   <Alert
-                    key={idx}
+                    key={`${note.severity}-${note.message}`}
                     severity={meta.color}
                     icon={meta.icon}
                     sx={{ py: 0, fontSize: "0.72rem", alignItems: "center" }}

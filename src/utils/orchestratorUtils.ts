@@ -7,10 +7,17 @@ import {
   TemplateInfo,
 } from "../types/orchestrator";
 
-const FRIENDLY_ID_SUFFIX = /(\d+)$/;
-
 const formatFriendlySequence = (type: string, index: number): string =>
   `${type}-${String(index).padStart(4, "0")}`;
+
+/** Returns the trailing run of digits in `id`, or null if it doesn't end in a digit. */
+const trailingDigits = (id: string): string | null => {
+  let start = id.length;
+  while (start > 0 && id.charCodeAt(start - 1) >= 48 && id.charCodeAt(start - 1) <= 57) {
+    start -= 1;
+  }
+  return start === id.length ? null : id.slice(start);
+};
 
 const extractFriendlyIndex = (
   _type: string,
@@ -20,12 +27,12 @@ const extractFriendlyIndex = (
     return null;
   }
 
-  const match = FRIENDLY_ID_SUFFIX.exec(friendlyId);
-  if (!match) {
+  const digits = trailingDigits(friendlyId);
+  if (digits === null) {
     return null;
   }
 
-  const parsed = Number.parseInt(match[1], 10);
+  const parsed = Number.parseInt(digits, 10);
   return Number.isNaN(parsed) ? null : parsed;
 };
 
@@ -157,6 +164,76 @@ const buildFriendlyIdLookup = (nodes: Node[]): Record<string, string> => {
  * @param node - React Flow node instance
  * @returns Minimal node data for DB storage
  */
+/** Builds the rich linked-node reference stored on a connected value (see Resource Mapping Contract). */
+const buildLinkedNodeRef = (sourceNode: Node, outputRef: string) => ({
+  id: sourceNode.id,
+  __nodeType: (sourceNode.data as any)?.__nodeType,
+  friendlyId: resolveNodeFriendlyId(sourceNode),
+  outputRef,
+});
+
+/** Resolves a single `list<object>` / `list<string>` item, linking any field that references a node id. */
+const resolveLinkedListItem = (
+  item: any,
+  allNodes: Node[] | undefined,
+  linkRule: any,
+  bind: string,
+): any => {
+  if (item && typeof item === "object" && !Array.isArray(item)) {
+    // Clone the object to avoid mutations
+    const itemCopy = { ...item };
+
+    // For list<object> with nested links, check each field
+    for (const [fieldName, fieldValue] of Object.entries(itemCopy)) {
+      if (typeof fieldValue !== "string") {
+        continue;
+      }
+      const sourceNode = allNodes?.find((n) => n.id === fieldValue);
+      if (sourceNode) {
+        itemCopy[fieldName] = buildLinkedNodeRef(
+          sourceNode,
+          resolveOutputRef(linkRule, sourceNode, fieldName),
+        );
+      }
+    }
+    return itemCopy;
+  }
+
+  // Handle array of simple strings (legacy behavior)
+  if (typeof item === "string") {
+    const sourceNode = allNodes?.find((n) => n.id === item);
+    if (sourceNode) {
+      return buildLinkedNodeRef(sourceNode, linkRule.outputRef ?? bind);
+    }
+  }
+
+  return item;
+};
+
+/** Applies one link rule to `values` in place: replaces a bound id (or array of ids) with rich link info. */
+const applyLinkBinding = (
+  values: { [key: string]: any },
+  linkRule: any,
+  allNodes: Node[] | undefined,
+): void => {
+  const bind: string = linkRule.bind;
+  const val = values[bind];
+
+  if (val && typeof val === "string") {
+    const sourceNode = allNodes?.find((n) => n.id === val);
+    if (sourceNode) {
+      values[bind] = buildLinkedNodeRef(sourceNode, linkRule.outputRef ?? bind);
+    }
+    return;
+  }
+
+  if (Array.isArray(val)) {
+    values[bind] = val.map((item: any) =>
+      resolveLinkedListItem(item, allNodes, linkRule, bind),
+    );
+  }
+};
+
 export const transformNodeForDB = (
   node: Node,
   friendlyId?: string,
@@ -167,7 +244,9 @@ export const transformNodeForDB = (
 
   // Extract isExpanded from values if it was stored there, otherwise check node.data
   // Add index signature for values to allow dynamic property access
-  const values: { [key: string]: any } = { ...(node.data?.values || {}) };
+  const values: { [key: string]: any } = {
+    ...(node.data?.values as Record<string, unknown> | undefined),
+  };
   const isExpanded = values?.__isExpanded ?? node.data?.isExpanded ?? true;
   const persistedFriendlyId = resolveNodeFriendlyId(node);
   const outgoingFriendlyId = persistedFriendlyId ?? friendlyId;
@@ -185,71 +264,11 @@ export const transformNodeForDB = (
 
   // For each link, if the value is a linked node id, store rich info
   if (node.data?.links && Array.isArray(node.data.links)) {
+    const allNodes: Node[] | undefined = (
+      node.data?.__helpers as { allNodes?: Node[] }
+    )?.allNodes;
     for (const linkRule of node.data.links) {
-      const bind: string = linkRule.bind;
-      const val = values[bind];
-      if (val && typeof val === "string") {
-        // Find the source node
-        const allNodes: Node[] | undefined = (
-          node.data?.__helpers as { allNodes?: Node[] }
-        )?.allNodes;
-        const sourceNode = allNodes?.find((n) => n.id === val);
-        if (sourceNode) {
-          values[bind] = {
-            id: sourceNode.id,
-            __nodeType: (sourceNode.data as any)?.__nodeType,
-            friendlyId: resolveNodeFriendlyId(sourceNode),
-            outputRef: linkRule.outputRef ?? bind,
-          };
-        }
-      } else if (Array.isArray(val)) {
-        const allNodes: Node[] | undefined = (
-          node.data?.__helpers as { allNodes?: Node[] }
-        )?.allNodes;
-
-        values[bind] = val.map((item: any) => {
-          // Handle array of objects: each item might have a field that references a node
-          if (item && typeof item === "object" && !Array.isArray(item)) {
-            // Clone the object to avoid mutations
-            const itemCopy = { ...item };
-
-            // For list<object> with nested links, check each field
-            for (const [fieldName, fieldValue] of Object.entries(itemCopy)) {
-              if (typeof fieldValue === "string") {
-                const sourceNode = allNodes?.find((n) => n.id === fieldValue);
-                if (sourceNode) {
-                  itemCopy[fieldName] = {
-                    id: sourceNode.id,
-                    __nodeType: (sourceNode.data as any)?.__nodeType,
-                    friendlyId: resolveNodeFriendlyId(sourceNode),
-                    outputRef: resolveOutputRef(
-                      linkRule,
-                      sourceNode,
-                      fieldName,
-                    ),
-                  };
-                }
-              }
-            }
-            return itemCopy;
-          }
-
-          // Handle array of simple strings (legacy behavior)
-          if (typeof item === "string") {
-            const sourceNode = allNodes?.find((n) => n.id === item);
-            if (sourceNode) {
-              return {
-                id: sourceNode.id,
-                __nodeType: (sourceNode.data as any)?.__nodeType,
-                friendlyId: resolveNodeFriendlyId(sourceNode),
-                outputRef: linkRule.outputRef ?? bind,
-              };
-            }
-          }
-
-          return item;
-        });
-      }
+      applyLinkBinding(values, linkRule, allNodes);
     }
   }
 
@@ -361,7 +380,7 @@ export const reconstructNodeFromDB = (
   resourceTemplate: any, // Will be fetched from API using dbNode.resourceId
 ): Node => {
   // When reconstructing, flatten linked value objects back to just id for UI fields
-  const values = { ...(dbNode.values || {}) };
+  const values = { ...dbNode.values };
   if (
     resourceTemplate?.resourceNode?.data?.links &&
     Array.isArray(resourceTemplate.resourceNode.data.links)
