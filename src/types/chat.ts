@@ -63,6 +63,17 @@ export interface PageContext {
   metadata?: Record<string, unknown>;
 }
 
+// Snapshot of what's actually on the orchestrator canvas right now, published
+// by the Orchestrator page so Maestro can answer "what am I looking at?"
+// questions even when no chat-driven plan exists for this session yet.
+export interface CanvasContext {
+  orchestratorId?: string | null;
+  templateType?: string | null;
+  templateName?: string;
+  cloudProvider?: string;
+  resourceSummary?: string;
+}
+
 export interface ChatSessionListItem {
   id: string;
   title?: string;

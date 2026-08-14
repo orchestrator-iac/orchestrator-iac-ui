@@ -4,8 +4,16 @@ import apiService from "../services/apiService";
 export const fetchResourceById = createAsyncThunk(
   "resource/fetchById",
   async (id: string) => {
-    const response = await apiService.get(`/configs/${id}`);
-    return { id, data: response };
+    // `id` here is a resourceId (e.g. "vpc"), not the config document's
+    // internal database id, so this must go through the `resource_id`
+    // filter on the list endpoint rather than the by-id path lookup
+    // (GET /configs/{id} looks up the internal id and 404s for a
+    // resourceId like "vpc").
+    const response = await apiService.get("/configs", {
+      params: { resource_id: id },
+    });
+    const data = Array.isArray(response) ? response[0] : response;
+    return { id, data };
   },
 );
 

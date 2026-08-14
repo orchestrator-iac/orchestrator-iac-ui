@@ -6,6 +6,7 @@ import {
 import { chatService } from "@/services/chatService";
 import { getApiErrorMessage } from "@/utils/apiError";
 import type {
+  CanvasContext,
   ChatMessage,
   ChatMessageFeedbackRequest,
   ChatSessionUpdateRequest,
@@ -25,6 +26,9 @@ interface ChatState {
   activeSessionStatus: "idle" | "loading" | "succeeded" | "failed";
   isSending: boolean;
   sendError: string | null;
+  // What's currently on screen (e.g. the orchestrator canvas), published by
+  // the active page — independent of whether a chat session/plan exists.
+  canvasContext: CanvasContext | null;
 }
 
 const initialState: ChatState = {
@@ -35,6 +39,7 @@ const initialState: ChatState = {
   activeSessionStatus: "idle",
   isSending: false,
   sendError: null,
+  canvasContext: null,
 };
 
 const replaceMessageById = (
@@ -183,6 +188,9 @@ const chatSlice = createSlice({
         action.payload,
       ];
     },
+    setCanvasContext(state, action: PayloadAction<CanvasContext | null>) {
+      state.canvasContext = action.payload;
+    },
   },
   extraReducers: (builder) => {
     // fetchSessions
@@ -304,6 +312,7 @@ export const {
   clearActiveSession,
   clearSendError,
   appendLocalMessage,
+  setCanvasContext,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
