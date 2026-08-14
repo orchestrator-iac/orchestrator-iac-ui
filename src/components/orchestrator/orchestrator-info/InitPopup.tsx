@@ -221,9 +221,11 @@ const InitPopup = ({
               }
               fullWidth
               required
-              SelectProps={{
-                MenuProps: {
-                  disablePortal: true,
+              slotProps={{
+                select: {
+                  MenuProps: {
+                    disablePortal: true,
+                  },
                 },
               }}
               sx={{

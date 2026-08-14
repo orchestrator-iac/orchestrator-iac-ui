@@ -42,7 +42,7 @@ export const loadUsersByIds = createAsyncThunk<
     if (data && Array.isArray(data)) {
       const map: Record<string, User> = Object.fromEntries(
         data
-          .filter((u): u is User => Boolean(u && u._id))
+          .filter((u): u is User => Boolean(u?._id))
           .map((u) => [u._id, u]),
       );
 
@@ -58,7 +58,7 @@ export const loadUsersByIds = createAsyncThunk<
               // If the API returns an array for single id, normalize it:
               const one: User | undefined = Array.isArray(j) ? j[0] : j;
 
-              if (one && one._id) {
+              if (one?._id) {
                 return [one._id, one] as const;
               }
 
@@ -110,7 +110,7 @@ const usersSlice = createSlice({
     upsertUsers(state, action: PayloadAction<User[]>) {
       for (const u of action.payload) {
         if (!u._id) continue;
-        state.entities[u._id] = { ...(state.entities[u._id] || {}), ...u };
+        state.entities[u._id] = { ...state.entities[u._id], ...u };
       }
     },
     clearUsers(state) {
@@ -127,7 +127,7 @@ const usersSlice = createSlice({
       .addCase(loadUsersByIds.fulfilled, (state, action) => {
         const map = action.payload || {};
         for (const [_id, u] of Object.entries(map)) {
-          state.entities[_id] = { ...(state.entities[_id] || {}), ...u };
+          state.entities[_id] = { ...state.entities[_id], ...u };
           state.loadingById[_id] = false;
           state.errorById[_id] = undefined;
         }

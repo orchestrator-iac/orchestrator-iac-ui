@@ -36,7 +36,7 @@ export const ChatLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [isSplitView, setIsSplitView] = useState(false);
-  const [splitWidth, setSplitWidthState] = useState<number>(() => {
+  const [splitWidthState, setSplitWidthState] = useState<number>(() => {
     const stored = Number(localStorage.getItem(STORAGE_KEY));
     if (!Number.isFinite(stored) || stored <= 0) return DEFAULT_WIDTH;
     return clamp(stored, MIN_WIDTH, maxWidthForViewport());
@@ -76,12 +76,12 @@ export const ChatLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
       isSplitView,
       toggleSplitView,
       setSplitView,
-      splitWidth,
+      splitWidth: splitWidthState,
       setSplitWidth,
       isDragging,
       setIsDragging,
     }),
-    [isSplitView, toggleSplitView, setSplitView, splitWidth, setSplitWidth, isDragging],
+    [isSplitView, toggleSplitView, setSplitView, splitWidthState, setSplitWidth, isDragging],
   );
 
   return (

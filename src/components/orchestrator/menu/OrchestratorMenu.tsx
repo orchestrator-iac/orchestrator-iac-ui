@@ -52,6 +52,216 @@ import PolicyScanSettingsDialog from "./PolicyScanSettingsDialog";
 import ReconcileDialog from "./ReconcileDialog";
 import DriftReportDialog from "./DriftReportDialog";
 
+interface MenuToggleItemProps {
+  icon: React.ComponentType<{
+    fontSize?: "small";
+    color?: "primary" | "disabled";
+  }>;
+  active: boolean;
+  primary: string;
+  secondary: string;
+  ariaLabel: string;
+  onToggle: (checked: boolean) => void;
+  extraAction?: React.ReactNode;
+}
+
+/** A menu row pairing an icon/label with a toggle switch (Architecture mode, Auto-save, Policy scan). */
+const MenuToggleItem: React.FC<MenuToggleItemProps> = ({
+  icon: Icon,
+  active,
+  primary,
+  secondary,
+  ariaLabel,
+  onToggle,
+  extraAction,
+}) => (
+  <MenuItem
+    disableRipple
+    onClick={(event) => {
+      event.stopPropagation();
+    }}
+    sx={{
+      alignItems: "center",
+      borderRadius: 1.5,
+      mx: 0.5,
+      "&:hover": {
+        bgcolor: "action.hover",
+      },
+    }}
+  >
+    <ListItemIcon>
+      <Icon fontSize="small" color={active ? "primary" : "disabled"} />
+    </ListItemIcon>
+    <ListItemText
+      primary={primary}
+      secondary={secondary}
+      slotProps={{ primary: { sx: { fontWeight: 500 } } }}
+      sx={{ cursor: "pointer", mr: 1 }}
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle(!active);
+      }}
+    />
+    {extraAction}
+    <Switch
+      edge="end"
+      size="small"
+      checked={active}
+      onChange={(_, checked) => onToggle(checked)}
+      onClick={(event) => {
+        event.stopPropagation();
+      }}
+      slotProps={{ input: { "aria-label": ariaLabel } }}
+    />
+  </MenuItem>
+);
+
+/** Resolves the color/hover styling for a standard vs. destructive menu action item. */
+const getActionItemStyles = (destructive: boolean, disabled: boolean) => {
+  if (!destructive) {
+    return { color: undefined, hoverBg: "action.hover" };
+  }
+  return {
+    color: disabled ? "text.disabled" : "error.main",
+    hoverBg: disabled ? "action.hover" : "error.lighter",
+  };
+};
+
+interface MenuActionItemProps {
+  onClick: () => void;
+  disabled?: boolean;
+  icon: React.ReactNode;
+  label: React.ReactNode;
+  destructive?: boolean;
+}
+
+/** A single-icon, single-label menu action row (Save, Reconcile, Delete, etc.). */
+const MenuActionItem: React.FC<MenuActionItemProps> = ({
+  onClick,
+  disabled = false,
+  icon,
+  label,
+  destructive = false,
+}) => {
+  const { color, hoverBg } = getActionItemStyles(destructive, disabled);
+  return (
+    <MenuItem
+      onClick={onClick}
+      disabled={disabled}
+      sx={{
+        borderRadius: 1.5,
+        mx: 0.5,
+        color,
+        "&:hover": { bgcolor: hoverBg },
+      }}
+    >
+      <ListItemIcon>{icon}</ListItemIcon>
+      <ListItemText>{label}</ListItemText>
+    </MenuItem>
+  );
+};
+
+interface PublishMenuItemProps {
+  canPublish: boolean;
+  isUpdate: boolean;
+  activeColor: string;
+  disabledColor: string;
+  onClick: () => void;
+}
+
+/** "Publish as Template" / "Manage Template" menu row. */
+const PublishMenuItem: React.FC<PublishMenuItemProps> = ({
+  canPublish,
+  isUpdate,
+  activeColor,
+  disabledColor,
+  onClick,
+}) => (
+  <MenuItem
+    onClick={onClick}
+    disabled={!canPublish}
+    sx={{
+      borderRadius: 1.5,
+      mx: 0.5,
+      "&:hover": { bgcolor: "action.hover" },
+    }}
+  >
+    <ListItemIcon>
+      <FontAwesomeIcon
+        icon={isUpdate ? "pen" : "layer-group"}
+        style={{
+          fontSize: 16,
+          color: canPublish ? activeColor : disabledColor,
+        }}
+      />
+    </ListItemIcon>
+    <ListItemText>
+      {isUpdate ? "Manage Template" : "Publish as Template"}
+    </ListItemText>
+  </MenuItem>
+);
+
+interface DownloadZipMenuItemProps {
+  canSave: boolean;
+  isDownloading: boolean;
+  onClick: () => void;
+}
+
+/** "Download IaC (zip)" menu row, swapping to a spinner while a download is in flight. */
+const DownloadZipMenuItem: React.FC<DownloadZipMenuItemProps> = ({
+  canSave,
+  isDownloading,
+  onClick,
+}) => (
+  <MenuItem
+    onClick={onClick}
+    disabled={!canSave || isDownloading}
+    sx={{
+      borderRadius: 1.5,
+      mx: 0.5,
+      "&:hover": { bgcolor: "action.hover" },
+    }}
+  >
+    <ListItemIcon>
+      {isDownloading ? (
+        <CircularProgress size={18} />
+      ) : (
+        <ArchiveIcon fontSize="small" color={canSave ? "primary" : "disabled"} />
+      )}
+    </ListItemIcon>
+    <ListItemText>
+      {isDownloading ? "Preparing Zip…" : "Download IaC (zip)"}
+    </ListItemText>
+  </MenuItem>
+);
+
+/** Triggers a browser download/open of `url`, falling back if the anchor-click approach is blocked. */
+const openDownloadLink = (url: string): void => {
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch {
+    if (!window.open(url, "_blank")) {
+      globalThis.location.href = url;
+    }
+  }
+};
+
+/** Picks the success vs. "generated with warnings" snackbar copy for generate/download actions. */
+const buildGenerateSnackbar = (
+  hasIssues: boolean,
+  successMessage: string,
+  warningMessage: string,
+): { message: string; severity: "success" | "info" } =>
+  hasIssues
+    ? { message: warningMessage, severity: "info" }
+    : { message: successMessage, severity: "success" };
+
 interface OrchestratorMenuProps {
   nodes: Node[];
   edges: Edge[];
@@ -236,18 +446,16 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         const response = await orchestratorService.generateIac(id, { mode });
         onValidationIssuesChange?.(response.iacValidationIssues ?? []);
         showPolicyFindingsIfAny(response.policyValidationIssues);
+        const hasIssues = Boolean(
+          response.iacValidationIssues && response.iacValidationIssues.length > 0,
+        );
         setSnackbar({
           open: true,
-          message:
-            response.iacValidationIssues &&
-            response.iacValidationIssues.length > 0
-              ? "Draft IaC generated with validation warnings."
-              : "IaC generation request submitted successfully.",
-          severity:
-            response.iacValidationIssues &&
-            response.iacValidationIssues.length > 0
-              ? "info"
-              : "success",
+          ...buildGenerateSnackbar(
+            hasIssues,
+            "IaC generation request submitted successfully.",
+            "Draft IaC generated with validation warnings.",
+          ),
         });
       } catch (error: any) {
         console.error("Failed to generate IaC:", error);
@@ -275,38 +483,27 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         onValidationIssuesChange?.(resp.iacValidationIssues ?? []);
         showPolicyFindingsIfAny(resp.policyValidationIssues);
         const url = resp?.downloadIaCUrl;
-      if (url) {
-        try {
-          const a = document.createElement("a");
-          a.href = url;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        } catch {
-          if (!window.open(url, "_blank")) {
-            globalThis.location.href = url;
-          }
+        if (!url) {
+          setSnackbar({
+            open: true,
+            message: "No download URL returned from server.",
+            severity: "error",
+          });
+          return;
         }
+
+        openDownloadLink(url);
+        const hasIssues = Boolean(
+          resp.iacValidationIssues && resp.iacValidationIssues.length > 0,
+        );
         setSnackbar({
           open: true,
-          message:
-            resp.iacValidationIssues && resp.iacValidationIssues.length > 0
-              ? "Draft IaC zip is downloading with validation warnings."
-              : "Your IaC zip is downloading.",
-          severity:
-            resp.iacValidationIssues && resp.iacValidationIssues.length > 0
-              ? "info"
-              : "success",
+          ...buildGenerateSnackbar(
+            hasIssues,
+            "Your IaC zip is downloading.",
+            "Draft IaC zip is downloading with validation warnings.",
+          ),
         });
-      } else {
-        setSnackbar({
-          open: true,
-          message: "No download URL returned from server.",
-          severity: "error",
-        });
-      }
       } catch (error: any) {
         console.error("Failed to download IaC:", error);
         if (error instanceof IacValidationError) {
@@ -443,142 +640,45 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           },
         }}
       >
-        <MenuItem
-          disableRipple
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-          sx={{
-            alignItems: "center",
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": {
-              bgcolor: "action.hover",
-            },
-          }}
-        >
-          <ListItemIcon>
-            <ArchitectureIcon
-              fontSize="small"
-              color={isArchitectureMode ? "primary" : "disabled"}
-            />
-          </ListItemIcon>
-          <ListItemText
-            primary="Architecture mode"
-            secondary={isArchitectureMode ? "Compact arch's" : "Detailed forms"}
-            slotProps={{ primary: { sx: { fontWeight: 500 } } }}
-            sx={{ cursor: "pointer", mr: 1 }}
-            onClick={(event) => {
-              event.stopPropagation();
-              onArchitectureModeChange(!isArchitectureMode);
-            }}
-          />
-          <Switch
-            edge="end"
-            size="small"
-            checked={isArchitectureMode}
-            onChange={(_, checked) => onArchitectureModeChange(checked)}
-            onClick={(event) => {
-              event.stopPropagation();
-            }}
-            slotProps={{ input: { "aria-label": "Toggle architecture mode" } }}
-          />
-        </MenuItem>
+        <MenuToggleItem
+          icon={ArchitectureIcon}
+          active={isArchitectureMode}
+          primary="Architecture mode"
+          secondary={isArchitectureMode ? "Compact arch's" : "Detailed forms"}
+          ariaLabel="Toggle architecture mode"
+          onToggle={onArchitectureModeChange}
+        />
 
-        <MenuItem
-          disableRipple
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-          sx={{
-            alignItems: "center",
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": {
-              bgcolor: "action.hover",
-            },
-          }}
-        >
-          <ListItemIcon>
-            <ArchiveIcon
-              fontSize="small"
-              color={autoSaveEnabled ? "primary" : "disabled"}
-            />
-          </ListItemIcon>
-          <ListItemText
-            primary="Auto-save"
-            secondary="Saves changes after you pause editing"
-            slotProps={{ primary: { sx: { fontWeight: 500 } } }}
-            sx={{ cursor: "pointer", mr: 1 }}
-            onClick={(event) => {
-              event.stopPropagation();
-              onAutoSaveEnabledChange(!autoSaveEnabled);
-            }}
-          />
-          <Switch
-            edge="end"
-            size="small"
-            checked={autoSaveEnabled}
-            onChange={(_, checked) => onAutoSaveEnabledChange(checked)}
-            onClick={(event) => {
-              event.stopPropagation();
-            }}
-            slotProps={{ input: { "aria-label": "Toggle auto-save" } }}
-          />
-        </MenuItem>
+        <MenuToggleItem
+          icon={ArchiveIcon}
+          active={autoSaveEnabled}
+          primary="Auto-save"
+          secondary="Saves changes after you pause editing"
+          ariaLabel="Toggle auto-save"
+          onToggle={onAutoSaveEnabledChange}
+        />
 
-        <MenuItem
-          disableRipple
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-          sx={{
-            alignItems: "center",
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": {
-              bgcolor: "action.hover",
-            },
-          }}
-        >
-          <ListItemIcon>
-            <PolicyIcon
-              fontSize="small"
-              color={policyScan.enabled ? "primary" : "disabled"}
-            />
-          </ListItemIcon>
-          <ListItemText
-            primary="Policy scan"
-            secondary="Advisory security/compliance checks on generate"
-            slotProps={{ primary: { sx: { fontWeight: 500 } } }}
-            sx={{ cursor: "pointer", mr: 1 }}
-            onClick={(event) => {
-              event.stopPropagation();
-              handlePolicyScanToggle(!policyScan.enabled);
-            }}
-          />
-          <Tooltip title="Policy scan settings" arrow>
-            <IconButton
-              size="small"
-              onClick={(event) => {
-                event.stopPropagation();
-                setPolicyScanSettingsOpen(true);
-              }}
-            >
-              <SettingsOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Switch
-            edge="end"
-            size="small"
-            checked={policyScan.enabled}
-            onChange={(_, checked) => handlePolicyScanToggle(checked)}
-            onClick={(event) => {
-              event.stopPropagation();
-            }}
-            slotProps={{ input: { "aria-label": "Toggle policy scan" } }}
-          />
-        </MenuItem>
+        <MenuToggleItem
+          icon={PolicyIcon}
+          active={policyScan.enabled}
+          primary="Policy scan"
+          secondary="Advisory security/compliance checks on generate"
+          ariaLabel="Toggle policy scan"
+          onToggle={handlePolicyScanToggle}
+          extraAction={
+            <Tooltip title="Policy scan settings" arrow>
+              <IconButton
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setPolicyScanSettingsOpen(true);
+                }}
+              >
+                <SettingsOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          }
+        />
 
         <MenuItem
           onClick={handleDownloadImage}
@@ -594,112 +694,54 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
           <ListItemText>Download as Image</ListItemText>
         </MenuItem>
 
-        
-        <MenuItem
-          onClick={() => { setPublishDialogOpen(true); handleMenuClose(); }}
-          disabled={!canPublish}
-          sx={{
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": { bgcolor: "action.hover" },
+        <PublishMenuItem
+          canPublish={canPublish}
+          isUpdate={Boolean(templateId)}
+          activeColor={theme.palette.primary.main}
+          disabledColor={theme.palette.action.disabled}
+          onClick={() => {
+            setPublishDialogOpen(true);
+            handleMenuClose();
           }}
-        >
-          <ListItemIcon>
-            <FontAwesomeIcon
-              icon={templateId ? "pen" : "layer-group"}
-              style={{
-                fontSize: 16,
-                color: canPublish
-                  ? theme.palette.primary.main
-                  : theme.palette.action.disabled,
-              }}
-            />
-          </ListItemIcon>
-          <ListItemText>
-            {templateId ? "Manage Template" : "Publish as Template"}
-          </ListItemText>
-        </MenuItem>
+        />
 
-        <MenuItem
+        <MenuActionItem
           onClick={handleSaveClick}
           disabled={!canSave}
-          sx={{
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": { bgcolor: "action.hover" },
-          }}
-        >
-          <ListItemIcon>
-            <SaveIcon
-              fontSize="small"
-              color={canSave ? "primary" : "disabled"}
-            />
-          </ListItemIcon>
-          <ListItemText>Save Orchestrator</ListItemText>
-        </MenuItem>
+          icon={<SaveIcon fontSize="small" color={canSave ? "primary" : "disabled"} />}
+          label="Save Orchestrator"
+        />
 
-        <MenuItem
+        <DownloadZipMenuItem
+          canSave={canSave}
+          isDownloading={isDownloading}
           onClick={handleDownloadZipClick}
-          disabled={!canSave || isDownloading}
-          sx={{
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": { bgcolor: "action.hover" },
-          }}
-        >
-          <ListItemIcon>
-            {isDownloading ? (
-              <CircularProgress size={18} />
-            ) : (
-              <ArchiveIcon
-                fontSize="small"
-                color={canSave ? "primary" : "disabled"}
-              />
-            )}
-          </ListItemIcon>
-          <ListItemText>
-            {isDownloading ? "Preparing Zip…" : "Download IaC (zip)"}
-          </ListItemText>
-        </MenuItem>
+        />
 
-        <MenuItem
+        <MenuActionItem
           onClick={handleReconcileClick}
           disabled={!currentOrchestratorId}
-          sx={{
-            borderRadius: 1.5,
-            mx: 0.5,
-            "&:hover": { bgcolor: "action.hover" },
-          }}
-        >
-          <ListItemIcon>
+          icon={
             <FactCheckOutlinedIcon
               fontSize="small"
               color={currentOrchestratorId ? "primary" : "disabled"}
             />
-          </ListItemIcon>
-          <ListItemText>Reconcile State</ListItemText>
-        </MenuItem>
+          }
+          label="Reconcile State"
+        />
 
-        <MenuItem
+        <MenuActionItem
           onClick={handleDeleteClick}
           disabled={!canDelete}
-          sx={{
-            borderRadius: 1.5,
-            mx: 0.5,
-            color: canDelete ? "error.main" : "text.disabled",
-            "&:hover": {
-              bgcolor: canDelete ? "error.lighter" : "action.hover",
-            },
-          }}
-        >
-          <ListItemIcon>
+          destructive
+          icon={
             <DeleteOutlineIcon
               fontSize="small"
               color={canDelete ? "error" : "disabled"}
             />
-          </ListItemIcon>
-          <ListItemText>Delete Orchestrator</ListItemText>
-        </MenuItem>
+          }
+          label="Delete Orchestrator"
+        />
       </Menu>
 
       {/* Hidden SaveButton - controlled by menu */}

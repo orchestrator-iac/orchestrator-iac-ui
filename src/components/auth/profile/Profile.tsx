@@ -41,7 +41,7 @@ const Profile: React.FC = () => {
   const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
-    document.body.setAttribute("data-theme", theme.palette.mode);
+    document.body.dataset.theme = theme.palette.mode;
   }, [theme.palette.mode]);
 
   useEffect(() => {

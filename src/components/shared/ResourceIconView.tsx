@@ -35,6 +35,30 @@ const isAtlasSprite = (
       typeof sprite.sheetHeight === "number",
   );
 
+/** Returns `value` when it is a usable CSS dimension, otherwise `undefined`. */
+const asCssDimension = (value: unknown): number | string | undefined =>
+  typeof value === "number" || typeof value === "string" ? value : undefined;
+
+/** The atlas sprite's pixel ratio, defaulting to 1 when unset or invalid. */
+const getAtlasScale = (sprite: AtlasSprite | null): number => {
+  if (sprite?.pixelRatio && sprite.pixelRatio > 0) {
+    return sprite.pixelRatio;
+  }
+  return 1;
+};
+
+/** Prefers an explicit `sx` dimension, falling back to the sprite's own size. */
+const getAtlasDimension = (
+  sxValue: number | string | undefined,
+  spriteSize: number | undefined,
+  scale: number,
+): number | string | undefined => {
+  if (sxValue !== undefined) {
+    return sxValue;
+  }
+  return spriteSize === undefined ? undefined : spriteSize / scale;
+};
+
 const ResourceIconView: React.FC<ResourceIconViewProps> = ({
   icon,
   alt,
@@ -52,23 +76,12 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
     return null;
   }
 
+  const sxWidth = asCssDimension(sxObject.width);
+  const sxHeight = asCssDimension(sxObject.height);
   const atlasSprite = isAtlasSprite(normalized.sprite) ? normalized.sprite : null;
-  const atlasDisplayScale =
-    atlasSprite && atlasSprite.pixelRatio && atlasSprite.pixelRatio > 0
-      ? atlasSprite.pixelRatio
-      : 1;
-  const atlasWidth =
-    typeof sxObject.width === "number" || typeof sxObject.width === "string"
-      ? sxObject.width
-      : atlasSprite
-        ? atlasSprite.width / atlasDisplayScale
-        : undefined;
-  const atlasHeight =
-    typeof sxObject.height === "number" || typeof sxObject.height === "string"
-      ? sxObject.height
-      : atlasSprite
-        ? atlasSprite.height / atlasDisplayScale
-        : undefined;
+  const atlasDisplayScale = getAtlasScale(atlasSprite);
+  const atlasWidth = getAtlasDimension(sxWidth, atlasSprite?.width, atlasDisplayScale);
+  const atlasHeight = getAtlasDimension(sxHeight, atlasSprite?.height, atlasDisplayScale);
 
   React.useEffect(() => {
     if (!atlasSprite) {
@@ -144,7 +157,7 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
         ref={atlasHostRef}
         style={{ width: atlasWidth, height: atlasHeight }}
         sx={{
-          ...((sx as object) || {}),
+          ...(sx as object),
           width: atlasWidth,
           height: atlasHeight,
           display: "inline-flex",
@@ -157,6 +170,7 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
         <canvas
           ref={atlasCanvasRef}
           aria-hidden="true"
+          tabIndex={-1}
           style={{ display: "block", width: "100%", height: "100%" }}
         />
       </Box>
@@ -171,15 +185,9 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
         aria-label={alt}
         className={className}
         viewBox={normalized.sprite.viewBox}
-        style={{
-          width: typeof sxObject.width === "number" || typeof sxObject.width === "string" ? sxObject.width : undefined,
-          height:
-            typeof sxObject.height === "number" || typeof sxObject.height === "string"
-              ? sxObject.height
-              : undefined,
-        }}
+        style={{ width: sxWidth, height: sxHeight }}
         sx={{
-          ...((sx as object) || {}),
+          ...(sx as object),
           flexShrink: 0,
         }}
       >
@@ -201,15 +209,9 @@ const ResourceIconView: React.FC<ResourceIconViewProps> = ({
       src={normalized.url}
       alt={alt}
       className={className}
-      style={{
-        width: typeof sxObject.width === "number" || typeof sxObject.width === "string" ? sxObject.width : undefined,
-        height:
-          typeof sxObject.height === "number" || typeof sxObject.height === "string"
-            ? sxObject.height
-            : undefined,
-      }}
+      style={{ width: sxWidth, height: sxHeight }}
       sx={{
-        ...((sx as object) || {}),
+        ...(sx as object),
         flexShrink: 0,
       }}
     />

@@ -25,7 +25,7 @@ export default function OverflowTooltipText({
   sx,
   tooltipSlotProps,
   tooltipPlacement = "top",
-}: OverflowTooltipTextProps) {
+}: Readonly<OverflowTooltipTextProps>) {
   const textRef = React.useRef<HTMLElement | null>(null);
   const [isTruncated, setIsTruncated] = React.useState(false);
 

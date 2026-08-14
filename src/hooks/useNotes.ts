@@ -46,7 +46,7 @@ export const useNotes = () => {
   // Utility functions
   const getPlainText = (html: string) =>
     html
-      .replace(/<[^>]*>/g, "")
+      .replace(/<[^<>]*>/g, "")
       .replace(/&nbsp;/g, " ")
       .trim();
   const isContentEmpty = (html: string) => getPlainText(html).length === 0;

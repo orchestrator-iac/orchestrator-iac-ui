@@ -30,8 +30,59 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => {
+    throw error;
+  },
 );
+
+/** Kicks off a token refresh if one isn't already in flight, and returns the shared promise. */
+const ensureTokenRefreshInFlight = (): Promise<string> => {
+  if (!isRefreshing) {
+    isRefreshing = true;
+    refreshPromise = refreshAccessToken()
+      .then((newToken) => {
+        if (hasLoggedOutMarker()) {
+          throw new Error("Session was explicitly logged out");
+        }
+        tokenManager.setAccessToken(newToken);
+        onRefreshed(newToken);
+        return newToken;
+      })
+      .finally(() => {
+        isRefreshing = false;
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise as Promise<string>;
+};
+
+/** Best-effort redirect to /login; failures here shouldn't mask the original refresh error. */
+const redirectToLoginIfNeeded = (): void => {
+  try {
+    if (globalThis.window === undefined) {
+      return;
+    }
+    if (globalThis.location.pathname !== "/login") {
+      console.debug("apiService: refresh failed, redirecting to /login");
+      globalThis.location.href = "/login";
+    }
+  } catch (err) {
+    console.debug(
+      "apiService: failed to redirect after refresh failure",
+      err,
+    );
+  }
+};
+
+/** Token refresh failed: clear the token, force a login redirect, and re-throw. */
+const handleRefreshFailure = (e: unknown): never => {
+  tokenManager.setAccessToken(null);
+  if (!hasLoggedOutMarker()) {
+    markLoggedOut();
+    redirectToLoginIfNeeded();
+  }
+  throw e;
+};
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -39,66 +90,29 @@ apiClient.interceptors.response.use(
     const original: any = error.config;
     const status = error?.response?.status;
 
-    if (status === 401 && !original?._retry) {
-      if (hasLoggedOutMarker()) {
-        tokenManager.setAccessToken(null);
-        return Promise.reject(error);
-      }
-
-      original._retry = true;
-
-      try {
-        if (!isRefreshing) {
-          isRefreshing = true;
-          refreshPromise = refreshAccessToken()
-            .then((newToken) => {
-              if (hasLoggedOutMarker()) {
-                throw new Error("Session was explicitly logged out");
-              }
-              tokenManager.setAccessToken(newToken);
-              onRefreshed(newToken);
-              return newToken;
-            })
-            .finally(() => {
-              isRefreshing = false;
-              refreshPromise = null;
-            });
-        }
-
-        const newToken = await (refreshPromise as Promise<string>);
-        if (hasLoggedOutMarker()) {
-          tokenManager.setAccessToken(null);
-          return Promise.reject(error);
-        }
-        original.headers = original.headers ?? {};
-        original.headers.Authorization = `Bearer ${newToken}`;
-        return apiClient(original); // retry
-      } catch (e) {
-        // refresh failed -> clear token and force login (avoid reload loop)
-        tokenManager.setAccessToken(null);
-        if (!hasLoggedOutMarker()) {
-          markLoggedOut();
-          try {
-            if (globalThis.window !== undefined) {
-              if (globalThis.location.pathname !== "/login") {
-                console.debug(
-                  "apiService: refresh failed, redirecting to /login",
-                );
-                globalThis.location.href = "/login";
-              }
-            }
-          } catch (err) {
-            console.debug(
-              "apiService: failed to redirect after refresh failure",
-              err,
-            );
-          }
-        }
-        throw e;
-      }
+    if (status !== 401 || original?._retry) {
+      throw error;
     }
 
-    throw error;
+    if (hasLoggedOutMarker()) {
+      tokenManager.setAccessToken(null);
+      throw error;
+    }
+
+    original._retry = true;
+
+    try {
+      const newToken = await ensureTokenRefreshInFlight();
+      if (hasLoggedOutMarker()) {
+        tokenManager.setAccessToken(null);
+        throw error;
+      }
+      original.headers = original.headers ?? {};
+      original.headers.Authorization = `Bearer ${newToken}`;
+      return apiClient(original); // retry
+    } catch (e) {
+      handleRefreshFailure(e);
+    }
   },
 );
 

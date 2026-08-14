@@ -79,12 +79,12 @@ export const downloadFlowAsImage = async ({
  */
 export const dataUrlToFile = (dataUrl: string, fileName: string): File => {
   const arr = dataUrl.split(",");
-  const mime = /:(.*?);/.exec(arr[0])?.[1] || "image/png";
+  const mime = /:([^:;]*);/.exec(arr[0])?.[1] || "image/png";
   const bstr = atob(arr[1]);
   let n = bstr.length;
   const u8arr = new Uint8Array(n);
   while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
+    u8arr[n] = bstr.codePointAt(n) ?? 0;
   }
   return new File([u8arr], fileName, { type: mime });
 };

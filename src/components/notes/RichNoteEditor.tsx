@@ -106,6 +106,25 @@ const AdvancedToolbar: React.FC<{
   </>
 );
 
+// Renders the advanced toolbar only when enabled.
+// Extracted out of the component body to keep RichNoteEditor's
+// cognitive complexity within the allowed threshold (rule typescript:S3776).
+const renderAdvancedToolbar = (
+  advanced: boolean,
+  editor: Editor,
+  currentHeading: number,
+  onHeadingChange: (lvl: number) => void,
+): JSX.Element | null => {
+  if (!advanced) return null;
+  return (
+    <AdvancedToolbar
+      editor={editor}
+      currentHeading={currentHeading}
+      onHeadingChange={onHeadingChange}
+    />
+  );
+};
+
 const RichNoteEditor: React.FC<RichNoteEditorProps> = ({
   value,
   onChange,
@@ -336,13 +355,12 @@ const RichNoteEditor: React.FC<RichNoteEditorProps> = ({
     </>
   );
 
-  const advButtons = advanced ? (
-    <AdvancedToolbar
-      editor={editor}
-      currentHeading={currentHeading}
-      onHeadingChange={handleHeadingChange}
-    />
-  ) : null;
+  const advButtons = renderAdvancedToolbar(
+    advanced,
+    editor,
+    currentHeading,
+    handleHeadingChange,
+  );
 
   return (
     <Box

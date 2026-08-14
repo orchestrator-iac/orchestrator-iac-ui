@@ -44,7 +44,7 @@ import ResourcesGallery from "./components/resources/ResourcesGallery";
 
 const SITE_URL = "https://orchestrator.next-zen.dev";
 
-const NO_HEADER_ROUTES = [
+const NO_HEADER_ROUTES = new Set([
   "/login",
   "/register",
   "/register-success",
@@ -54,7 +54,7 @@ const NO_HEADER_ROUTES = [
   "/night-sky",
   "/black-hole",
   "/update-password",
-];
+]);
 
 const MAESTRO_DISABLED_ROUTES = new Set([
   "/login",
@@ -120,7 +120,7 @@ const AppShell: React.FC<{
 }> = ({ isSplitView, splitWidth, isDragging }) => {
   const location = useLocation();
   const { token, isInitializing } = useAuth();
-  const hideHeader = NO_HEADER_ROUTES.includes(location.pathname);
+  const hideHeader = NO_HEADER_ROUTES.has(location.pathname);
   const showChatbot =
     !isInitializing && Boolean(token) && !isMaestroDisabledRoute(location.pathname);
 

@@ -76,7 +76,7 @@ const Register: React.FC = () => {
         job_role: form.job_role,
         password: form.password,
       });
-      navigate("/register-success");
+      navigate("/register-success", { state: { email: form.email } });
     } catch (err) {
       console.error("Registration failed:", err);
       setError(

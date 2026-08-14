@@ -136,84 +136,91 @@ const DynamicForm: React.FC<Props> = ({
     return typeof info === "string" ? parse(info) : info;
   };
 
-  // "from:nodes:resourceId=vpc" or "from:nodes:type=vpc" (generic)
-  // Enhanced to support conditional filtering based on context data
-  // Also supports "from:region:availability_zones" to generate AZs based on template region
-  const resolveOptions = (
-    options: any,
-    contextData?: Record<string, any>,
+  // Resolves "from:region:availability_zones" style options into AZ picker entries.
+  // Extracted out of resolveOptions to keep its cognitive complexity within the
+  // allowed threshold (rule typescript:S3776). Logic is unchanged from before.
+  const resolveRegionBasedOptions = (
+    options: string,
   ): { value: string; label: string; disabled?: boolean }[] | undefined => {
-    if (typeof options !== "string") return options;
+    const [, , optionType] = options.split(":");
 
-    // Handle region-based options (e.g., availability zones)
-    if (options.startsWith("from:region:")) {
-      const [, , optionType] = options.split(":");
+    if (optionType === "availability_zones") {
+      const cloud = templateInfo?.cloud;
+      const region = templateInfo?.region;
 
-      if (optionType === "availability_zones") {
-        const cloud = templateInfo?.cloud;
-        const region = templateInfo?.region;
+      if (!cloud || !region) return [];
 
-        if (!cloud || !region) return [];
+      // Get availability zones from the comprehensive mapping
+      const zones = availabilityZones[cloud]?.[region];
 
-        // Get availability zones from the comprehensive mapping
-        const zones = availabilityZones[cloud]?.[region];
+      if (!zones || zones.length === 0) {
+        // Fallback: generate default zones if mapping doesn't exist
+        const azSuffixes =
+          cloud === "azure"
+            ? ["1", "2", "3"]
+            : ["a", "b", "c", "d", "e", "f"];
 
-        if (!zones || zones.length === 0) {
-          // Fallback: generate default zones if mapping doesn't exist
-          const azSuffixes =
-            cloud === "azure"
-              ? ["1", "2", "3"]
-              : ["a", "b", "c", "d", "e", "f"];
-
-          return azSuffixes.map((suffix) => {
-            const separator = cloud === "azure" ? "-" : "";
-            const azCode = `${region}${separator}${suffix}`;
-            return {
-              value: azCode,
-              label: azCode,
-            };
-          });
-        }
-
-        // Return zones from mapping
-        return zones.map((zone) => ({
-          value: zone,
-          label: zone,
-        }));
+        return azSuffixes.map((suffix) => {
+          const separator = cloud === "azure" ? "-" : "";
+          const azCode = `${region}${separator}${suffix}`;
+          return {
+            value: azCode,
+            label: azCode,
+          };
+        });
       }
 
-      return undefined;
+      // Return zones from mapping
+      return zones.map((zone) => ({
+        value: zone,
+        label: zone,
+      }));
     }
 
-    if (!options.startsWith("from:nodes:")) return undefined;
+    return undefined;
+  };
 
+  // Determines the allowed canonical node types for a "from:nodes:" filter,
+  // supporting both static ("type=a|b") and context-driven ("type=${field}")
+  // filtering. Extracted out of resolveOptions for the same reason as above.
+  const computeAllowedTypes = (
+    k: string,
+    v: string,
+    contextData?: Record<string, any>,
+  ): string[] => {
+    if (k !== "resourceId" && k !== "type") return [];
+
+    // Handle conditional logic based on context data
+    if (v.includes("${") && contextData) {
+      // Dynamic filtering: e.g., "type=${target_type}" where target_type field contains the actual type value
+      const processedValue = v.replace(/\$\{([^}]+)\}/g, (_, fieldName) => {
+        const contextValue = contextData[fieldName];
+        if (!contextValue) return "";
+
+        // Direct mapping: use the field value as the type filter
+        // This supports both single values and pipe-separated values from the field
+        return String(contextValue);
+      });
+
+      return processedValue ? processedValue.split("|").filter(Boolean) : [];
+    }
+
+    // Static filtering: handle pipe-separated values like "internet_gateway|nat_gateway|..."
+    return v.split("|");
+  };
+
+  // Resolves "from:nodes:resourceId=..." / "from:nodes:type=..." style options
+  // into node picker entries. Extracted out of resolveOptions for the same
+  // reason as above.
+  const resolveNodeBasedOptions = (
+    options: string,
+    contextData?: Record<string, any>,
+  ): { value: string; label: string; disabled?: boolean }[] => {
     const [, , filter] = options.split(":"); // e.g., "resourceId=vpc" or "type=internet_gateway|nat_gateway"
     const [k, v] = filter.split("=");
 
     const nodes = allNodes ?? [];
-    let allowedTypes: string[] = [];
-
-    if (k === "resourceId" || k === "type") {
-      // Handle conditional logic based on context data
-      if (v.includes("${") && contextData) {
-        // Dynamic filtering: e.g., "type=${target_type}" where target_type field contains the actual type value
-        const processedValue = v.replace(/\$\{([^}]+)\}/g, (_, fieldName) => {
-          const contextValue = contextData[fieldName];
-          if (!contextValue) return "";
-
-          // Direct mapping: use the field value as the type filter
-          // This supports both single values and pipe-separated values from the field
-          return String(contextValue);
-        });
-
-        if (processedValue) {
-          allowedTypes = processedValue.split("|").filter(Boolean);
-        }
-      } else {
-        // Static filtering: handle pipe-separated values like "internet_gateway|nat_gateway|..."
-        allowedTypes = v.split("|");
-      }
-    }
+    const allowedTypes = computeAllowedTypes(k, v, contextData);
 
     const candidates = nodes.filter((n: any) => {
       const typeCode = n?.data?.__nodeType; // canonical domain type from resourceId
@@ -239,6 +246,25 @@ const DynamicForm: React.FC<Props> = ({
 
       return { value: String(n.id), label };
     });
+  };
+
+  // "from:nodes:resourceId=vpc" or "from:nodes:type=vpc" (generic)
+  // Enhanced to support conditional filtering based on context data
+  // Also supports "from:region:availability_zones" to generate AZs based on template region
+  const resolveOptions = (
+    options: any,
+    contextData?: Record<string, any>,
+  ): { value: string; label: string; disabled?: boolean }[] | undefined => {
+    if (typeof options !== "string") return options;
+
+    // Handle region-based options (e.g., availability zones)
+    if (options.startsWith("from:region:")) {
+      return resolveRegionBasedOptions(options);
+    }
+
+    if (!options.startsWith("from:nodes:")) return undefined;
+
+    return resolveNodeBasedOptions(options, contextData);
   };
 
   const renderField = (field: Field) => {

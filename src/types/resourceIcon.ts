@@ -105,6 +105,51 @@ const normalizeSearchMetadata = (
   };
 };
 
+/** Legacy shape: `{ type: "url", value: "..." }` instead of a plain `url` field. */
+const resolveLegacyUrlValue = (
+  candidate: Record<string, unknown>,
+): string | undefined => {
+  if (
+    typeof candidate.type === "string" &&
+    candidate.type.toLowerCase() === "url" &&
+    typeof candidate.value === "string" &&
+    candidate.value.trim()
+  ) {
+    return candidate.value;
+  }
+  return undefined;
+};
+
+const hasUsableVariant = (
+  entry: unknown,
+): entry is Record<string, unknown> => {
+  if (!entry || typeof entry !== "object") {
+    return false;
+  }
+  const variant = entry as Record<string, unknown>;
+  return Boolean(
+    normalizeSpriteRef(variant.sprite) ||
+      (typeof variant.url === "string" && variant.url.trim()),
+  );
+};
+
+/** Fills in `url`/`sprite`/`search` from the first usable entry of a variant array, if any. */
+const applyPreferredVariant = (
+  normalized: ResourceIconValue,
+  urlVariants: unknown[],
+): void => {
+  const preferredVariant = urlVariants.find(hasUsableVariant);
+  if (!preferredVariant) {
+    return;
+  }
+
+  if (!normalized.url && typeof preferredVariant.url === "string") {
+    normalized.url = preferredVariant.url;
+  }
+  normalized.sprite ??= normalizeSpriteRef(preferredVariant.sprite);
+  normalized.search ??= normalizeSearchMetadata(preferredVariant.search);
+};
+
 export const normalizeResourceIcon = (
   icon: unknown,
 ): ResourceIconValue | undefined => {
@@ -131,42 +176,15 @@ export const normalizeResourceIcon = (
     normalized.url = candidate.url;
   }
 
-  if (
-    !normalized.url &&
-    typeof candidate.type === "string" &&
-    candidate.type.toLowerCase() === "url" &&
-    typeof candidate.value === "string" &&
-    candidate.value.trim()
-  ) {
-    normalized.url = candidate.value;
+  if (!normalized.url) {
+    normalized.url = resolveLegacyUrlValue(candidate);
   }
 
   normalized.sprite = normalizeSpriteRef(candidate.sprite);
   normalized.search = normalizeSearchMetadata(candidate.search);
 
   if (Array.isArray(candidate.url)) {
-    const preferredVariant = candidate.url.find((entry) => {
-      if (!entry || typeof entry !== "object") {
-        return false;
-      }
-      const variant = entry as Record<string, unknown>;
-      return Boolean(
-        normalizeSpriteRef(variant.sprite) ||
-          (typeof variant.url === "string" && variant.url.trim()),
-      );
-    }) as Record<string, unknown> | undefined;
-
-    if (preferredVariant) {
-      if (!normalized.url && typeof preferredVariant.url === "string") {
-        normalized.url = preferredVariant.url;
-      }
-      if (!normalized.sprite) {
-        normalized.sprite = normalizeSpriteRef(preferredVariant.sprite);
-      }
-      if (!normalized.search) {
-        normalized.search = normalizeSearchMetadata(preferredVariant.search);
-      }
-    }
+    applyPreferredVariant(normalized, candidate.url);
   }
 
   if (!normalized.id && !normalized.url && !normalized.sprite) {
