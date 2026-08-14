@@ -2,49 +2,49 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
     <loc>https://orchestrator.next-zen.dev/</loc>
-    <lastmod>2026-08-13</lastmod>
+    <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 <url>
     <loc>https://orchestrator.next-zen.dev/templates</loc>
-    <lastmod>2026-08-13</lastmod>
+    <lastmod>2026-08-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 <url>
-    <loc>https://orchestrator.next-zen.dev/templates/d191f65e-b63c-422e-8d46-70f21e214d0a</loc>
-    <lastmod>2026-08-13</lastmod>
+    <loc>https://orchestrator.next-zen.dev/templates/36256853-4da3-4bd3-b76e-bf75095b544f</loc>
+    <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 <url>
-    <loc>https://orchestrator.next-zen.dev/templates/8a972630-0a13-41d6-9b23-06d48f0a6663</loc>
-    <lastmod>2026-08-13</lastmod>
+    <loc>https://orchestrator.next-zen.dev/templates/b5e0321a-8a2d-41ef-8f4f-d7d2c6d2da4f</loc>
+    <lastmod>2026-08-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+<url>
+    <loc>https://orchestrator.next-zen.dev/templates/08a2f28a-e5ce-4e3b-b22f-e0591ed3cc6e</loc>
+    <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 <url>
     <loc>https://orchestrator.next-zen.dev/templates/ad9465f2-3594-4cdb-82de-ab712ed1d4d7</loc>
-    <lastmod>2026-08-13</lastmod>
+    <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 <url>
-    <loc>https://orchestrator.next-zen.dev/templates/a608b27c-6bf5-4cc8-9bde-08a44b903f72</loc>
-    <lastmod>2026-08-13</lastmod>
+    <loc>https://orchestrator.next-zen.dev/templates/6593bf3e-0ec9-4573-948e-56ba4dadfd22</loc>
+    <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 <url>
-    <loc>https://orchestrator.next-zen.dev/templates/51585b66-713c-4b8b-9ffc-05f86f3803d2</loc>
-    <lastmod>2026-08-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-<url>
-    <loc>https://orchestrator.next-zen.dev/templates/a34e9e88-8038-4ef3-8d9d-1e13141b95c8</loc>
-    <lastmod>2026-08-13</lastmod>
+    <loc>https://orchestrator.next-zen.dev/templates/47dda769-d278-4ba2-baf1-be58cccb0957</loc>
+    <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
