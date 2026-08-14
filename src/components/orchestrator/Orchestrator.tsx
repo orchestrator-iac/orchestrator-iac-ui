@@ -51,7 +51,7 @@ import { useDnD } from "./sidebar/DnDContext";
 
 import { AppDispatch, RootState } from "../../store";
 import { fetchResourceById } from "../../store/resourceSlice";
-import { updateSession } from "../../store/chatSlice";
+import { updateSession, setCanvasContext } from "../../store/chatSlice";
 import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
 import { CloudConfig, CloudProvider } from "../../types/clouds-info";
@@ -502,6 +502,65 @@ const OrchestratorReactFlow: React.FC = () => {
     }
     return currentSnapshot !== baselineSnapshot;
   }, [baselineSnapshot, buildCurrentCanvasSnapshot]);
+
+  // Publish what's actually on the canvas so Maestro can answer questions
+  // about the current page even when this chat session hasn't generated a
+  // plan of its own (e.g. the user opened an existing/custom orchestrator
+  // directly). Keyed off nodes.length/edges.length rather than the arrays
+  // themselves for the same reason as the effects above: those lengths only
+  // change on add/remove, not on every keystroke while editing a resource.
+  useEffect(() => {
+    if (nodes.length === 0 && edges.length === 0 && !templateInfo.templateName) {
+      dispatch(setCanvasContext(null));
+      return;
+    }
+
+    const counts = new Map<string, number>();
+    nodes.forEach((node) => {
+      const label =
+        (node.data as any)?.header?.label ||
+        (node.data as any)?.__nodeType ||
+        "resource";
+      counts.set(label, (counts.get(label) || 0) + 1);
+    });
+    const resourceList = Array.from(counts.entries())
+      .map(([label, count]) => (count > 1 ? `${count}x ${label}` : label))
+      .join(", ");
+
+    const resourceSummary = resourceList
+      ? `${nodes.length} resource${nodes.length === 1 ? "" : "s"} on canvas: ${resourceList}.` +
+        (edges.length
+          ? ` ${edges.length} connection${edges.length === 1 ? "" : "s"} between them.`
+          : "")
+      : undefined;
+
+    dispatch(
+      setCanvasContext({
+        orchestratorId: currentOrchestratorId || (template_id !== "new" ? template_id : null),
+        templateType: template_type,
+        templateName: templateInfo.templateName || undefined,
+        cloudProvider: templateInfo.cloud,
+        resourceSummary,
+      }),
+    );
+  }, [
+    dispatch,
+    nodes.length,
+    edges.length,
+    templateInfo.templateName,
+    templateInfo.cloud,
+    currentOrchestratorId,
+    template_id,
+    template_type,
+  ]);
+
+  // Clear it on unmount so leaving the canvas doesn't leak stale context into
+  // Maestro conversations on other pages.
+  useEffect(() => {
+    return () => {
+      dispatch(setCanvasContext(null));
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
