@@ -19,6 +19,12 @@
     <priority>0.8</priority>
   </url>
 <url>
+    <loc>https://orchestrator.next-zen.dev/templates/d801ee5c-6d41-46a0-9bba-b027f143b07f</loc>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+<url>
     <loc>https://orchestrator.next-zen.dev/templates/36256853-4da3-4bd3-b76e-bf75095b544f</loc>
     <lastmod>2026-09-27</lastmod>
     <changefreq>weekly</changefreq>
@@ -44,6 +50,18 @@
   </url>
 <url>
     <loc>https://orchestrator.next-zen.dev/templates/6593bf3e-0ec9-4573-948e-56ba4dadfd22</loc>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+<url>
+    <loc>https://orchestrator.next-zen.dev/templates/53911f3d-004b-4945-b52f-cad33bc886b0</loc>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+<url>
+    <loc>https://orchestrator.next-zen.dev/templates/3389c31e-f97a-46d2-bcf4-cefb8487ad5e</loc>
     <lastmod>2026-09-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
