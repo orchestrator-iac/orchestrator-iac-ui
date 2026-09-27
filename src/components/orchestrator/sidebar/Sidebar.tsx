@@ -242,7 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
                 },
               }}
               className="dndnode"
-              onDragStart={(event) => onDragStart(event, resource._id)}
+              onDragStart={(event) => onDragStart(event, resource.resourceId)}
               draggable
             >
               <ResourceIconView

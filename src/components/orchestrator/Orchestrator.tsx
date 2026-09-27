@@ -1231,6 +1231,15 @@ const OrchestratorReactFlow: React.FC = () => {
 
       if (fetchResourceById.fulfilled.match(resultAction)) {
         const resourceData = resultAction.payload;
+        const resourceNode = resourceData?.data?.resourceNode;
+
+        if (!resourceNode?.data) {
+          console.error(
+            "Failed to add resource to canvas: resourceNode.data is missing.",
+            { resourceId: id },
+          );
+          return;
+        }
 
         const dropPosition = screenToFlowPosition({
           x: event.clientX,
@@ -1239,7 +1248,7 @@ const OrchestratorReactFlow: React.FC = () => {
 
         // node from backend
         let newNode: any = {
-          ...resourceData?.data?.resourceNode,
+          ...resourceNode,
           id: `${id}-${uuidv4()}`,
           position: dropPosition,
         };
