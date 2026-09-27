@@ -15,7 +15,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
-import { fetchResourceById } from "../../store/resourceSlice";
+import { fetchResourceByDocumentId } from "../../store/resourceSlice";
 import { useForm, FormProvider } from "react-hook-form";
 
 import BasicInfo from "./basic_info/BasicInfo";
@@ -115,7 +115,7 @@ const Resources: React.FC = () => {
 
   useEffect(() => {
     if (resource_id && resource_id !== "new") {
-      dispatch(fetchResourceById(resource_id));
+      dispatch(fetchResourceByDocumentId(resource_id));
     }
   }, [resource_id, dispatch]);
 

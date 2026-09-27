@@ -17,6 +17,15 @@ export const fetchResourceById = createAsyncThunk(
   },
 );
 
+/** Fetch a resource configuration by its internal document ID. */
+export const fetchResourceByDocumentId = createAsyncThunk(
+  "resource/fetchByDocumentId",
+  async (id: string) => {
+    const data = await apiService.get(`/configs/${encodeURIComponent(id)}`);
+    return { id, data };
+  },
+);
+
 interface ResourceState {
   resources: Record<string, any>;
   loading: boolean;
@@ -52,6 +61,18 @@ const resourceSlice = createSlice({
       .addCase(fetchResourceById.fulfilled, (state, action) => {
         state.loading = false;
         state.resources[action.payload.id] = action.payload.data;
+      })
+      .addCase(fetchResourceByDocumentId.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchResourceByDocumentId.fulfilled, (state, action) => {
+        state.loading = false;
+        state.resources[action.payload.id] = action.payload.data;
+      })
+      .addCase(fetchResourceByDocumentId.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch resource";
       })
       .addCase(fetchResourceById.rejected, (state, action) => {
         state.loading = false;
