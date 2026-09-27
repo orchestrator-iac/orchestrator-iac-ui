@@ -62,6 +62,7 @@ import {
   ReconciliationResult,
 } from "../../types/orchestrator";
 import { orchestratorService } from "../../services/orchestratorService";
+import { templateService } from "../../services/templateService";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
 import {
   fetchOrchestratorById,
@@ -793,6 +794,7 @@ const OrchestratorReactFlow: React.FC = () => {
     return window.localStorage.getItem(AUTO_SAVE_STORAGE_KEY) === "true";
   });
   const requestedOrchestratorIdsRef = useRef<Set<string>>(new Set());
+  const requestedTemplateIdsRef = useRef<Set<string>>(new Set());
   const loadedOrchestratorIdRef = useRef<string | null>(null);
   const routeLoadCountRef = useRef(0);
 
@@ -1665,6 +1667,40 @@ const OrchestratorReactFlow: React.FC = () => {
       return;
     }
 
+    if (isViewMode) {
+      if (requestedTemplateIdsRef.current.has(template_id)) {
+        return;
+      }
+
+      requestedTemplateIdsRef.current.add(template_id);
+      void runWithRouteLoading(async () => {
+        const template = await templateService.getTemplate(template_id);
+        const appliedTemplateInfo = normalizeTemplateInfo({
+          templateName: template.templateName,
+          description: template.description,
+          cloud: template.cloud,
+          region: template.region,
+        });
+
+        setCurrentOrchestratorId(null);
+        setPolicyScan(DEFAULT_POLICY_SCAN);
+        setMaestroReviewDraft(null);
+        setIsMaestroReviewDraftBannerDismissed(false);
+        setPendingMaestroDraft(null);
+        setReplaceDraftDialogOpen(false);
+
+        await loadSerializedGraph(
+          template.nodes || [],
+          template.edges || [],
+          appliedTemplateInfo,
+        );
+      }).catch((error) => {
+        requestedTemplateIdsRef.current.delete(template_id);
+        console.error("Failed to fetch template by id:", error);
+      });
+      return;
+    }
+
     const orchestratorData = orchestrators.find(
       (item) => item._id === template_id,
     );
@@ -1722,6 +1758,7 @@ const OrchestratorReactFlow: React.FC = () => {
     maestroDraftToken,
     orchestrators,
     runWithRouteLoading,
+    isViewMode,
     template_id,
     template_type,
   ]);

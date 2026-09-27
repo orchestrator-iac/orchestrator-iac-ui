@@ -779,7 +779,9 @@ const TemplateDetail: React.FC = () => {
 
   const handleViewInCanvas = () => {
     if (!template) return;
-    const dest = `/orchestrator/${template.orchestratorId}?template_type=template`;
+    // Public templates must be opened by template id. The source orchestrator
+    // belongs to the publishing user and is not readable by every viewer.
+    const dest = `/orchestrator/${template.id}?template_type=template`;
     if (!user) {
       navigate("/login", { state: { redirect: dest } });
       return;
