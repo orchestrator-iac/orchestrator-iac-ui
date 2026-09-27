@@ -947,7 +947,7 @@ const TemplatesSection: React.FC<{
 
   useEffect(() => {
     if (status === "idle")
-      dispatch(fetchTemplates({ page: 1, size: 3, sort: "popularity" }));
+      dispatch(fetchTemplates({ page: 1, size: 3, sort: "featured" }));
   }, [dispatch, status]);
 
   const rows = useMemo<PreviewTemplate[]>(() => {
