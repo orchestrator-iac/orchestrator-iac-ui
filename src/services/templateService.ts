@@ -37,7 +37,9 @@ export const templateService = {
     });
     if (search) queryParams.set("search", search);
 
-    const response = await apiService.get(`/templates?${queryParams.toString()}`);
+    const response = await apiService.get(
+      `/templates?${queryParams.toString()}`,
+    );
     return {
       ...response,
       templates: (response.templates || []).map(normalizeTemplate),
@@ -45,7 +47,10 @@ export const templateService = {
   },
 
   /** GET /templates/:id — public. Each call increments viewCount server-side. */
-  getTemplate: async (id: string, signal?: AbortSignal): Promise<TemplateDetail> => {
+  getTemplate: async (
+    id: string,
+    signal?: AbortSignal,
+  ): Promise<TemplateDetail> => {
     const response = await apiService.get(`/templates/${id}`, { signal });
     return normalizeTemplate(response);
   },

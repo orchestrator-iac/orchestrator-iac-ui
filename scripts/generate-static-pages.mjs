@@ -33,6 +33,10 @@ const distDir = join(__dirname, "..", "dist");
 const API_BASE = process.env.VITE_API_BASE_URL;
 const SITE_BASE =
   process.env.VITE_SITE_URL || "https://orchestrator.next-zen.dev";
+const LANDING_PREVIEW_TITLE =
+  "Visual Cloud Infrastructure Templates | Orchestrator";
+const LANDING_PREVIEW_DESCRIPTION =
+  "Design reusable AWS, Azure, and GCP infrastructure visually, review connected resources, and export Terraform with Orchestrator.";
 
 if (!API_BASE) {
   console.warn(
@@ -60,6 +64,7 @@ function stripBaseSeoTags(html) {
     /\n?\s*<meta property="og:description"[^>]*>\n?/i,
     /\n?\s*<meta property="og:url"[^>]*>\n?/i,
     /\n?\s*<meta property="og:type"[^>]*>\n?/i,
+    /\n?\s*<meta property="og:site_name"[^>]*>\n?/i,
     /\n?\s*<meta property="og:image"[^>]*>\n?/i,
     /\n?\s*<meta property="og:image:width"[^>]*>\n?/i,
     /\n?\s*<meta property="og:image:height"[^>]*>\n?/i,
@@ -77,7 +82,10 @@ function stripBaseSeoTags(html) {
  * Inject SEO tags into the SPA shell HTML.
  * Replaces the generic <title> and inserts <meta>/<link> tags before </head>.
  */
-function buildHtml(baseHtml, { title, description, url, image }) {
+function buildHtml(
+  baseHtml,
+  { title, description, url, image, structuredData },
+) {
   const tags = [
     `  <meta name="description" content="${esc(description)}">`,
     `  <meta name="robots" content="index, follow">`,
@@ -94,6 +102,9 @@ function buildHtml(baseHtml, { title, description, url, image }) {
     `  <meta name="twitter:description" content="${esc(description)}">`,
     image ? `  <meta name="twitter:image" content="${esc(image)}">` : "",
     `  <link rel="canonical" href="${esc(url)}">`,
+    structuredData
+      ? `  <script type="application/ld+json" data-seo="landing-preview">${JSON.stringify(structuredData).replaceAll("<", "\\u003c")}</script>`
+      : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -125,7 +136,9 @@ async function fetchAllTemplates() {
     const url = `${API_BASE}/templates?page=${page}&size=${size}&sort=newest`;
     const res = await fetch(url);
     if (!res.ok) {
-      console.warn(`[static-pages] API ${res.status} on page ${page} — stopping.`);
+      console.warn(
+        `[static-pages] API ${res.status} on page ${page} — stopping.`,
+      );
       break;
     }
     const data = await res.json();
@@ -148,7 +161,30 @@ async function fetchAllTemplates() {
 async function main() {
   const baseHtml = readFileSync(join(distDir, "index.html"), "utf-8");
 
-  // 1. /templates  — gallery page
+  // 1. /landing-preview — crawl-visible marketing page
+  writeRoute(
+    "landing-preview",
+    buildHtml(baseHtml, {
+      title: LANDING_PREVIEW_TITLE,
+      description: LANDING_PREVIEW_DESCRIPTION,
+      url: `${SITE_BASE}/landing-preview`,
+      image: `${SITE_BASE}/og-landing.png`,
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: LANDING_PREVIEW_TITLE,
+        description: LANDING_PREVIEW_DESCRIPTION,
+        url: `${SITE_BASE}/landing-preview`,
+        isPartOf: {
+          "@type": "WebSite",
+          name: "Orchestrator",
+          url: SITE_BASE,
+        },
+      },
+    }),
+  );
+
+  // 2. /templates  — gallery page
   writeRoute(
     "templates",
     buildHtml(baseHtml, {
@@ -160,7 +196,7 @@ async function main() {
     }),
   );
 
-  // 2. /templates/:id — one page per published template
+  // 3. /templates/:id — one page per published template
   if (!API_BASE) return;
 
   console.log("[static-pages] Fetching templates from", API_BASE);
@@ -187,7 +223,12 @@ async function main() {
 
     writeRoute(
       `templates/${id}`,
-      buildHtml(baseHtml, { title, description, url, image: doc.previewImage ?? null }),
+      buildHtml(baseHtml, {
+        title,
+        description,
+        url,
+        image: doc.previewImage ?? null,
+      }),
     );
   }
 
