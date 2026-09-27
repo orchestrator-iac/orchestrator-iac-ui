@@ -26,8 +26,6 @@ export interface TemplateListItem {
   nodeCount: number;
   edgeCount: number;
   previewImageUrl?: string;
-  featured?: boolean;
-  featuredOrder?: number;
   analytics: TemplateAnalytics;
   isPublished: boolean;
   publishedAt?: string;

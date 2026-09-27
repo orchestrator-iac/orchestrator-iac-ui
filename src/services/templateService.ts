@@ -12,7 +12,7 @@ export interface ListTemplatesParams {
   page?: number;
   size?: number;
   search?: string;
-  sort?: "popularity" | "newest" | "featured";
+  sort?: "popularity" | "newest";
 }
 
 const normalizeTemplate = <T extends Record<string, any>>(raw: T): T => ({
