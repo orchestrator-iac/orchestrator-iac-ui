@@ -38,6 +38,7 @@ import NightSky from "./components/shared/night-sky/NightSky";
 import UpdatePassword from "./components/auth/login/UpdatePassword";
 import Chatbot from "./components/chatbot/Chatbot";
 import LandingPage from "./components/landing/LandingPage";
+import LandingPreviewPage from "./components/landing-preview/LandingPreviewPage";
 import TemplatesGallery from "./components/templates/TemplatesGallery";
 import TemplateDetail from "./components/templates/TemplateDetail";
 import ResourcesGallery from "./components/resources/ResourcesGallery";
@@ -54,6 +55,7 @@ const NO_HEADER_ROUTES = new Set([
   "/night-sky",
   "/black-hole",
   "/update-password",
+  "/landing-preview",
 ]);
 
 const MAESTRO_DISABLED_ROUTES = new Set([
@@ -64,6 +66,7 @@ const MAESTRO_DISABLED_ROUTES = new Set([
   "/night-sky",
   "/black-hole",
   "/update-password",
+  "/landing-preview",
 ]);
 
 const isMaestroDisabledRoute = (pathname: string) =>
@@ -170,6 +173,7 @@ const AppShell: React.FC<{
           <Routes>
             <Route path="/" element={<Layout />}>
                 <Route index element={<LandingPage />} />
+                <Route path="landing-preview" element={<LandingPreviewPage />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
                 <Route
