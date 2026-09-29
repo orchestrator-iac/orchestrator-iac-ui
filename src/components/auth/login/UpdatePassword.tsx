@@ -1,8 +1,16 @@
 import { useState } from "react";
-import { TextField, Button, Typography, Box } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  IconButton,
+  InputAdornment,
+  TextField,
+} from "@mui/material";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { updatePassword } from "../../../services/auth";
-import NightSky from "../../shared/night-sky/NightSky";
+import AuthFrame from "../AuthFrame";
 
 interface UpdatePasswordRequest {
   token: string | null;
@@ -15,6 +23,8 @@ export default function UpdatePassword() {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -27,6 +37,11 @@ export default function UpdatePassword() {
 
     if (!newPassword || !confirmPassword) {
       setError("Please fill in all fields.");
+      return;
+    }
+
+    if (!token) {
+      setError("This password reset link is missing or invalid.");
       return;
     }
 
@@ -53,67 +68,124 @@ export default function UpdatePassword() {
   };
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="100vh"
+    <AuthFrame
+      mode="recovery"
+      title="Choose a new password"
+      description="Set a new password for your Orchestrator account, then return to your workspace."
+      alternatePrompt="Need another reset link?"
+      alternateLabel="Request one"
+      alternateTo="/email-verification/forgot"
     >
-      <NightSky />
+      {error && (
+        <Alert
+          className="auth-error"
+          severity="error"
+          onClose={() => setError("")}
+        >
+          {error}
+        </Alert>
+      )}
+      {success && (
+        <Alert className="auth-success" severity="success">
+          {success}
+        </Alert>
+      )}
+
       <Box
-        sx={{
-          p: 4,
-          zIndex: 2,
-          maxWidth: 400,
-          width: "100%",
-          borderRadius: 2,
-          backgroundColor: "background.default",
+        component="form"
+        className="auth-form"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSubmit();
         }}
       >
-        <Typography variant="h5" gutterBottom>
-          Update Password
-        </Typography>
-
         <TextField
           fullWidth
-          type="password"
+          type={showPassword ? "text" : "password"}
           label="New Password"
-          margin="normal"
           value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
+          onChange={(event) => setNewPassword(event.target.value)}
+          autoComplete="new-password"
+          required
+          slotProps={{
+            htmlInput: {
+              "aria-label": "New password",
+              "aria-required": "true",
+            },
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    onClick={() => setShowPassword((value) => !value)}
+                    edge="end"
+                    size="small"
+                  >
+                    <FontAwesomeIcon
+                      icon={showPassword ? "eye-slash" : "eye"}
+                      style={{ fontSize: "0.85rem" }}
+                    />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
         />
-
         <TextField
           fullWidth
-          type="password"
+          type={showConfirmPassword ? "text" : "password"}
           label="Confirm Password"
-          margin="normal"
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          autoComplete="new-password"
+          required
+          slotProps={{
+            htmlInput: {
+              "aria-label": "Confirm password",
+              "aria-required": "true",
+            },
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                    onClick={() => setShowConfirmPassword((value) => !value)}
+                    edge="end"
+                    size="small"
+                  >
+                    <FontAwesomeIcon
+                      icon={showConfirmPassword ? "eye-slash" : "eye"}
+                      style={{ fontSize: "0.85rem" }}
+                    />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
         />
-
-        {error && (
-          <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-            {error}
-          </Typography>
-        )}
-
-        {success && (
-          <Typography color="success.main" variant="body2" sx={{ mt: 1 }}>
-            {success}
-          </Typography>
-        )}
-
         <Button
+          type="submit"
           variant="contained"
           fullWidth
-          sx={{ mt: 2 }}
-          onClick={handleSubmit}
           disabled={loading}
+          startIcon={
+            loading ? (
+              <FontAwesomeIcon
+                icon="spinner"
+                spin
+                style={{ fontSize: "0.9rem" }}
+              />
+            ) : undefined
+          }
         >
-          {loading ? "Updating..." : "Update Password"}
+          {loading ? "Updating…" : "Update password"}
         </Button>
       </Box>
-    </Box>
+    </AuthFrame>
   );
 }

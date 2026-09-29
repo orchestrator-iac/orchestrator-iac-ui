@@ -34,7 +34,6 @@ import Profile from "./components/auth/profile/Profile";
 import ConfirmEmail from "./components/auth/ConfirmEmail";
 import NotFound from "./components/shared/NotFound";
 import ResendEmailForm from "./components/auth/ResendEmailForm";
-import NightSky from "./components/shared/night-sky/NightSky";
 import UpdatePassword from "./components/auth/login/UpdatePassword";
 import Chatbot from "./components/chatbot/Chatbot";
 import LandingPage from "./components/landing/LandingPage";
@@ -53,7 +52,6 @@ const NO_HEADER_ROUTES = new Set([
   "/confirm",
   "/email-verification/forgot",
   "/email-verification/verify",
-  "/night-sky",
   "/black-hole",
   "/update-password",
   "/landing-preview",
@@ -65,7 +63,6 @@ const MAESTRO_DISABLED_ROUTES = new Set([
   "/register",
   "/register-success",
   "/confirm",
-  "/night-sky",
   "/black-hole",
   "/update-password",
   "/landing-preview",
@@ -81,7 +78,6 @@ const PRIVATE_ROUTES = new Set([
   "/register-success",
   "/confirm",
   "/update-password",
-  "/night-sky",
   "/black-hole",
   "/profile",
   "/resources",
@@ -188,7 +184,6 @@ const AppShell: React.FC<{
                   element={<RegisterSuccessPage />}
                 />
                 <Route path="confirm" element={<ConfirmEmail />} />
-                <Route path="night-sky" element={<NightSky />} />
                 <Route path="update-password" element={<UpdatePassword />} />
                 <Route
                   path="email-verification/:type"
