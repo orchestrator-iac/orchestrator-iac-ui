@@ -155,16 +155,19 @@
 }
 
 .galleryLayout {
+  --gallery-panel-height: min(760px, calc(100vh - 250px));
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr);
-  align-items: start;
+  align-items: stretch;
   gap: var(--product-space-7);
   padding-top: var(--product-space-6);
 }
 
 .galleryIndex {
+  box-sizing: border-box;
   min-width: 0;
-  max-height: min(760px, calc(100vh - 250px));
+  height: var(--gallery-panel-height);
+  max-height: none;
   overflow-y: auto;
   padding-right: var(--product-space-2);
   scrollbar-color: var(--product-line) transparent;
@@ -307,11 +310,13 @@
 }
 
 .galleryPreview {
+  box-sizing: border-box;
   position: sticky;
   top: 88px;
   display: grid;
-  grid-template-rows: auto minmax(180px, 30vh) auto;
-  max-height: calc(100vh - 112px);
+  grid-template-rows: auto minmax(180px, 1fr) auto;
+  height: var(--gallery-panel-height);
+  max-height: none;
   overflow: hidden;
   border: 1px solid var(--product-line);
   border-radius: var(--product-radius-preview);
@@ -1042,6 +1047,7 @@
   }
 
   .galleryIndex {
+    height: auto;
     max-height: none;
     overflow: visible;
     padding-right: 0;
@@ -1049,6 +1055,7 @@
 
   .galleryPreview {
     position: static;
+    height: auto;
     max-height: none;
     width: 100%;
   }
