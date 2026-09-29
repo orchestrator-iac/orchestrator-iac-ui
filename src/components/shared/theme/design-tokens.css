@@ -1,0 +1,88 @@
+/*
+ * Product design tokens
+ *
+ * These values are intentionally semantic rather than component-specific.
+ * The landing preview is the first surface consuming them; other product
+ * surfaces can adopt the same vocabulary without copying a page palette.
+ */
+:root {
+  color-scheme: light;
+
+  --product-bg: #f3f0e8;
+  --product-surface: #faf8f2;
+  --product-surface-raised: #ebe5d8;
+  --product-surface-deep: #e2dacb;
+  --product-text: #292822;
+  --product-text-muted: #767267;
+  --product-text-subtle: #a6a092;
+  --product-ink: #2f3029;
+  --product-line: rgba(63, 59, 49, 0.2);
+  --product-line-subtle: rgba(63, 59, 49, 0.1);
+  --product-accent: #6f7451;
+  --product-accent-strong: #4f573c;
+  --product-accent-soft: rgba(111, 116, 81, 0.1);
+  --product-warm: #a27658;
+  --product-focus: #6f7451;
+  --product-connection: rgba(79, 87, 60, 0.68);
+  --product-button-text: #faf8f2;
+  --product-glow-warm: rgba(162, 118, 88, 0.08);
+  --product-glow-cool: rgba(111, 116, 81, 0.08);
+  --product-texture-opacity: 0.16;
+  --product-texture-blend: multiply;
+  --product-shadow: rgba(69, 62, 50, 0.08);
+  --product-shadow-strong: rgba(69, 62, 50, 0.16);
+  --product-shape-slab-border: #6f7451;
+  --product-shape-slab-start: #b3b596;
+  --product-shape-slab-end: #737b56;
+  --product-shape-cube-border: #865d43;
+  --product-shape-cube-start: #c49a79;
+  --product-shape-cube-end: #936c51;
+  --product-shape-cylinder-border: #90897a;
+  --product-shape-cylinder-start: #c4bfb1;
+  --product-shape-cylinder-mid: #8f897c;
+  --product-shape-boundary: rgba(111, 116, 81, 0.12);
+  --product-cta-stone-one: #989283;
+  --product-cta-stone-two: #a47759;
+  --product-cta-stone-three: #777d59;
+}
+
+body[data-theme="dark"] {
+  color-scheme: dark;
+
+  --product-bg: #101513;
+  --product-surface: #171e1a;
+  --product-surface-raised: #202a23;
+  --product-surface-deep: #29342b;
+  --product-text: #f1efe7;
+  --product-text-muted: #aeb5a8;
+  --product-text-subtle: #7f8b80;
+  --product-ink: #e0e6db;
+  --product-line: rgba(230, 235, 222, 0.2);
+  --product-line-subtle: rgba(230, 235, 222, 0.11);
+  --product-accent: #a8b57d;
+  --product-accent-strong: #c1d395;
+  --product-accent-soft: rgba(168, 181, 125, 0.14);
+  --product-warm: #d29872;
+  --product-focus: #c1d395;
+  --product-connection: rgba(193, 211, 149, 0.72);
+  --product-button-text: #121812;
+  --product-glow-warm: rgba(210, 152, 114, 0.1);
+  --product-glow-cool: rgba(168, 181, 125, 0.1);
+  --product-texture-opacity: 0.07;
+  --product-texture-blend: screen;
+  --product-shadow: rgba(0, 0, 0, 0.24);
+  --product-shadow-strong: rgba(0, 0, 0, 0.42);
+  --product-shape-slab-border: #b6c995;
+  --product-shape-slab-start: #a9b486;
+  --product-shape-slab-end: #65734f;
+  --product-shape-cube-border: #d7a481;
+  --product-shape-cube-start: #ce9572;
+  --product-shape-cube-end: #956047;
+  --product-shape-cylinder-border: #b9c0aa;
+  --product-shape-cylinder-start: #c9c9b5;
+  --product-shape-cylinder-mid: #7f8979;
+  --product-shape-boundary: rgba(168, 181, 125, 0.15);
+  --product-cta-stone-one: #768277;
+  --product-cta-stone-two: #a8755b;
+  --product-cta-stone-three: #8d9a68;
+}

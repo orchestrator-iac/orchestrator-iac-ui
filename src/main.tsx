@@ -21,6 +21,7 @@ import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/ext-searchbox";
 import "ace-builds/src-noconflict/ext-beautify";
 import "./index.css";
+import "./components/shared/theme/design-tokens.css";
 
 ace.config.setModuleUrl("ace/mode/json_worker", workerJsonUrl);
 ace.config.setModuleUrl("ace/mode/javascript_worker", workerJavascriptUrl);

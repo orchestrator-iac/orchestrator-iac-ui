@@ -8,6 +8,7 @@ import NorthEastIcon from "@mui/icons-material/NorthEast";
 import { fetchTemplates } from "../../store/templatesSlice";
 import type { AppDispatch, RootState } from "../../store";
 import type { TemplateListItem } from "../../types/template";
+import MinimalThemeToggle from "../shared/theme/MinimalThemeToggle";
 import awsLogo from "../../assets/aws_logo.svg";
 import azureLogo from "../../assets/az_logo.svg";
 import gcpLogo from "../../assets/gcp_logo.svg";
@@ -738,6 +739,11 @@ const PreviewHeader: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
           <img src="/one-color-teal-print.svg" alt="" aria-hidden="true" />
           <span>Orchestrator</span>
         </a>
+
+        <span className="preview-theme-control">
+          <span className="preview-theme-label">Theme</span>
+          <MinimalThemeToggle size="small" />
+        </span>
 
         <button
           className="preview-menu-button"
