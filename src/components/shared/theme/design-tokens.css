@@ -8,6 +8,25 @@
 :root {
   color-scheme: light;
 
+  /* Shared product geometry and type tokens. Keep page-specific layouts on
+     these semantic values so new surfaces can inherit the same rhythm. */
+  --product-content-width: 1440px;
+  --product-reading-width: 72ch;
+  --product-space-1: 4px;
+  --product-space-2: 8px;
+  --product-space-3: 12px;
+  --product-space-4: 16px;
+  --product-space-5: 24px;
+  --product-space-6: 32px;
+  --product-space-7: 48px;
+  --product-radius-control: 10px;
+  --product-radius-surface: 16px;
+  --product-radius-preview: 20px;
+  --product-control-height: 44px;
+  --product-label-spacing: 0.14em;
+  --product-display-font: Georgia, "Times New Roman", serif;
+  --product-mono-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   --product-bg: #f3f0e8;
   --product-surface: #faf8f2;
   --product-surface-raised: #ebe5d8;

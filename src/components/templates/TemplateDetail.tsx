@@ -403,7 +403,8 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
 
   return (
     <>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+      <Box className={styles.detailPreview}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
         <Box
           sx={{
             width: 5,
@@ -414,6 +415,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
           }}
         />
         <Typography
+          className={styles.detailSectionHeading}
           variant="subtitle2"
           sx={{
             fontWeight: 800,
@@ -425,10 +427,10 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
         >
           Canvas Preview
         </Typography>
-      </Box>
+        </Box>
       <Box
         sx={{
-          mb: 4,
+          mb: 0,
           position: "relative",
           minHeight: 480,
           maxHeight: 620,
@@ -552,6 +554,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
           </Button>
         </Box>
       </Box>
+      </Box>
     </>
   );
 };
@@ -579,6 +582,7 @@ const TemplateReadmeSection: React.FC<TemplateReadmeSectionProps> = ({
           }}
         />
         <Typography
+          className={styles.detailSectionHeading}
           variant="subtitle2"
           sx={{
             fontWeight: 800,
@@ -852,10 +856,11 @@ const TemplateDetail: React.FC = () => {
   return (
     <Fade in={showContent} timeout={600}>
       <Box
-        sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: 4 }}
+        className={styles.detailPage}
       >
         {/* Header: title + meta LEFT — stats + actions RIGHT */}
         <Box
+          className={styles.detailHero}
           sx={{
             display: "flex",
             alignItems: "flex-start",
@@ -865,7 +870,7 @@ const TemplateDetail: React.FC = () => {
           }}
         >
           {/* Left: title + description */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box className={styles.detailHeroCopy} sx={{ flex: 1, minWidth: 0 }}>
             {/* Breadcrumb */}
             <Box
               component="nav"
@@ -905,6 +910,7 @@ const TemplateDetail: React.FC = () => {
               />
               <Typography
                 variant="h4"
+                className={styles.detailTitle}
                 sx={{
                   fontWeight: 800,
                   letterSpacing: "-0.04em",
@@ -922,6 +928,7 @@ const TemplateDetail: React.FC = () => {
 
             <Typography
               variant="body1"
+              className={styles.detailDescription}
               sx={{ color: "text.secondary", mb: 1.5 }}
             >
               {template.description}
@@ -930,6 +937,7 @@ const TemplateDetail: React.FC = () => {
 
           {/* Right: meta + stats + like + use template + owner actions */}
           <Box
+            className={styles.detailActions}
             sx={{
               display: "flex",
               flexDirection: "column",
