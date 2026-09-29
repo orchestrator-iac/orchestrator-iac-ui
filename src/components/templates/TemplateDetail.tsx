@@ -407,61 +407,49 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
   return (
     <>
       <Box className={styles.detailPreview}>
-        <Box className={styles.detailSectionHeader} sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
         <Box
-          sx={{
-            width: 5,
-            height: 28,
-            borderRadius: 2,
-            background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.25)})`,
-            flexShrink: 0,
-          }}
-        />
-        <Typography
-          className={styles.detailSectionHeading}
-          variant="subtitle2"
-          sx={{
-            fontWeight: 800,
-            color: theme.palette.primary.main,
-            textTransform: "uppercase",
-            fontSize: "0.78rem",
-            letterSpacing: "0.14em",
-          }}
+          className={styles.detailSectionHeader}
+          sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
         >
-          Canvas Preview
-        </Typography>
-        <Button
-          className={styles.detailPreviewHeaderButton}
-          variant="outlined"
-          onClick={onOpenPreview}
-          startIcon={<FontAwesomeIcon icon="up-right-from-square" aria-hidden="true" />}
-        >
-          {user ? "Preview" : "Login to preview"}
-        </Button>
+          <Typography
+            className={styles.detailSectionHeading}
+            component="h2"
+            variant="h5"
+          >
+            Canvas preview
+          </Typography>
+          <Button
+            className={styles.detailPreviewHeaderButton}
+            variant="outlined"
+            onClick={onOpenPreview}
+            startIcon={<FontAwesomeIcon icon="up-right-from-square" aria-hidden="true" />}
+          >
+            {user ? "Preview" : "Login to preview"}
+          </Button>
         </Box>
-      <Box
-        className={styles.detailPreviewFrame}
-        sx={{
-          mb: 0,
-          position: "relative",
-          minHeight: 480,
-          maxHeight: 620,
-          borderRadius: 4,
-          overflow: "hidden",
-          background: isDark
-            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`
-            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, ${alpha(theme.palette.secondary.main, 0.06)} 100%)`,
-          border: "1.5px solid",
-          borderColor: alpha(theme.palette.primary.main, 0.25),
-          boxShadow: isDark
-            ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}, 0 24px 60px rgba(0,0,0,0.35)`
-            : `0 0 0 1px ${alpha(theme.palette.primary.main, 0.06)}, 0 20px 50px rgba(0,0,0,0.1)`,
+        <Box
+          className={styles.detailPreviewFrame}
+          sx={{
+            mb: 0,
+            position: "relative",
+            minHeight: 480,
+            maxHeight: 620,
+            borderRadius: 4,
+            overflow: "hidden",
+            background: isDark
+              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`
+              : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, ${alpha(theme.palette.secondary.main, 0.06)} 100%)`,
+            border: "1.5px solid",
+            borderColor: alpha(theme.palette.primary.main, 0.25),
+            boxShadow: isDark
+              ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}, 0 24px 60px rgba(0,0,0,0.35)`
+              : `0 0 0 1px ${alpha(theme.palette.primary.main, 0.06)}, 0 20px 50px rgba(0,0,0,0.1)`,
 
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
         {/* Preview image */}
         {template.previewImageUrl ? (
           <Box
@@ -569,7 +557,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
             {user ? "Preview (Read Only)" : "Login to Preview"}
           </Button>
         </Box>
-      </Box>
+        </Box>
       </Box>
     </>
   );
@@ -583,48 +571,23 @@ const TemplateReadmeSection: React.FC<TemplateReadmeSectionProps> = ({
   readme,
 }) => {
   const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
 
   return (
-    <>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-        <Box
-          sx={{
-            width: 5,
-            height: 28,
-            borderRadius: 2,
-            background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.25)})`,
-            flexShrink: 0,
-          }}
-        />
+    <Box className={styles.detailReadmeSection}>
+      <Box
+        className={styles.detailSectionHeader}
+        sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
+      >
         <Typography
           className={styles.detailSectionHeading}
-          variant="subtitle2"
-          sx={{
-            fontWeight: 800,
-            color: theme.palette.primary.main,
-            textTransform: "uppercase",
-            fontSize: "0.78rem",
-            letterSpacing: "0.14em",
-          }}
+          component="h2"
+          variant="h5"
         >
           README
         </Typography>
       </Box>
       <Box
         className={styles.readmeContent}
-        sx={{
-          background: isDark
-            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, rgba(0,0,0,0) 60%)`
-            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.025)} 0%, ${alpha(theme.palette.common.white, 0)} 60%)`,
-          border: "1.5px solid",
-          borderColor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.1),
-          borderRadius: 4,
-          p: { xs: 3, sm: 4 },
-          minHeight: 220,
-          mb: 4,
-          boxShadow: `inset 0 1px 0 ${alpha(theme.palette.primary.main, 0.08)}`,
-        }}
       >
         {readme ? (
           <Box
@@ -664,7 +627,7 @@ const TemplateReadmeSection: React.FC<TemplateReadmeSectionProps> = ({
           </Box>
         )}
       </Box>
-    </>
+    </Box>
   );
 };
 
@@ -925,20 +888,14 @@ const TemplateDetail: React.FC = () => {
                 aria-hidden="true"
                 style={{ fontSize: "0.6rem", opacity: 0.4 }}
               />
-              <Typography
-                variant="h4"
-                className={styles.detailTitle}
-                sx={{
-                  fontWeight: 800,
-                  letterSpacing: "-0.04em",
-                  mb: 0.5,
-                  lineHeight: 1.15,
-                  fontSize: { xs: "1.75rem", sm: "2rem", md: "2.25rem" },
-                }}
-              >
-                {template.templateName}
-              </Typography>
             </Box>
+
+            <Typography
+              variant="h1"
+              className={styles.detailTitle}
+            >
+              {template.templateName}
+            </Typography>
 
             {/* Meta row */}
             <TemplateMetaRow template={template} />
@@ -967,7 +924,10 @@ const TemplateDetail: React.FC = () => {
             <TemplateStatsRow template={template} likeCount={likeCount} />
 
             {/* Like + Use Template */}
-            <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+            <Box
+              className={styles.detailActionRow}
+              sx={{ display: "flex", gap: 1.5, alignItems: "center" }}
+            >
               <TemplateLikeButton
                 liked={liked}
                 likeLoading={likeLoading}
