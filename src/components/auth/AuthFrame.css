@@ -287,7 +287,8 @@ body[data-theme="dark"] .auth-brand img {
 }
 
 .auth-shell--login .auth-form-surface {
-  padding-block: 16px;
+  margin: 0 auto;
+  padding: clamp(40px, 6vh, 48px) 0 20px;
 }
 
 .auth-shell--login .auth-form-header {
