@@ -16,17 +16,18 @@
 }
 
 .pageHeaderCopy {
-  max-width: 760px;
+  min-width: 0;
 }
 
 .pageHeaderTitle {
   margin: 0;
   color: var(--product-text);
   font-family: var(--product-display-font) !important;
-  font-size: clamp(2.8rem, 6vw, 5.5rem) !important;
+  font-size: clamp(3rem, 5vw, 5.5rem) !important;
   font-weight: 400 !important;
   letter-spacing: -0.055em !important;
   line-height: 0.94 !important;
+  white-space: nowrap;
 }
 
 .pageHeaderDescription {
@@ -1100,6 +1101,10 @@
   .pageHeaderTitle,
   .detailTitle {
     font-size: clamp(2.6rem, 14vw, 4rem);
+  }
+
+  .pageHeaderTitle {
+    white-space: normal;
   }
 
   .detailSectionHeader {
