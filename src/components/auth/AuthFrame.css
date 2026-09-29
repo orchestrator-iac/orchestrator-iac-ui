@@ -12,10 +12,11 @@
   --auth-accent-soft: var(--product-accent-soft);
   --auth-focus: var(--product-focus);
   --auth-shadow: var(--product-shadow);
+  height: 100svh;
   min-height: 100svh;
   display: grid;
   grid-template-columns: minmax(360px, 0.92fr) minmax(520px, 1.08fr);
-  overflow: hidden;
+  overflow: clip;
   background:
     radial-gradient(circle at 70% 12%, var(--product-glow-cool), transparent 32%),
     var(--auth-bg);
@@ -25,6 +26,8 @@
 .auth-rail {
   position: relative;
   display: flex;
+  height: 100%;
+  min-height: 0;
   min-height: 100svh;
   flex-direction: column;
   justify-content: space-between;
@@ -237,16 +240,23 @@ body[data-theme="dark"] .auth-brand img {
 
 .auth-form-column {
   display: flex;
+  height: 100%;
+  min-height: 0;
   min-width: 0;
   flex-direction: column;
+  overflow-y: auto;
   padding: clamp(24px, 4vw, 56px) clamp(24px, 7vw, 112px);
+  scrollbar-width: none;
+}
+
+.auth-form-column::-webkit-scrollbar {
+  display: none;
 }
 
 .auth-form-column__topline {
   gap: 20px;
 }
 
-.auth-back-link,
 .auth-form-switch a,
 .auth-text-link {
   color: var(--auth-muted);
@@ -255,8 +265,6 @@ body[data-theme="dark"] .auth-brand img {
   text-decoration: none;
 }
 
-.auth-back-link:hover,
-.auth-back-link:focus-visible,
 .auth-form-switch a:hover,
 .auth-form-switch a:focus-visible,
 .auth-text-link:hover,
@@ -276,6 +284,26 @@ body[data-theme="dark"] .auth-brand img {
   max-width: 560px;
   margin: auto;
   padding: clamp(40px, 7vh, 88px) 0;
+}
+
+.auth-shell--login .auth-form-surface {
+  padding-block: 16px;
+}
+
+.auth-shell--login .auth-form-header {
+  margin-bottom: 20px;
+}
+
+.auth-shell--login .auth-form {
+  gap: 10px;
+}
+
+.auth-shell--login .auth-form .MuiDivider-root {
+  margin-block: 16px;
+}
+
+.auth-shell--login .auth-form-switch {
+  margin-top: 18px;
 }
 
 .auth-form-header {
@@ -459,6 +487,7 @@ body[data-theme="dark"] .auth-brand img {
 
   .auth-rail {
     min-height: auto;
+    height: auto;
     padding: 22px 24px 28px;
     border-right: 0;
     border-bottom: 1px solid var(--auth-line);
@@ -488,6 +517,8 @@ body[data-theme="dark"] .auth-brand img {
   }
 
   .auth-form-column {
+    height: auto;
+    min-height: 0;
     padding: 0 24px 32px;
   }
 
