@@ -429,6 +429,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
         </Typography>
         </Box>
       <Box
+        className={styles.detailPreviewFrame}
         sx={{
           mb: 0,
           position: "relative",
@@ -465,6 +466,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
           />
         ) : (
           <Box
+            className={styles.detailPreviewFallback}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -494,6 +496,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
 
         {/* Gradient overlay */}
         <Box
+          className={styles.detailPreviewOverlay}
           sx={{
             position: "absolute",
             inset: 0,
@@ -506,6 +509,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
 
         {/* Open button */}
         <Box
+          className={styles.detailPreviewAction}
           sx={{
             position: "absolute",
             bottom: 24,
@@ -514,6 +518,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
           }}
         >
           <Button
+            className={styles.detailPreviewButton}
             variant="contained"
             size="medium"
             onClick={onOpenPreview}
@@ -875,6 +880,7 @@ const TemplateDetail: React.FC = () => {
             <Box
               component="nav"
               aria-label="Breadcrumb"
+              className={styles.detailBreadcrumb}
               sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 2 }}
             >
               <Button
