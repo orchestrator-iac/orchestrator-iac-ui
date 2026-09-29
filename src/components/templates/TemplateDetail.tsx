@@ -152,7 +152,7 @@ const TemplateStatsRow: React.FC<TemplateStatsRowProps> = ({
   template,
   likeCount,
 }) => (
-  <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+  <Box className={styles.detailStats} sx={{ display: "flex", gap: 2, alignItems: "center" }}>
     {[
       {
         icon: "eye",
@@ -168,6 +168,7 @@ const TemplateStatsRow: React.FC<TemplateStatsRowProps> = ({
     ].map(({ icon, val, label }) => (
       <Box
         key={label}
+        className={styles.detailStat}
         aria-label={`${val} ${label}`}
         sx={{
           textAlign: "center",
@@ -233,6 +234,7 @@ const TemplateLikeButton: React.FC<TemplateLikeButtonProps> = ({
     <Tooltip title={likeTooltip}>
       <span>
         <IconButton
+          className={styles.detailLikeButton}
           onClick={onLike}
           disabled={likeLoading}
           aria-label={likeAriaLabel}
@@ -293,6 +295,7 @@ const TemplateUseButton: React.FC<TemplateUseButtonProps> = ({
     <Tooltip title="Creates your own editable copy" arrow>
       <span>
         <Button
+          className={styles.detailUseButton}
           variant="contained"
           size="large"
           onClick={onUseTemplate}
@@ -353,7 +356,7 @@ const TemplateOwnerActions: React.FC<TemplateOwnerActionsProps> = ({
   onEditClick,
   onUnpublishClick,
 }) => (
-  <Box sx={{ display: "flex", gap: 1 }}>
+  <Box className={styles.detailOwnerActions} sx={{ display: "flex", gap: 1 }}>
     <Button
       variant="outlined"
       size="small"
@@ -404,7 +407,7 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
   return (
     <>
       <Box className={styles.detailPreview}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+        <Box className={styles.detailSectionHeader} sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
         <Box
           sx={{
             width: 5,
@@ -427,6 +430,14 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
         >
           Canvas Preview
         </Typography>
+        <Button
+          className={styles.detailPreviewHeaderButton}
+          variant="outlined"
+          onClick={onOpenPreview}
+          startIcon={<FontAwesomeIcon icon="up-right-from-square" aria-hidden="true" />}
+        >
+          {user ? "Preview" : "Login to preview"}
+        </Button>
         </Box>
       <Box
         className={styles.detailPreviewFrame}

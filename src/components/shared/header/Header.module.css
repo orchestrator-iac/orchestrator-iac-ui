@@ -1,27 +1,133 @@
 /* Header.module.css */
 .appBar {
   box-shadow: none !important;
+  background: var(--product-bg) !important;
+  background-image: none !important;
+  color: var(--product-text) !important;
+  border-bottom: 1px solid var(--product-line-subtle) !important;
 }
 
 .toolbar {
+  width: min(var(--product-content-width), calc(100% - 48px));
+  min-height: 68px !important;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 24px !important;
+  padding: 0 !important;
 }
 
 .logo {
   display: flex;
   align-items: center;
+  gap: 10px;
   text-decoration: none;
-  font-weight: 600;
+  color: var(--product-text) !important;
+  font-family: var(--product-mono-font);
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+  letter-spacing: var(--product-label-spacing) !important;
   text-transform: uppercase;
+  transition: color 180ms ease;
+}
+
+.logo:hover {
+  color: var(--product-accent-strong) !important;
+}
+
+.logo img {
+  width: 62px !important;
+  height: 38px !important;
+  object-fit: contain;
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
+}
+
+.controls > button,
+.chromeButton {
+  width: 38px;
+  height: 38px;
+  padding: 0 !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  color: var(--product-text) !important;
+  background: transparent !important;
+  transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease !important;
+}
+
+.controls > button:hover,
+.chromeButton:hover {
+  border-color: var(--product-accent) !important;
+  color: var(--product-accent-strong) !important;
+  background: var(--product-accent-soft) !important;
+}
+
+.controls > button:focus-visible,
+.chromeButton:focus-visible {
+  outline: 2px solid var(--product-focus);
+  outline-offset: 3px;
+}
+
+.menuPaper {
+  min-width: 276px !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-surface) !important;
+  background: var(--product-surface) !important;
+  box-shadow: 0 24px 60px var(--product-shadow-strong) !important;
+}
+
+.menuPaper::before {
+  display: none !important;
+}
+
+.menuPaper :global(.MuiMenu-list) {
+  padding: 0 !important;
+  background: var(--product-surface) !important;
+}
+
+.menuHeading {
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--product-line-subtle);
+  color: var(--product-text-subtle);
+  font-family: var(--product-mono-font);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: var(--product-label-spacing);
+  text-transform: uppercase;
+}
+
+.menuItem {
+  min-height: 58px !important;
+  padding: 11px 18px !important;
+  gap: 12px !important;
+  color: var(--product-text) !important;
+}
+
+.menuItem:hover {
+  background: var(--product-accent-soft) !important;
+}
+
+.menuItem :global(.MuiListItemIcon-root) {
+  min-width: 24px;
+  color: var(--product-accent-strong);
+}
+
+.menuItem :global(.MuiListItemText-primary) {
+  color: var(--product-text);
+  font-family: var(--product-mono-font);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.menuItem :global(.MuiListItemText-secondary) {
+  color: var(--product-text-muted);
+  line-height: 1.4;
 }
 
 .controlItem {
@@ -36,6 +142,43 @@
 }
 
 .switchLabel {
-  color: var(--text1);
+  color: var(--product-text);
   font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .toolbar {
+    width: min(100% - 32px, var(--product-content-width));
+  }
+
+  .logo {
+    font-size: 0.66rem !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .logo img {
+    width: 52px !important;
+    height: 34px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .toolbar {
+    width: min(100% - 24px, var(--product-content-width));
+  }
+
+  .logo {
+    gap: 6px;
+    font-size: 0.58rem !important;
+  }
+
+  .controls {
+    gap: 5px;
+  }
+
+  .controls > button,
+  .chromeButton {
+    width: 34px;
+    height: 34px;
+  }
 }
