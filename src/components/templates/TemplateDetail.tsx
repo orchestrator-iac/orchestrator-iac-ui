@@ -77,11 +77,6 @@ const getLikeAriaLabel = (hasUser: boolean, liked: boolean): string => {
   return liked ? "Unlike this template" : "Like this template";
 };
 
-const getLikeBorderColor = (liked: boolean, isDarkMode: boolean): string => {
-  if (!liked) return "divider";
-  return isDarkMode ? "rgba(255,100,120,0.5)" : "rgba(220,50,80,0.4)";
-};
-
 // ── Small presentational subcomponents extracted from TemplateDetail's JSX.
 // Each keeps its own (small) branching logic in its own function scope. ──
 
@@ -224,7 +219,6 @@ const TemplateLikeButton: React.FC<TemplateLikeButtonProps> = ({
   likeLoading,
   onLike,
 }) => {
-  const theme = useTheme();
   const { user } = useAuth();
   const hasUser = !!user;
   const likeTooltip = getLikeTooltip(hasUser, liked);
@@ -234,33 +228,17 @@ const TemplateLikeButton: React.FC<TemplateLikeButtonProps> = ({
     <Tooltip title={likeTooltip}>
       <span>
         <IconButton
-          className={styles.detailLikeButton}
+          className={`${styles.detailLikeButton} ${liked ? styles.detailLikeButtonLiked : ""}`}
           onClick={onLike}
           disabled={likeLoading}
           aria-label={likeAriaLabel}
           aria-pressed={liked}
           sx={{
             borderRadius: 2,
-            border: "1px solid",
-            borderColor: getLikeBorderColor(liked, theme.palette.mode === "dark"),
-            color: liked ? "error.main" : "text.secondary",
-            backgroundColor: liked
-              ? alpha(theme.palette.error.main, 0.06)
-              : "transparent",
             gap: 0.75,
             px: 1.5,
             py: 0.85,
             transition: "all 0.2s",
-            "&:hover": {
-              color: "error.main",
-              borderColor: "error.main",
-              backgroundColor: alpha(theme.palette.error.main, 0.06),
-            },
-            "&:focus-visible": {
-              outline: "2px solid",
-              outlineColor: "error.main",
-              outlineOffset: 2,
-            },
           }}
         >
           <FontAwesomeIcon
@@ -432,8 +410,8 @@ const TemplateCanvasPreview: React.FC<TemplateCanvasPreviewProps> = ({
           sx={{
             mb: 0,
             position: "relative",
-            minHeight: 480,
-            maxHeight: 620,
+            minHeight: 0,
+            maxHeight: "none",
             borderRadius: 4,
             overflow: "hidden",
             background: isDark
@@ -952,16 +930,14 @@ const TemplateDetail: React.FC = () => {
 
         <Divider sx={{ mb: 3 }} />
 
-        {/* Canvas Preview — static image + open button */}
-        <TemplateCanvasPreview
-          template={template}
-          onOpenPreview={handleViewInCanvas}
-        />
-
-        <Divider sx={{ mb: 3 }} />
-
-        {/* README — full width */}
-        <TemplateReadmeSection readme={template.readme} />
+        {/* Primary artifact + supporting documentation */}
+        <Box className={styles.detailContentLayout}>
+          <TemplateCanvasPreview
+            template={template}
+            onOpenPreview={handleViewInCanvas}
+          />
+          <TemplateReadmeSection readme={template.readme} />
+        </Box>
 
         {/* Edit dialog (owner only) */}
         {isOwner && editDialogOpen && (

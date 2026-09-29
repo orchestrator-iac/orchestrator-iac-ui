@@ -713,10 +713,22 @@
   color: var(--product-text-muted) !important;
 }
 
-.detailLikeButton:hover {
-  border-color: var(--product-warm) !important;
-  color: var(--product-warm) !important;
-  background: var(--product-accent-soft) !important;
+.detailLikeButtonLiked {
+  border-color: var(--product-like) !important;
+  color: var(--product-like) !important;
+  background: var(--product-like-soft) !important;
+}
+
+.detailLikeButton:hover,
+.detailLikeButtonLiked:hover {
+  border-color: var(--product-like) !important;
+  color: var(--product-like) !important;
+  background: var(--product-like-soft) !important;
+}
+
+.detailLikeButton:focus-visible {
+  outline: 2px solid var(--product-like);
+  outline-offset: 2px;
 }
 
 .detailUseButton {
@@ -745,8 +757,17 @@
   border-color: var(--product-line-subtle) !important;
 }
 
+.detailContentLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.2fr) minmax(300px, 1fr);
+  align-items: start;
+  gap: var(--product-space-7);
+  margin: var(--product-space-6) 0 var(--product-space-7);
+}
+
 .detailPreview {
-  margin: var(--product-space-7) 0 var(--product-space-7);
+  min-width: 0;
+  margin: 0;
 }
 
 .detailSectionHeader {
@@ -792,25 +813,9 @@
   display: none;
 }
 
-.detailPreview > div:nth-child(2) {
-  min-height: clamp(320px, 48vw, 620px) !important;
-  max-height: none !important;
-  border-radius: var(--product-radius-preview) !important;
-  border: 1px solid var(--product-line) !important;
-  background: var(--product-surface-raised) !important;
-  box-shadow: 0 24px 60px var(--product-shadow) !important;
-}
-
-.detailPreview > div:nth-child(2) > div[style*="linear-gradient"] {
-  background: linear-gradient(
-    to bottom,
-    transparent 45%,
-    var(--product-shadow-strong) 100%
-  ) !important;
-}
-
 .detailPreviewFrame {
-  min-height: clamp(320px, 48vw, 620px) !important;
+  aspect-ratio: 2040 / 990;
+  min-height: 0 !important;
   max-height: none !important;
   border-radius: var(--product-radius-preview) !important;
   border: 1px solid var(--product-line) !important;
@@ -839,8 +844,8 @@
 }
 
 .detailReadmeSection {
-  max-width: var(--product-reading-width);
-  margin: 0 auto;
+  min-width: 0;
+  margin: 0;
 }
 
 .readmeContent {
@@ -939,8 +944,23 @@
     gap: var(--product-space-5);
   }
 
+  .detailContentLayout {
+    gap: var(--product-space-5);
+  }
+
   .galleryPreview {
     top: 72px;
+  }
+}
+
+@media (max-width: 900px) {
+  .detailContentLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .detailReadmeSection {
+    max-width: var(--product-reading-width);
+    margin-inline: auto;
   }
 }
 

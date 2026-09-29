@@ -40,6 +40,8 @@
   --product-accent: #6f7451;
   --product-accent-strong: #4f573c;
   --product-accent-soft: rgba(111, 116, 81, 0.1);
+  --product-like: #a44751;
+  --product-like-soft: rgba(164, 71, 81, 0.1);
   --product-warm: #a27658;
   --product-focus: #6f7451;
   --product-connection: rgba(79, 87, 60, 0.68);
@@ -81,6 +83,8 @@ body[data-theme="dark"] {
   --product-accent: #a8b57d;
   --product-accent-strong: #c1d395;
   --product-accent-soft: rgba(168, 181, 125, 0.14);
+  --product-like: #ef9aa4;
+  --product-like-soft: rgba(239, 154, 164, 0.16);
   --product-warm: #d29872;
   --product-focus: #c1d395;
   --product-connection: rgba(193, 211, 149, 0.72);
