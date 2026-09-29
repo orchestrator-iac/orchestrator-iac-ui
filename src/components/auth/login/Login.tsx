@@ -193,7 +193,7 @@ const Login: React.FC = () => {
             onError={onGoogleError}
             theme={isDark ? "filled_black" : "outline"}
             size="large"
-            width="100%"
+            width={400}
             text="signin_with"
           />
         </Box>

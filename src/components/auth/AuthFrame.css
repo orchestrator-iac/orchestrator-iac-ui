@@ -448,14 +448,17 @@ body[data-theme="dark"] .auth-brand img {
 .auth-google {
   display: flex;
   justify-content: center;
+  width: 100%;
   min-height: 44px;
 }
 
 .auth-google > div {
-  width: 100%;
+  width: min(100%, 400px);
+  margin: 0 auto;
 }
 
 .auth-google iframe {
+  width: 100% !important;
   max-width: 100%;
 }
 
