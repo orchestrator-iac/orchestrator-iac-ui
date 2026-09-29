@@ -6,10 +6,8 @@ import {
   Typography,
   Skeleton,
   Fade,
-  Chip,
   InputAdornment,
   TextField,
-  alpha,
   Tooltip,
   IconButton,
   Button,
@@ -18,7 +16,6 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../store";
@@ -121,22 +118,14 @@ const HomeSearchBar: React.FC<HomeSearchBarProps> = ({
   canViewTemplates,
   canViewResources,
 }) => {
-  const theme = useTheme();
   const navigate = useNavigate();
 
   return (
     <Fade in={showContent} timeout={600}>
       <Box
         component="search"
+        className={styles.workspaceSearch}
         aria-label="Search orchestrators"
-        sx={{
-          mb: 4,
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 2,
-          alignItems: { xs: "stretch", md: "center" },
-          justifyContent: "space-between",
-        }}
       >
         <TextField
           placeholder="Search orchestrators…"
@@ -145,30 +134,7 @@ const HomeSearchBar: React.FC<HomeSearchBarProps> = ({
           variant="outlined"
           size="small"
           data-tour="home-search"
-          sx={{
-            flex: { xs: "1", md: "0 1 420px" },
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 3,
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? alpha(theme.palette.common.white, 0.03)
-                  : alpha(theme.palette.common.black, 0.02),
-              transition: "all 0.2s ease",
-              "&:hover": {
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha(theme.palette.common.white, 0.05)
-                    : alpha(theme.palette.common.black, 0.04),
-              },
-              "&.Mui-focused": {
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? alpha(theme.palette.common.white, 0.07)
-                    : theme.palette.common.white,
-                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
-              },
-            },
-          }}
+          className={styles.workspaceSearchInput}
           slotProps={{
             htmlInput: {
               "aria-label": "Search orchestrators",
@@ -186,78 +152,38 @@ const HomeSearchBar: React.FC<HomeSearchBarProps> = ({
             },
           }}
         />
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+        <Box
+          component="nav"
+          aria-label="Workspace areas"
+          className={styles.workspaceLinks}
+        >
           {canViewOrchestrators && (
-            <Chip
-              icon={
-                <FontAwesomeIcon
-                  icon="sitemap"
-                  aria-hidden="true"
-                  style={{ fontSize: "0.85rem", paddingRight: 1 }}
-                />
-              }
-              label={`${orchestratorsCount} Orchestrators`}
-              size="small"
-              sx={{
-                fontWeight: 600,
-                px: 0.5,
-                backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
-                color: theme.palette.secondary.main,
-                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-              }}
-            />
+            <span className={styles.workspaceCount}>
+              <FontAwesomeIcon icon="sitemap" aria-hidden="true" />
+              {orchestratorsCount} orchestrators
+            </span>
           )}
           {canViewTemplates && (
-            <Chip
-              icon={
-                <FontAwesomeIcon
-                  icon="layer-group"
-                  aria-hidden="true"
-                  style={{ fontSize: "0.85rem", paddingRight: 1 }}
-                />
-              }
-              label="Templates"
-              size="small"
+            <button
+              type="button"
+              className={styles.workspaceLink}
               onClick={() => navigate("/templates")}
               data-tour="home-templates-chip"
-              sx={{
-                fontWeight: 600,
-                px: 0.5,
-                backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
-                color: theme.palette.secondary.main,
-                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
-                cursor: "pointer",
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-              }}
-            />
+            >
+              <FontAwesomeIcon icon="layer-group" aria-hidden="true" />
+              Templates
+            </button>
           )}
           {canViewResources && (
-            <Chip
-              icon={
-                <FontAwesomeIcon
-                  icon="cube"
-                  aria-hidden="true"
-                  style={{ fontSize: "0.85rem", paddingRight: 1 }}
-                />
-              }
-              label="Resources"
-              size="small"
+            <button
+              type="button"
+              className={styles.workspaceLink}
               onClick={() => navigate("/resources")}
               data-tour="home-resources-chip"
-              sx={{
-                fontWeight: 600,
-                px: 0.5,
-                backgroundColor: alpha(theme.palette.tertiary.main, 0.24),
-                color: theme.palette.secondary.main,
-                border: `1px solid ${alpha(theme.palette.tertiary.main, 0.48)}`,
-                cursor: "pointer",
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-              }}
-            />
+            >
+              <FontAwesomeIcon icon="cube" aria-hidden="true" />
+              Resources
+            </button>
           )}
         </Box>
       </Box>
@@ -286,8 +212,6 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
   onScrollRight,
   onSelect,
 }) => {
-  const theme = useTheme();
-
   return (
     <Box
       component="section"
@@ -299,45 +223,19 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
         id="home-top-templates-heading"
         variant="h5"
         className={styles.insightHeading}
-        sx={{
-          fontWeight: 700,
-          mb: 1,
-          textTransform: "uppercase",
-          color: theme.palette.secondary.main,
-          letterSpacing: "0.1em",
-        }}
       >
         Start from a template
       </Typography>
-      <Box sx={{ position: "relative" }}>
+      <Box className={styles.carouselFrame}>
         {!loading && templates.length > 4 && (
           <IconButton
             aria-label="Previous templates"
             size="small"
             onClick={onScrollLeft}
             disabled={!canScrollLeft}
-            sx={{
-              position: "absolute",
-              left: 6,
-              top: "50%",
-              transform: "translateY(-50%)",
-              zIndex: 10,
-              boxShadow: 1,
-              p: 0.6,
-              height: 50,
-              width: 50,
-              opacity: 0.9,
-              backgroundColor: theme.palette.background.paper,
-              "&:hover": {
-                opacity: 1,
-                backgroundColor: theme.palette.background.paper,
-              },
-            }}
+            className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
           >
-            <FontAwesomeIcon
-              icon="chevron-left"
-              style={{ fontSize: "1.5rem" }}
-            />
+            <FontAwesomeIcon icon="chevron-left" aria-hidden="true" />
           </IconButton>
         )}
         {!loading && templates.length > 4 && (
@@ -346,47 +244,16 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
             size="small"
             onClick={onScrollRight}
             disabled={!canScrollRight}
-            sx={{
-              position: "absolute",
-              right: 6,
-              top: "50%",
-              transform: "translateY(-50%)",
-              zIndex: 10,
-              boxShadow: 1,
-              p: 0.6,
-              height: 50,
-              width: 50,
-              opacity: 0.9,
-              backgroundColor: theme.palette.background.paper,
-              "&:hover": {
-                opacity: 1,
-                backgroundColor: theme.palette.background.paper,
-              },
-            }}
+            className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
           >
-            <FontAwesomeIcon
-              icon="chevron-right"
-              style={{ fontSize: "1.5rem" }}
-            />
+            <FontAwesomeIcon icon="chevron-right" aria-hidden="true" />
           </IconButton>
         )}
 
-        <Box
-          ref={scrollRef}
-          sx={{
-            display: "flex",
-            gap: 1,
-            overflowX: "auto",
-            scrollBehavior: "smooth",
-            pb: 0.5,
-            "&::-webkit-scrollbar": { display: "none" },
-            msOverflowStyle: "none",
-            scrollbarWidth: "none",
-          }}
-        >
+        <Box ref={scrollRef} className={styles.carouselViewport}>
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
-                <Box key={`tmpl-skel-${i}`} sx={{ width: 250, p: 1 }}>
+                <Box key={`tmpl-skel-${i}`} className={styles.insightSkeleton}>
                   <Skeleton variant="rectangular" height={150} />
                   <Skeleton variant="text" />
                   <Skeleton variant="text" />
@@ -395,22 +262,8 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
             : templates.map((t) => (
                 <Box
                   key={t.id}
-                  className={styles.templateInsightCard}
                   onClick={() => onSelect(t.id)}
-                  sx={{
-                    minWidth: 250,
-                    p: 1,
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    cursor: "pointer",
-                    transition:
-                      "box-shadow 0.2s ease, border-color 0.2s ease",
-                    "&:hover": {
-                      borderColor: "primary.main",
-                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-                    },
-                  }}
+                  className={styles.templateInsightCard}
                 >
                   {t.previewImageUrl ? (
                     <img
@@ -419,18 +272,27 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
                       className={styles.templateInsightImage}
                     />
                   ) : (
-                    <Box className={styles.templateInsightPlaceholder} aria-hidden="true">
+                    <Box
+                      className={styles.templateInsightPlaceholder}
+                      aria-hidden="true"
+                    >
                       <FontAwesomeIcon icon="sitemap" />
                     </Box>
                   )}
-                  <Typography variant="body2" className={styles.templateInsightTitle}>
+                  <Typography
+                    variant="body2"
+                    className={styles.templateInsightTitle}
+                  >
                     {t.templateName}
                   </Typography>
                   <Typography
                     variant="caption"
                     className={styles.templateInsightMeta}
                   >
-                    {(t.cloud || "Cloud").toUpperCase()} · {t.nodeCount || 0} resources · {t.analytics?.usageCount || t.analytics?.viewCount || 0} uses
+                    {(t.cloud || "Cloud").toUpperCase()} · {t.nodeCount || 0}{" "}
+                    resources ·{" "}
+                    {t.analytics?.usageCount || t.analytics?.viewCount || 0}{" "}
+                    uses
                   </Typography>
                 </Box>
               ))}
@@ -461,8 +323,6 @@ const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
   onScrollRight,
   onSelect,
 }) => {
-  const theme = useTheme();
-
   return (
     <Box
       component="section"
@@ -472,45 +332,20 @@ const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
       <Typography
         id="home-top-resources-heading"
         variant="h5"
-        sx={{
-          fontWeight: 700,
-          mb: 1,
-          textTransform: "uppercase",
-          color: theme.palette.secondary.main,
-          letterSpacing: "0.1em",
-        }}
+        className={styles.insightHeading}
       >
         Top Resources
       </Typography>
-      <Box sx={{ position: "relative" }}>
+      <Box className={styles.carouselFrame}>
         {!loading && resources.length > 0 && (
           <IconButton
             aria-label="Previous resources"
             size="small"
             onClick={onScrollLeft}
             disabled={!canScrollLeft}
-            sx={{
-              position: "absolute",
-              left: 6,
-              top: "50%",
-              transform: "translateY(-50%)",
-              zIndex: 10,
-              boxShadow: 1,
-              p: 0.6,
-              height: 50,
-              width: 50,
-              opacity: 0.9,
-              backgroundColor: theme.palette.background.paper,
-              "&:hover": {
-                opacity: 1,
-                backgroundColor: theme.palette.background.paper,
-              },
-            }}
+            className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
           >
-            <FontAwesomeIcon
-              icon="chevron-left"
-              style={{ fontSize: "1.5rem" }}
-            />
+            <FontAwesomeIcon icon="chevron-left" aria-hidden="true" />
           </IconButton>
         )}
         {!loading && resources.length > 6 && (
@@ -519,47 +354,16 @@ const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
             size="small"
             onClick={onScrollRight}
             disabled={!canScrollRight}
-            sx={{
-              position: "absolute",
-              right: 6,
-              top: "50%",
-              transform: "translateY(-50%)",
-              zIndex: 10,
-              boxShadow: 1,
-              p: 0.6,
-              height: 50,
-              width: 50,
-              opacity: 0.9,
-              backgroundColor: theme.palette.background.paper,
-              "&:hover": {
-                opacity: 1,
-                backgroundColor: theme.palette.background.paper,
-              },
-            }}
+            className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
           >
-            <FontAwesomeIcon
-              icon="chevron-right"
-              style={{ fontSize: "1.5rem" }}
-            />
+            <FontAwesomeIcon icon="chevron-right" aria-hidden="true" />
           </IconButton>
         )}
 
-        <Box
-          ref={scrollRef}
-          sx={{
-            display: "flex",
-            gap: 1,
-            overflowX: "auto",
-            scrollBehavior: "smooth",
-            pb: 0.5,
-            "&::-webkit-scrollbar": { display: "none" },
-            msOverflowStyle: "none",
-            scrollbarWidth: "none",
-          }}
-        >
+        <Box ref={scrollRef} className={styles.carouselViewport}>
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
-                <Box key={`res-skel-${i}`} sx={{ width: 250, p: 1 }}>
+                <Box key={`res-skel-${i}`} className={styles.insightSkeleton}>
                   <Skeleton variant="rectangular" height={150} />
                   <Skeleton variant="text" />
                   <Skeleton variant="text" />
@@ -569,47 +373,26 @@ const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
                 <Box
                   key={r.resourceId}
                   onClick={() => onSelect(r._id || r.resourceId)}
-                  sx={{
-                    minWidth: 200,
-                    p: 1,
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    cursor: "pointer",
-                    transition:
-                      "box-shadow 0.2s ease, border-color 0.2s ease",
-                    "&:hover": {
-                      borderColor: "primary.main",
-                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-                    },
-                  }}
+                  className={`${styles.resourceInsightCard} ${styles.insightClickable}`}
                 >
                   {hasRenderableResourceIcon(r.resourceIcon) ? (
                     <ResourceIconView
                       icon={r.resourceIcon}
                       alt={r.resourceName || r.resourceId}
-                      sx={{
-                        width: "100%",
-                        height: 150,
-                        display: "block",
-                        objectFit: "cover",
-                      }}
+                      className={styles.resourceInsightImage}
                     />
                   ) : (
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: 150,
-                        backgroundColor: "divider",
-                      }}
-                    />
+                    <Box className={styles.resourceInsightPlaceholder} />
                   )}
-                  <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
+                  <Typography
+                    variant="body2"
+                    className={styles.resourceInsightTitle}
+                  >
                     {r.resourceName || r.resourceId}
                   </Typography>
                   <Typography
                     variant="caption"
-                    sx={{ color: "text.secondary" }}
+                    className={styles.resourceInsightMeta}
                   >
                     {r.count} uses
                   </Typography>
@@ -666,10 +449,14 @@ const HomeInsightsSection: React.FC<HomeInsightsSectionProps> = ({
 
   return (
     <Fade in={showContent} timeout={700}>
-      <Box component="section" data-tour="home-top-sections" sx={{ mb: 3 }}>
-        <Grid container columns={{ xs: 4, sm: 8, md: 12 }} spacing={2}>
+      <Box
+        component="section"
+        data-tour="home-top-sections"
+        className={styles.insightsSection}
+      >
+        <Box className={styles.insightsGrid}>
           {(loadingInsights || topTemplates.length > 0) && (
-            <Grid>
+            <Box>
               <HomeTopTemplatesCarousel
                 templates={topTemplates}
                 loading={loadingInsights}
@@ -680,10 +467,10 @@ const HomeInsightsSection: React.FC<HomeInsightsSectionProps> = ({
                 onScrollRight={() => onScrollTemplates(1)}
                 onSelect={onSelectTemplate}
               />
-            </Grid>
+            </Box>
           )}
-          {(loadingInsights || topResources.length > 6) && (
-            <Grid>
+          {(loadingInsights || topResources.length > 0) && (
+            <Box>
               <HomeTopResourcesCarousel
                 resources={topResources}
                 loading={loadingInsights}
@@ -694,9 +481,9 @@ const HomeInsightsSection: React.FC<HomeInsightsSectionProps> = ({
                 onScrollRight={() => onScrollResources(1)}
                 onSelect={onSelectResource}
               />
-            </Grid>
+            </Box>
           )}
-        </Grid>
+        </Box>
       </Box>
     </Fade>
   );
@@ -719,10 +506,8 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
   onPublishClick,
   onUnpublishClick,
 }) => {
-  const theme = useTheme();
-
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box className={styles.orchestratorCardShell}>
       <Fade in={showContent} timeout={1000 + index * 100}>
         <Box className={styles.card} onClick={() => onOpen(orchestrator._id)}>
           <CardLogo
@@ -737,41 +522,12 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
               className={styles.orchestratorCardImage}
             />
           ) : (
-            <Box
-              className={styles.orchestratorCardImage}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "2.5rem",
-                color: alpha(theme.palette.primary.main, 0.5),
-                backgroundColor: alpha(theme.palette.primary.main, 0.04),
-              }}
-            >
+            <Box className={styles.orchestratorCardImage} aria-hidden="true">
               <FontAwesomeIcon icon="sitemap" />
             </Box>
           )}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 1.5,
-              mt: 1.5,
-              mb: 0.75,
-            }}
-          >
-            <Typography
-              variant="h6"
-              className={styles.cardTitle}
-              sx={{
-                fontWeight: 600,
-                fontSize: "1.1rem",
-                flex: 1,
-                minWidth: 0,
-                mb: 0,
-              }}
-            >
+          <Box className={styles.cardHeader}>
+            <Typography variant="h6" className={styles.cardTitle}>
               <Link
                 to={`/orchestrator/${orchestrator._id}`}
                 style={{
@@ -784,15 +540,7 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
                   "Unnamed Orchestrator"}
               </Link>
             </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 0.5,
-                alignItems: "center",
-                flexShrink: 0,
-                mt: -0.25,
-              }}
-            >
+            <Box className={styles.cardActions}>
               <Tooltip
                 title={
                   orchestrator.templateId
@@ -812,28 +560,7 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
                       e.stopPropagation();
                       onPublishClick(orchestrator);
                     }}
-                    sx={{
-                      color: orchestrator.templateId
-                        ? theme.palette.primary.main
-                        : "text.secondary",
-                      fontSize: "0.8rem",
-                      p: 0.5,
-                      borderRadius: 1.5,
-                      opacity: orchestrator.templateId ? 1 : 0.55,
-                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        opacity: 1,
-                        backgroundColor: alpha(
-                          theme.palette.primary.main,
-                          0.2,
-                        ),
-                      },
-                      "&:focus-visible": {
-                        outline: `2px solid ${theme.palette.primary.main}`,
-                        outlineOffset: 2,
-                      },
-                    }}
+                    className={styles.cardAction}
                   >
                     <FontAwesomeIcon
                       aria-hidden="true"
@@ -852,27 +579,7 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
                         e.stopPropagation();
                         onUnpublishClick(orchestrator);
                       }}
-                      sx={{
-                        color: "text.secondary",
-                        fontSize: "0.8rem",
-                        p: 0.5,
-                        borderRadius: 1.5,
-                        opacity: 0.5,
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          opacity: 1,
-                          color: "error.main",
-                          backgroundColor: alpha(
-                            theme.palette.error.main,
-                            0.08,
-                          ),
-                        },
-                        "&:focus-visible": {
-                          outline: "2px solid",
-                          outlineColor: "error.main",
-                          outlineOffset: 2,
-                        },
-                      }}
+                      className={`${styles.cardAction} ${styles.cardActionDanger}`}
                     >
                       <FontAwesomeIcon aria-hidden="true" icon="eye-slash" />
                     </IconButton>
@@ -881,37 +588,11 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
               )}
             </Box>
           </Box>
-          <Typography
-            variant="body2"
-            className={styles.cardDescription}
-            sx={{ mb: 1.5, lineHeight: 1.5 }}
-          >
+          <Typography variant="body2" className={styles.cardDescription}>
             {orchestrator.templateInfo?.description || "No description"}
           </Typography>
-          <Box
-            component="code"
-            sx={{
-              fontSize: "0.8rem",
-              color: "text.secondary",
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? "rgba(255, 255, 255, 0.05)"
-                  : "rgba(0, 0, 0, 0.04)",
-              px: 1.5,
-              py: 0.75,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 1.5,
-            }}
-          >
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
+          <Box component="code" className={styles.cardMeta}>
+            <Box className={styles.cardMetaItem}>
               <FontAwesomeIcon
                 icon="circle-nodes"
                 style={{ fontSize: "0.75rem" }}
@@ -934,14 +615,7 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
               }
               arrow
             >
-              <Box
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <Box className={styles.cardMetaItem}>
                 {orchestrator.updatedAt
                   ? new Date(orchestrator.updatedAt).toLocaleDateString(
                       undefined,
@@ -970,47 +644,20 @@ const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
   showContent,
   searchQuery,
 }) => {
-  const theme = useTheme();
-
   return (
-    <Box sx={{ gridColumn: "1 / -1" }}>
+    <Box className={styles.emptyStateShell}>
       <Fade in={showContent} timeout={1200}>
-        <Box
-          role="status"
-          aria-live="polite"
-          sx={{
-            p: { xs: 5, sm: 7 },
-            textAlign: "center",
-            color: "text.secondary",
-            backgroundColor:
-              theme.palette.mode === "dark"
-                ? alpha(theme.palette.common.white, 0.02)
-                : alpha(theme.palette.common.black, 0.02),
-            borderRadius: 3,
-            border: "1px dashed",
-            borderColor:
-              theme.palette.mode === "dark"
-                ? "rgba(255, 255, 255, 0.1)"
-                : "rgba(0, 0, 0, 0.1)",
-          }}
-        >
+        <Box role="status" aria-live="polite" className={styles.emptyState}>
           <FontAwesomeIcon
             icon="sitemap"
             size="3x"
             aria-hidden="true"
-            style={{
-              opacity: 0.25,
-              marginBottom: "16px",
-              color: theme.palette.primary.main,
-            }}
+            className={styles.emptyStateIcon}
           />
-          <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+          <Typography variant="h6" className={styles.emptyStateTitle}>
             {searchQuery ? "No orchestrators found" : "No orchestrators yet"}
           </Typography>
-          <Typography
-            variant="body2"
-            sx={{ maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
-          >
+          <Typography variant="body2" className={styles.emptyStateDescription}>
             {searchQuery
               ? "Try adjusting your search query"
               : 'Click "New Orchestrator" to create your first infrastructure workflow!'}
@@ -1044,7 +691,6 @@ const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
   onPublishClick,
   onUnpublishClick,
 }) => {
-  const theme = useTheme();
   const hasOrchestrators = filteredOrchestrators.length > 0;
 
   return (
@@ -1053,64 +699,25 @@ const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
         <Box
           component="section"
           aria-labelledby="orchestrators-heading"
-          sx={{ mb: 3 }}
+          className={styles.orchestratorSectionHeader}
         >
+          <Box className={styles.sectionKicker}>
+            <FontAwesomeIcon icon="diagram-project" aria-hidden="true" />
+            Workspace index
+          </Box>
           <Typography
             id="orchestrators-heading"
-            variant="h4"
-            className={styles.wrapperHeader}
-            sx={{
-              fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2rem" },
-              fontWeight: 700,
-              mb: 0.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              textTransform: "uppercase",
-              color: theme.palette.secondary.main,
-              letterSpacing: "0.1em",
-            }}
+            component="h2"
+            className={styles.sectionTitle}
           >
-            <Box
-              aria-hidden="true"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 64,
-                height: 64,
-                borderRadius: 2,
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.main, 0.08)})`,
-                color: theme.palette.primary.main,
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              }}
-            >
-              <FontAwesomeIcon icon="diagram-project" style={{ fontSize: "2rem" }} />
-            </Box>
-            <Box>
-              Orchestrators
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.925rem",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                Manage your infrastructure orchestration workflows
-              </Typography>
-            </Box>
+            Orchestrators
+          </Typography>
+          <Typography component="p" className={styles.sectionDescription}>
+            Manage your infrastructure orchestration workflows.
           </Typography>
         </Box>
       </Fade>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-          gap: { xs: 2, sm: 2.5, md: 3 },
-          alignItems: "stretch",
-        }}
-      >
+      <Box className={styles.orchestratorGrid}>
         {isLoading ? (
           // Loading Skeletons
           Array.from({ length: 4 }).map((_, index) => (
@@ -1141,41 +748,16 @@ const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
         ) : (
           <>
             {canCreateOrchestrators && (
-              <Box sx={{ display: "flex" }}>
+              <Box className={styles.orchestratorCardShell}>
                 <Fade in={showContent} timeout={1000}>
                   <Box
-                    className={styles.card}
+                    className={`${styles.card} ${styles.newCard}`}
                     onClick={onCreateNew}
                     data-tour="home-new-orchestrator"
-                    sx={{
-                      border: "2px dashed",
-                      borderColor: alpha(theme.palette.primary.main, 0.3),
-                      backgroundColor: "transparent !important",
-                      "&:hover": {
-                        borderColor: alpha(theme.palette.primary.main, 0.6),
-                        backgroundColor: `${alpha(theme.palette.primary.main, 0.04)} !important`,
-                      },
-                    }}
                   >
                     <div className={styles.cardBlank}>
-                      <FontAwesomeIcon
-                        icon="plus"
-                        size="3x"
-                        style={{
-                          color: theme.palette.primary.main,
-                          opacity: 0.7,
-                        }}
-                      />
-                      <Typography
-                        sx={{
-                          mt: 2,
-                          fontWeight: 500,
-                          fontSize: "0.95rem",
-                          textTransform: "uppercase",
-                          color: theme.palette.secondary.main,
-                          letterSpacing: "0.1em",
-                        }}
-                      >
+                      <FontAwesomeIcon icon="plus" size="2x" />
+                      <Typography className={styles.newCardTitle}>
                         New Orchestrator
                       </Typography>
                     </div>
@@ -1389,9 +971,7 @@ const Home: React.FC = () => {
   const isLoading = orchestratorsStatus === "loading";
 
   return (
-    <Box
-      className={styles.workspaceShell}
-    >
+    <Box className={styles.workspaceShell}>
       <Fade in={showContent} timeout={500}>
         <Box component="section" className={styles.workspaceIntro}>
           <Box>
@@ -1399,9 +979,8 @@ const Home: React.FC = () => {
               Keep your systems visible.
             </Typography>
             <Typography component="p" className={styles.workspaceDescription}>
-              Continue shaping your orchestrators, start from a proven
-              template, and keep the path from architecture to Terraform in
-              one workspace.
+              Continue shaping your orchestrators, start from a proven template,
+              and keep the path from architecture to Terraform in one workspace.
             </Typography>
           </Box>
           {canCreateOrchestrators && (
