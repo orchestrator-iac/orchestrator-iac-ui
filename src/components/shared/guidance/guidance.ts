@@ -494,7 +494,6 @@ const PUBLIC_ENTRY_PATHS = new Set([
   "/register",
   "/register-success",
   "/confirm",
-  "/night-sky",
   "/black-hole",
   "/update-password",
 ]);

@@ -5,13 +5,19 @@ import "./AuthFrame.css";
 
 type AuthFrameProps = {
   children: ReactNode;
-  mode: "login" | "register";
+  mode: "login" | "register" | "recovery";
   title: string;
   description: string;
   alternatePrompt: string;
   alternateLabel: string;
   alternateTo: string;
 };
+
+const authFormLabels = {
+  login: "Return to your workspace",
+  register: "Start with a blueprint",
+  recovery: "Keep your workspace secure",
+} as const;
 
 const AuthSystemDiagram: React.FC = () => (
   <div className="auth-diagram" aria-hidden="true">
@@ -52,7 +58,11 @@ const AuthFrame: React.FC<AuthFrameProps> = ({
   <div className={`auth-shell auth-shell--${mode}`}>
     <aside className="auth-rail">
       <div className="auth-rail__topline">
-        <RouterLink className="auth-brand" to="/" aria-label="Orchestrator home">
+        <RouterLink
+          className="auth-brand"
+          to="/"
+          aria-label="Orchestrator home"
+        >
           <img src="/one-color-teal-print.svg" alt="" aria-hidden="true" />
           <span>Orchestrator</span>
         </RouterLink>
@@ -83,9 +93,7 @@ const AuthFrame: React.FC<AuthFrameProps> = ({
 
       <section className="auth-form-surface" aria-labelledby="auth-form-title">
         <div className="auth-form-header">
-          <p className="auth-form-header__label">
-            {mode === "login" ? "Return to your workspace" : "Start with a blueprint"}
-          </p>
+          <p className="auth-form-header__label">{authFormLabels[mode]}</p>
           <h1 id="auth-form-title">{title}</h1>
           <p>{description}</p>
         </div>

@@ -18,7 +18,11 @@
   grid-template-columns: minmax(360px, 0.92fr) minmax(520px, 1.08fr);
   overflow: clip;
   background:
-    radial-gradient(circle at 70% 12%, var(--product-glow-cool), transparent 32%),
+    radial-gradient(
+      circle at 70% 12%,
+      var(--product-glow-cool),
+      transparent 32%
+    ),
     var(--auth-bg);
   color: var(--auth-text);
 }
@@ -467,6 +471,14 @@ body[data-theme="dark"] .auth-brand img {
   border: 1px solid color-mix(in srgb, var(--product-warm) 46%, transparent);
   border-radius: 2px;
   background: color-mix(in srgb, var(--product-warm) 10%, var(--auth-surface));
+  color: var(--auth-text);
+}
+
+.auth-success {
+  margin-bottom: 20px;
+  border: 1px solid color-mix(in srgb, var(--auth-accent) 46%, transparent);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--auth-accent) 10%, var(--auth-surface));
   color: var(--auth-text);
 }
 
