@@ -109,6 +109,14 @@ const TemplatePreviewPanel: React.FC<TemplatePreviewPanelProps> = ({
       <Box className={styles.galleryPreviewHeader}>
         <span className={styles.galleryPreviewLabel}>Selected pattern</span>
         <span className={styles.galleryPreviewProvider}>{cloud}</span>
+        <Button
+          className={styles.galleryPreviewButton}
+          variant="contained"
+          onClick={() => onOpen(template.id)}
+          endIcon={<FontAwesomeIcon icon="arrow-up-right" aria-hidden="true" />}
+        >
+          Inspect
+        </Button>
       </Box>
 
       <Box className={styles.galleryPreviewMedia}>
@@ -157,14 +165,6 @@ const TemplatePreviewPanel: React.FC<TemplatePreviewPanelProps> = ({
           </span>
         </Box>
 
-        <Button
-          className={styles.galleryPreviewButton}
-          variant="contained"
-          onClick={() => onOpen(template.id)}
-          endIcon={<FontAwesomeIcon icon="arrow-up-right" aria-hidden="true" />}
-        >
-          Inspect template
-        </Button>
       </Box>
     </Box>
   );
@@ -181,9 +181,8 @@ const TemplatesGallery: React.FC = () => {
   );
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const { items, status, hasMore, page, searchQuery, sortBy } = useSelector(
-    (state: RootState) => state.templates,
-  );
+  const { items, total, status, hasMore, page, searchQuery, sortBy } =
+    useSelector((state: RootState) => state.templates);
 
   useEffect(() => {
     document.body.style.overflow = "auto";
@@ -508,7 +507,9 @@ const TemplatesGallery: React.FC = () => {
                 Pattern index
               </Typography>
               <Typography component="span">
-                {items.length} {items.length === 1 ? "pattern" : "patterns"}
+                {total > items.length
+                  ? items.length + " of " + total
+                  : total + " " + (total === 1 ? "pattern" : "patterns")}
               </Typography>
             </Box>
             <Box component="ol" className={styles.galleryList}>
@@ -525,6 +526,11 @@ const TemplatesGallery: React.FC = () => {
             {status === "loading" && items.length > 0
               ? renderLoadingState(true)
               : null}
+            <Box
+              ref={sentinelRef}
+              className={styles.gallerySentinel}
+              aria-hidden="true"
+            />
           </Box>
 
           {selectedTemplate ? (
@@ -536,11 +542,6 @@ const TemplatesGallery: React.FC = () => {
         </Box>
       )}
 
-      <Box
-        ref={sentinelRef}
-        className={styles.gallerySentinel}
-        aria-hidden="true"
-      />
     </Box>
   );
 };

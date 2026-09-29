@@ -113,9 +113,9 @@ const Header: React.FC = () => {
       right: 14,
       width: 0,
       height: 0,
-      borderLeft: "10px solid transparent",
-      borderRight: "10px solid transparent",
-      borderBottom: `10px solid ${menuSurface}`,
+      borderLeft: "0",
+      borderRight: "0",
+      borderBottom: "0",
       transform: "translateY(-100%)",
       zIndex: 0,
     },
@@ -127,16 +127,12 @@ const Header: React.FC = () => {
       elevation={0}
       className={styles.appBar}
       sx={{
-        background:
-          theme.palette.mode === "dark"
-            ? "rgba(18, 18, 18, 0.95)"
-            : "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(12px)",
+        backgroundColor: "var(--product-bg)",
+        backgroundImage: "none",
+        color: "var(--product-text)",
+        backdropFilter: "none",
         borderBottom: "1px solid",
-        borderColor:
-          theme.palette.mode === "dark"
-            ? alpha(theme.palette.common.white, 0.08)
-            : alpha(theme.palette.common.black, 0.06),
+        borderColor: "var(--product-line-subtle)",
       }}
     >
       <Toolbar
@@ -178,6 +174,7 @@ const Header: React.FC = () => {
           <MinimalThemeToggle />
           <Tooltip title="Help and what is new" arrow>
             <IconButton
+              className={styles.chromeButton}
               onClick={handleHelpOpen}
               size="small"
               aria-label="Open help menu"
@@ -212,13 +209,16 @@ const Header: React.FC = () => {
             slotProps={{
               paper: {
                 elevation: 8,
+                className: styles.menuPaper,
                 sx: menuPaperSx,
               },
             }}
             transformOrigin={{ horizontal: "right", vertical: "top" }}
             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
+            <Box className={styles.menuHeading}>Product guidance</Box>
             <MenuItem
+              className={styles.menuItem}
               onClick={handleReplayCurrentTour}
               disabled={!currentTour}
               sx={{
@@ -245,6 +245,7 @@ const Header: React.FC = () => {
             </MenuItem>
             <Divider sx={{ my: 0.5 }} />
             <MenuItem
+              className={styles.menuItem}
               onClick={handleOpenAnnouncements}
               sx={{
                 py: 1.25,
@@ -332,6 +333,7 @@ const Header: React.FC = () => {
                 slotProps={{
                   paper: {
                     elevation: 8,
+                    className: styles.menuPaper,
                     sx: {
                       ...menuPaperSx,
                       minWidth: 180,
@@ -342,6 +344,7 @@ const Header: React.FC = () => {
                 anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
               >
                 <MenuItem
+                  className={styles.menuItem}
                   onClick={handleProfileClick}
                   sx={{
                     py: 1.25,
@@ -357,6 +360,7 @@ const Header: React.FC = () => {
                   View Profile
                 </MenuItem>
                 <MenuItem
+                  className={styles.menuItem}
                   onClick={handleLogoutClick}
                   sx={{
                     py: 1.25,

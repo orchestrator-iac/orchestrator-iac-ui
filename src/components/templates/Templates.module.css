@@ -22,16 +22,16 @@
 .pageHeaderTitle {
   margin: 0;
   color: var(--product-text);
-  font-family: var(--product-display-font);
-  font-size: clamp(2.8rem, 6vw, 5.5rem);
-  font-weight: 400;
-  letter-spacing: -0.055em;
-  line-height: 0.94;
+  font-family: var(--product-display-font) !important;
+  font-size: clamp(2.8rem, 6vw, 5.5rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.055em !important;
+  line-height: 0.94 !important;
 }
 
 .pageHeaderDescription {
   max-width: 62ch;
-  margin: var(--product-space-4) 0 0;
+  margin: var(--product-space-5) 0 0 !important;
   color: var(--product-text-muted);
   font-size: 1rem;
   line-height: 1.75;
@@ -134,6 +134,20 @@
 
 .galleryIndex {
   min-width: 0;
+  max-height: min(760px, calc(100vh - 250px));
+  overflow-y: auto;
+  padding-right: var(--product-space-2);
+  scrollbar-color: var(--product-line) transparent;
+  scrollbar-width: thin;
+}
+
+.galleryIndex::-webkit-scrollbar {
+  width: 6px;
+}
+
+.galleryIndex::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--product-line);
 }
 
 .gallerySectionHeader {
@@ -265,6 +279,9 @@
 .galleryPreview {
   position: sticky;
   top: 88px;
+  display: grid;
+  grid-template-rows: auto minmax(180px, 30vh) auto;
+  max-height: calc(100vh - 112px);
   overflow: hidden;
   border: 1px solid var(--product-line);
   border-radius: var(--product-radius-preview);
@@ -290,7 +307,7 @@
 
 .galleryPreviewMedia {
   position: relative;
-  aspect-ratio: 1.25;
+  min-height: 180px;
   overflow: hidden;
   background: var(--product-surface-raised);
 }
@@ -366,17 +383,19 @@
 
 .galleryPreviewFooter {
   display: grid;
+  min-height: 0;
+  overflow: auto;
   gap: var(--product-space-4);
 }
 
 .galleryPreviewTitle {
   margin: 0;
   color: var(--product-text);
-  font-family: var(--product-display-font);
-  font-size: clamp(1.8rem, 3vw, 2.65rem);
-  font-weight: 400;
-  letter-spacing: -0.045em;
-  line-height: 1;
+  font-family: var(--product-display-font) !important;
+  font-size: clamp(1.8rem, 3vw, 2.65rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.045em !important;
+  line-height: 1 !important;
 }
 
 .galleryPreviewDescription {
@@ -414,10 +433,14 @@
 
 .galleryPreviewButton {
   justify-self: start;
-  min-height: var(--product-control-height);
+  min-height: 32px;
+  padding: 5px 10px !important;
   border-radius: var(--product-radius-control);
   background: var(--product-accent-strong);
-  color: var(--product-on-accent);
+  color: var(--product-button-text);
+  font-family: var(--product-mono-font);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
   font-weight: 700;
   text-transform: none;
   box-shadow: 0 12px 24px var(--product-shadow);
@@ -585,11 +608,11 @@
 .detailTitle {
   margin: 0 0 var(--product-space-3);
   color: var(--product-text);
-  font-family: var(--product-display-font);
-  font-size: clamp(2.8rem, 6vw, 5.5rem);
-  font-weight: 400;
-  letter-spacing: -0.055em;
-  line-height: 0.94;
+  font-family: var(--product-display-font) !important;
+  font-size: clamp(2.8rem, 6vw, 5.5rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.055em !important;
+  line-height: 0.94 !important;
 }
 
 .detailDescription {
@@ -600,11 +623,83 @@
   line-height: 1.75;
 }
 
+.cloudLogo {
+  width: 34px;
+  height: 26px;
+  object-fit: contain;
+}
+
 .detailActions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: var(--product-space-3);
+}
+
+.detailStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 !important;
+  border-top: 1px solid var(--product-line-subtle);
+  border-bottom: 1px solid var(--product-line-subtle);
+}
+
+.detailStat {
+  min-width: 76px !important;
+  padding: var(--product-space-3) var(--product-space-4) !important;
+  border: 0 !important;
+  border-right: 1px solid var(--product-line-subtle) !important;
+  border-radius: 0 !important;
+  color: var(--product-text);
+  background: transparent !important;
+}
+
+.detailStat:last-child {
+  border-right: 0 !important;
+}
+
+.detailStat :global(.MuiTypography-root) {
+  color: var(--product-text);
+}
+
+.detailStat :global(.MuiTypography-caption) {
+  color: var(--product-text-subtle);
+  font-family: var(--product-mono-font);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detailLikeButton,
+.detailUseButton {
+  min-height: var(--product-control-height);
+  border-radius: var(--product-radius-control) !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+}
+
+.detailLikeButton {
+  border-color: var(--product-line) !important;
+  color: var(--product-text-muted) !important;
+}
+
+.detailLikeButton:hover {
+  border-color: var(--product-warm) !important;
+  color: var(--product-warm) !important;
+  background: var(--product-accent-soft) !important;
+}
+
+.detailUseButton {
+  background: var(--product-accent-strong) !important;
+  color: var(--product-button-text) !important;
+}
+
+.detailUseButton:hover {
+  background: var(--product-accent) !important;
+}
+
+.detailOwnerActions {
+  align-items: center;
 }
 
 .detailSectionDivider {
@@ -613,6 +708,35 @@
 
 .detailPreview {
   margin: var(--product-space-6) 0 var(--product-space-7);
+}
+
+.detailSectionHeader {
+  justify-content: space-between;
+  border-bottom: 1px solid var(--product-line-subtle);
+  padding-bottom: var(--product-space-3);
+}
+
+.detailPreviewHeaderButton {
+  min-height: 34px;
+  padding-inline: var(--product-space-3) !important;
+  border-color: var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  color: var(--product-text-muted) !important;
+  font-family: var(--product-mono-font);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase !important;
+}
+
+.detailPreviewHeaderButton:hover {
+  border-color: var(--product-accent) !important;
+  color: var(--product-accent-strong) !important;
+  background: var(--product-accent-soft) !important;
+}
+
+.detailPreviewAction {
+  display: none;
 }
 
 .detailPreview > div:nth-child(2) {
@@ -806,8 +930,15 @@
     gap: var(--product-space-6);
   }
 
+  .galleryIndex {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
   .galleryPreview {
     position: static;
+    max-height: none;
     width: 100%;
   }
 
