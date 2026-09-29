@@ -87,7 +87,6 @@ async function main() {
   const staticUrls = [
     urlEntry(`${SITE_BASE}/`, today, "weekly", "1.0"),
     urlEntry(`${SITE_BASE}/templates`, today, "daily", "0.9"),
-    urlEntry(`${SITE_BASE}/landing-preview`, today, "weekly", "0.8"),
   ];
 
   let templateUrls = [];

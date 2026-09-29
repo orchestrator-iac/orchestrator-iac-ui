@@ -3469,16 +3469,24 @@ const FinalCta: React.FC<{
   );
 };
 
-const LandingPage: React.FC = () => {
+interface LandingPageProps {
+  legacyMode?: boolean;
+}
+
+const LandingPage: React.FC<LandingPageProps> = ({ legacyMode = false }) => {
   const navigate = useNavigate();
   const theme = useTheme();
 
   useEffect(() => {
     const previousTitle = document.title;
-    const title = "Orchestrator | Reusable IaC Templates";
+    const title = legacyMode
+      ? "Orchestrator Legacy Landing"
+      : "Orchestrator | Reusable IaC Templates";
     const description =
       "Browse reusable cloud infrastructure templates, shape them visually, and generate IaC with Orchestrator.";
-    const url = `${SITE_URL}/`;
+    const url = legacyMode
+      ? `${SITE_URL}/landing-legacy`
+      : `${SITE_URL}/`;
     const image = `${SITE_URL}/og-landing.png`;
 
     document.title = title;
@@ -3494,7 +3502,7 @@ const LandingPage: React.FC = () => {
       "meta",
       { name: "robots" },
       "content",
-      "index, follow",
+      legacyMode ? "noindex, nofollow" : "index, follow",
     );
     setHeadAttribute(
       'meta[property="og:title"]',
@@ -3584,7 +3592,7 @@ const LandingPage: React.FC = () => {
     return () => {
       document.title = previousTitle;
     };
-  }, []);
+  }, [legacyMode]);
 
   const goToTemplates = () => navigate("/templates");
   const goToCanvas = () => navigate("/home");

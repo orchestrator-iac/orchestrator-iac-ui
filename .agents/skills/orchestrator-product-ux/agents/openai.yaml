@@ -1,0 +1,4 @@
+interface:
+  display_name: Orchestrator Product UX
+  short_description: Apply the landing-preview UX and light/dark theme standard
+  default_prompt: Use $orchestrator-product-ux to design or refine this screen using the shared semantic theme tokens, editorial infrastructure UX direction, accessible interactions, responsive behavior, and rendered light/dark verification.
