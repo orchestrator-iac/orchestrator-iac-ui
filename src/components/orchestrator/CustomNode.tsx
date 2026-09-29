@@ -8,6 +8,8 @@ import {
   Box,
   Typography,
   Chip,
+  IconButton,
+  alpha,
 } from "@mui/material";
 import { Handle } from "@xyflow/react";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -23,6 +25,8 @@ import DynamicForm from "./DynamicForm";
 import { getFriendlyId } from "./utils/nodePresentation";
 import { OrchestratorNodeProps } from "./types";
 import { DriftStatus } from "../../types/orchestrator";
+
+const CUSTOM_NODE_ICON_SIZE = 56;
 
 /** Border treatment for the drift status attached by Tier 1 state reconciliation. */
 const getDriftBorder = (status: DriftStatus | undefined, fallback: string): string => {
@@ -120,6 +124,12 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
       sx={{
         boxShadow: driftBorder,
         width: "400px",
+        borderRadius: 1.5,
+        overflow: "hidden",
+        backgroundColor: "background.paper",
+        "&::before": {
+          display: "none",
+        },
       }}
       expanded={expanded}
       onChange={handleAccordionChange}
@@ -128,45 +138,76 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           sx={{
-            borderBottom: `1px solid ${theme.palette.background.paper}`,
+            minHeight: 64,
+            px: 2,
+            py: 0.375,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.75)}`,
             alignItems: "center",
-            gap: 1,
-            pr: 2,
+            gap: 1.5,
             "& .MuiAccordionSummary-content": {
+              alignItems: "center",
+              gap: 1.5,
+              margin: 0,
               minWidth: 0,
+            },
+            "&.Mui-expanded": {
+              minHeight: 64,
+            },
+            "& .MuiAccordionSummary-expandIconWrapper": {
+              ml: 0.25,
+              color: theme.palette.textVariants.text3,
             },
           }}
         >
           {data?.header?.icon && (
-            <ResourceIconView
-              icon={data?.header?.icon}
-              alt={data?.header?.label || "Resource Icon"}
+            <Box
               sx={{
-                width: 42,
-                height: 42,
+                width: CUSTOM_NODE_ICON_SIZE,
+                height: CUSTOM_NODE_ICON_SIZE,
                 mr: 1.5,
-                objectFit: "contain",
+                flexShrink: 0,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 1.25,
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.22)}`,
               }}
-            />
+            >
+              <ResourceIconView
+                icon={data?.header?.icon}
+                alt={data?.header?.label || "Resource Icon"}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </Box>
           )}
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box
               sx={{
-                fontSize: "1.05rem",
-                fontWeight: 700,
+                fontSize: "1.08rem",
+                fontWeight: 750,
+                lineHeight: 1.2,
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 0.75,
                 minWidth: 0,
               }}
             >
               <Box
                 sx={{
+                  minWidth: 0,
+                  flex: "1 1 auto",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                  maxWidth: "120px",
                 }}
               >
                 {data?.header?.label}
@@ -243,9 +284,9 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1,
+              gap: 0.75,
               flexShrink: 0,
-              mr: 0.5,
+              ml: 0.5,
             }}
           >
             {friendlyId && (
@@ -255,12 +296,14 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
                   label={friendlyId}
                   onMouseDown={(event) => event.stopPropagation()}
                   onClick={(event) => event.stopPropagation()}
-                sx={{
-                  color: theme.palette.textVariants.text4,
-                  maxWidth: "96px",
-                  "& .MuiChip-label": {
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
+                  sx={{
+                    color: theme.palette.textVariants.text4,
+                    maxWidth: "96px",
+                    backgroundColor: alpha(theme.palette.text.primary, 0.08),
+                    border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                    "& .MuiChip-label": {
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
                     },
                   }}
@@ -276,50 +319,34 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
                 color={driftBadge.color}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
-                sx={{ height: 20, fontSize: "0.65rem" }}
+                sx={{ height: 22, fontSize: "0.68rem", fontWeight: 700 }}
               />
             )}
 
-            <Box
-              component="span"
-              role="button"
-              tabIndex={0}
-              aria-label="node actions"
+            <IconButton
+              size="small"
+              aria-label="Node actions"
               onMouseDown={(event) => event.stopPropagation()}
               onClick={(event: React.MouseEvent<HTMLElement>) => {
                 event.stopPropagation();
                 handleMenuOpen(event);
               }}
-              onKeyDown={(event: React.KeyboardEvent<HTMLElement>) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  handleMenuOpen(event as unknown as React.MouseEvent<HTMLElement>);
-                }
-              }}
               sx={{
-                width: 28,
-                height: 28,
-                borderRadius: "999px",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: 0.6,
-                cursor: "pointer",
-                transition: "opacity 0.2s ease, background-color 0.2s ease",
+                width: 32,
+                height: 32,
+                color: theme.palette.textVariants.text3,
                 "&:hover": {
-                  opacity: 1,
-                  backgroundColor: "action.hover",
+                  color: theme.palette.text.primary,
+                  backgroundColor: alpha(theme.palette.action.active, 0.1),
                 },
                 "&:focus-visible": {
-                  opacity: 1,
                   outline: `2px solid ${theme.palette.primary.main}`,
                   outlineOffset: 2,
                 },
               }}
             >
               <MoreVertIcon fontSize="small" />
-            </Box>
+            </IconButton>
             <Menu
               anchorEl={anchorEl}
               open={open}

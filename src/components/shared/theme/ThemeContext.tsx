@@ -21,11 +21,25 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(
   undefined,
 );
 
+const getStoredThemeMode = (): ThemeMode | null => {
+  if (typeof window === "undefined") return null;
+
+  const stored = window.localStorage.getItem("themePreference");
+  return stored === "light" || stored === "dark" || stored === "system"
+    ? stored
+    : null;
+};
+
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const { user } = useAuth();
-  const [mode, setMode] = useState<ThemeMode>("system");
+  const [mode, setMode] = useState<ThemeMode>(
+    () => getStoredThemeMode() ?? "system",
+  );
+  const [hasStoredPreference] = useState(
+    () => getStoredThemeMode() !== null,
+  );
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
 
   let effectiveMode: "light" | "dark";
@@ -47,15 +61,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
   }, [mode]);
 
   useEffect(() => {
-    if (user?.themePreference) {
+    if (!hasStoredPreference && user?.themePreference) {
       setMode(user?.themePreference);
     }
-  }, [user]);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("themePreference") as ThemeMode | null;
-    if (stored) setMode(stored);
-  }, []);
+  }, [hasStoredPreference, user]);
 
   const contextValue = useMemo(() => ({ mode, setMode }), [mode]);
 

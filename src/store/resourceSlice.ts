@@ -1,18 +1,37 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiService from "../services/apiService";
 
+export type ResourceLookup =
+  | string
+  | {
+      id: string;
+      cloudProvider?: string;
+    };
+
 export const fetchResourceById = createAsyncThunk(
   "resource/fetchById",
-  async (id: string) => {
+  async (lookup: ResourceLookup) => {
+    const id = typeof lookup === "string" ? lookup : lookup.id;
+    const cloudProvider =
+      typeof lookup === "string" ? undefined : lookup.cloudProvider;
+
     // `id` here is a resourceId (e.g. "vpc"), not the config document's
     // internal database id, so this must go through the `resource_id`
     // filter on the list endpoint rather than the by-id path lookup
     // (GET /configs/{id} looks up the internal id and 404s for a
     // resourceId like "vpc").
     const response = await apiService.get("/configs", {
-      params: { resource_id: id },
+      params: {
+        resource_id: id,
+        ...(cloudProvider
+          ? { cloud_provider: cloudProvider.toLowerCase() }
+          : {}),
+      },
     });
     const data = Array.isArray(response) ? response[0] : response;
+    if (!data || typeof data !== "object") {
+      throw new Error(`Resource catalog entry not found for ${id}`);
+    }
     return { id, data };
   },
 );

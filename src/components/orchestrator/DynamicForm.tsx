@@ -286,10 +286,10 @@ const DynamicForm: React.FC<Props> = ({
     const isRequired = isFieldRequired(required, formData);
     const validationErrorText = validationErrors?.[name];
     const hasValidationError = Boolean(validationErrorText);
-    const helperText = renderFieldHelperText(
-      hint,
-      validationErrorText ?? error_text,
-    );
+    // `error_text` is the schema's message for an invalid value; it is not
+    // instructional copy. Show it only when validation reports this field as
+    // invalid, otherwise keep the normal field hint visible.
+    const helperText = renderFieldHelperText(hint, validationErrorText);
     const currentListValue = Array.isArray(formData[name] ?? value)
       ? (formData[name] ?? value)
       : [];
