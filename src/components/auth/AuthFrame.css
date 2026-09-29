@@ -29,6 +29,7 @@
 
 .auth-rail {
   position: relative;
+  box-sizing: border-box;
   display: flex;
   height: 100%;
   min-height: 0;
@@ -243,6 +244,7 @@ body[data-theme="dark"] .auth-brand img {
 }
 
 .auth-form-column {
+  box-sizing: border-box;
   display: flex;
   height: 100%;
   min-height: 0;
@@ -259,6 +261,19 @@ body[data-theme="dark"] .auth-brand img {
 
 .auth-form-column__topline {
   gap: 20px;
+}
+
+.auth-shell--login .auth-form-column,
+.auth-shell--recovery .auth-form-column {
+  justify-content: center;
+}
+
+.auth-shell--login .auth-form-column__topline,
+.auth-shell--recovery .auth-form-column__topline {
+  position: absolute;
+  top: clamp(24px, 4vw, 56px);
+  right: clamp(24px, 7vw, 112px);
+  left: clamp(24px, 7vw, 112px);
 }
 
 .auth-form-switch a,
@@ -290,8 +305,12 @@ body[data-theme="dark"] .auth-brand img {
   padding: clamp(40px, 7vh, 88px) 0;
 }
 
-.auth-shell--login .auth-form-surface {
+.auth-shell--login .auth-form-surface,
+.auth-shell--recovery .auth-form-surface {
   margin: 0 auto;
+}
+
+.auth-shell--login .auth-form-surface {
   padding: clamp(40px, 6vh, 48px) 0 20px;
 }
 
@@ -539,10 +558,17 @@ body[data-theme="dark"] .auth-brand img {
   .auth-form-column {
     height: auto;
     min-height: 0;
+    justify-content: flex-start;
     padding: 0 24px 32px;
   }
 
-  .auth-form-column__topline {
+  .auth-form-column__topline,
+  .auth-shell--login .auth-form-column__topline,
+  .auth-shell--recovery .auth-form-column__topline {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
     padding-top: 18px;
   }
 
