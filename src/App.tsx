@@ -46,6 +46,7 @@ import ResourcesGallery from "./components/resources/ResourcesGallery";
 const SITE_URL = "https://orchestrator.next-zen.dev";
 
 const NO_HEADER_ROUTES = new Set([
+  "/",
   "/login",
   "/register",
   "/register-success",
@@ -59,6 +60,7 @@ const NO_HEADER_ROUTES = new Set([
 ]);
 
 const MAESTRO_DISABLED_ROUTES = new Set([
+  "/",
   "/login",
   "/register",
   "/register-success",
@@ -85,6 +87,7 @@ const PRIVATE_ROUTES = new Set([
   "/resources",
   "/home",
   "/dashboard",
+  "/landing-legacy",
 ]);
 
 const isPrivateSeoRoute = (pathname: string) =>
@@ -172,8 +175,12 @@ const AppShell: React.FC<{
         >
           <Routes>
             <Route path="/" element={<Layout />}>
-                <Route index element={<LandingPage />} />
+                <Route index element={<LandingPreviewPage />} />
                 <Route path="landing-preview" element={<LandingPreviewPage />} />
+                <Route
+                  path="landing-legacy"
+                  element={<LandingPage legacyMode />}
+                />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
                 <Route

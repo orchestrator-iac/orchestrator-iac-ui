@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
 import CloseIcon from "@mui/icons-material/Close";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -19,7 +19,7 @@ const PREVIEW_SEO = {
   title: "Visual Cloud Infrastructure Templates | Orchestrator",
   description:
     "Design reusable AWS, Azure, and GCP infrastructure visually, review connected resources, and export Terraform with Orchestrator.",
-  url: `${SITE_URL}/landing-preview`,
+  url: `${SITE_URL}/`,
   image: `${SITE_URL}/og-landing.png`,
 };
 
@@ -1283,7 +1283,9 @@ const PreviewFooter: React.FC = () => (
 );
 
 const LandingPreviewPage: React.FC = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const isPrimaryRoute = location.pathname === "/";
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -1294,7 +1296,10 @@ const LandingPreviewPage: React.FC = () => {
       },
       {
         selector: 'meta[name="robots"]',
-        attributes: { name: "robots", content: "index, follow" },
+        attributes: {
+          name: "robots",
+          content: isPrimaryRoute ? "index, follow" : "noindex, follow",
+        },
       },
       {
         selector: 'meta[property="og:title"]',
@@ -1381,22 +1386,26 @@ const LandingPreviewPage: React.FC = () => {
         'script[data-seo="landing-preview"]',
       ) || document.createElement("script");
     const previousStructuredData = structuredData.textContent;
-    structuredData.type = "application/ld+json";
-    structuredData.dataset.seo = "landing-preview";
-    structuredData.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      name: PREVIEW_SEO.title,
-      description: PREVIEW_SEO.description,
-      url: PREVIEW_SEO.url,
-      isPartOf: {
-        "@type": "WebSite",
-        name: "Orchestrator",
-        url: SITE_URL,
-      },
-    });
-    if (!structuredData.parentElement)
-      document.head.appendChild(structuredData);
+    if (isPrimaryRoute) {
+      structuredData.type = "application/ld+json";
+      structuredData.dataset.seo = "landing-preview";
+      structuredData.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: PREVIEW_SEO.title,
+        description: PREVIEW_SEO.description,
+        url: PREVIEW_SEO.url,
+        isPartOf: {
+          "@type": "WebSite",
+          name: "Orchestrator",
+          url: SITE_URL,
+        },
+      });
+      if (!structuredData.parentElement)
+        document.head.appendChild(structuredData);
+    } else if (structuredData.parentElement) {
+      structuredData.remove();
+    }
 
     document.title = PREVIEW_SEO.title;
     return () => {
@@ -1419,7 +1428,7 @@ const LandingPreviewPage: React.FC = () => {
       if (previousStructuredData === null) structuredData.remove();
       else structuredData.textContent = previousStructuredData;
     };
-  }, []);
+  }, [isPrimaryRoute]);
 
   const openTemplates = (template?: PreviewTemplate) => {
     if (template?.id) {
