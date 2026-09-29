@@ -463,21 +463,40 @@
 
 .galleryPreviewButton {
   justify-self: start;
-  min-height: 32px;
-  padding: 5px 10px !important;
-  border-radius: var(--product-radius-control);
-  background: var(--product-accent-strong);
-  color: var(--product-button-text);
-  font-family: var(--product-mono-font);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-  font-weight: 700;
-  text-transform: none;
-  box-shadow: 0 12px 24px var(--product-shadow);
+  min-height: 40px;
+  padding: 0.65rem 0.9rem !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  background: transparent !important;
+  color: var(--product-text) !important;
+  font-family: var(--product-mono-font) !important;
+  font-size: 0.68rem !important;
+  letter-spacing: var(--product-label-spacing) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  box-shadow: none !important;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
 }
 
 .galleryPreviewButton:hover {
-  background: var(--product-accent);
+  border-color: var(--product-accent) !important;
+  background: var(--product-accent-soft) !important;
+  color: var(--product-accent-strong) !important;
+  transform: translateY(-1px);
+}
+
+.galleryPreviewButton:focus-visible {
+  outline: 2px solid var(--product-focus);
+  outline-offset: 2px;
+}
+
+.galleryPreviewButton :global(.MuiButton-endIcon) {
+  margin-left: 0.55rem;
+  font-size: 0.72rem;
 }
 
 .galleryEmpty {

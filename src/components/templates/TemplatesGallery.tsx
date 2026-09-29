@@ -111,7 +111,8 @@ const TemplatePreviewPanel: React.FC<TemplatePreviewPanelProps> = ({
         <span className={styles.galleryPreviewProvider}>{cloud}</span>
         <Button
           className={styles.galleryPreviewButton}
-          variant="contained"
+          variant="outlined"
+          aria-label={"Inspect " + template.templateName}
           onClick={() => onOpen(template.id)}
           endIcon={<FontAwesomeIcon icon="arrow-up-right" aria-hidden="true" />}
         >
