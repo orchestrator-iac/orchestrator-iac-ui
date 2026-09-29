@@ -42,6 +42,9 @@ This repo is the React + TypeScript front end for a SaaS product. Optimize for p
 - Do not introduce new dependencies unless the tradeoff is clear.
 - Add or update tests for meaningful UI or logic changes.
 - For visual work, verify behavior across the main flows before finishing.
+- Never commit directly to `main`. Make commits on `develop`, push the branch,
+  create a pull request targeting `main`, wait for required checks, and merge
+  through that pull request.
 
 ## Resource Mapping Contract
 

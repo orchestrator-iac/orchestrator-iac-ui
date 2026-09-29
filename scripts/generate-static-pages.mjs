@@ -37,6 +37,9 @@ const LANDING_PREVIEW_TITLE =
   "Visual Cloud Infrastructure Templates | Orchestrator";
 const LANDING_PREVIEW_DESCRIPTION =
   "Design reusable AWS, Azure, and GCP infrastructure visually, review connected resources, and export Terraform with Orchestrator.";
+const LEGACY_LANDING_TITLE = "Orchestrator Legacy Landing";
+const LEGACY_LANDING_DESCRIPTION =
+  "The previous Orchestrator landing page, retained temporarily as a rollback path.";
 
 if (!API_BASE) {
   console.warn(
@@ -84,11 +87,11 @@ function stripBaseSeoTags(html) {
  */
 function buildHtml(
   baseHtml,
-  { title, description, url, image, structuredData },
+  { title, description, url, image, robots = "index, follow", structuredData },
 ) {
   const tags = [
     `  <meta name="description" content="${esc(description)}">`,
-    `  <meta name="robots" content="index, follow">`,
+    `  <meta name="robots" content="${esc(robots)}">`,
     `  <meta property="og:title" content="${esc(title)}">`,
     `  <meta property="og:description" content="${esc(description)}">`,
     `  <meta property="og:url" content="${esc(url)}">`,
@@ -161,30 +164,33 @@ async function fetchAllTemplates() {
 async function main() {
   const baseHtml = readFileSync(join(distDir, "index.html"), "utf-8");
 
-  // 1. /landing-preview — crawl-visible marketing page
+  // 1. /landing-preview — temporary noindex compatibility alias for /
   writeRoute(
     "landing-preview",
     buildHtml(baseHtml, {
       title: LANDING_PREVIEW_TITLE,
       description: LANDING_PREVIEW_DESCRIPTION,
-      url: `${SITE_BASE}/landing-preview`,
+      url: `${SITE_BASE}/`,
       image: `${SITE_BASE}/og-landing.png`,
-      structuredData: {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        name: LANDING_PREVIEW_TITLE,
-        description: LANDING_PREVIEW_DESCRIPTION,
-        url: `${SITE_BASE}/landing-preview`,
-        isPartOf: {
-          "@type": "WebSite",
-          name: "Orchestrator",
-          url: SITE_BASE,
-        },
-      },
+      robots: "noindex, follow",
+      structuredData: null,
     }),
   );
 
-  // 2. /templates  — gallery page
+  // 2. /landing-legacy — temporary rollback path, never index
+  writeRoute(
+    "landing-legacy",
+    buildHtml(baseHtml, {
+      title: LEGACY_LANDING_TITLE,
+      description: LEGACY_LANDING_DESCRIPTION,
+      url: `${SITE_BASE}/landing-legacy`,
+      image: `${SITE_BASE}/og-landing.png`,
+      robots: "noindex, nofollow",
+      structuredData: null,
+    }),
+  );
+
+  // 3. /templates  — gallery page
   writeRoute(
     "templates",
     buildHtml(baseHtml, {
@@ -196,7 +202,7 @@ async function main() {
     }),
   );
 
-  // 3. /templates/:id — one page per published template
+  // 4. /templates/:id — one page per published template
   if (!API_BASE) return;
 
   console.log("[static-pages] Fetching templates from", API_BASE);
