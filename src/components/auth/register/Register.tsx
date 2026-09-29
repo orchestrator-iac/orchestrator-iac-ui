@@ -1,25 +1,22 @@
-// components/Register.tsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  TextField,
-  Button,
-  Typography,
-  Box,
-  MenuItem,
-  Grid,
   Alert,
-  useTheme,
+  Box,
+  Button,
   Divider,
-  InputAdornment,
+  Grid,
   IconButton,
+  InputAdornment,
+  MenuItem,
+  TextField,
+  useTheme,
 } from "@mui/material";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { registerUser } from "../../../services/auth";
 import { useGoogleAuth } from "../../../hooks/useGoogleAuth";
-import NightSky from "../../shared/night-sky/NightSky";
-
-import { useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import AuthFrame from "../AuthFrame";
 
 const jobFunctions = [
   "Developer",
@@ -42,6 +39,7 @@ const Register: React.FC = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const {
@@ -51,22 +49,27 @@ const Register: React.FC = () => {
     setError: setGoogleError,
   } = useGoogleAuth();
   const visibleError = error || googleError;
+  const isDark = theme.palette.mode === "dark";
 
-  const handleChange = (e: any) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
+  const handleChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setForm((previous) => ({
+      ...previous,
+      [event.target.name]: event.target.value,
     }));
   };
 
   const handleRegister = async () => {
     setError("");
     setGoogleError("");
+
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
+    setLoading(true);
     try {
       await registerUser({
         firstName: form.firstName,
@@ -84,7 +87,14 @@ const Register: React.FC = () => {
           ? err.message
           : "Registration failed. Please try again.",
       );
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await handleRegister();
   };
 
   const onGoogleSuccess = async (credentialResponse: CredentialResponse) => {
@@ -98,226 +108,189 @@ const Register: React.FC = () => {
   };
 
   return (
-    <Box position="relative" height="100vh">
-      <NightSky />
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-        sx={{ position: "relative", zIndex: 2 }}
-      >
-        <Box
-          sx={{
-            p: { xs: 3, sm: 4 },
-            maxWidth: 560,
-            width: "100%",
-            borderRadius: 2,
-            backgroundColor: theme.palette.background.default,
-          }}
-        >
-          <Typography variant="h4" gutterBottom>
-            Create your account
-          </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-            Continue with Google for a passwordless sign-up, or use email below
-            if you want to create a password-based account.
-          </Typography>
-
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-              Continue with Google
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Google handles the sign-in step, so you do not need to enter a
-              password on this page.
-            </Typography>
-            <Box display="flex" justifyContent="center">
-              <GoogleLogin
-                onSuccess={onGoogleSuccess}
-                onError={onGoogleError}
-                theme="outline"
-                size="large"
-                width="100%"
-              />
-            </Box>
-          </Box>
-
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="body2" color="textSecondary">
-              Or sign up with email
-            </Typography>
-          </Divider>
-
-          {visibleError && (
-            <Box mb={2}>
-              <Alert
-                severity="error"
-                onClose={() => {
-                  setError("");
-                  setGoogleError("");
-                }}
-              >
-                {visibleError}
-              </Alert>
-            </Box>
-          )}
-
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="First Name"
-                name="firstName"
-                value={form.firstName}
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Last Name"
-                name="lastName"
-                value={form.lastName}
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Company"
-                name="company"
-                value={form.company}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                select
-                label="Job Role"
-                name="job_role"
-                value={form.job_role}
-                onChange={handleChange}
-              >
-                {jobFunctions.map((jf) => (
-                  <MenuItem key={jf} value={jf}>
-                    {jf}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                value={form.password}
-                onChange={handleChange}
-                required
-                slotProps={{
-                  htmlInput: {
-                    "aria-label": "Password",
-                    "aria-required": "true",
-                  },
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label={
-                            showPassword ? "Hide password" : "Show password"
-                          }
-                          onClick={() => setShowPassword((v) => !v)}
-                          edge="end"
-                          size="small"
-                        >
-                          <FontAwesomeIcon
-                            icon={showPassword ? "eye-slash" : "eye"}
-                            style={{ fontSize: "0.85rem" }}
-                          />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Confirm Password"
-                name="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={form.confirmPassword}
-                onChange={handleChange}
-                required
-                slotProps={{
-                  htmlInput: {
-                    "aria-label": "Password",
-                    "aria-required": "true",
-                  },
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label={
-                            showConfirmPassword ? "Hide password" : "Show password"
-                          }
-                          onClick={() => setShowConfirmPassword((v) => !v)}
-                          edge="end"
-                          size="small"
-                        >
-                          <FontAwesomeIcon
-                            icon={showConfirmPassword ? "eye-slash" : "eye"}
-                            style={{ fontSize: "0.85rem" }}
-                          />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
-          <Box mt={3}>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={handleRegister}
-            >
-              Create account with email
-            </Button>
-          </Box>
-          <Box mt={2}>
-            <Typography variant="body2" color="textSecondary">
-              Already have an account?{" "}
-              <Box
-                component="span"
-                sx={{ color: "primary.main", cursor: "pointer" }}
-                onClick={() => navigate("/login")}
-              >
-                Login
-              </Box>
-            </Typography>
-          </Box>
+    <AuthFrame
+      mode="register"
+      title="Create your account"
+      description="Start with a reusable blueprint, shape the architecture, and leave with infrastructure your team can inspect."
+      alternatePrompt="Already have an account?"
+      alternateLabel="Sign in"
+      alternateTo="/login"
+    >
+      <Box className="auth-form" component="form" noValidate onSubmit={handleSubmit}>
+        <Box className="auth-google">
+          <GoogleLogin
+            onSuccess={onGoogleSuccess}
+            onError={onGoogleError}
+            theme={isDark ? "filled_black" : "outline"}
+            size="large"
+            width="100%"
+          />
         </Box>
+
+        <Divider>OR SIGN UP WITH EMAIL</Divider>
+
+        {visibleError && (
+          <Alert
+            className="auth-error"
+            severity="error"
+            onClose={() => {
+              setError("");
+              setGoogleError("");
+            }}
+          >
+            {visibleError}
+          </Alert>
+        )}
+
+        <Grid container spacing={2} className="auth-register-grid">
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="First name"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleChange}
+              autoComplete="given-name"
+              required
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Last name"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleChange}
+              autoComplete="family-name"
+              required
+            />
+          </Grid>
+          <Grid size={12}>
+            <TextField
+              fullWidth
+              label="Email address"
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              autoComplete="email"
+              required
+            />
+          </Grid>
+          <Grid size={12}>
+            <TextField
+              fullWidth
+              label="Company"
+              name="company"
+              value={form.company}
+              onChange={handleChange}
+              autoComplete="organization"
+            />
+          </Grid>
+          <Grid size={12}>
+            <TextField
+              fullWidth
+              select
+              label="Job role"
+              name="job_role"
+              value={form.job_role}
+              onChange={handleChange}
+            >
+              {jobFunctions.map((jobFunction) => (
+                <MenuItem key={jobFunction} value={jobFunction}>
+                  {jobFunction}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid size={12}>
+            <TextField
+              fullWidth
+              label="Password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={handleChange}
+              autoComplete="new-password"
+              required
+              slotProps={{
+                htmlInput: { "aria-label": "Password", "aria-required": "true" },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        onClick={() => setShowPassword((value) => !value)}
+                        edge="end"
+                        size="small"
+                      >
+                        <FontAwesomeIcon
+                          icon={showPassword ? "eye-slash" : "eye"}
+                          style={{ fontSize: "0.85rem" }}
+                        />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={12}>
+            <TextField
+              fullWidth
+              label="Confirm password"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              value={form.confirmPassword}
+              onChange={handleChange}
+              autoComplete="new-password"
+              required
+              slotProps={{
+                htmlInput: { "aria-label": "Confirm password", "aria-required": "true" },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={
+                          showConfirmPassword ? "Hide password" : "Show password"
+                        }
+                        onClick={() => setShowConfirmPassword((value) => !value)}
+                        edge="end"
+                        size="small"
+                      >
+                        <FontAwesomeIcon
+                          icon={showConfirmPassword ? "eye-slash" : "eye"}
+                          style={{ fontSize: "0.85rem" }}
+                        />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid>
+        </Grid>
+
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          disabled={loading}
+          startIcon={
+            loading ? (
+              <FontAwesomeIcon icon="spinner" spin style={{ fontSize: "0.9rem" }} />
+            ) : undefined
+          }
+        >
+          {loading ? "Creating account…" : "Create account with email"}
+        </Button>
       </Box>
-    </Box>
+
+      <Box className="auth-form__legal">
+        By creating an account, you can save reusable architecture workspaces
+        and continue into the visual design workflow.
+      </Box>
+    </AuthFrame>
   );
 };
 
