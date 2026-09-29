@@ -768,6 +768,9 @@
 .detailPreview {
   min-width: 0;
   margin: 0;
+  position: sticky;
+  top: 88px;
+  align-self: start;
 }
 
 .detailSectionHeader {
@@ -814,7 +817,7 @@
 }
 
 .detailPreviewFrame {
-  aspect-ratio: 2040 / 990;
+  aspect-ratio: 1.86;
   min-height: 0 !important;
   max-height: none !important;
   border-radius: var(--product-radius-preview) !important;
@@ -956,6 +959,10 @@
 @media (max-width: 900px) {
   .detailContentLayout {
     grid-template-columns: 1fr;
+  }
+
+  .detailPreview {
+    position: static;
   }
 
   .detailReadmeSection {
