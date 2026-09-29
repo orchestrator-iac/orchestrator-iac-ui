@@ -87,7 +87,6 @@ const AuthFrame: React.FC<AuthFrameProps> = ({
 
     <main className="auth-form-column">
       <div className="auth-form-column__topline">
-        <span className="auth-form-column__meta">Account access</span>
         <MinimalThemeToggle size="small" />
       </div>
 

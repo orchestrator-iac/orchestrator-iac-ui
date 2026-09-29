@@ -106,8 +106,7 @@ body[data-theme="dark"] .auth-brand img {
 }
 
 .auth-rail__label,
-.auth-form-header__label,
-.auth-form-column__meta {
+.auth-form-header__label {
   margin: 0;
   color: var(--auth-accent-strong);
   font-family: "Roboto Mono", ui-monospace, monospace;
@@ -291,11 +290,6 @@ body[data-theme="dark"] .auth-brand img {
   color: var(--auth-accent-strong);
   text-decoration: underline;
   text-underline-offset: 4px;
-}
-
-.auth-form-column__meta {
-  color: var(--auth-subtle);
-  font-size: 0.58rem;
 }
 
 .auth-form-surface {
@@ -589,10 +583,6 @@ body[data-theme="dark"] .auth-brand img {
 
   .auth-form-header h1 {
     font-size: clamp(2.7rem, 14vw, 4rem);
-  }
-
-  .auth-form-column__meta {
-    display: none;
   }
 }
 
