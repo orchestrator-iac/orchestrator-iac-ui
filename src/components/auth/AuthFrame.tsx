@@ -56,7 +56,6 @@ const AuthFrame: React.FC<AuthFrameProps> = ({
           <img src="/one-color-teal-print.svg" alt="" aria-hidden="true" />
           <span>Orchestrator</span>
         </RouterLink>
-        <MinimalThemeToggle size="small" />
       </div>
 
       <div className="auth-rail__content">
@@ -78,10 +77,8 @@ const AuthFrame: React.FC<AuthFrameProps> = ({
 
     <main className="auth-form-column">
       <div className="auth-form-column__topline">
-        <RouterLink className="auth-back-link" to="/">
-          Back to Orchestrator
-        </RouterLink>
         <span className="auth-form-column__meta">Account access</span>
+        <MinimalThemeToggle size="small" />
       </div>
 
       <section className="auth-form-surface" aria-labelledby="auth-form-title">
