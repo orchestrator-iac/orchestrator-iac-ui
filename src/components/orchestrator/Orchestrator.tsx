@@ -93,6 +93,15 @@ const extractCatalogId = (nodeId: string): string => {
     ? id.slice(0, id.length - UUID_LENGTH - 1)
     : id.split("-")[0];
 };
+
+const getResourceLookupCandidates = (node: Record<string, any>): string[] =>
+  Array.from(
+    new Set(
+      [node.resourceId, node.__nodeType, node.resourceType, extractCatalogId(node.id)]
+        .map((candidate) => String(candidate ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
 const defaultOptions: Record<string, string> = {
   "elk.algorithm": "layered",
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
@@ -851,9 +860,24 @@ const OrchestratorReactFlow: React.FC = () => {
       appliedTemplateInfo: CloudConfig,
     ) =>
       runWithRouteLoading(async () => {
-        const fetchPromises = (serializedNodes || []).map((dbNode) =>
-          dispatch(fetchResourceById(extractCatalogId(dbNode.id))),
-        );
+        const fetchPromises = (serializedNodes || []).map(async (dbNode) => {
+          for (const candidate of getResourceLookupCandidates(dbNode)) {
+            const result = await dispatch(
+              fetchResourceById({
+                id: candidate,
+                cloudProvider: appliedTemplateInfo.cloud,
+              }),
+            );
+            if (
+              fetchResourceById.fulfilled.match(result) &&
+              result.payload.data?.resourceNode?.data
+            ) {
+              return result;
+            }
+          }
+
+          return null;
+        });
 
         const results = await Promise.all(fetchPromises);
         const resourceNodes: Node[] = [];
@@ -862,8 +886,16 @@ const OrchestratorReactFlow: React.FC = () => {
           const resultAction = results[i];
           const dbNode = serializedNodes[i];
 
-          if (fetchResourceById.fulfilled.match(resultAction)) {
+          if (
+            resultAction &&
+            fetchResourceById.fulfilled.match(resultAction) &&
+            resultAction.payload.data?.resourceNode?.data
+          ) {
             const resourceData = resultAction.payload;
+            const catalogResourceId =
+              resourceData.data.resourceId ||
+              dbNode.__nodeType ||
+              dbNode.resourceId;
             resourceNodes.push({
               id: dbNode.id,
               type: "customNode",
@@ -872,8 +904,10 @@ const OrchestratorReactFlow: React.FC = () => {
                 ...resourceData?.data?.resourceNode?.data,
                 values: dbNode.values || {},
                 __nodeType:
-                  dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
-                __resourceId: dbNode.resourceId,
+                  dbNode.__nodeType ||
+                  dbNode.resourceType ||
+                  catalogResourceId,
+                __resourceId: catalogResourceId,
                 isExpanded: dbNode.isExpanded ?? true,
                 friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
                 header: {
@@ -1229,7 +1263,9 @@ const OrchestratorReactFlow: React.FC = () => {
       event.preventDefault();
       if (!id || isArchitectureMode) return;
 
-      const resultAction = await dispatch(fetchResourceById(id));
+      const resultAction = await dispatch(
+        fetchResourceById({ id, cloudProvider: templateInfo.cloud }),
+      );
 
       if (fetchResourceById.fulfilled.match(resultAction)) {
         const resourceData = resultAction.payload;
@@ -1350,7 +1386,12 @@ const OrchestratorReactFlow: React.FC = () => {
           // Use the same extractCatalogId convention as the saved-orchestrator path:
           // node.id = `${mongodb_catalog_id}-${uuid}`, this recovers the catalog _id.
           const fetchPromises = (prefill.nodes || []).map((dbNode: any) =>
-            dispatch(fetchResourceById(extractCatalogId(dbNode.id))),
+            dispatch(
+              fetchResourceById({
+                id: extractCatalogId(dbNode.id),
+                cloudProvider: appliedTemplateInfo.cloud,
+              }),
+            ),
           );
 
           Promise.all(fetchPromises).then((results) => {
@@ -1497,7 +1538,14 @@ const OrchestratorReactFlow: React.FC = () => {
         const resourceNodes: Node[] = [];
         for (const node of orchestratorData?.nodes || []) {
           const id = extractCatalogId(node.id);
-          customNodes.push(dispatch(fetchResourceById(id)));
+          customNodes.push(
+            dispatch(
+              fetchResourceById({
+                id,
+                cloudProvider: templateInfo.cloud,
+              }),
+            ),
+          );
         }
         Promise.all(customNodes).then((results) => {
           for (let i = 0; i < results.length; i += 1) {
