@@ -5,6 +5,126 @@
   letter-spacing: -0.02em;
 }
 
+.workspaceShell {
+  width: min(var(--product-content-width), calc(100% - 48px));
+  margin: 0 auto;
+  padding-top: var(--product-space-7);
+  padding-bottom: 72px;
+}
+
+.workspaceIntro {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--product-space-6);
+  padding-bottom: var(--product-space-6);
+  border-bottom: 1px solid var(--product-line-subtle);
+}
+
+.workspaceTitle {
+  margin: 0;
+  color: var(--product-text);
+  font-family: var(--product-display-font);
+  font-size: clamp(2.25rem, 5vw, 4.25rem);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+
+.workspaceDescription {
+  max-width: 62ch;
+  margin: var(--product-space-4) 0 0;
+  color: var(--product-text-muted);
+  line-height: 1.7;
+}
+
+.workspaceIntroAction {
+  flex-shrink: 0;
+  border-radius: var(--product-radius-control) !important;
+  text-transform: none !important;
+}
+
+.templateInsight {
+  padding-top: var(--product-space-5);
+}
+
+.insightHeading {
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: clamp(1.5rem, 3vw, 2.25rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.035em !important;
+  text-transform: none !important;
+}
+
+.templateInsightCard {
+  background: var(--product-surface) !important;
+  border-color: var(--product-line-subtle) !important;
+  border-radius: var(--product-radius-surface) !important;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease !important;
+}
+
+.templateInsightCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--product-accent) !important;
+  box-shadow: 0 16px 32px var(--product-shadow) !important;
+}
+
+.templateInsightImage,
+.templateInsightPlaceholder {
+  width: 100%;
+  height: 150px;
+  border-radius: var(--product-radius-control);
+}
+
+.templateInsightImage {
+  display: block;
+  object-fit: cover;
+}
+
+.templateInsightPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--product-accent);
+  background: var(--product-accent-soft);
+  font-size: 2rem;
+}
+
+.templateInsightTitle {
+  display: block;
+  margin-top: var(--product-space-3) !important;
+  color: var(--product-text) !important;
+  font-weight: 700 !important;
+}
+
+.templateInsightMeta {
+  display: block;
+  margin-top: var(--product-space-2) !important;
+  color: var(--product-text-muted) !important;
+  font-family: var(--product-mono-font);
+  font-size: 0.64rem !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .workspaceShell {
+    width: min(100% - 24px, var(--product-content-width));
+    padding-top: var(--product-space-6);
+  }
+
+  .workspaceIntro {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--product-space-4);
+  }
+
+  .workspaceIntroAction {
+    align-self: flex-start;
+  }
+}
+
 .card {
   position: relative;
   box-sizing: border-box;
@@ -13,7 +133,7 @@
   padding: 20px;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 220ms ease-out, box-shadow 220ms ease-out, border-color 220ms ease-out;
   background-color: var(--card-bg);
   color: var(--card-color);
   box-shadow:
@@ -79,7 +199,7 @@
   height: 32px;
   background-color: rgba(255, 255, 255, 0.95);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out;
   overflow: hidden;
 }
 
@@ -135,7 +255,9 @@
   width: 0;
   height: 2px;
   background: linear-gradient(90deg, var(--secondary), var(--ternary));
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms ease-out;
   border-radius: 2px;
 }
 
@@ -144,7 +266,7 @@
 }
 
 .card:hover .cardTitle::after {
-  width: 100%;
+  transform: scaleX(1);
 }
 
 .cardDescription {
@@ -167,7 +289,7 @@
   object-fit: contain;
   object-position: center;
   opacity: 0.85;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 220ms ease-out, transform 220ms ease-out, filter 220ms ease-out;
   border-radius: 8px;
   background: linear-gradient(
     135deg,
@@ -191,7 +313,7 @@
   height: 160px;
   object-fit: cover;
   opacity: 0.85;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 220ms ease-out, transform 220ms ease-out, filter 220ms ease-out;
   border-radius: 8px;
   margin-bottom: 4px;
   filter: brightness(0.95) saturate(0.9);

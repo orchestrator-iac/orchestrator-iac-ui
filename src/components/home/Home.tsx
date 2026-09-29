@@ -81,6 +81,8 @@ interface TopTemplateItem {
   id: string;
   templateName: string;
   previewImageUrl?: string;
+  cloud?: string;
+  nodeCount?: number;
   analytics?: {
     usageCount?: number;
     viewCount?: number;
@@ -289,12 +291,14 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
   return (
     <Box
       component="section"
+      className={styles.templateInsight}
       data-tour="home-top-templates"
       aria-labelledby="home-top-templates-heading"
     >
       <Typography
         id="home-top-templates-heading"
         variant="h5"
+        className={styles.insightHeading}
         sx={{
           fontWeight: 700,
           mb: 1,
@@ -303,7 +307,7 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
           letterSpacing: "0.1em",
         }}
       >
-        Top Templates
+        Start from a template
       </Typography>
       <Box sx={{ position: "relative" }}>
         {!loading && templates.length > 4 && (
@@ -391,6 +395,7 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
             : templates.map((t) => (
                 <Box
                   key={t.id}
+                  className={styles.templateInsightCard}
                   onClick={() => onSelect(t.id)}
                   sx={{
                     minWidth: 250,
@@ -407,25 +412,25 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
                     },
                   }}
                 >
-                  <img
-                    src={t.previewImageUrl}
-                    alt={t.templateName}
-                    style={{
-                      width: "100%",
-                      height: 150,
-                      objectFit: "cover",
-                      borderRadius: 6,
-                    }}
-                  />
-                  <Typography variant="body2" sx={{ mt: 1, fontWeight: 600 }}>
+                  {t.previewImageUrl ? (
+                    <img
+                      src={t.previewImageUrl}
+                      alt={`Preview of ${t.templateName}`}
+                      className={styles.templateInsightImage}
+                    />
+                  ) : (
+                    <Box className={styles.templateInsightPlaceholder} aria-hidden="true">
+                      <FontAwesomeIcon icon="sitemap" />
+                    </Box>
+                  )}
+                  <Typography variant="body2" className={styles.templateInsightTitle}>
                     {t.templateName}
                   </Typography>
                   <Typography
                     variant="caption"
-                    sx={{ color: "text.secondary" }}
+                    className={styles.templateInsightMeta}
                   >
-                    {t.analytics?.usageCount || t.analytics?.viewCount || 0}{" "}
-                    uses
+                    {(t.cloud || "Cloud").toUpperCase()} · {t.nodeCount || 0} resources · {t.analytics?.usageCount || t.analytics?.viewCount || 0} uses
                   </Typography>
                 </Box>
               ))}
@@ -1385,13 +1390,33 @@ const Home: React.FC = () => {
 
   return (
     <Box
-      sx={{
-        maxWidth: "1600px",
-        margin: "0 auto",
-        px: { xs: 2, sm: 3, md: 4 },
-        py: 4,
-      }}
+      className={styles.workspaceShell}
     >
+      <Fade in={showContent} timeout={500}>
+        <Box component="section" className={styles.workspaceIntro}>
+          <Box>
+            <Typography component="h1" className={styles.workspaceTitle}>
+              Keep your systems visible.
+            </Typography>
+            <Typography component="p" className={styles.workspaceDescription}>
+              Continue shaping your orchestrators, start from a proven
+              template, and keep the path from architecture to Terraform in
+              one workspace.
+            </Typography>
+          </Box>
+          {canCreateOrchestrators && (
+            <Button
+              variant="contained"
+              className={styles.workspaceIntroAction}
+              startIcon={<FontAwesomeIcon icon="plus" aria-hidden="true" />}
+              onClick={() => navigateOrchestrator("new")}
+            >
+              New orchestrator
+            </Button>
+          )}
+        </Box>
+      </Fade>
+
       {/* Search and Stats Bar */}
       <HomeSearchBar
         showContent={showContent}

@@ -1,11 +1,132 @@
 /* Templates feature — CSS module */
 /* Reuses the same CSS variable conventions as Home.module.css */
 
+.pageShell {
+  width: min(var(--product-content-width), calc(100% - 48px));
+  margin: 0 auto;
+  padding: var(--product-space-7) 0 72px;
+}
+
+.pageHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--product-space-6);
+  padding-bottom: var(--product-space-6);
+  border-bottom: 1px solid var(--product-line-subtle);
+}
+
+.pageHeaderCopy {
+  max-width: 720px;
+}
+
+.pageHeaderTitle {
+  margin: 0;
+  color: var(--product-text);
+  font-family: var(--product-display-font);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+
+.pageHeaderDescription {
+  max-width: 62ch;
+  margin: var(--product-space-4) 0 0;
+  color: var(--product-text-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.pageHeaderNote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--product-space-2);
+  color: var(--product-text-subtle);
+  font-family: var(--product-mono-font);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: var(--product-label-spacing);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--product-space-4);
+  padding: var(--product-space-5) 0;
+  border-bottom: 1px solid var(--product-line-subtle);
+}
+
+.filterBar > * {
+  min-width: 0;
+}
+
+.detailPage {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: var(--product-space-7) 0 80px;
+}
+
+.detailHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--product-space-7);
+  padding: var(--product-space-6) 0 var(--product-space-7);
+}
+
+.detailHeroCopy {
+  min-width: 0;
+  max-width: 720px;
+}
+
+.detailTitle {
+  margin: 0 0 var(--product-space-3);
+  color: var(--product-text);
+  font-family: var(--product-display-font);
+  font-size: clamp(2.3rem, 5vw, 4.4rem);
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+
+.detailDescription {
+  max-width: 65ch;
+  margin: 0;
+  color: var(--product-text-muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.detailActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--product-space-3);
+}
+
+.detailSectionDivider {
+  border-color: var(--product-line-subtle) !important;
+}
+
+.detailPreview {
+  margin-bottom: var(--product-space-7);
+}
+
+.detailSectionHeading {
+  color: var(--product-text);
+  font-family: var(--product-mono-font);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: var(--product-label-spacing);
+  text-transform: uppercase;
+}
+
 .pageHeader {
   font-size: 2rem;
-  margin: 0;
-  font-weight: 600;
-  letter-spacing: -0.02em;
 }
 
 /* ── Card — identical to .card in Home.module.css ── */
@@ -13,16 +134,14 @@
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: var(--product-radius-surface);
+  padding: var(--product-space-4);
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   background-color: var(--card-bg);
   color: var(--card-color);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.08),
-    0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 12px 30px var(--product-shadow);
   display: flex;
   flex-direction: column;
   border: 1px solid transparent;
@@ -35,11 +154,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(75, 190, 190, 0.05) 0%,
-    rgba(32, 90, 90, 0.02) 100%
-  );
+  background: var(--product-accent-soft);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -47,11 +162,9 @@
 }
 
 .card:hover {
-  transform: translateY(-6px);
-  box-shadow:
-    0 16px 38px rgba(0, 0, 0, 0.14),
-    0 10px 20px rgba(0, 0, 0, 0.1);
-  border-color: rgba(75, 190, 190, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 38px var(--product-shadow-strong);
+  border-color: var(--product-accent);
 }
 
 .card:hover::before {
@@ -60,11 +173,11 @@
 
 .card:active {
   transform: translateY(-2px);
-  transition: all 0.15s ease;
+  transition: transform 120ms ease;
 }
 
 .card:focus-visible {
-  outline: 2px solid rgba(75, 190, 190, 0.8);
+  outline: 2px solid var(--product-focus);
   outline-offset: 2px;
   border-color: rgba(75, 190, 190, 0.4);
 }
@@ -79,10 +192,10 @@
   top: 16px;
   right: 16px;
   z-index: 10;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out;
   overflow: hidden;
 }
 
@@ -103,7 +216,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text1);
+  color: var(--product-text);
   transition: all 0.3s ease;
   position: relative;
   display: inline-block;
@@ -116,23 +229,25 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--secondary), var(--ternary));
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: var(--product-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms ease-out;
   border-radius: 2px;
 }
 
 .card:hover .cardTitle {
-  color: var(--secondary);
+  color: var(--product-accent-strong);
 }
 
 .card:hover .cardTitle::after {
-  width: 100%;
+  transform: scaleX(1);
 }
 
 .cardDescription {
   font-size: 0.875rem;
   margin: 0;
-  color: var(--text3);
+  color: var(--product-text-muted);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -142,11 +257,50 @@
 
 .templateCardImage {
   width: 100%;
-  height: 140px;
+  height: 156px;
   object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  background-color: var(--card-bg);
+  border-radius: var(--product-radius-control);
+  margin-bottom: var(--product-space-3);
+  background-color: var(--product-surface-raised);
+}
+
+@media (max-width: 900px) {
+  .pageShell,
+  .detailPage {
+    width: min(100% - 32px, var(--product-content-width));
+  }
+
+  .detailHero {
+    gap: var(--product-space-5);
+  }
+}
+
+@media (max-width: 680px) {
+  .pageShell,
+  .detailPage {
+    width: min(100% - 24px, var(--product-content-width));
+    padding-top: var(--product-space-6);
+  }
+
+  .pageHeader,
+  .detailHero {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: var(--product-space-4);
+  }
+
+  .pageHeaderNote {
+    white-space: normal;
+  }
+
+  .filterBar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detailActions {
+    align-items: stretch;
+  }
 }
 
 /* ── Readme markdown render area ── */
@@ -198,7 +352,7 @@
 }
 
 .readmeContent blockquote {
-  border-left: 4px solid rgba(75, 190, 190, 0.5);
+  border-left: 1px solid var(--product-accent);
   padding-left: 1em;
   color: var(--text3);
   margin: 0 0 0.75em 0;

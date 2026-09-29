@@ -31,6 +31,7 @@ import {
 } from "../../store/templatesSlice";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 import TemplateCard from "./TemplateCard";
+import styles from "./Templates.module.css";
 
 const PAGE_SIZE = 20;
 
@@ -602,7 +603,7 @@ const TemplatesGallery: React.FC = () => {
         <Box
           sx={{
             width: "100%",
-            animation: `card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(index * 55, 550)}ms both`,
+            animation: `card-enter 0.5s ease-out ${Math.min(index * 55, 550)}ms both`,
             "@keyframes card-enter": {
               from: { opacity: 0, transform: "translateY(18px) scale(0.97)" },
               to: { opacity: 1, transform: "translateY(0) scale(1)" },
@@ -617,64 +618,29 @@ const TemplatesGallery: React.FC = () => {
 
   return (
     <Box
-      sx={{
-        maxWidth: "1600px",
-        margin: "0 auto",
-        px: { xs: 2, sm: 3, md: 4 },
-        py: 4,
-      }}
+      className={styles.pageShell}
     >
       {/* Page header */}
       <Fade in={showContent} timeout={600}>
         <Box
           component="section"
           aria-labelledby="templates-heading"
+          className={styles.pageHeader}
           sx={{ mb: 4 }}
         >
-          <Typography
-            id="templates-heading"
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              letterSpacing: "-0.025em",
-              fontSize: { xs: "1.75rem", md: "2.25rem" },
-              mb: 0.75,
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              color: theme.palette.primary.main,
-            }}
-          >
-            <Box
-              aria-hidden="true"
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 44,
-                  height: 44,
-                  borderRadius: 2,
-                  background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.18)}, ${alpha(theme.palette.tertiary.main, 0.22)})`,
-                  color: theme.palette.secondary.main,
-                  border: `1px solid ${alpha(theme.palette.tertiary.main, 0.45)}`,
-                  flexShrink: 0,
-                  fontSize: "1.1rem",
-                }}
-            >
-              <FontAwesomeIcon icon="layer-group" />
-            </Box>
-            Templates
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              ml: 7.5,
-              fontSize: "0.925rem",
-              letterSpacing: "0.01em",
-            }}
-          >
-            Ready-made infrastructure blueprints. Fork any template to start building.
+          <Box className={styles.pageHeaderCopy}>
+            <Typography id="templates-heading" component="h1" className={styles.pageHeaderTitle}>
+              Start with a proven pattern.
+            </Typography>
+            <Typography component="p" className={styles.pageHeaderDescription}>
+              Explore reusable infrastructure blueprints, inspect how they are
+              connected, and fork the one that gives your next system a clear
+              first shape.
+            </Typography>
+          </Box>
+          <Typography className={styles.pageHeaderNote}>
+            <FontAwesomeIcon icon="layer-group" aria-hidden="true" />
+            Public infrastructure templates
           </Typography>
         </Box>
       </Fade>
@@ -820,6 +786,7 @@ const TemplatesGallery: React.FC = () => {
         <Box
           component="search"
           aria-label="Filter templates"
+          className={styles.filterBar}
           sx={{
             display: "flex",
             gap: 2,

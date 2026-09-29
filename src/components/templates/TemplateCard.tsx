@@ -95,6 +95,22 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
         </Box>
       )}
 
+      <Typography
+        component="p"
+        variant="caption"
+        sx={{
+          mb: 0.75,
+          color: "var(--product-accent-strong)",
+          fontFamily: "var(--product-mono-font)",
+          fontSize: "0.66rem",
+          fontWeight: 750,
+          letterSpacing: "var(--product-label-spacing)",
+          textTransform: "uppercase",
+        }}
+      >
+        {template.cloud || "Cloud"} · {template.nodeCount} resources
+      </Typography>
+
       {/* Title */}
       <Typography
         variant="h6"
@@ -225,7 +241,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template }) => {
           alignSelf: "flex-start",
         }}
       >
-        View Details
+          Inspect pattern
       </Button>
     </Box>
   );
