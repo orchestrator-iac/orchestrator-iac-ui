@@ -42,8 +42,7 @@
 .galleryPreviewLabel,
 .galleryPreviewProvider,
 .galleryRowMeta,
-.galleryRowFacts,
-.detailSectionHeading {
+.galleryRowFacts {
   color: var(--product-text-subtle);
   font-family: var(--product-mono-font);
   font-size: 0.68rem;
@@ -612,32 +611,28 @@
 
 .detailHero {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  align-items: start;
   gap: var(--product-space-7);
   padding: var(--product-space-5) 0 var(--product-space-6);
 }
 
 .detailHeroCopy {
   min-width: 0;
-  max-width: 760px;
+  max-width: 780px;
 }
 
 .detailBreadcrumb {
-  display: grid !important;
-  grid-template-columns: auto auto;
+  display: flex !important;
   justify-content: start;
   align-items: center;
   gap: 0.65rem;
-  margin-bottom: var(--product-space-4) !important;
-}
-
-.detailBreadcrumb .detailTitle {
-  grid-column: 1 / -1;
+  margin-bottom: var(--product-space-3) !important;
 }
 
 .detailTitle {
-  margin: 0 0 var(--product-space-3);
+  max-width: 14ch;
+  margin: 0 0 var(--product-space-4) !important;
   color: var(--product-text);
   font-family: var(--product-display-font) !important;
   font-size: clamp(2.8rem, 6vw, 5.5rem) !important;
@@ -662,13 +657,16 @@
 
 .detailActions {
   display: flex;
+  width: min(100%, 380px);
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
+  justify-self: end;
   gap: var(--product-space-3);
 }
 
 .detailStats {
   display: flex;
+  width: 100%;
   flex-wrap: wrap;
   gap: 0 !important;
   border-top: 1px solid var(--product-line-subtle);
@@ -676,7 +674,8 @@
 }
 
 .detailStat {
-  min-width: 76px !important;
+  min-width: 0 !important;
+  flex: 1 1 0;
   padding: var(--product-space-3) var(--product-space-4) !important;
   border: 0 !important;
   border-right: 1px solid var(--product-line-subtle) !important;
@@ -729,8 +728,17 @@
   background: var(--product-accent) !important;
 }
 
+.detailActionRow {
+  width: 100%;
+}
+
+.detailActionRow .detailUseButton {
+  flex: 1;
+}
+
 .detailOwnerActions {
   align-items: center;
+  justify-content: flex-end;
 }
 
 .detailSectionDivider {
@@ -738,13 +746,27 @@
 }
 
 .detailPreview {
-  margin: var(--product-space-6) 0 var(--product-space-7);
+  margin: var(--product-space-7) 0 var(--product-space-7);
 }
 
 .detailSectionHeader {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: var(--product-space-4);
   border-bottom: 1px solid var(--product-line-subtle);
   padding-bottom: var(--product-space-3);
+}
+
+.detailSectionHeading {
+  margin: 0 !important;
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: clamp(1.7rem, 3vw, 2.4rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1 !important;
+  text-transform: none;
 }
 
 .detailPreviewHeaderButton {
@@ -816,14 +838,15 @@
   text-transform: none !important;
 }
 
-.detailSectionHeading {
-  color: var(--product-text-subtle);
+.detailReadmeSection {
+  max-width: var(--product-reading-width);
+  margin: 0 auto;
 }
 
 .readmeContent {
-  max-width: var(--product-reading-width);
+  max-width: none;
   min-height: 220px;
-  margin-bottom: var(--product-space-6) !important;
+  margin: 0 0 var(--product-space-6) !important;
   padding: var(--product-space-6) !important;
   border: 1px solid var(--product-line) !important;
   border-radius: var(--product-radius-surface) !important;
@@ -934,6 +957,16 @@
     gap: var(--product-space-4);
   }
 
+  .detailHeroCopy,
+  .detailActions {
+    width: 100%;
+    max-width: none;
+  }
+
+  .detailActions {
+    justify-self: stretch;
+  }
+
   .pageHeaderNote {
     white-space: normal;
   }
@@ -991,6 +1024,14 @@
     align-items: stretch;
   }
 
+  .detailSectionHeader {
+    align-items: flex-start;
+  }
+
+  .detailSectionHeading {
+    font-size: 1.8rem !important;
+  }
+
   .readmeContent {
     padding: var(--product-space-4);
   }
@@ -1006,6 +1047,14 @@
   .pageHeaderTitle,
   .detailTitle {
     font-size: clamp(2.6rem, 14vw, 4rem);
+  }
+
+  .detailSectionHeader {
+    flex-wrap: wrap;
+  }
+
+  .detailPreviewHeaderButton {
+    margin-left: auto;
   }
 
   .galleryPreviewHeader,
