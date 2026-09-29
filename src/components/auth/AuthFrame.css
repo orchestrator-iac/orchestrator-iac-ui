@@ -260,6 +260,7 @@ body[data-theme="dark"] .auth-brand img {
 
 .auth-form-column__topline {
   gap: 20px;
+  justify-content: flex-end;
 }
 
 .auth-shell--login .auth-form-column,
