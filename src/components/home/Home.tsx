@@ -215,41 +215,52 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
   return (
     <Box
       component="section"
-      className={styles.templateInsight}
+      className={`${styles.templateInsight} ${styles.insightRail}`}
       data-tour="home-top-templates"
       aria-labelledby="home-top-templates-heading"
     >
-      <Typography
-        id="home-top-templates-heading"
-        variant="h5"
-        className={styles.insightHeading}
-      >
-        Start from a template
-      </Typography>
+      <Box className={styles.insightHeader}>
+        <Box>
+          <Typography
+            id="home-top-templates-heading"
+            variant="h5"
+            className={styles.insightHeading}
+          >
+            Start from a template
+          </Typography>
+          <Typography component="p" className={styles.insightSupportingText}>
+            Begin with a proven infrastructure pattern.
+          </Typography>
+        </Box>
+        <Box className={styles.insightControls}>
+          <Typography component="span" className={styles.insightCount}>
+            {loading ? "Loading patterns" : `${templates.length} patterns`}
+          </Typography>
+          {!loading && templates.length > 4 && (
+            <>
+              <IconButton
+                aria-label="Previous templates"
+                size="small"
+                onClick={onScrollLeft}
+                disabled={!canScrollLeft}
+                className={styles.insightControl}
+              >
+                <FontAwesomeIcon icon="chevron-left" aria-hidden="true" />
+              </IconButton>
+              <IconButton
+                aria-label="Next templates"
+                size="small"
+                onClick={onScrollRight}
+                disabled={!canScrollRight}
+                className={styles.insightControl}
+              >
+                <FontAwesomeIcon icon="chevron-right" aria-hidden="true" />
+              </IconButton>
+            </>
+          )}
+        </Box>
+      </Box>
       <Box className={styles.carouselFrame}>
-        {!loading && templates.length > 4 && (
-          <IconButton
-            aria-label="Previous templates"
-            size="small"
-            onClick={onScrollLeft}
-            disabled={!canScrollLeft}
-            className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
-          >
-            <FontAwesomeIcon icon="chevron-left" aria-hidden="true" />
-          </IconButton>
-        )}
-        {!loading && templates.length > 4 && (
-          <IconButton
-            aria-label="Next templates"
-            size="small"
-            onClick={onScrollRight}
-            disabled={!canScrollRight}
-            className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
-          >
-            <FontAwesomeIcon icon="chevron-right" aria-hidden="true" />
-          </IconButton>
-        )}
-
         <Box ref={scrollRef} className={styles.carouselViewport}>
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
@@ -264,6 +275,14 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
                   key={t.id}
                   onClick={() => onSelect(t.id)}
                   className={styles.templateInsightCard}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect(t.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                 >
                   {t.previewImageUrl ? (
                     <img
@@ -326,40 +345,52 @@ const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
   return (
     <Box
       component="section"
+      className={styles.insightRail}
       data-tour="home-top-resources"
       aria-labelledby="home-top-resources-heading"
     >
-      <Typography
-        id="home-top-resources-heading"
-        variant="h5"
-        className={styles.insightHeading}
-      >
-        Top Resources
-      </Typography>
+      <Box className={styles.insightHeader}>
+        <Box>
+          <Typography
+            id="home-top-resources-heading"
+            variant="h5"
+            className={styles.insightHeading}
+          >
+            Top Resources
+          </Typography>
+          <Typography component="p" className={styles.insightSupportingText}>
+            The building blocks most used across your workspace.
+          </Typography>
+        </Box>
+        <Box className={styles.insightControls}>
+          <Typography component="span" className={styles.insightCount}>
+            {loading ? "Loading resources" : `${resources.length} resources`}
+          </Typography>
+          {!loading && resources.length > 4 && (
+            <>
+              <IconButton
+                aria-label="Previous resources"
+                size="small"
+                onClick={onScrollLeft}
+                disabled={!canScrollLeft}
+                className={styles.insightControl}
+              >
+                <FontAwesomeIcon icon="chevron-left" aria-hidden="true" />
+              </IconButton>
+              <IconButton
+                aria-label="Next resources"
+                size="small"
+                onClick={onScrollRight}
+                disabled={!canScrollRight}
+                className={styles.insightControl}
+              >
+                <FontAwesomeIcon icon="chevron-right" aria-hidden="true" />
+              </IconButton>
+            </>
+          )}
+        </Box>
+      </Box>
       <Box className={styles.carouselFrame}>
-        {!loading && resources.length > 0 && (
-          <IconButton
-            aria-label="Previous resources"
-            size="small"
-            onClick={onScrollLeft}
-            disabled={!canScrollLeft}
-            className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
-          >
-            <FontAwesomeIcon icon="chevron-left" aria-hidden="true" />
-          </IconButton>
-        )}
-        {!loading && resources.length > 6 && (
-          <IconButton
-            aria-label="Next resources"
-            size="small"
-            onClick={onScrollRight}
-            disabled={!canScrollRight}
-            className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
-          >
-            <FontAwesomeIcon icon="chevron-right" aria-hidden="true" />
-          </IconButton>
-        )}
-
         <Box ref={scrollRef} className={styles.carouselViewport}>
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
@@ -373,17 +404,27 @@ const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
                 <Box
                   key={r.resourceId}
                   onClick={() => onSelect(r._id || r.resourceId)}
-                  className={`${styles.resourceInsightCard} ${styles.insightClickable}`}
+                  className={styles.resourceInsightCard}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect(r._id || r.resourceId);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                 >
-                  {hasRenderableResourceIcon(r.resourceIcon) ? (
-                    <ResourceIconView
-                      icon={r.resourceIcon}
-                      alt={r.resourceName || r.resourceId}
-                      className={styles.resourceInsightImage}
-                    />
-                  ) : (
-                    <Box className={styles.resourceInsightPlaceholder} />
-                  )}
+                  <Box className={styles.resourceInsightMedia}>
+                    {hasRenderableResourceIcon(r.resourceIcon) ? (
+                      <ResourceIconView
+                        icon={r.resourceIcon}
+                        alt={r.resourceName || r.resourceId}
+                        className={styles.resourceInsightImage}
+                      />
+                    ) : (
+                      <Box className={styles.resourceInsightPlaceholder} />
+                    )}
+                  </Box>
                   <Typography
                     variant="body2"
                     className={styles.resourceInsightTitle}
