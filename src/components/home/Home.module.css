@@ -147,15 +147,51 @@
 
 .insightsGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--product-space-7);
+}
+
+.insightRail {
+  min-width: 0;
+}
+
+.insightHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: var(--product-space-5);
+  margin-bottom: var(--product-space-4);
 }
 
 .insightHeading {
-  margin: 0 0 var(--product-space-3) !important;
+  margin: 0 !important;
   font-size: clamp(1.5rem, 3vw, 2.2rem) !important;
   line-height: 1.05 !important;
   text-transform: none !important;
+}
+
+.insightSupportingText {
+  margin: var(--product-space-2) 0 0;
+  color: var(--product-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.insightControls {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--product-space-2);
+}
+
+.insightCount {
+  margin-right: var(--product-space-2);
+  color: var(--product-text-subtle);
+  font-family: var(--product-mono-font);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .carouselFrame {
@@ -181,10 +217,7 @@
   background: var(--product-line);
 }
 
-.carouselArrow {
-  position: absolute !important;
-  top: 42% !important;
-  z-index: 2;
+.insightControl {
   width: 36px !important;
   height: 36px !important;
   border: 1px solid var(--product-line) !important;
@@ -192,25 +225,16 @@
   background: var(--product-surface) !important;
   color: var(--product-text) !important;
   box-shadow: 0 8px 18px var(--product-shadow) !important;
-  transform: translateY(-50%);
 }
 
-.carouselArrow:hover:not(:disabled),
-.carouselArrow:focus-visible:not(:disabled) {
+.insightControl:hover:not(:disabled),
+.insightControl:focus-visible:not(:disabled) {
   border-color: var(--product-accent) !important;
   color: var(--product-accent-strong) !important;
 }
 
-.carouselArrow:disabled {
+.insightControl:disabled {
   opacity: 0.3;
-}
-
-.carouselArrowLeft {
-  left: 0.55rem;
-}
-
-.carouselArrowRight {
-  right: 0.55rem;
 }
 
 .templateInsightCard,
@@ -233,7 +257,7 @@
 }
 
 .resourceInsightCard {
-  min-width: 200px;
+  min-width: 220px;
 }
 
 .templateInsightCard:hover,
@@ -247,22 +271,18 @@
 }
 
 .templateInsightImage,
-.templateInsightPlaceholder,
-.resourceInsightImage,
-.resourceInsightPlaceholder {
+.templateInsightPlaceholder {
   display: block;
   width: 100%;
   height: 150px;
   border-radius: var(--product-radius-control);
 }
 
-.templateInsightImage,
-.resourceInsightImage {
+.templateInsightImage {
   object-fit: cover;
 }
 
-.templateInsightPlaceholder,
-.resourceInsightPlaceholder {
+.templateInsightPlaceholder {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -294,7 +314,30 @@
 }
 
 .resourceInsightPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--product-radius-control);
   background: var(--product-raised);
+  color: var(--product-accent);
+  font-size: 1.5rem;
+}
+
+.resourceInsightMedia {
+  display: flex;
+  align-items: flex-start;
+  height: 94px;
+  padding: 0.15rem;
+}
+
+.resourceInsightImage {
+  display: block;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--product-radius-control);
+  object-fit: contain;
 }
 
 .insightSkeleton {
@@ -637,6 +680,26 @@
 
   .workspaceLinks {
     justify-content: flex-start;
+  }
+
+  .insightHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--product-space-3);
+  }
+
+  .insightControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .insightCount {
+    margin-right: auto;
+  }
+
+  .templateInsightCard,
+  .resourceInsightCard {
+    min-width: min(280px, calc(100vw - 48px));
   }
 
   .orchestratorGrid {
