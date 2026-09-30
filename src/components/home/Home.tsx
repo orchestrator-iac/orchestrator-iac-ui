@@ -506,6 +506,8 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
   onPublishClick,
   onUnpublishClick,
 }) => {
+  const theme = useTheme();
+
   return (
     <Box className={styles.orchestratorCardShell}>
       <Fade in={showContent} timeout={1000 + index * 100}>
