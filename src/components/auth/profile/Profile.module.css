@@ -12,6 +12,37 @@
   margin: 0 auto;
 }
 
+.loadingState {
+  display: grid;
+  justify-items: center;
+  gap: var(--product-space-3);
+  min-height: min(420px, 58vh);
+  place-content: center;
+  padding: var(--product-space-7);
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-preview);
+  background: var(--product-surface);
+  box-shadow: 0 24px 60px var(--product-shadow);
+  text-align: center;
+}
+
+.loadingTitle {
+  margin: 0 !important;
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: 2rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.loadingCopy {
+  max-width: 38ch;
+  margin: 0 !important;
+  color: var(--product-text-muted) !important;
+  font-size: 0.88rem !important;
+  line-height: 1.6 !important;
+}
+
 .pageHeader {
   display: flex;
   align-items: flex-end;

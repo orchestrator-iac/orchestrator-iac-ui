@@ -18,6 +18,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { uploadProfileImage } from "../../../services/auth";
 import { UserProfile } from "../../../types/auth";
 import apiService from "../../../services/apiService";
+import LumaSpin from "../../ui/luma-spin";
 import styles from "./Profile.module.css";
 
 const jobFunctions = [
@@ -29,7 +30,7 @@ const jobFunctions = [
 ];
 
 const Profile: React.FC = () => {
-  const { user, refreshProfile } = useAuth();
+  const { user, token, isInitializing, refreshProfile } = useAuth();
   const theme = useTheme();
   const themeOptions = [
     { label: "System Default", value: "system" },
@@ -44,6 +45,7 @@ const Profile: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const refreshAttemptedRef = useRef(false);
 
   useEffect(() => {
     document.body.dataset.theme = theme.palette.mode;
@@ -63,6 +65,15 @@ const Profile: React.FC = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    if (isInitializing || !token || user || refreshAttemptedRef.current) {
+      return;
+    }
+
+    refreshAttemptedRef.current = true;
+    void refreshProfile();
+  }, [isInitializing, refreshProfile, token, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -158,12 +169,21 @@ const Profile: React.FC = () => {
 
   if (!profile) {
     return (
-      <Box className={styles.page} aria-live="polite">
+      <Box
+        className={styles.page}
+        aria-busy={isInitializing || Boolean(token)}
+        aria-live="polite"
+      >
         <Box className={styles.container}>
-          <Typography className={styles.title}>Your profile</Typography>
-          <Typography className={styles.subtitle}>
-            Loading your account details…
-          </Typography>
+          <Box className={styles.loadingState}>
+            <LumaSpin size={44} />
+            <Typography component="h1" className={styles.loadingTitle}>
+              Preparing your profile
+            </Typography>
+            <Typography component="p" className={styles.loadingCopy}>
+              Loading your account details and workspace preferences…
+            </Typography>
+          </Box>
         </Box>
       </Box>
     );
