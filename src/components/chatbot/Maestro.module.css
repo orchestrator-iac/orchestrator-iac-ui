@@ -17,15 +17,18 @@
   min-width: 58px !important;
   height: 58px !important;
   padding: 8px !important;
-  border: 0 !important;
+  border: 1px solid var(--product-line) !important;
   border-radius: 50% !important;
   background: transparent !important;
   color: var(--product-accent-strong) !important;
   box-shadow: none !important;
-  transition: transform 180ms ease !important;
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease !important;
 }
 
 .launcherButton:hover {
+  border-color: var(--product-accent) !important;
   background: transparent !important;
   box-shadow: none !important;
   transform: translateY(-2px) scale(1.04);
