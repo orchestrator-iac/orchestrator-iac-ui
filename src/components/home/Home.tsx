@@ -984,25 +984,39 @@ const Home: React.FC = () => {
     let mounted = true;
     const loadInsights = async () => {
       setLoadingInsights(true);
-      try {
-        if (canViewOrchestrators) {
-          const tplResp = await templateService.listTemplates({
-            page: 1,
-            size: 10,
-            sort: "popularity",
-          });
-          if (mounted) setTopTemplates(tplResp.templates || []);
-        }
-        if (canViewResources) {
-          const res = await apiService.get(
-            `/orchestrators/analytics/top-resources?size=10`,
+      const [templatesResult, resourcesResult] = await Promise.allSettled([
+        canViewOrchestrators
+          ? templateService.listTemplates({
+              page: 1,
+              size: 10,
+              sort: "popularity",
+            })
+          : Promise.resolve(null),
+        canViewResources
+          ? apiService.get(`/orchestrators/analytics/top-resources?size=10`)
+          : Promise.resolve(null),
+      ]);
+
+      if (mounted) {
+        if (templatesResult.status === "fulfilled") {
+          setTopTemplates(templatesResult.value?.templates || []);
+        } else {
+          console.error(
+            "Failed to load top templates:",
+            templatesResult.reason,
           );
-          if (mounted) setTopResources(res || []);
         }
-      } catch (err) {
-        console.error("Failed to load insights:", err);
-      } finally {
-        if (mounted) setLoadingInsights(false);
+
+        if (resourcesResult.status === "fulfilled") {
+          setTopResources(resourcesResult.value || []);
+        } else {
+          console.error(
+            "Failed to load top resources:",
+            resourcesResult.reason,
+          );
+        }
+
+        setLoadingInsights(false);
       }
     };
 
