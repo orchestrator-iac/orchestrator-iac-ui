@@ -2389,7 +2389,17 @@ const OrchestratorReactFlow: React.FC = () => {
           deleteKeyCode={["Delete", "Backspace"]}
           fitView
         >
-          <Panel position="top-left" className={styles.canvasPanel}>
+          <Panel
+            position="top-left"
+            className={[
+              styles.canvasPanel,
+              !isViewMode && templateInfo?.cloud
+                ? styles.canvasPanelSidebarOffset
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
             <Box className={styles.canvasPanelStack}>
               <TemplateInfoChips
                 templateInfo={templateInfo}
