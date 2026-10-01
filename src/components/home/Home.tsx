@@ -589,7 +589,23 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
   return (
     <Box className={styles.orchestratorCardShell}>
       <Fade in={showContent} timeout={1000 + index * 100}>
-        <Box className={styles.card} onClick={() => onOpen(orchestrator._id)}>
+        <Box
+          className={styles.card}
+          onClick={() => onOpen(orchestrator._id)}
+          onKeyDown={(event) => {
+            if (event.target !== event.currentTarget) return;
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onOpen(orchestrator._id);
+            }
+          }}
+          role="link"
+          tabIndex={0}
+          aria-label={
+            "Open " +
+            (orchestrator.templateInfo?.templateName || "orchestrator")
+          }
+        >
           <CardLogo
             cloudType={orchestrator.templateInfo?.cloud || "aws"}
             className={styles.cloudTypeLogo}
@@ -718,11 +734,15 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
 interface OrchestratorsEmptyStateProps {
   showContent: boolean;
   searchQuery: string;
+  canCreateOrchestrators: boolean;
+  onCreateNew: () => void;
 }
 
 const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
   showContent,
   searchQuery,
+  canCreateOrchestrators,
+  onCreateNew,
 }) => {
   return (
     <Box className={styles.emptyStateShell}>
@@ -742,6 +762,18 @@ const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
               ? "Try adjusting your search query"
               : 'Click "New Orchestrator" to create your first infrastructure workflow!'}
           </Typography>
+          {!searchQuery && canCreateOrchestrators && (
+            <Button
+              className={styles.emptyStateAction}
+              variant="contained"
+              endIcon={
+                <FontAwesomeIcon icon="arrow-up-right" aria-hidden="true" />
+              }
+              onClick={onCreateNew}
+            >
+              New orchestrator
+            </Button>
+          )}
         </Box>
       </Fade>
     </Box>
@@ -781,20 +813,39 @@ const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
           aria-labelledby="orchestrators-heading"
           className={styles.orchestratorSectionHeader}
         >
-          <Box className={styles.sectionKicker}>
-            <FontAwesomeIcon icon="diagram-project" aria-hidden="true" />
-            Workspace index
+          <Box className={styles.orchestratorSectionCopy}>
+            <Typography
+              id="orchestrators-heading"
+              component="h2"
+              className={styles.sectionTitle}
+            >
+              Orchestrators
+            </Typography>
+            <Typography component="p" className={styles.sectionDescription}>
+              Manage your infrastructure orchestration workflows.
+            </Typography>
           </Box>
-          <Typography
-            id="orchestrators-heading"
-            component="h2"
-            className={styles.sectionTitle}
-          >
-            Orchestrators
-          </Typography>
-          <Typography component="p" className={styles.sectionDescription}>
-            Manage your infrastructure orchestration workflows.
-          </Typography>
+          <Box className={styles.orchestratorSectionTools}>
+            <Typography component="span" className={styles.orchestratorCount}>
+              {filteredOrchestrators.length}{" "}
+              {filteredOrchestrators.length === 1
+                ? "orchestrator"
+                : "orchestrators"}
+            </Typography>
+            {canCreateOrchestrators && (
+              <Button
+                className={styles.orchestratorCreateButton}
+                variant="contained"
+                endIcon={
+                  <FontAwesomeIcon icon="arrow-up-right" aria-hidden="true" />
+                }
+                onClick={onCreateNew}
+                data-tour="home-new-orchestrator"
+              >
+                New orchestrator
+              </Button>
+            )}
+          </Box>
         </Box>
       </Fade>
       <Box
@@ -847,25 +898,6 @@ const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
           ))
         ) : (
           <>
-            {canCreateOrchestrators && (
-              <Box className={styles.orchestratorCardShell}>
-                <Fade in={showContent} timeout={1000}>
-                  <Box
-                    className={`${styles.card} ${styles.newCard}`}
-                    onClick={onCreateNew}
-                    data-tour="home-new-orchestrator"
-                  >
-                    <div className={styles.cardBlank}>
-                      <FontAwesomeIcon icon="plus" size="2x" />
-                      <Typography className={styles.newCardTitle}>
-                        New Orchestrator
-                      </Typography>
-                    </div>
-                  </Box>
-                </Fade>
-              </Box>
-            )}
-
             {hasOrchestrators ? (
               filteredOrchestrators.map((orchestrator, index) => (
                 <OrchestratorCard
@@ -882,6 +914,8 @@ const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
               <OrchestratorsEmptyState
                 showContent={showContent}
                 searchQuery={searchQuery}
+                canCreateOrchestrators={canCreateOrchestrators}
+                onCreateNew={onCreateNew}
               />
             )}
           </>

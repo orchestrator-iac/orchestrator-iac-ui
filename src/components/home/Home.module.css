@@ -496,23 +496,49 @@
 }
 
 .orchestratorSectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--product-space-6);
   margin: var(--product-space-7) 0 var(--product-space-5);
+  padding-bottom: var(--product-space-5);
+  border-bottom: 1px solid var(--product-line-subtle);
 }
 
-.sectionKicker {
+.orchestratorSectionCopy {
+  min-width: 0;
+}
+
+.orchestratorSectionTools {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  color: var(--product-text-subtle);
-  font-family: var(--product-mono-font);
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  flex-shrink: 0;
+  gap: var(--product-space-4);
 }
 
-.sectionKicker svg {
-  color: var(--product-accent);
+.orchestratorCount {
+  color: var(--product-text-subtle);
+  font-family: var(--product-mono-font);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.orchestratorCreateButton {
+  min-height: var(--product-control-height);
+  border-radius: var(--product-radius-control) !important;
+  background: var(--product-accent-strong) !important;
+  color: var(--product-button-text) !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+}
+
+.orchestratorCreateButton:hover {
+  background: var(--product-accent) !important;
+  box-shadow: 0 8px 18px var(--product-shadow) !important;
 }
 
 .sectionTitle {
@@ -530,7 +556,7 @@
 .orchestratorGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--product-space-5);
+  gap: var(--product-space-4);
   align-items: stretch;
 }
 
@@ -565,6 +591,11 @@
   box-shadow: 0 16px 30px var(--product-shadow);
   outline: none;
   transform: translateY(-4px);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--product-focus);
+  outline-offset: 3px;
 }
 
 .card:active {
@@ -618,7 +649,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--product-space-3);
-  margin: var(--product-space-3) 0 var(--product-space-2);
+  margin: var(--product-space-4) 0 var(--product-space-2);
 }
 
 .cardTitle {
@@ -683,7 +714,7 @@
 }
 
 .cardDescription {
-  min-height: 4.5em;
+  min-height: 4.95em;
   margin: 0 0 var(--product-space-4) !important;
   overflow: hidden;
   color: var(--product-text-muted) !important;
@@ -721,41 +752,6 @@
   color: var(--product-accent);
 }
 
-.newCard {
-  justify-content: center;
-  border-style: dashed;
-  border-color: var(--product-accent);
-  background: transparent;
-}
-
-.newCard:hover {
-  background: var(--product-accent-soft);
-}
-
-.cardBlank {
-  display: flex;
-  min-height: 280px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.cardBlank svg {
-  color: var(--product-accent);
-  font-size: 2rem;
-}
-
-.newCardTitle {
-  margin-top: var(--product-space-3) !important;
-  color: var(--product-text) !important;
-  font-family: var(--product-mono-font) !important;
-  font-size: 0.72rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 .emptyStateShell {
   grid-column: 1 / -1;
 }
@@ -787,6 +783,21 @@
   max-width: 360px;
   margin: 0 auto;
   line-height: 1.6 !important;
+}
+
+.emptyStateAction {
+  margin-top: var(--product-space-5) !important;
+  min-height: var(--product-control-height);
+  border-radius: var(--product-radius-control) !important;
+  background: var(--product-accent-strong) !important;
+  color: var(--product-button-text) !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+}
+
+.emptyStateAction:hover {
+  background: var(--product-accent) !important;
 }
 
 @media (max-width: 900px) {
@@ -838,6 +849,21 @@
 
   .insightCount {
     margin-right: auto;
+  }
+
+  .orchestratorSectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--product-space-4);
+  }
+
+  .orchestratorSectionTools {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .orchestratorCreateButton {
+    margin-left: auto;
   }
 
   .templateInsightCard,
