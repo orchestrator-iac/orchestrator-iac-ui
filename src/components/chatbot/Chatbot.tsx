@@ -994,12 +994,16 @@ const Chatbot: React.FC = () => {
   const previousSessionIdRef = useRef<string | null>(null);
   const previousMessageCountRef = useRef(0);
 
-  // ── Load resource catalog once (needed by handleImplement) ────────────────
+  // ── Load the catalog when chat is opened (needed by handleImplement) ──────
+  // The chatbot is mounted on every protected route, but most visitors never
+  // open it. Defer this catalog request until chat is actually used; Resources
+  // and the orchestrator sidebar already populate the shared slice when they
+  // need the same data.
   useEffect(() => {
-    if (catalogStatus === "idle") {
+    if (openChat && catalogStatus === "idle") {
       dispatch(fetchResources());
     }
-  }, [catalogStatus, dispatch]);
+  }, [catalogStatus, dispatch, openChat]);
 
   // ── Split view isn't supported on small screens ────────────────────────────
   useEffect(() => {
