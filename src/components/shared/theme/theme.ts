@@ -42,7 +42,38 @@ declare module "@mui/material/styles" {
   }
 }
 
+const productTooltipComponents = {
+  MuiTooltip: {
+    defaultProps: {
+      arrow: true,
+      enterDelay: 280,
+      enterNextDelay: 80,
+      leaveDelay: 40,
+    },
+    styleOverrides: {
+      tooltip: {
+        maxWidth: 280,
+        padding: "8px 10px",
+        border: "1px solid var(--product-line)",
+        borderRadius: "var(--product-radius-control)",
+        backgroundColor: "var(--product-surface-raised)",
+        color: "var(--product-text)",
+        fontFamily: "var(--product-mono-font)",
+        fontSize: "0.68rem",
+        fontWeight: 700,
+        lineHeight: 1.45,
+        letterSpacing: "0.025em",
+        boxShadow: "0 10px 26px var(--product-shadow-strong)",
+      },
+      arrow: {
+        color: "var(--product-surface-raised)",
+      },
+    },
+  },
+};
+
 export const lightTheme = createTheme({
+  components: productTooltipComponents,
   palette: {
     mode: "light",
     primary: {
@@ -88,6 +119,7 @@ export const lightTheme = createTheme({
 });
 
 export const darkTheme = createTheme({
+  components: productTooltipComponents,
   palette: {
     mode: "dark",
     primary: {
