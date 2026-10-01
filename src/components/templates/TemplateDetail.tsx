@@ -772,23 +772,113 @@ const TemplateDetail: React.FC = () => {
   if (loading) {
     return (
       <Box
+        className={styles.detailLoadingPage}
         role="status"
         aria-label="Loading template"
         aria-busy="true"
-        sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, md: 4 }, py: 4 }}
       >
-        <Skeleton variant="text" width="55%" height={48} sx={{ mb: 2 }} />
-        <Skeleton variant="text" width="75%" height={28} sx={{ mb: 1 }} />
-        <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
-          <Skeleton variant="rounded" width={80} height={24} />
-          <Skeleton variant="rounded" width={80} height={24} />
+        <Box className={styles.detailLoadingHero} aria-hidden="true">
+          <Box className={styles.detailLoadingHeroCopy}>
+            <Skeleton
+              className={styles.detailLoadingBreadcrumb}
+              variant="text"
+              animation="wave"
+            />
+            <Skeleton
+              className={styles.detailLoadingTitle}
+              variant="text"
+              animation="wave"
+            />
+            <Skeleton
+              className={styles.detailLoadingMeta}
+              variant="text"
+              animation="wave"
+            />
+            <Skeleton
+              className={styles.detailLoadingDescription}
+              variant="text"
+              animation="wave"
+            />
+            <Skeleton
+              className={styles.detailLoadingDescriptionShort}
+              variant="text"
+              animation="wave"
+            />
+          </Box>
+          <Box className={styles.detailLoadingActions}>
+            <Box className={styles.detailLoadingStats}>
+              <Skeleton variant="text" animation="wave" />
+              <Skeleton variant="text" animation="wave" />
+              <Skeleton variant="text" animation="wave" />
+            </Box>
+            <Box className={styles.detailLoadingActionRow}>
+              <Skeleton
+                className={styles.detailLoadingLike}
+                variant="rounded"
+                animation="wave"
+              />
+              <Skeleton
+                className={styles.detailLoadingUse}
+                variant="rounded"
+                animation="wave"
+              />
+            </Box>
+          </Box>
         </Box>
-        <Skeleton
-          variant="rectangular"
-          height={520}
-          sx={{ borderRadius: 3, mb: 3 }}
-        />
-        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 3 }} />
+        <Divider className={styles.detailLoadingDivider} />
+        <Box className={styles.detailLoadingContent} aria-hidden="true">
+          <Box className={styles.detailLoadingPreview}>
+            <Skeleton
+              className={styles.detailLoadingSectionHeading}
+              variant="text"
+              animation="wave"
+            />
+            <Skeleton
+              className={styles.detailLoadingPreviewFrame}
+              variant="rectangular"
+              animation="wave"
+            />
+          </Box>
+          <Box className={styles.detailLoadingReadme}>
+            <Skeleton
+              className={styles.detailLoadingSectionHeading}
+              variant="text"
+              animation="wave"
+            />
+            <Box className={styles.detailLoadingReadmeFrame}>
+              <Skeleton
+                className={styles.detailLoadingReadmeHeading}
+                variant="text"
+                animation="wave"
+              />
+              <Skeleton
+                className={styles.detailLoadingReadmeLine}
+                variant="text"
+                animation="wave"
+              />
+              <Skeleton
+                className={styles.detailLoadingReadmeLine}
+                variant="text"
+                animation="wave"
+              />
+              <Skeleton
+                className={styles.detailLoadingReadmeLineShort}
+                variant="text"
+                animation="wave"
+              />
+              <Skeleton
+                className={styles.detailLoadingReadmeHeadingSmall}
+                variant="text"
+                animation="wave"
+              />
+              <Skeleton
+                className={styles.detailLoadingReadmeLine}
+                variant="text"
+                animation="wave"
+              />
+            </Box>
+          </Box>
+        </Box>
       </Box>
     );
   }

@@ -70,7 +70,9 @@ const TemplateListRow: React.FC<TemplateListRowProps> = ({
             <span aria-hidden="true">/</span>
             <span>{region}</span>
           </span>
-          <span className={styles.galleryRowTitle}>{template.templateName}</span>
+          <span className={styles.galleryRowTitle}>
+            {template.templateName}
+          </span>
           <span className={styles.galleryRowDescription}>
             {template.description ||
               "A reusable infrastructure pattern ready to inspect."}
@@ -145,13 +147,19 @@ const TemplatePreviewPanel: React.FC<TemplatePreviewPanelProps> = ({
           <Typography component="h2" className={styles.galleryPreviewTitle}>
             {template.templateName}
           </Typography>
-          <Typography component="p" className={styles.galleryPreviewDescription}>
+          <Typography
+            component="p"
+            className={styles.galleryPreviewDescription}
+          >
             {template.description ||
               "Inspect the connected resources before you make it your own."}
           </Typography>
         </Box>
 
-        <Box className={styles.galleryPreviewStats} aria-label="Pattern details">
+        <Box
+          className={styles.galleryPreviewStats}
+          aria-label="Pattern details"
+        >
           <span>
             <strong>{template.nodeCount}</strong>
             resources
@@ -165,7 +173,6 @@ const TemplatePreviewPanel: React.FC<TemplatePreviewPanelProps> = ({
             uses
           </span>
         </Box>
-
       </Box>
     </Box>
   );
@@ -206,9 +213,9 @@ const TemplatesGallery: React.FC = () => {
     const set = (sel: string, attr: string, val: string) => {
       let el = document.querySelector<HTMLMetaElement | HTMLLinkElement>(sel);
       if (!el) {
-        el = document.createElement(sel.startsWith("link") ? "link" : "meta") as
-          | HTMLMetaElement
-          | HTMLLinkElement;
+        el = document.createElement(
+          sel.startsWith("link") ? "link" : "meta",
+        ) as HTMLMetaElement | HTMLLinkElement;
         document.head.appendChild(el);
       }
       el.setAttribute(attr, val);
@@ -379,20 +386,120 @@ const TemplatesGallery: React.FC = () => {
     </Fade>
   );
 
-  const renderLoadingState = (append = false) => (
-    <Box className={append ? styles.galleryLoadingAppend : styles.galleryLoading}>
+  const renderLoadingRows = (append = false) => (
+    <Box
+      className={append ? styles.galleryLoadingAppend : styles.galleryLoading}
+    >
       {Array.from({ length: append ? 4 : 6 }).map((_, index) => (
-        <Box className={styles.galleryLoadingRow} key={index}>
-          <Skeleton variant="text" width={34} />
-          <Box sx={{ flex: 1 }}>
-            <Skeleton variant="text" width="28%" />
-            <Skeleton variant="text" width="62%" height={28} />
-            <Skeleton variant="text" width="84%" />
-            <Skeleton variant="text" width="46%" />
+        <Box
+          className={styles.galleryLoadingRow}
+          key={index}
+          aria-hidden="true"
+        >
+          <Skeleton
+            className={styles.galleryLoadingNumber}
+            variant="text"
+            animation="wave"
+          />
+          <Box className={styles.galleryLoadingCopy}>
+            <Skeleton
+              className={styles.galleryLoadingMeta}
+              variant="text"
+              animation="wave"
+            />
+            <Skeleton
+              className={styles.galleryLoadingTitle}
+              variant="text"
+              animation="wave"
+            />
+            <Skeleton
+              className={styles.galleryLoadingDescription}
+              variant="text"
+              animation="wave"
+            />
+            <Skeleton
+              className={styles.galleryLoadingFacts}
+              variant="text"
+              animation="wave"
+            />
           </Box>
-          <Skeleton variant="rounded" width={28} height={28} />
+          <Skeleton
+            className={styles.galleryLoadingAction}
+            variant="rounded"
+            animation="wave"
+          />
         </Box>
       ))}
+    </Box>
+  );
+
+  const renderLoadingState = () => (
+    <Box
+      className={styles.galleryLoadingLayout}
+      aria-busy="true"
+      aria-label="Loading templates"
+    >
+      <Box className={styles.galleryLoadingIndex} aria-hidden="true">
+        <Box className={styles.galleryLoadingSectionHeader}>
+          <Skeleton
+            className={styles.galleryLoadingHeading}
+            variant="text"
+            animation="wave"
+          />
+          <Skeleton
+            className={styles.galleryLoadingCount}
+            variant="text"
+            animation="wave"
+          />
+        </Box>
+        {renderLoadingRows()}
+      </Box>
+      <Box className={styles.galleryPreviewSkeleton} aria-hidden="true">
+        <Box className={styles.galleryPreviewSkeletonHeader}>
+          <Skeleton
+            className={styles.galleryLoadingLabel}
+            variant="text"
+            animation="wave"
+          />
+          <Skeleton
+            className={styles.galleryLoadingProvider}
+            variant="text"
+            animation="wave"
+          />
+          <Skeleton
+            className={styles.galleryLoadingButton}
+            variant="rounded"
+            animation="wave"
+          />
+        </Box>
+        <Skeleton
+          className={styles.galleryPreviewSkeletonMedia}
+          variant="rectangular"
+          animation="wave"
+        />
+        <Box className={styles.galleryPreviewSkeletonFooter}>
+          <Skeleton
+            className={styles.galleryLoadingPreviewTitle}
+            variant="text"
+            animation="wave"
+          />
+          <Skeleton
+            className={styles.galleryLoadingPreviewDescription}
+            variant="text"
+            animation="wave"
+          />
+          <Skeleton
+            className={styles.galleryLoadingPreviewDescriptionShort}
+            variant="text"
+            animation="wave"
+          />
+          <Box className={styles.galleryPreviewSkeletonStats}>
+            <Skeleton variant="text" animation="wave" />
+            <Skeleton variant="text" animation="wave" />
+            <Skeleton variant="text" animation="wave" />
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 
@@ -497,7 +604,7 @@ const TemplatesGallery: React.FC = () => {
       ) : items.length === 0 && status === "succeeded" ? (
         renderEmptyState()
       ) : (
-        <Box className={styles.galleryLayout}>
+        <Box className={styles.galleryLayout} aria-busy={status === "loading"}>
           <Box
             component="section"
             aria-labelledby="template-index-heading"
@@ -525,7 +632,7 @@ const TemplatesGallery: React.FC = () => {
               ))}
             </Box>
             {status === "loading" && items.length > 0
-              ? renderLoadingState(true)
+              ? renderLoadingRows(true)
               : null}
             <Box
               ref={sentinelRef}
@@ -542,7 +649,6 @@ const TemplatesGallery: React.FC = () => {
           ) : null}
         </Box>
       )}
-
     </Box>
   );
 };
