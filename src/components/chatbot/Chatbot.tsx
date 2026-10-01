@@ -276,7 +276,6 @@ interface ChatHeaderProps {
   isSplitView: boolean;
   isMobile: boolean;
   maestroState: MaestroRobotState;
-  headerAvatarBg: string;
   headerRobotColor: string | undefined;
   showHistory: boolean;
   onNewChat: () => void;
@@ -290,7 +289,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   isSplitView,
   isMobile,
   maestroState,
-  headerAvatarBg,
   headerRobotColor,
   showHistory,
   onNewChat,
@@ -333,7 +331,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           sx={{
             width: 50,
             height: 50,
-            bgcolor: headerAvatarBg,
           }}
         >
           <MaestroRobot
@@ -1729,7 +1726,6 @@ const Chatbot: React.FC = () => {
     isCreatingSession && Boolean(pendingMessageRef.current);
   const hasDraftInput = input.trim().length > 0;
   const launcherRobotColor = dark ? theme.palette.secondary.light : undefined;
-  const headerAvatarBg = dark ? theme.palette.tertiary.dark : "primary.dark";
   const headerRobotColor = dark
     ? theme.palette.secondary.light
     : theme.palette.primary.light;
@@ -1815,7 +1811,6 @@ const Chatbot: React.FC = () => {
               isSplitView={isSplitView}
               isMobile={isMobile}
               maestroState={maestroState}
-              headerAvatarBg={headerAvatarBg}
               headerRobotColor={headerRobotColor}
               showHistory={showHistory}
               onNewChat={handleNewChat}
