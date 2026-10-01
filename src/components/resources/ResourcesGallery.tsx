@@ -54,6 +54,7 @@ const SORT_OPTIONS: { value: ResourceSortBy; label: string; icon: string }[] = [
 // so the badge count grows/shrinks with real usage instead of always
 // spotlighting a fixed number of cards.
 const POPULAR_USAGE_THRESHOLD = 3;
+const RESOURCE_CARD_FADE_TIMEOUT_MS = 400;
 
 const matchesCloudFilter = (
   resource: ResourceItem,
@@ -699,13 +700,13 @@ const ResourcesGallery: React.FC = () => {
       />
     );
   } else {
-    galleryContent = filteredResources.map((resource, index) => (
+    galleryContent = filteredResources.map((resource) => (
       <Grid
         key={resource._id}
         size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
         display="flex"
       >
-        <Fade in={showContent} timeout={600 + index * 50}>
+        <Fade in={showContent} timeout={RESOURCE_CARD_FADE_TIMEOUT_MS}>
           <Box sx={{ width: "100%", display: "flex" }}>
             <ResourceCard
               resource={resource}
