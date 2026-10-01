@@ -374,12 +374,121 @@
   margin-top: 0.35rem !important;
 }
 
-.insightSkeleton {
-  flex: 0 0 250px;
-  padding: var(--product-space-3);
+.templateInsightSkeleton,
+.resourceInsightSkeleton,
+.orchestratorSkeleton {
+  box-sizing: border-box;
   border: 1px solid var(--product-line-subtle);
   border-radius: var(--product-radius-surface);
   background: var(--product-surface);
+}
+
+.templateInsightSkeleton,
+.resourceInsightSkeleton {
+  flex: 0 0 auto;
+  padding: var(--product-space-3);
+}
+
+.templateInsightSkeleton {
+  flex: 0 0 250px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--product-space-2);
+}
+
+.resourceInsightSkeleton {
+  min-width: 220px;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--product-space-3);
+}
+
+.resourceSkeletonCopy {
+  min-width: 0;
+}
+
+.orchestratorSkeleton {
+  display: flex;
+  min-width: 0;
+  min-height: 360px;
+  flex-direction: column;
+  padding: var(--product-space-3);
+}
+
+.orchestratorSkeletonCopy {
+  display: grid;
+  gap: var(--product-space-2);
+  margin-top: var(--product-space-3);
+}
+
+.orchestratorSkeletonMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--product-space-3);
+  margin-top: auto;
+  padding-top: var(--product-space-3);
+  border-top: 1px solid var(--product-line-subtle);
+}
+
+.templateSkeletonMedia,
+.orchestratorSkeletonMedia {
+  display: block !important;
+  width: 100% !important;
+  height: 150px !important;
+  border-radius: var(--product-radius-control) !important;
+}
+
+.orchestratorSkeletonMedia {
+  height: 160px !important;
+}
+
+.resourceSkeletonIcon {
+  display: block !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: var(--product-radius-control) !important;
+}
+
+.skeletonTitleLine,
+.skeletonMetaLine,
+.skeletonDescriptionLine,
+.skeletonActionLine,
+.templateSkeletonMedia,
+.orchestratorSkeletonMedia,
+.resourceSkeletonIcon {
+  background: var(--product-surface-raised) !important;
+}
+
+.templateInsightSkeleton :global(.MuiSkeleton-root),
+.resourceInsightSkeleton :global(.MuiSkeleton-root),
+.orchestratorSkeleton :global(.MuiSkeleton-root) {
+  opacity: 0.9;
+}
+
+.skeletonTitleLine {
+  width: 72% !important;
+  height: 24px !important;
+}
+
+.skeletonMetaLine {
+  width: 52% !important;
+  height: 15px !important;
+}
+
+.skeletonDescriptionLine {
+  width: 100% !important;
+  height: 18px !important;
+}
+
+.orchestratorSkeletonCopy .skeletonDescriptionLine:nth-child(3) {
+  width: 86% !important;
+}
+
+.skeletonActionLine {
+  width: 112px !important;
+  height: 28px !important;
 }
 
 .skeletonBlock {
