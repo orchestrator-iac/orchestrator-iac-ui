@@ -91,11 +91,6 @@
 
 .canvasCommandPanel {
   z-index: 6;
-  padding: 0.35rem;
-  border: 1px solid var(--product-line);
-  border-radius: var(--product-radius-control);
-  background: color-mix(in srgb, var(--product-surface) 94%, transparent);
-  box-shadow: 0 10px 26px var(--product-shadow);
 }
 
 .menuTrigger {
