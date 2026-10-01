@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, Box, Button, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import styles from "./Maestro.module.css";
 
 interface DiffAlertProps {
   summary: string;
@@ -13,11 +14,17 @@ interface DiffAlertProps {
  */
 const DiffAlert: React.FC<DiffAlertProps> = ({ summary, onDismiss }) => (
   <Alert
+    className={styles.diffAlert}
     severity="warning"
     icon={<InfoOutlinedIcon fontSize="small" />}
     sx={{ mx: 1, my: 0.5, fontSize: "0.75rem", alignItems: "flex-start" }}
     action={
-      <Button color="inherit" size="small" onClick={onDismiss} sx={{ whiteSpace: "nowrap" }}>
+      <Button
+        color="inherit"
+        size="small"
+        onClick={onDismiss}
+        sx={{ whiteSpace: "nowrap" }}
+      >
         Acknowledged
       </Button>
     }

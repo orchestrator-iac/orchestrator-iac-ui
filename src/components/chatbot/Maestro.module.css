@@ -1,0 +1,382 @@
+.maestroShell {
+  --maestro-panel: var(--product-surface);
+  --maestro-panel-raised: var(--product-surface-raised);
+  --maestro-field: var(--product-bg);
+  color: var(--product-text);
+  font-family: var(--product-mono-font);
+}
+
+.launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1300;
+}
+
+.launcherButton {
+  min-width: 58px !important;
+  height: 58px !important;
+  padding: 8px 14px !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: 999px !important;
+  background: var(--product-surface) !important;
+  color: var(--product-accent-strong) !important;
+  box-shadow: 0 18px 42px var(--product-shadow-strong) !important;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease !important;
+}
+
+.launcherButton:hover {
+  border-color: var(--product-accent) !important;
+  background: var(--product-accent-soft) !important;
+  box-shadow: 0 22px 50px var(--product-shadow-strong) !important;
+  transform: translateY(-2px);
+}
+
+.launcherButton:focus-visible,
+.headerAction:focus-visible,
+.composerAction:focus-visible {
+  outline: 2px solid var(--product-focus);
+  outline-offset: 3px;
+}
+
+.chatDock {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.chatPanel {
+  border: 1px solid var(--product-line) !important;
+  background: var(--maestro-panel) !important;
+  color: var(--product-text) !important;
+  box-shadow: 0 30px 80px var(--product-shadow-strong) !important;
+}
+
+.floatingPanel {
+  border-radius: var(--product-radius-preview) !important;
+}
+
+.splitPanel {
+  border-radius: 0 !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+.chatHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--product-space-3);
+  min-height: 72px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--product-line-subtle);
+  background: var(--maestro-panel) !important;
+  color: var(--product-text) !important;
+}
+
+.chatHeaderSplit {
+  min-height: 54px;
+  padding: 8px 12px;
+}
+
+.chatHeaderAvatar {
+  display: grid;
+  flex: 0 0 auto;
+  width: 42px !important;
+  height: 42px !important;
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-control) !important;
+  background: var(--product-accent-soft) !important;
+}
+
+.chatHeaderTitle {
+  min-width: 0;
+}
+
+.chatHeaderTitle :global(.MuiTypography-root:first-child) {
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: 1.25rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.02em;
+}
+
+.chatHeaderTitle :global(.MuiTypography-root:last-child) {
+  color: var(--product-text-subtle) !important;
+  font-family: var(--product-mono-font) !important;
+  font-size: 0.58rem !important;
+  font-weight: 800 !important;
+  letter-spacing: var(--product-label-spacing);
+  text-transform: uppercase;
+}
+
+.chatHeader :global(.MuiIconButton-root) {
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: var(--product-radius-control);
+  color: var(--product-text-muted);
+}
+
+.chatHeader :global(.MuiIconButton-root:hover) {
+  border-color: var(--product-line);
+  background: var(--product-accent-soft);
+  color: var(--product-accent-strong);
+}
+
+.chatDivider {
+  border-color: var(--product-line-subtle) !important;
+}
+
+.messageList {
+  min-height: 0;
+  background: var(--product-bg) !important;
+  scrollbar-color: var(--product-line) transparent;
+}
+
+.messageList > :global(.MuiBox-root) {
+  padding-inline: 18px;
+}
+
+.sessionHistory {
+  min-height: 0;
+  background: var(--product-bg);
+  scrollbar-color: var(--product-line) transparent;
+}
+
+.sessionHistory :global(.MuiTypography-root) {
+  color: var(--product-text-muted);
+}
+
+.sessionHistory :global(.MuiListItemButton-root) {
+  border-left: 2px solid transparent;
+  color: var(--product-text);
+}
+
+.sessionHistory :global(.MuiListItemButton-root:hover),
+.sessionHistory :global(.MuiListItemButton-root.Mui-selected) {
+  border-left-color: var(--product-accent);
+  background: var(--product-accent-soft);
+}
+
+.sessionHistory :global(.MuiListItem-root) {
+  border-color: var(--product-line-subtle);
+}
+
+.userMessage {
+  margin-bottom: var(--product-space-3) !important;
+  padding-inline: 18px !important;
+}
+
+.userBubble {
+  border: 1px solid var(--product-accent-strong) !important;
+  border-radius: 16px 16px 4px 16px !important;
+  background: var(--product-accent-strong) !important;
+  color: var(--product-button-text) !important;
+}
+
+.assistantMessage {
+  margin-bottom: var(--product-space-4) !important;
+  padding-inline: 18px !important;
+}
+
+.assistantMessage :global(.MuiAvatar-root) {
+  width: 34px !important;
+  height: 44px !important;
+}
+
+.assistantBubble {
+  max-width: 88% !important;
+  border: 1px solid var(--product-line-subtle) !important;
+  border-radius: 4px 16px 16px 16px !important;
+  background: var(--maestro-panel) !important;
+  color: var(--product-text) !important;
+  box-shadow: inset 0 2px 0 var(--product-accent),
+    0 8px 24px var(--product-shadow) !important;
+}
+
+.assistantMarkdown {
+  color: var(--product-text) !important;
+  font-family: var(--product-mono-font);
+  font-size: 0.8rem !important;
+  line-height: 1.65 !important;
+}
+
+.assistantMarkdown :global(h1),
+.assistantMarkdown :global(h2),
+.assistantMarkdown :global(h3),
+.assistantMarkdown :global(h4),
+.assistantMarkdown :global(h5),
+.assistantMarkdown :global(h6) {
+  color: var(--product-text);
+  font-family: var(--product-display-font);
+  font-weight: 400 !important;
+  letter-spacing: -0.015em;
+}
+
+.assistantMarkdown :global(code) {
+  border: 1px solid var(--product-line-subtle);
+  border-radius: 5px;
+  background: var(--product-accent-soft) !important;
+  color: var(--product-accent-strong);
+}
+
+.assistantMarkdown :global(pre) {
+  border: 1px solid var(--product-line-subtle);
+  border-radius: var(--product-radius-control) !important;
+  background: var(--product-surface-deep) !important;
+}
+
+.assistantMarkdown :global(a) {
+  color: var(--product-accent-strong) !important;
+}
+
+.messageMeta {
+  color: var(--product-text-subtle) !important;
+  font-family: var(--product-mono-font) !important;
+  font-size: 0.62rem !important;
+}
+
+.inputBar {
+  padding: 12px !important;
+  background: var(--maestro-panel) !important;
+}
+
+.inputField {
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  background: var(--maestro-field) !important;
+  color: var(--product-text) !important;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease !important;
+}
+
+.inputField:focus-within {
+  border-color: var(--product-accent) !important;
+  box-shadow: 0 0 0 3px var(--product-accent-soft) !important;
+}
+
+.inputField :global(.MuiInputBase-input) {
+  color: var(--product-text) !important;
+  font-family: var(--product-mono-font) !important;
+  font-size: 0.78rem;
+}
+
+.inputField :global(.MuiInputBase-input::placeholder) {
+  color: var(--product-text-subtle) !important;
+  opacity: 1;
+}
+
+.composerAction {
+  width: 34px !important;
+  height: 34px !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  color: var(--product-accent-strong) !important;
+}
+
+.composerAction:hover:not(:disabled) {
+  border-color: var(--product-accent) !important;
+  background: var(--product-accent-soft) !important;
+}
+
+.composerAction:last-child:not(:disabled) {
+  border-color: var(--product-accent-strong) !important;
+  background: var(--product-accent-strong) !important;
+  color: var(--product-button-text) !important;
+}
+
+.planCard {
+  margin-top: 12px !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  background: var(--product-surface) !important;
+  overflow: hidden;
+}
+
+.planCardHeader {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--product-line-subtle);
+  background: var(--product-accent-soft) !important;
+}
+
+.planCardHeader :global(.MuiTypography-root) {
+  color: var(--product-text) !important;
+}
+
+.planCardHeader :global(.MuiTypography-root:first-child) {
+  font-family: var(--product-display-font);
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.planCard :global(.MuiDivider-root) {
+  border-color: var(--product-line-subtle);
+}
+
+.planCard :global(.MuiButton-containedPrimary) {
+  border-radius: var(--product-radius-control);
+  background: var(--product-accent-strong);
+  color: var(--product-button-text);
+}
+
+.diffAlert {
+  margin: 10px 14px !important;
+  border: 1px solid var(--product-warm) !important;
+  border-radius: var(--product-radius-control) !important;
+  background: var(--product-glow-warm) !important;
+  color: var(--product-text) !important;
+}
+
+.modalPaper {
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-preview) !important;
+  background: var(--product-surface) !important;
+  color: var(--product-text) !important;
+}
+
+@media (max-width: 900px) {
+  .floatingPanel {
+    right: 16px !important;
+    bottom: 84px !important;
+    width: min(560px, calc(100vw - 32px)) !important;
+    height: min(640px, calc(100dvh - 112px)) !important;
+  }
+
+  .launcher {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .floatingPanel {
+    right: 12px !important;
+    bottom: 76px !important;
+    width: calc(100vw - 24px) !important;
+    height: calc(100dvh - 96px) !important;
+    border-radius: var(--product-radius-surface) !important;
+  }
+
+  .launcher {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .assistantBubble {
+    max-width: calc(100% - 42px) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launcherButton,
+  .inputField,
+  .composerAction {
+    transition: none !important;
+  }
+}

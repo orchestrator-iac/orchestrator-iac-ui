@@ -71,6 +71,7 @@ import MicLevelVisualizer from "./MicLevelVisualizer";
 import usePageContext from "@/hooks/usePageContext";
 import MaestroRobot, { type MaestroRobotState } from "./MaestroRobot";
 import { IoMdClose } from "react-icons/io";
+import styles from "./Maestro.module.css";
 
 // ── Typing indicator ───────────────────────────────────────────────────────────
 
@@ -240,9 +241,10 @@ const MaestroLauncherButton: React.FC<MaestroLauncherButtonProps> = ({
   launcherRobotColor,
   onToggle,
 }) => (
-  <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1300 }}>
+  <Box className={styles.launcher}>
     <Tooltip title={openChat ? "Close Maestro" : "Open Maestro"}>
       <IconButton
+        className={styles.launcherButton}
         aria-label={openChat ? "Close Maestro" : "Open Maestro"}
         color="primary"
         onClick={onToggle}
@@ -300,6 +302,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   // In split view the app header already shows branding, so this row is
   // reduced to just the action icons rather than duplicating it.
   <Box
+    className={`${styles.chatHeader} ${isSplitView ? styles.chatHeaderSplit : ""}`}
     sx={
       isSplitView
         ? {
@@ -326,6 +329,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
     {!isSplitView && (
       <>
         <Avatar
+          className={styles.chatHeaderAvatar}
           sx={{
             width: 50,
             height: 50,
@@ -339,7 +343,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             robotColor={headerRobotColor}
           />
         </Avatar>
-        <Box flex={1}>
+        <Box className={styles.chatHeaderTitle} flex={1}>
           <Typography variant="body1" fontWeight={700}>
             Maestro
           </Typography>
@@ -371,9 +375,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
     </Tooltip>
     {!isMobile && (
       <Tooltip
-        title={
-          isSplitView ? "Restore floating chat" : "Expand to split view"
-        }
+        title={isSplitView ? "Restore floating chat" : "Expand to split view"}
       >
         <IconButton size="small" color="inherit" onClick={onToggleSplitView}>
           {isSplitView ? (
@@ -428,7 +430,7 @@ const SessionHistoryPanel: React.FC<SessionHistoryPanelProps> = ({
   }
 
   return (
-    <Box flex={1} overflow="auto">
+    <Box className={styles.sessionHistory} flex={1} overflow="auto">
       <Box
         px={2}
         py={1.5}
@@ -456,7 +458,11 @@ const SessionHistoryPanel: React.FC<SessionHistoryPanelProps> = ({
               />
             </Tooltip>
           )}
-          <Typography variant="subtitle2" fontWeight={700} color="text.secondary">
+          <Typography
+            variant="subtitle2"
+            fontWeight={700}
+            color="text.secondary"
+          >
             Previous conversations
           </Typography>
         </Box>
@@ -506,7 +512,11 @@ const SessionHistoryPanel: React.FC<SessionHistoryPanelProps> = ({
             const label =
               s.title?.trim() || s.preview?.trim() || `Chat — ${dateLabel}`;
             const secondaryNode = (
-              <Typography variant="caption" color="text.secondary" component="div">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="div"
+              >
                 {`${s.messageCount} message${s.messageCount === 1 ? "" : "s"}`}{" "}
                 · {dateLabel} at {timeLabel}
               </Typography>
@@ -597,15 +607,14 @@ const MessageList: React.FC<MessageListProps> = ({
   onClearSendError,
   messagesEndRef,
 }) => (
-  <Box flex={1} overflow="auto" py={1}>
+  <Box className={styles.messageList} flex={1} overflow="auto" py={1}>
     {(!activeSession || activeSession.messages.length === 0) &&
       !isSending &&
       !isWaitingForSessionSend && (
         <Box textAlign="center" px={3} mt={3}>
           <Typography variant="body2" color="text.secondary">
-            Hi! I'm <strong>Maestro</strong>. Describe the cloud
-            infrastructure you'd like to build and I'll create a plan for
-            you.
+            Hi! I'm <strong>Maestro</strong>. Describe the cloud infrastructure
+            you'd like to build and I'll create a plan for you.
           </Typography>
         </Box>
       )}
@@ -702,7 +711,7 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
   }
 
   return (
-    <Box sx={{ bgcolor: "background.paper" }}>
+    <Box className={styles.inputBar} sx={{ bgcolor: "background.paper" }}>
       {isRecordingAudio ? (
         /* ── Dictation mode: textbox + send icon are replaced by a
            ChatGPT-dictate-style bar — cancel (X), live waveform,
@@ -730,7 +739,10 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
           </Tooltip>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <MicLevelVisualizer analyser={micAnalyser} active={isRecordingAudio} />
+            <MicLevelVisualizer
+              analyser={micAnalyser}
+              active={isRecordingAudio}
+            />
           </Box>
 
           <Tooltip title="Stop and transcribe">
@@ -751,6 +763,7 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
         </Box>
       ) : (
         <TextField
+          className={styles.inputField}
           inputRef={inputRef}
           fullWidth
           multiline
@@ -795,6 +808,7 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
                           color="primary"
                           onClick={onStartRecording}
                           disabled={isMicDisabled}
+                          className={styles.composerAction}
                           sx={{
                             border: `1px solid ${theme.palette.divider}`,
                             ml: 0.25,
@@ -805,6 +819,7 @@ const ChatInputBar: React.FC<ChatInputBarProps> = ({
                       </span>
                     </Tooltip>
                     <IconButton
+                      className={styles.composerAction}
                       size="small"
                       color="primary"
                       onClick={onSend}
@@ -852,9 +867,19 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   onClose,
   onConfirm,
 }) => (
-  <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+  <Dialog
+    open={open}
+    onClose={onClose}
+    maxWidth="xs"
+    fullWidth
+    slotProps={{
+      paper: { className: styles.modalPaper },
+    }}
+  >
     <DialogTitle color="error">
-      {deleteTargetIds.length > 1 ? "Delete Conversations" : "Delete Conversation"}
+      {deleteTargetIds.length > 1
+        ? "Delete Conversations"
+        : "Delete Conversation"}
     </DialogTitle>
     <DialogContent dividers>
       <Typography>
@@ -871,7 +896,12 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
               session?.preview?.trim() ||
               "Untitled conversation";
             return (
-              <Typography key={sessionId} variant="body2" color="text.primary" noWrap>
+              <Typography
+                key={sessionId}
+                variant="body2"
+                color="text.primary"
+                noWrap
+              >
                 {label}
               </Typography>
             );
@@ -883,7 +913,12 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
       <Button onClick={onClose} disabled={isDeleting}>
         Cancel
       </Button>
-      <Button color="error" variant="contained" onClick={onConfirm} disabled={isDeleting}>
+      <Button
+        color="error"
+        variant="contained"
+        onClick={onConfirm}
+        disabled={isDeleting}
+      >
         {isDeleting ? <CircularProgress size={18} color="inherit" /> : "Delete"}
       </Button>
     </DialogActions>
@@ -930,7 +965,9 @@ const Chatbot: React.FC = () => {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
-  const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(
+    null,
+  );
   const [talkingMessageKey, setTalkingMessageKey] = useState<string | null>(
     null,
   );
@@ -979,7 +1016,10 @@ const Chatbot: React.FC = () => {
       mediaRecorderRef.current?.stop();
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
       analyserRef.current?.disconnect();
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      if (
+        audioContextRef.current &&
+        audioContextRef.current.state !== "closed"
+      ) {
         audioContextRef.current.close().catch(() => undefined);
       }
     };
@@ -1217,8 +1257,13 @@ const Chatbot: React.FC = () => {
   const handleStartRecording = async () => {
     if (isRecordingAudio || isTranscribingAudio || isSending) return;
 
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setTranscriptionError("Audio recording is not supported in this browser.");
+    if (
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
+      setTranscriptionError(
+        "Audio recording is not supported in this browser.",
+      );
       return;
     }
 
@@ -1274,7 +1319,9 @@ const Chatbot: React.FC = () => {
 
         try {
           await handleTranscribeBlob(audioBlob);
-          setToastMessage("Voice note transcribed and added to the message box.");
+          setToastMessage(
+            "Voice note transcribed and added to the message box.",
+          );
           setToastSeverity("success");
           setToastOpen(true);
         } catch (error) {
@@ -1290,11 +1337,14 @@ const Chatbot: React.FC = () => {
       };
 
       recorder.start();
-      setToastMessage("Recording started. Click stop when you're done speaking.");
+      setToastMessage(
+        "Recording started. Click stop when you're done speaking.",
+      );
       setToastSeverity("info");
       setToastOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to start recording.";
+      const message =
+        error instanceof Error ? error.message : "Unable to start recording.";
       setTranscriptionError(message);
       setToastMessage(message);
       setToastSeverity("error");
@@ -1386,7 +1436,7 @@ const Chatbot: React.FC = () => {
         return v;
       };
       const normalizeConfig = (
-        config: Record<string, unknown> | undefined
+        config: Record<string, unknown> | undefined,
       ): Record<string, unknown> => {
         if (!config) return {};
         const result: Record<string, unknown> = {};
@@ -1745,6 +1795,7 @@ const Chatbot: React.FC = () => {
       {/* Chat panel */}
       {(openChat || isSplitView) && (
         <Box
+          className={styles.maestroShell}
           sx={{
             display: "flex",
             height: isSplitView ? "100%" : "auto",
@@ -1753,7 +1804,13 @@ const Chatbot: React.FC = () => {
           }}
         >
           {isSplitView && <DragHandle />}
-          <Paper elevation={chatPanelElevation} sx={chatPanelSx}>
+          <Paper
+            className={`${styles.chatPanel} ${
+              isSplitView ? styles.splitPanel : styles.floatingPanel
+            }`}
+            elevation={chatPanelElevation}
+            sx={chatPanelSx}
+          >
             <ChatHeader
               isSplitView={isSplitView}
               isMobile={isMobile}
@@ -1768,7 +1825,7 @@ const Chatbot: React.FC = () => {
               onClose={handleCloseChat}
             />
 
-            <Divider />
+            <Divider className={styles.chatDivider} />
 
             {/* ── Diff alert ── */}
             {showDiffAlert && lastDiffMsg && (
@@ -1805,7 +1862,7 @@ const Chatbot: React.FC = () => {
               />
             )}
 
-            <Divider />
+            <Divider className={styles.chatDivider} />
 
             {/* ── Input bar (hidden when browsing history) ── */}
             {showHistory ? null : (
@@ -1839,6 +1896,9 @@ const Chatbot: React.FC = () => {
         onClose={() => setNotesOpen(false)}
         maxWidth="lg"
         fullWidth
+        slotProps={{
+          paper: { className: styles.modalPaper },
+        }}
       >
         <DialogTitle>
           Notes
