@@ -27,6 +27,7 @@ import { fetchTopResources } from "../../../store/resourceAnalyticsSlice";
 import { CloudProvider } from "../../../types/clouds-info";
 import ResourceIconView from "@/components/shared/ResourceIconView";
 import OverflowTooltipText from "@/components/shared/OverflowTooltipText";
+import styles from "../Orchestrator.module.css";
 
 const drawerWidth = 240;
 
@@ -149,27 +150,10 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   return (
     <>
       <IconButton
+        className={[styles.sidebarToggle, open && styles.sidebarToggleOpen]
+          .filter(Boolean)
+          .join(" ")}
         onClick={toggleDrawer}
-        sx={{
-          position: "fixed",
-          top: "110px",
-          left: open ? "223px" : "16px",
-          zIndex: 101,
-          width: 36,
-          height: 36,
-          borderRadius: "50%",
-          backgroundColor: theme.palette.background.paper,
-          border: `1px solid ${theme.palette.divider}`,
-          boxShadow: 2,
-          color: theme.palette.text.primary,
-          transition: "left 0.3s ease",
-          "&:hover": {
-            backgroundColor: theme.palette.background.paper,
-          },
-          "& .MuiSvgIcon-root": {
-            fontSize: 24,
-          },
-        }}
       >
         {open ? <KeyboardArrowLeftIcon /> : <KeyboardArrowRightIcon />}
       </IconButton>
@@ -194,23 +178,14 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
             zIndex: 100,
           },
         }}
+        slotProps={{ paper: { className: styles.sidebarDrawer } }}
       >
         <Box sx={{ mt: 2, px: 2, pb: 1, flexShrink: 0 }}>
           <Paper
             variant="outlined"
             data-tour="orchestrator-sidebar-search"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              px: 1,
-              py: 0.5,
-              borderRadius: 2,
-              transition: "all 0.3s ease",
-              "&:focus-within": {
-                borderColor: "primary.main",
-                boxShadow: 1,
-              },
-            }}
+            className={styles.sidebarSearch}
+            sx={{ display: "flex", alignItems: "center", px: 1, py: 0.5 }}
           >
             <SearchIcon fontSize="small" />
             <InputBase
@@ -229,19 +204,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
           {visibleResources.map((resource: any) => (
             <ListItemButton
               key={resource._id}
-              sx={{
-                alignItems: "center",
-                py: 1.5,
-                borderRadius: 2,
-                mx: 1,
-                mb: 0.5,
-                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                "&:hover": {
-                  bgcolor: "action.hover",
-                  transform: "translateX(4px)",
-                },
-              }}
-              className="dndnode"
+              sx={{ alignItems: "center" }}
+              className={[styles.sidebarResourceItem, "dndnode"].join(" ")}
               onDragStart={(event) => onDragStart(event, resource.resourceId)}
               draggable
             >

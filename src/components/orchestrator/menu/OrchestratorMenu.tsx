@@ -51,6 +51,7 @@ import PolicyFindingsDialog from "./PolicyFindingsDialog";
 import PolicyScanSettingsDialog from "./PolicyScanSettingsDialog";
 import ReconcileDialog from "./ReconcileDialog";
 import DriftReportDialog from "./DriftReportDialog";
+import styles from "../Orchestrator.module.css";
 
 interface MenuToggleItemProps {
   icon: React.ComponentType<{
@@ -599,19 +600,9 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
     <>
       <Tooltip title="Orchestrator Menu" arrow>
         <IconButton
+          className={styles.menuTrigger}
           onClick={handleMenuClick}
           data-tour="orchestrator-menu"
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 1,
-            transition: "all 0.3s ease",
-            "&:hover": {
-              bgcolor: "background.paper",
-              transform: "translateY(-2px)",
-              boxShadow: 2,
-            },
-          }}
         >
           <MoreVertIcon />
         </IconButton>
@@ -631,12 +622,7 @@ export const OrchestratorMenu: React.FC<OrchestratorMenuProps> = ({
         }}
         slotProps={{
           paper: {
-            sx: {
-              minWidth: 200,
-              borderRadius: 2,
-              boxShadow: 2,
-              mt: 0.5,
-            },
+            className: styles.menuPaper,
           },
         }}
       >

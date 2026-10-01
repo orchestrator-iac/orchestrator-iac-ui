@@ -1,0 +1,384 @@
+.editorShell {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--product-bg);
+  color: var(--product-text);
+}
+
+.canvasSurface {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  background: var(--product-bg);
+}
+
+.canvasSurface :global(.react-flow__pane) {
+  cursor: default;
+}
+
+.canvasSurface :global(.react-flow__attribution) {
+  display: none;
+}
+
+.canvasPanel {
+  z-index: 5;
+}
+
+.canvasPanelStack {
+  display: grid;
+  gap: var(--product-space-3);
+}
+
+.reactFlowSurface {
+  width: 100%;
+  height: 100%;
+}
+
+.canvasMeta {
+  display: flex;
+  max-width: min(620px, calc(100vw - 48px));
+  align-items: center;
+  gap: var(--product-space-2);
+  flex-wrap: wrap;
+  padding: 0.35rem;
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-control);
+  background: color-mix(in srgb, var(--product-surface) 94%, transparent);
+  box-shadow: 0 10px 26px var(--product-shadow);
+}
+
+.templateChip {
+  min-height: 32px;
+  border: 0 !important;
+  border-radius: 7px !important;
+  color: var(--product-text-muted) !important;
+  background: transparent !important;
+  font-family: var(--product-mono-font) !important;
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.templateChip:hover {
+  color: var(--product-text) !important;
+  background: var(--product-accent-soft) !important;
+}
+
+.readOnlyChip {
+  min-height: 28px;
+  border-color: var(--product-line) !important;
+  border-radius: 7px !important;
+  color: var(--product-text-subtle) !important;
+  font-family: var(--product-mono-font) !important;
+  font-size: 0.6rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.maestroDraftBanner {
+  max-width: min(520px, calc(100vw - 48px));
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  color: var(--product-text) !important;
+  background: var(--product-surface) !important;
+  box-shadow: 0 12px 28px var(--product-shadow) !important;
+}
+
+.canvasCommandPanel {
+  z-index: 6;
+  padding: 0.35rem;
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-control);
+  background: color-mix(in srgb, var(--product-surface) 94%, transparent);
+  box-shadow: 0 10px 26px var(--product-shadow);
+}
+
+.menuTrigger {
+  width: 40px !important;
+  height: 40px !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: 50% !important;
+  color: var(--product-text) !important;
+  background: var(--product-surface) !important;
+  box-shadow: none !important;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.menuTrigger:hover,
+.menuTrigger:focus-visible {
+  border-color: var(--product-accent) !important;
+  color: var(--product-accent-strong) !important;
+  background: var(--product-accent-soft) !important;
+  transform: translateY(-1px);
+}
+
+.menuPaper {
+  min-width: 250px;
+  margin-top: 0.5rem;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-surface) !important;
+  background: var(--product-surface) !important;
+  box-shadow: 0 24px 60px var(--product-shadow-strong) !important;
+}
+
+.menuPaper :global(.MuiMenuItem-root) {
+  min-height: 44px;
+  margin: 0.2rem 0.35rem;
+  border-radius: var(--product-radius-control);
+  color: var(--product-text);
+}
+
+.menuPaper :global(.MuiMenuItem-root:hover) {
+  background: var(--product-accent-soft);
+}
+
+.menuPaper :global(.MuiListItemText-primary) {
+  font-size: 0.88rem;
+}
+
+.menuPaper :global(.MuiListItemText-secondary) {
+  color: var(--product-text-subtle);
+  font-size: 0.72rem;
+}
+
+.flowControls,
+.flowMiniMap {
+  overflow: hidden;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  background: var(--product-surface) !important;
+  box-shadow: 0 10px 26px var(--product-shadow) !important;
+}
+
+.flowControls :global(.react-flow__controls-button) {
+  width: 34px;
+  height: 34px;
+  border-bottom: 1px solid var(--product-line-subtle);
+  background: transparent;
+  color: var(--product-text-muted);
+  fill: currentColor;
+}
+
+.flowControls :global(.react-flow__controls-button:last-child) {
+  border-bottom: 0;
+}
+
+.flowControls :global(.react-flow__controls-button:hover) {
+  background: var(--product-accent-soft);
+  color: var(--product-accent-strong);
+}
+
+.flowMiniMap {
+  right: 16px !important;
+  bottom: 16px !important;
+  width: 190px;
+  height: 120px;
+}
+
+.flowMiniMap :global(.react-flow__minimap-mask) {
+  fill: color-mix(in srgb, var(--product-bg) 68%, transparent);
+}
+
+.routeLoadingOverlay {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--product-space-5);
+  background: color-mix(in srgb, var(--product-bg) 86%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.routeLoadingCard {
+  display: grid;
+  max-width: 360px;
+  gap: var(--product-space-3);
+  padding: var(--product-space-6);
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-surface);
+  background: var(--product-surface);
+  box-shadow: 0 24px 60px var(--product-shadow-strong);
+  text-align: center;
+}
+
+.routeLoadingTitle {
+  margin: 0 !important;
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: 1.7rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.routeLoadingDescription {
+  margin: 0 !important;
+  color: var(--product-text-muted) !important;
+  font-size: 0.88rem !important;
+  line-height: 1.6 !important;
+}
+
+.emptyCanvasState {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--product-space-6);
+  pointer-events: none;
+}
+
+.emptyCanvasCard {
+  display: grid;
+  max-width: 420px;
+  gap: var(--product-space-3);
+  padding: var(--product-space-6);
+  border: 1px solid var(--product-line-subtle);
+  border-radius: var(--product-radius-surface);
+  background: color-mix(in srgb, var(--product-surface) 86%, transparent);
+  box-shadow: 0 18px 42px var(--product-shadow);
+  text-align: center;
+}
+
+.emptyCanvasIcon {
+  color: var(--product-accent);
+  font-size: 1.5rem;
+}
+
+.emptyCanvasTitle {
+  margin: 0 !important;
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: clamp(1.8rem, 3vw, 2.5rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.emptyCanvasDescription {
+  margin: 0 !important;
+  color: var(--product-text-muted) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.65 !important;
+}
+
+.sidebarToggle {
+  position: fixed !important;
+  top: 88px;
+  left: 16px;
+  z-index: 101;
+  width: 36px !important;
+  height: 36px !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: 50% !important;
+  color: var(--product-text) !important;
+  background: var(--product-surface) !important;
+  box-shadow: 0 10px 24px var(--product-shadow) !important;
+  transition:
+    left 240ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.sidebarToggleOpen {
+  left: 223px;
+}
+
+.sidebarToggle:hover,
+.sidebarToggle:focus-visible {
+  border-color: var(--product-accent) !important;
+  color: var(--product-accent-strong) !important;
+  background: var(--product-accent-soft) !important;
+}
+
+.sidebarDrawer {
+  top: 72px !important;
+  height: calc(100vh - 72px) !important;
+  border-right: 1px solid var(--product-line) !important;
+  background: var(--product-surface) !important;
+  box-sizing: border-box;
+}
+
+.sidebarSearch {
+  min-height: 42px;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  color: var(--product-text) !important;
+  background: var(--product-bg) !important;
+  box-shadow: none !important;
+}
+
+.sidebarSearch:focus-within {
+  border-color: var(--product-accent) !important;
+  box-shadow: 0 0 0 3px var(--product-accent-soft) !important;
+}
+
+.sidebarSearch :global(.MuiSvgIcon-root) {
+  color: var(--product-text-subtle);
+}
+
+.sidebarResourceItem {
+  margin: 0 0.5rem 0.25rem !important;
+  padding: 0.7rem !important;
+  border-radius: var(--product-radius-control) !important;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.sidebarResourceItem:hover,
+.sidebarResourceItem:focus-visible {
+  background: var(--product-accent-soft) !important;
+}
+
+.initDialogPaper {
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-preview) !important;
+  background: var(--product-surface) !important;
+  color: var(--product-text) !important;
+  box-shadow: 0 30px 80px var(--product-shadow-strong) !important;
+}
+
+.initDialogTitle {
+  padding: var(--product-space-6) var(--product-space-6) var(--product-space-3) !important;
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: 2rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.initDialogContent {
+  padding: var(--product-space-3) var(--product-space-6) !important;
+}
+
+.initDialogActions {
+  padding: var(--product-space-4) var(--product-space-6) var(--product-space-6) !important;
+  border-top: 1px solid var(--product-line-subtle);
+}
+
+@media (max-width: 720px) {
+  .canvasMeta {
+    max-width: calc(100vw - 32px);
+  }
+
+  .flowMiniMap {
+    display: none;
+  }
+
+  .emptyCanvasCard,
+  .routeLoadingCard {
+    padding: var(--product-space-5);
+  }
+
+  .sidebarToggleOpen {
+    left: 16px;
+  }
+}

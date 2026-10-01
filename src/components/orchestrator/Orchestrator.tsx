@@ -75,6 +75,7 @@ import {
 } from "@/utils/maestroDraft";
 import LumaSpin from "@/components/ui/luma-spin";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
+import styles from "./Orchestrator.module.css";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -617,56 +618,25 @@ const computeNodeValuesForLinkChange = (
 // is in flight. Extracted from OrchestratorReactFlow's render to keep the
 // component's own cognitive complexity within limits; markup is unchanged.
 const RouteLoadingOverlay: React.FC = () => {
-  const theme = useTheme();
   return (
     <Box
+      className={styles.routeLoadingOverlay}
       aria-live="polite"
       role="status"
-      sx={{
-        position: "absolute",
-        inset: 0,
-        zIndex: 10,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 3,
-        bgcolor:
-          theme.palette.mode === "dark"
-            ? "rgba(7, 10, 18, 0.24)"
-            : "rgba(244, 247, 251, 0.28)",
-        backdropFilter: "blur(8px) saturate(120%)",
-        WebkitBackdropFilter: "blur(8px) saturate(120%)",
-      }}
     >
       <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 1.25,
-          textAlign: "center",
-          px: 2,
-          py: 1,
-          transform: "translateY(-2%)",
-        }}
+        className={styles.routeLoadingCard}
       >
-        <LumaSpin size={72} />
+        <LumaSpin size={56} />
         <Typography
           variant="h6"
-          sx={{
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
+          className={styles.routeLoadingTitle}
         >
           Loading orchestrator
         </Typography>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{
-            maxWidth: 320,
-            fontSize: "0.95rem",
-          }}
+          className={styles.routeLoadingDescription}
         >
           Preparing your resources and canvas so the workflow opens cleanly.
         </Typography>
@@ -682,16 +652,10 @@ const TemplateInfoChips: React.FC<{
   isViewMode: boolean;
   onOpenInit: () => void;
 }> = ({ templateInfo, isViewMode, onOpenInit }) => (
-  <Box
-    sx={{
-      display: "flex",
-      gap: 2,
-      alignItems: "center",
-      flexWrap: "wrap",
-    }}
-  >
+  <Box className={styles.canvasMeta}>
     {templateInfo?.templateName && (
       <Chip
+        className={styles.templateChip}
         icon={<DeblurIcon />}
         label={templateInfo?.templateName}
         onClick={isViewMode ? undefined : onOpenInit}
@@ -699,6 +663,7 @@ const TemplateInfoChips: React.FC<{
     )}
     {templateInfo?.cloud && (
       <Chip
+        className={styles.templateChip}
         icon={<CloudCircleIcon />}
         label={templateInfo?.cloud.toUpperCase()}
         onClick={isViewMode ? undefined : onOpenInit}
@@ -706,6 +671,7 @@ const TemplateInfoChips: React.FC<{
     )}
     {templateInfo?.region && (
       <Chip
+        className={styles.templateChip}
         icon={<SouthAmericaIcon />}
         label={templateInfo?.region}
         onClick={isViewMode ? undefined : onOpenInit}
@@ -713,6 +679,7 @@ const TemplateInfoChips: React.FC<{
     )}
     {isViewMode && (
       <Chip
+        className={styles.readOnlyChip}
         label="Read-only preview"
         size="small"
         variant="outlined"
@@ -729,8 +696,8 @@ const MaestroDraftBanner: React.FC<{
   onDismiss: () => void;
 }> = ({ draft, onDismiss }) => (
   <Alert
+    className={styles.maestroDraftBanner}
     severity="info"
-    sx={{ maxWidth: 520 }}
     action={
       <IconButton
         aria-label="Dismiss Maestro draft message"
@@ -746,6 +713,21 @@ const MaestroDraftBanner: React.FC<{
       ? "Maestro loaded a workflow update draft. Review the proposed graph changes, then save to apply them to this workflow."
       : "Maestro loaded a new workflow draft. Review it and save when you are ready to create the workflow."}
   </Alert>
+);
+
+const EmptyCanvasState: React.FC = () => (
+  <Box className={styles.emptyCanvasState} aria-live="polite">
+    <Box className={styles.emptyCanvasCard}>
+      <DeblurIcon className={styles.emptyCanvasIcon} aria-hidden="true" />
+      <Typography component="h2" className={styles.emptyCanvasTitle}>
+        Shape the first move.
+      </Typography>
+      <Typography component="p" className={styles.emptyCanvasDescription}>
+        Drag a resource from the palette into the canvas, then connect the
+        pieces that make the workflow real.
+      </Typography>
+    </Box>
+  </Box>
 );
 
 const OrchestratorReactFlow: React.FC = () => {
@@ -2360,16 +2342,7 @@ const OrchestratorReactFlow: React.FC = () => {
   );
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        minHeight: 0,
-        display: "flex",
-        flexDirection: "row",
-        backgroundColor: theme.palette.background.default,
-        color: theme.palette.text.primary,
-      }}
-    >
+    <Box className={styles.editorShell}>
       {!isViewMode && templateInfo?.cloud && (
         <Sidebar
           open={sidebarOpen}
@@ -2378,6 +2351,7 @@ const OrchestratorReactFlow: React.FC = () => {
         />
       )}
       <Box
+        className={styles.canvasSurface}
         sx={{
           flexGrow: 1,
           height: "100%",
@@ -2401,6 +2375,7 @@ const OrchestratorReactFlow: React.FC = () => {
           colorMode={theme.palette.mode}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
+          className={styles.reactFlowSurface}
           proOptions={{ hideAttribution: true }}
           onDrop={isViewMode ? undefined : onDrop}
           onDragOver={isViewMode ? undefined : onDragOver}
@@ -2414,8 +2389,8 @@ const OrchestratorReactFlow: React.FC = () => {
           deleteKeyCode={["Delete", "Backspace"]}
           fitView
         >
-          <Panel position="top-left">
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Panel position="top-left" className={styles.canvasPanel}>
+            <Box className={styles.canvasPanelStack}>
               <TemplateInfoChips
                 templateInfo={templateInfo}
                 isViewMode={isViewMode}
@@ -2431,15 +2406,8 @@ const OrchestratorReactFlow: React.FC = () => {
                 )}
             </Box>
           </Panel>
-          <Panel position="top-right">
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-end",
-                gap: 1,
-              }}
-            >
+          <Panel position="top-right" className={styles.canvasPanel}>
+            <Box className={styles.canvasCommandPanel}>
               {!isViewMode && (
                 <OrchestratorMenu
                   nodes={nodes}
@@ -2463,8 +2431,9 @@ const OrchestratorReactFlow: React.FC = () => {
             </Box>
           </Panel>
 
-          <Background />
+          <Background color="var(--product-line-subtle)" gap={24} size={1} />
           <Controls
+            className={styles.flowControls}
             onFitView={() =>
               getLayoutElements({
                 "elk.algorithm": "layered",
@@ -2472,8 +2441,17 @@ const OrchestratorReactFlow: React.FC = () => {
               })
             }
           />
-          <MiniMap nodeStrokeWidth={3} zoomable pannable />
+          <MiniMap
+            className={styles.flowMiniMap}
+            nodeStrokeWidth={3}
+            zoomable
+            pannable
+          />
         </ReactFlow>
+        {!isRouteLoading &&
+          !initOpen &&
+          !isViewMode &&
+          nodes.length === 0 && <EmptyCanvasState />}
       </Box>
       <InitPopup
         open={initOpen}
