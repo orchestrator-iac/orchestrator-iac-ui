@@ -264,10 +264,26 @@ const HomeTopTemplatesCarousel: React.FC<HomeTopTemplatesCarouselProps> = ({
         <Box ref={scrollRef} className={styles.carouselViewport}>
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
-                <Box key={`tmpl-skel-${i}`} className={styles.insightSkeleton}>
-                  <Skeleton variant="rectangular" height={150} />
-                  <Skeleton variant="text" />
-                  <Skeleton variant="text" />
+                <Box
+                  key={`tmpl-skel-${i}`}
+                  className={styles.templateInsightSkeleton}
+                  aria-hidden="true"
+                >
+                  <Skeleton
+                    className={styles.templateSkeletonMedia}
+                    variant="rectangular"
+                    animation="wave"
+                  />
+                  <Skeleton
+                    className={styles.skeletonTitleLine}
+                    variant="text"
+                    animation="wave"
+                  />
+                  <Skeleton
+                    className={styles.skeletonMetaLine}
+                    variant="text"
+                    animation="wave"
+                  />
                 </Box>
               ))
             : templates.map((t) => (
@@ -394,10 +410,28 @@ const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
         <Box ref={scrollRef} className={styles.carouselViewport}>
           {loading
             ? Array.from({ length: 5 }).map((_, i) => (
-                <Box key={`res-skel-${i}`} className={styles.insightSkeleton}>
-                  <Skeleton variant="rectangular" height={150} />
-                  <Skeleton variant="text" />
-                  <Skeleton variant="text" />
+                <Box
+                  key={`res-skel-${i}`}
+                  className={styles.resourceInsightSkeleton}
+                  aria-hidden="true"
+                >
+                  <Skeleton
+                    className={styles.resourceSkeletonIcon}
+                    variant="rounded"
+                    animation="wave"
+                  />
+                  <Box className={styles.resourceSkeletonCopy}>
+                    <Skeleton
+                      className={styles.skeletonTitleLine}
+                      variant="text"
+                      animation="wave"
+                    />
+                    <Skeleton
+                      className={styles.skeletonMetaLine}
+                      variant="text"
+                      animation="wave"
+                    />
+                  </Box>
                 </Box>
               ))
             : resources.map((r) => (
@@ -496,6 +530,7 @@ const HomeInsightsSection: React.FC<HomeInsightsSectionProps> = ({
         component="section"
         data-tour="home-top-sections"
         className={styles.insightsSection}
+        aria-busy={loadingInsights}
       >
         <Box className={styles.insightsGrid}>
           {(loadingInsights || topTemplates.length > 0) && (
@@ -762,31 +797,51 @@ const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
           </Typography>
         </Box>
       </Fade>
-      <Box className={styles.orchestratorGrid}>
+      <Box
+        className={styles.orchestratorGrid}
+        aria-busy={isLoading}
+        aria-label={isLoading ? "Loading orchestrators" : undefined}
+      >
         {isLoading ? (
-          // Loading Skeletons
           Array.from({ length: 4 }).map((_, index) => (
-            <Box key={`skeleton-orch-${index}`} sx={{ display: "flex" }}>
-              <Box sx={{ width: "100%", p: 2.5, borderRadius: 3 }}>
+            <Box
+              key={`skeleton-orch-${index}`}
+              className={styles.orchestratorSkeleton}
+              aria-hidden="true"
+            >
+              <Skeleton
+                className={styles.orchestratorSkeletonMedia}
+                variant="rectangular"
+                animation="wave"
+              />
+              <Box className={styles.orchestratorSkeletonCopy}>
                 <Skeleton
-                  variant="rectangular"
-                  height={160}
-                  sx={{ borderRadius: 2, mb: 2 }}
-                />
-                <Skeleton
+                  className={styles.skeletonTitleLine}
                   variant="text"
-                  width="70%"
-                  height={32}
-                  sx={{ mb: 1 }}
+                  animation="wave"
                 />
-                <Skeleton variant="text" width="100%" height={20} />
                 <Skeleton
+                  className={styles.skeletonDescriptionLine}
                   variant="text"
-                  width="90%"
-                  height={20}
-                  sx={{ mb: 1.5 }}
+                  animation="wave"
                 />
-                <Skeleton variant="rounded" width={150} height={28} />
+                <Skeleton
+                  className={styles.skeletonDescriptionLine}
+                  variant="text"
+                  animation="wave"
+                />
+              </Box>
+              <Box className={styles.orchestratorSkeletonMeta}>
+                <Skeleton
+                  className={styles.skeletonMetaLine}
+                  variant="text"
+                  animation="wave"
+                />
+                <Skeleton
+                  className={styles.skeletonActionLine}
+                  variant="rounded"
+                  animation="wave"
+                />
               </Box>
             </Box>
           ))
