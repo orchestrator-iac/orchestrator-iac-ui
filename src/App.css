@@ -190,106 +190,100 @@ body::before {
 
 /* Driver.js guidance theming */
 .orchestrator-guidance-popover {
-  border-radius: 8px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-surface);
+  background: var(--product-surface) !important;
+  color: var(--product-text) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(11, 95, 97, 0.16);
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.12);
-}
-
-body[data-theme="light"] .orchestrator-guidance-popover {
-  background: rgba(255, 255, 255, 0.98);
-  color: var(--text1);
-}
-
-body[data-theme="dark"] .orchestrator-guidance-popover {
-  background: rgba(23, 29, 31, 0.98);
-  color: var(--text1);
-  border-color: rgba(127, 215, 214, 0.18);
-  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 30px 80px var(--product-shadow-strong);
 }
 
 .orchestrator-guidance-popover .driver-popover-title {
-  color: inherit;
-  font-family: inherit;
-  font-size: 1.15rem;
-  line-height: 1.35;
+  margin-bottom: 10px;
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font);
+  font-size: 1.45rem;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
 }
 
 .orchestrator-guidance-popover .driver-popover-description {
-  color: var(--text2);
-  font-family: inherit;
+  color: var(--product-text-muted) !important;
+  font-family: var(--product-mono-font);
+  font-size: 0.78rem;
+  line-height: 1.65;
 }
 
 .orchestrator-guidance-popover .driver-popover-progress-text {
-  color: var(--text3);
-  font-family: inherit;
+  color: var(--product-text-subtle) !important;
+  font-family: var(--product-mono-font);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .orchestrator-guidance-popover .driver-popover-close-btn {
-  color: var(--text4);
+  color: var(--product-text-subtle) !important;
 }
 
 .orchestrator-guidance-popover .driver-popover-close-btn:hover,
 .orchestrator-guidance-popover .driver-popover-close-btn:focus {
-  color: var(--text1);
+  color: var(--product-text) !important;
 }
 
 .orchestrator-guidance-popover .driver-popover-footer-btn {
-  border-radius: 4px;
-  border-color: rgba(11, 95, 97, 0.18);
+  min-height: 36px;
+  border: 1px solid var(--product-line);
+  border-radius: var(--product-radius-control);
   background-color: transparent;
-  color: var(--text1);
-  font-family: inherit;
-  font-weight: 600;
+  color: var(--product-text);
+  font-family: var(--product-mono-font);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .orchestrator-guidance-popover .driver-popover-footer-btn:hover,
 .orchestrator-guidance-popover .driver-popover-footer-btn:focus {
-  background-color: rgba(31, 143, 147, 0.08);
+  border-color: var(--product-accent);
+  background-color: var(--product-accent-soft);
+  color: var(--product-accent-strong);
 }
 
-body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-footer-btn {
-  border-color: rgba(127, 215, 214, 0.22);
+.orchestrator-guidance-popover .driver-popover-next-btn {
+  border-color: var(--product-accent-strong);
+  background: var(--product-accent-strong);
+  color: var(--product-button-text);
 }
 
-body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-footer-btn:hover,
-body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-footer-btn:focus {
-  background-color: rgba(127, 215, 214, 0.12);
+.orchestrator-guidance-popover .driver-popover-next-btn:hover,
+.orchestrator-guidance-popover .driver-popover-next-btn:focus {
+  background: var(--product-accent);
+  color: var(--product-button-text);
 }
 
 .orchestrator-guidance-popover .driver-popover-btn-disabled {
   opacity: 0.45;
 }
 
-body[data-theme="light"] .orchestrator-guidance-popover .driver-popover-arrow-side-top {
-  border-top-color: rgba(255, 255, 255, 0.98);
+.orchestrator-guidance-popover .driver-popover-arrow-side-top {
+  border-top-color: var(--product-surface);
 }
 
-body[data-theme="light"] .orchestrator-guidance-popover .driver-popover-arrow-side-right {
-  border-right-color: rgba(255, 255, 255, 0.98);
+.orchestrator-guidance-popover .driver-popover-arrow-side-right {
+  border-right-color: var(--product-surface);
 }
 
-body[data-theme="light"] .orchestrator-guidance-popover .driver-popover-arrow-side-bottom {
-  border-bottom-color: rgba(255, 255, 255, 0.98);
+.orchestrator-guidance-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--product-surface);
 }
 
-body[data-theme="light"] .orchestrator-guidance-popover .driver-popover-arrow-side-left {
-  border-left-color: rgba(255, 255, 255, 0.98);
-}
-
-body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-arrow-side-top {
-  border-top-color: rgba(23, 29, 31, 0.98);
-}
-
-body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-arrow-side-right {
-  border-right-color: rgba(23, 29, 31, 0.98);
-}
-
-body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-arrow-side-bottom {
-  border-bottom-color: rgba(23, 29, 31, 0.98);
-}
-
-body[data-theme="dark"] .orchestrator-guidance-popover .driver-popover-arrow-side-left {
-  border-left-color: rgba(23, 29, 31, 0.98);
+.orchestrator-guidance-popover .driver-popover-arrow-side-left {
+  border-left-color: var(--product-surface);
 }

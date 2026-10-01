@@ -21,7 +21,6 @@ import {
   Paper,
   Stack,
   Typography,
-  alpha,
   useTheme,
 } from "@mui/material";
 import { driver, type Driver } from "driver.js";
@@ -34,6 +33,7 @@ import type {
   GuidanceTourDefinition,
   GuidanceTourId,
 } from "./guidance";
+import styles from "./ProductGuidance.module.css";
 import {
   createGuidanceCatalog,
   dismissAnnouncementInState,
@@ -71,7 +71,9 @@ const announcementKey = (announcement: GuidanceAnnouncementDefinition) =>
   `${announcement.id}:${announcement.version}`;
 
 const isRouteMatch = (pathname: string, routes: string[]) =>
-  routes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  routes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
 
 const usePersistentGuidanceState = (
   userKey: string,
@@ -139,7 +141,8 @@ export const ProductGuidanceProvider = ({
   );
 
   const visibleAnnouncementKeys = useMemo(
-    () => visibleAnnouncements.map((announcement) => announcementKey(announcement)),
+    () =>
+      visibleAnnouncements.map((announcement) => announcementKey(announcement)),
     [visibleAnnouncements],
   );
   const canShowAnnouncements = useMemo(
@@ -273,7 +276,10 @@ export const ProductGuidanceProvider = ({
       if (!canShowAnnouncements) return false;
       const spotlight = announcement.spotlight;
       if (!spotlight) return false;
-      if (spotlight.routes && !isRouteMatch(location.pathname, spotlight.routes)) {
+      if (
+        spotlight.routes &&
+        !isRouteMatch(location.pathname, spotlight.routes)
+      ) {
         return false;
       }
 
@@ -326,7 +332,12 @@ export const ProductGuidanceProvider = ({
 
       return true;
     },
-    [canShowAnnouncements, destroyDriver, finishDriverSession, location.pathname],
+    [
+      canShowAnnouncements,
+      destroyDriver,
+      finishDriverSession,
+      location.pathname,
+    ],
   );
 
   useEffect(() => {
@@ -357,7 +368,8 @@ export const ProductGuidanceProvider = ({
       return;
     }
 
-    if (currentTour?.autoStart && !hasSeenTour(guidanceState, currentTour.id)) return;
+    if (currentTour?.autoStart && !hasSeenTour(guidanceState, currentTour.id))
+      return;
 
     const spotlightAnnouncements = getAnnouncementSpotlightsForPath(
       location.pathname,
@@ -450,51 +462,35 @@ export const ProductGuidanceProvider = ({
         maxWidth="sm"
         slotProps={{
           paper: {
-            sx: {
-              borderRadius: 1,
-              overflow: "hidden",
-            },
+            className: styles.dialogPaper,
           },
         }}
       >
-        <DialogTitle sx={{ pb: 1.5 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+        <DialogTitle className={styles.dialogTitle}>
+          <Box className={styles.titleRow}>
+            <Box className={styles.titleGroup}>
+              <Typography component="h2" className={styles.title}>
                 What&apos;s New
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography className={styles.subtitle}>
                 New product notes and feature updates live here.
               </Typography>
             </Box>
-            <Box
-              sx={{
-                px: 1.25,
-                py: 0.5,
-                borderRadius: 999,
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                color: theme.palette.primary.main,
-                backgroundColor: alpha(theme.palette.primary.main, 0.08),
-              }}
-            >
+            <Box className={styles.updateCount}>
               {visibleAnnouncements.length} update
               {visibleAnnouncements.length === 1 ? "" : "s"}
             </Box>
           </Box>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ py: 2.5 }}>
-          <Stack spacing={1.5}>
+        <Divider className={styles.divider} />
+        <DialogContent className={styles.dialogContent}>
+          <Stack className={styles.announcementList}>
             {visibleAnnouncements.length === 0 ? (
-              <Alert severity="info" variant="outlined">
+              <Alert
+                className={styles.emptyState}
+                severity="info"
+                variant="outlined"
+              >
                 You are all caught up.
               </Alert>
             ) : (
@@ -507,38 +503,30 @@ export const ProductGuidanceProvider = ({
                   <Paper
                     key={key}
                     variant="outlined"
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      backgroundColor: alpha(theme.palette.background.paper, 0.72),
-                    }}
+                    className={styles.announcementCard}
                   >
                     <Stack spacing={1.5}>
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      <Box className={styles.announcementCardHeader}>
+                        <Typography className={styles.announcementTitle}>
                           {announcement.title}
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: "text.secondary", fontWeight: 600 }}
-                        >
+                        <Typography className={styles.version}>
                           Version {announcement.version}
                         </Typography>
                       </Box>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "text.secondary", lineHeight: 1.7 }}
-                      >
+                      <Typography className={styles.announcementBody}>
                         {announcement.body}
                       </Typography>
 
-                      <Stack direction="row" spacing={1} flexWrap="wrap">
+                      <Stack className={styles.actionRow} direction="row">
                         {announcement.ctaLabel && announcement.ctaRoute && (
                           <Button
                             variant="contained"
                             size="small"
-                            onClick={() => navigate(announcement.ctaRoute ?? "/")}
-                            sx={{ borderRadius: 2, textTransform: "none" }}
+                            onClick={() =>
+                              navigate(announcement.ctaRoute ?? "/")
+                            }
+                            className={styles.primaryButton}
                           >
                             {announcement.ctaLabel}
                           </Button>
@@ -548,8 +536,10 @@ export const ProductGuidanceProvider = ({
                           <Button
                             variant="outlined"
                             size="small"
-                            onClick={() => showAnnouncementSpotlight(announcement)}
-                            sx={{ borderRadius: 2, textTransform: "none" }}
+                            onClick={() =>
+                              showAnnouncementSpotlight(announcement)
+                            }
+                            className={styles.secondaryButton}
                           >
                             Show me
                           </Button>
@@ -564,7 +554,7 @@ export const ProductGuidanceProvider = ({
                                 startTour(currentTour.id, { auto: false });
                               }
                             }}
-                            sx={{ borderRadius: 2, textTransform: "none" }}
+                            className={styles.secondaryButton}
                           >
                             Replay tour
                           </Button>
@@ -574,11 +564,7 @@ export const ProductGuidanceProvider = ({
                           variant="text"
                           size="small"
                           onClick={() => dismissAnnouncement(announcement.id)}
-                          sx={{
-                            borderRadius: 2,
-                            textTransform: "none",
-                            color: "text.secondary",
-                          }}
+                          className={styles.textButton}
                         >
                           Dismiss
                         </Button>
@@ -590,11 +576,11 @@ export const ProductGuidanceProvider = ({
             )}
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, pt: 0 }}>
+        <DialogActions className={styles.dialogActions}>
           <Button
             onClick={closeAnnouncements}
             variant="contained"
-            sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
+            className={styles.closeButton}
           >
             Close
           </Button>
