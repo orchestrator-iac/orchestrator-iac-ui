@@ -7,10 +7,6 @@ import "./App.css";
 
 import React, { lazy, Suspense, useEffect } from "react";
 
-import { library } from "@fortawesome/fontawesome-svg-core";
-import { fab } from "@fortawesome/free-brands-svg-icons";
-import { fas } from "@fortawesome/free-solid-svg-icons";
-
 import { Box } from "@mui/material";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -19,6 +15,7 @@ import { ThemeProvider } from "./components/shared/theme/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ChatLayoutProvider, useChatLayout } from "./context/ChatLayoutContext";
 import { ProductGuidanceProvider } from "./components/shared/guidance/ProductGuidanceProvider";
+import "./config/fontAwesome";
 
 import Layout from "./components/shared/layout/Layout";
 import Header from "./components/shared/header/Header";
@@ -144,9 +141,6 @@ const upsertMetaTag = (
 
   element.setAttribute(attribute, value);
 };
-
-// Add FontAwesome icon packs
-library.add(fab, fas);
 
 const AppShell: React.FC<{
   isSplitView: boolean;
