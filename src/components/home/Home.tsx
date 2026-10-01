@@ -425,18 +425,20 @@ const HomeTopResourcesCarousel: React.FC<HomeTopResourcesCarouselProps> = ({
                       <Box className={styles.resourceInsightPlaceholder} />
                     )}
                   </Box>
-                  <Typography
-                    variant="body2"
-                    className={styles.resourceInsightTitle}
-                  >
-                    {r.resourceName || r.resourceId}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    className={styles.resourceInsightMeta}
-                  >
-                    {r.count} uses
-                  </Typography>
+                  <Box className={styles.resourceInsightContent}>
+                    <Typography
+                      variant="body2"
+                      className={styles.resourceInsightTitle}
+                    >
+                      {r.resourceName || r.resourceId}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      className={styles.resourceInsightMeta}
+                    >
+                      {r.count} uses
+                    </Typography>
+                  </Box>
                 </Box>
               ))}
         </Box>

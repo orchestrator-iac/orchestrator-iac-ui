@@ -259,6 +259,9 @@
 .resourceInsightCard {
   min-width: 220px;
   align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: var(--product-space-3);
 }
 
 .templateInsightCard:hover,
@@ -329,8 +332,10 @@
 .resourceInsightMedia {
   display: flex;
   align-items: flex-start;
-  height: 68px;
-  padding: 0.15rem;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
 }
 
 .resourceInsightImage {
@@ -341,8 +346,12 @@
   object-fit: contain;
 }
 
+.resourceInsightContent {
+  min-width: 0;
+}
+
 .resourceInsightTitle {
-  margin-top: var(--product-space-2) !important;
+  margin-top: 0 !important;
 }
 
 .resourceInsightMeta {
