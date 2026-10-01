@@ -1,10 +1,29 @@
 import React, { useEffect } from "react";
 import AceEditor from "react-ace";
 import * as ace from "ace-builds";
+
+import workerJsonUrl from "ace-builds/src-noconflict/worker-json?url";
+import workerJavascriptUrl from "ace-builds/src-noconflict/worker-javascript?url";
+import workerYamlUrl from "ace-builds/src-noconflict/worker-yaml?url";
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/mode-text";
+import "ace-builds/src-noconflict/mode-yaml";
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-sh";
+import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/theme-github";
+import "ace-builds/src-noconflict/ext-language_tools";
+import "ace-builds/src-noconflict/ext-searchbox";
+import "ace-builds/src-noconflict/ext-beautify";
+
 import styles from "./CodeEditor.module.css";
 import { Box, Typography, useMediaQuery } from "@mui/material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { ThemeMode } from "../theme/ThemeContext";
+
+ace.config.setModuleUrl("ace/mode/json_worker", workerJsonUrl);
+ace.config.setModuleUrl("ace/mode/javascript_worker", workerJavascriptUrl);
+ace.config.setModuleUrl("ace/mode/yaml_worker", workerYamlUrl);
 
 interface CodeEditorProps {
   value: string;
