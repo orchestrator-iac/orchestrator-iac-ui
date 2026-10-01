@@ -174,8 +174,8 @@ const ResourcesErrorState: React.FC<ResourcesErrorStateProps> = ({
               variant="body2"
               sx={{ color: "text.secondary", lineHeight: 1.6, mb: 3 }}
             >
-              Try again. If this keeps happening, the backend may still
-              be warming up or your session may need to be refreshed.
+              Try again. If this keeps happening, the backend may still be
+              warming up or your session may need to be refreshed.
             </Typography>
             <Button
               variant="contained"
@@ -559,7 +559,7 @@ const ResourcesGallery: React.FC = () => {
   const { data: resources, status } = useSelector(
     (state: RootState) => state.resources,
   );
-  const { byId: usageById } = useSelector(
+  const { byId: usageById, status: analyticsStatus } = useSelector(
     (state: RootState) => state.resourceAnalytics,
   );
 
@@ -569,6 +569,7 @@ const ResourcesGallery: React.FC = () => {
   const [sortBy, setSortBy] = useState<ResourceSortBy>("popular");
   const [showContent, setShowContent] = useState(false);
   const hasRetriedFailedLoad = useRef(false);
+  const hasRetriedAnalyticsLoad = useRef(false);
   const [resolvedIcons, setResolvedIcons] = useState<
     Record<string, ResourceIconValue>
   >({});
@@ -638,10 +639,17 @@ const ResourcesGallery: React.FC = () => {
   // empty/missing cache here must never block or error the main gallery,
   // it just leaves every resource at usage count 0 (alphabetical fallback).
   useEffect(() => {
-    const promise = dispatch(fetchTopResources());
-    return () => promise.abort();
-  }, [dispatch]);
+    if (analyticsStatus === "idle") {
+      const promise = dispatch(fetchTopResources());
+      return () => promise.abort();
+    }
 
+    if (analyticsStatus === "failed" && !hasRetriedAnalyticsLoad.current) {
+      hasRetriedAnalyticsLoad.current = true;
+      const promise = dispatch(fetchTopResources());
+      return () => promise.abort();
+    }
+  }, [analyticsStatus, dispatch]);
 
   // Debounced search
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -665,7 +673,8 @@ const ResourcesGallery: React.FC = () => {
     if (!resources) return [];
     const filtered = resources.filter(
       (r) =>
-        matchesCloudFilter(r, cloudFilter) && matchesSearchQuery(r, searchQuery),
+        matchesCloudFilter(r, cloudFilter) &&
+        matchesSearchQuery(r, searchQuery),
     );
     return [...filtered].sort(getResourceComparator(sortBy, usageById));
   }, [resources, searchQuery, cloudFilter, sortBy, usageById]);
@@ -702,8 +711,7 @@ const ResourcesGallery: React.FC = () => {
               resource={resource}
               usageCount={usageById[resource.resourceId] || 0}
               isPopular={
-                (usageById[resource.resourceId] || 0) >=
-                POPULAR_USAGE_THRESHOLD
+                (usageById[resource.resourceId] || 0) >= POPULAR_USAGE_THRESHOLD
               }
             />
           </Box>

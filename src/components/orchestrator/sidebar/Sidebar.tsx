@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Drawer,
@@ -54,13 +54,14 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   const { data: resources, status: resourcesStatus } = useSelector(
     (state: RootState) => state.resources,
   );
-  const { byId: usageById } = useSelector(
+  const { byId: usageById, status: analyticsStatus } = useSelector(
     (state: RootState) => state.resourceAnalytics,
   );
 
   // --- local state for search ---
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const hasRetriedAnalyticsLoad = useRef(false);
 
   // Keep DnD id hookup
   const [, setId] = useDnD();
@@ -91,9 +92,17 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   // empty/missing cache here must never block or error the sidebar, it
   // just leaves every resource at usage count 0 (original-order fallback).
   useEffect(() => {
-    const promise = dispatch(fetchTopResources());
-    return () => promise.abort();
-  }, [dispatch]);
+    if (analyticsStatus === "idle") {
+      const promise = dispatch(fetchTopResources());
+      return () => promise.abort();
+    }
+
+    if (analyticsStatus === "failed" && !hasRetriedAnalyticsLoad.current) {
+      hasRetriedAnalyticsLoad.current = true;
+      const promise = dispatch(fetchTopResources());
+      return () => promise.abort();
+    }
+  }, [analyticsStatus, dispatch]);
 
   // Debounce search input for smoother typing
   useEffect(() => {

@@ -3,7 +3,7 @@ import apiService from "../services/apiService";
 
 export const fetchTopResources = createAsyncThunk(
   "resourceAnalytics/fetchTopResources",
-  async (_: void, { signal }) => {
+  async (_: void, { signal, rejectWithValue }) => {
     try {
       const response = await apiService.get(
         "/orchestrators/analytics/top-resources?size=200",
@@ -11,9 +11,9 @@ export const fetchTopResources = createAsyncThunk(
       );
       return response ?? [];
     } catch {
-      // Best-effort enhancement: never let a failed/unauthorized analytics
-      // call block the primary resources gallery from rendering.
-      return [];
+      // Best-effort enhancement: keep failures separate from a successful
+      // empty result so callers can retry without blocking the gallery.
+      return rejectWithValue([]);
     }
   },
 );
@@ -45,7 +45,10 @@ const resourceAnalyticsSlice = createSlice({
         state.status = "succeeded";
         state.items = action.payload;
         state.byId = action.payload.reduce(
-          (acc: Record<string, number>, item: { resourceId: string; count: number }) => {
+          (
+            acc: Record<string, number>,
+            item: { resourceId: string; count: number },
+          ) => {
             acc[item.resourceId] = item.count;
             return acc;
           },
@@ -53,7 +56,14 @@ const resourceAnalyticsSlice = createSlice({
         );
       })
       .addCase(fetchTopResources.rejected, (state, action) => {
-        if (action.meta.aborted) return;
+        if (action.meta.aborted) {
+          // An effect cleanup can abort a thunk during React StrictMode's
+          // development remount. Return to idle so the remount can retry.
+          state.status = "idle";
+          return;
+        }
+        state.items = [];
+        state.byId = {};
         state.status = "failed";
       });
   },
