@@ -2,32 +2,8 @@ import { keyframes } from "@emotion/react";
 import Box from "@mui/material/Box";
 
 const loaderAnim = keyframes`
-  0% {
-    inset: 0 35px 35px 0;
-  }
-  12.5% {
-    inset: 0 35px 0 0;
-  }
-  25% {
-    inset: 35px 35px 0 0;
-  }
-  37.5% {
-    inset: 35px 0 0 0;
-  }
-  50% {
-    inset: 35px 0 0 35px;
-  }
-  62.5% {
-    inset: 0 0 0 35px;
-  }
-  75% {
-    inset: 0 0 35px 35px;
-  }
-  87.5% {
-    inset: 0 0 35px 0;
-  }
-  100% {
-    inset: 0 35px 35px 0;
+  to {
+    transform: rotate(360deg);
   }
 `;
 
@@ -37,9 +13,14 @@ type LumaSpinProps = {
 
 const ringSx = {
   position: "absolute",
-  borderRadius: "50px",
-  boxShadow: "inset 0 0 0 3px",
-  animation: `${loaderAnim} 2.5s infinite`,
+  inset: 0,
+  boxSizing: "border-box",
+  border: "2px solid",
+  borderColor: "color-mix(in srgb, var(--product-accent) 22%, transparent)",
+  borderTopColor: "var(--product-accent-strong)",
+  borderRightColor: "var(--product-accent-strong)",
+  borderRadius: "50%",
+  animation: `${loaderAnim} 900ms cubic-bezier(0.16, 1, 0.3, 1) infinite`,
 };
 
 export const LumaSpin = ({ size = 65 }: LumaSpinProps) => (
@@ -48,24 +29,15 @@ export const LumaSpin = ({ size = 65 }: LumaSpinProps) => (
     role="progressbar"
     sx={{
       position: "relative",
+      display: "block",
       width: size,
-      aspectRatio: "1 / 1",
+      height: size,
+      flexShrink: 0,
     }}
   >
     <Box
       component="span"
-      sx={{
-        ...ringSx,
-        boxShadowColor: "text.primary",
-      }}
-    />
-    <Box
-      component="span"
-      sx={{
-        ...ringSx,
-        boxShadowColor: "text.primary",
-        animationDelay: "-1.25s",
-      }}
+      sx={ringSx}
     />
   </Box>
 );
