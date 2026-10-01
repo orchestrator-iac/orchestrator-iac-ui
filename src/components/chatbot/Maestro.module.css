@@ -86,9 +86,6 @@
   flex: 0 0 auto;
   width: 42px !important;
   height: 42px !important;
-  border: 1px solid var(--product-line);
-  border-radius: var(--product-radius-control) !important;
-  background: var(--product-accent-soft) !important;
 }
 
 .chatHeaderTitle {
