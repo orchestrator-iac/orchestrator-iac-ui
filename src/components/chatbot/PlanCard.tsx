@@ -28,6 +28,7 @@ import type {
   PlanSchema,
   SecurityNote,
 } from "@/types/chat";
+import styles from "./Maestro.module.css";
 
 const SEVERITY_META: Record<
   SecurityNote["severity"],
@@ -63,8 +64,12 @@ const PlanCard: React.FC<PlanCardProps> = ({
   onImplement,
   isImplementing = false,
 }) => {
-  const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(null);
-  const errorCount = plan.securityNotes.filter((n) => n.severity === "error").length;
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(
+    null,
+  );
+  const errorCount = plan.securityNotes.filter(
+    (n) => n.severity === "error",
+  ).length;
   const hasLinkedWorkflow = Boolean(linkedOrchestratorId);
 
   const handleImplement = (action: PlanImplementationAction) => {
@@ -74,15 +79,28 @@ const PlanCard: React.FC<PlanCardProps> = ({
 
   return (
     <Paper
+      className={styles.planCard}
       variant="outlined"
       sx={{ borderRadius: 2, overflow: "hidden", mt: 1, width: "100%" }}
     >
-      <Box sx={{ bgcolor: "primary.main", px: 2, py: 1 }}>
-        <Typography variant="subtitle2" color="primary.contrastText" fontWeight={700}>
+      <Box
+        className={styles.planCardHeader}
+        sx={{ bgcolor: "primary.main", px: 2, py: 1 }}
+      >
+        <Typography
+          variant="subtitle2"
+          color="primary.contrastText"
+          fontWeight={700}
+        >
           Infrastructure Plan
         </Typography>
-        <Typography variant="caption" color="primary.contrastText" sx={{ opacity: 0.85 }}>
-          {plan.resources.length} resource{plan.resources.length === 1 ? "" : "s"}
+        <Typography
+          variant="caption"
+          color="primary.contrastText"
+          sx={{ opacity: 0.85 }}
+        >
+          {plan.resources.length} resource
+          {plan.resources.length === 1 ? "" : "s"}
           {plan.estimatedMonthlyUSD != null &&
             ` · ~$${plan.estimatedMonthlyUSD.toFixed(0)}/mo`}
         </Typography>
@@ -99,7 +117,10 @@ const PlanCard: React.FC<PlanCardProps> = ({
       <List dense disablePadding>
         {plan.resources.map((res) => (
           <ListItem
-            key={res.id ?? `${res.resourceType}-${res.resourceName ?? "unnamed"}-${res.cloudProvider}`}
+            key={
+              res.id ??
+              `${res.resourceType}-${res.resourceName ?? "unnamed"}-${res.cloudProvider}`
+            }
             alignItems="flex-start"
             sx={{ px: 2, py: 0.75 }}
           >
@@ -108,7 +129,12 @@ const PlanCard: React.FC<PlanCardProps> = ({
             </ListItemIcon>
             <ListItemText
               primary={
-                <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap">
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
                   <Typography variant="body2" fontWeight={600} sx={{ mr: 0.5 }}>
                     {res.resourceName || res.resourceType}
                   </Typography>
@@ -119,7 +145,9 @@ const PlanCard: React.FC<PlanCardProps> = ({
                     sx={{ height: 18, fontSize: "0.6rem" }}
                   />
                   {res.dependencies.length > 0 && (
-                    <Tooltip title={`Depends on: ${res.dependencies.join(", ")}`}>
+                    <Tooltip
+                      title={`Depends on: ${res.dependencies.join(", ")}`}
+                    >
                       <Chip
                         label={`+${res.dependencies.length} dep`}
                         size="small"
@@ -144,7 +172,11 @@ const PlanCard: React.FC<PlanCardProps> = ({
         <>
           <Divider />
           <Box sx={{ px: 2, py: 1 }}>
-            <Typography variant="caption" fontWeight={600} color="text.secondary">
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.secondary"
+            >
               SECURITY NOTES
             </Typography>
             <Stack spacing={0.5} mt={0.5}>
@@ -169,7 +201,9 @@ const PlanCard: React.FC<PlanCardProps> = ({
       <Divider />
       <Box sx={{ px: 2, py: 1.5, display: "flex", justifyContent: "flex-end" }}>
         {errorCount > 0 && (
-          <Tooltip title={`Fix ${errorCount} security error(s) before implementing`}>
+          <Tooltip
+            title={`Fix ${errorCount} security error(s) before implementing`}
+          >
             <span>
               <Button
                 variant="contained"

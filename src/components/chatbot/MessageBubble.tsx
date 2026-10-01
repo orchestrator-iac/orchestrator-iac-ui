@@ -24,6 +24,7 @@ import type {
 import PlanCard from "./PlanCard";
 import MaestroRobot, { type MaestroRobotState } from "./MaestroRobot";
 import MessageFeedbackDialog from "./MessageFeedbackDialog";
+import styles from "./Maestro.module.css";
 
 /** Bubble background: system notice > diff highlight > default assistant background. */
 const getBubbleBackground = (
@@ -210,9 +211,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     setFeedbackDialogOpen(true);
   };
 
-  const handleFeedbackSubmit = async (
-    feedback: ChatMessageFeedbackRequest,
-  ) => {
+  const handleFeedbackSubmit = async (feedback: ChatMessageFeedbackRequest) => {
     if (!onSubmitFeedback) {
       throw new Error("Feedback is not available right now.");
     }
@@ -221,8 +220,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   if (isUser) {
     return (
-      <Box display="flex" justifyContent="flex-end" mb={1} px={1}>
+      <Box
+        className={styles.userMessage}
+        display="flex"
+        justifyContent="flex-end"
+        mb={1}
+        px={1}
+      >
         <Box
+          className={styles.userBubble}
           sx={{
             bgcolor: "primary.main",
             color: "primary.contrastText",
@@ -240,6 +246,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <>
       <Box
+        className={styles.assistantMessage}
         display="flex"
         alignItems="flex-start"
         mb={1}
@@ -274,13 +281,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         </Avatar>
 
         <Box
+          className={styles.assistantBubble}
           sx={{
             bgcolor: bubbleBg,
             borderRadius: "0px 8px 8px 8px",
             p: 0.75,
             maxWidth: "85%",
             borderLeft,
-            marginBottom: 1.5
+            marginBottom: 1.5,
           }}
         >
           {isSystem && (
@@ -296,6 +304,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           )}
 
           <Box
+            className={styles.assistantMarkdown}
             sx={{
               fontSize: "0.875rem",
               lineHeight: 1.5,
@@ -323,9 +332,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 fontSize: "0.85em",
               },
               "& pre": {
-                bgcolor: dark
-                  ? "rgba(0, 0, 0, 0.3)"
-                  : "rgba(0, 0, 0, 0.05)",
+                bgcolor: dark ? "rgba(0, 0, 0, 0.3)" : "rgba(0, 0, 0, 0.05)",
                 p: 1,
                 borderRadius: 1,
                 overflow: "auto",
@@ -375,7 +382,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 spacing={1}
               >
                 <Tooltip title={fullTimestamp}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    className={styles.messageMeta}
+                    variant="caption"
+                    color="text.secondary"
+                  >
                     {shortTimestamp}
                   </Typography>
                 </Tooltip>

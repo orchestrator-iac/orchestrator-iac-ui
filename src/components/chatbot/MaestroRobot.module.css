@@ -1,6 +1,6 @@
 .robot {
-  --robot: var(--primary);
-  --eye: var(--bg-color);
+  --robot: var(--product-accent-strong, var(--primary));
+  --eye: var(--product-bg, var(--bg-color));
   display: block;
   width: 100%;
   height: auto;
