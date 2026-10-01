@@ -97,7 +97,6 @@ const Header: React.FC = () => {
   const menuPaperSx = {
     mt: 1.5,
     minWidth: 220,
-    borderRadius: 2,
     overflow: "visible",
     backgroundColor: menuSurface,
     backgroundImage: "none",
@@ -243,7 +242,7 @@ const Header: React.FC = () => {
                 }}
               />
             </MenuItem>
-            <Divider sx={{ my: 0.5 }} />
+            <Divider sx={{ my: 0 }} />
             <MenuItem
               className={styles.menuItem}
               onClick={handleOpenAnnouncements}
