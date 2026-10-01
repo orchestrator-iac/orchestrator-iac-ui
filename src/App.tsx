@@ -3,7 +3,6 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 import "@xyflow/react/dist/style.css";
-import "driver.js/dist/driver.css";
 import "./App.css";
 
 import React, { lazy, Suspense, useEffect } from "react";

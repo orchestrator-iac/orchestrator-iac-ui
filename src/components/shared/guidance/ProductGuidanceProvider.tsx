@@ -23,7 +23,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { driver, type Driver } from "driver.js";
+import type { Driver } from "driver.js";
 
 import { useAuth } from "../../../context/AuthContext";
 import type {
@@ -66,6 +66,19 @@ type ProductGuidanceContextValue = {
 const ProductGuidanceContext = createContext<
   ProductGuidanceContextValue | undefined
 >(undefined);
+
+let driverModulePromise: Promise<typeof import("driver.js")> | null = null;
+
+const loadDriverModule = () => {
+  if (!driverModulePromise) {
+    driverModulePromise = Promise.all([
+      import("driver.js"),
+      import("driver.js/dist/driver.css"),
+    ]).then(([module]) => module);
+  }
+
+  return driverModulePromise;
+};
 
 const announcementKey = (announcement: GuidanceAnnouncementDefinition) =>
   `${announcement.id}:${announcement.version}`;
@@ -195,36 +208,51 @@ export const ProductGuidanceProvider = ({
       activeTourIdRef.current = tourId;
       setAnnouncementDialogOpen(false);
 
-      const instance = driver({
-        animate: true,
-        allowClose: true,
-        allowKeyboardControl: true,
-        allowScroll: true,
-        smoothScroll: true,
-        overlayColor: theme.palette.common.black,
-        overlayOpacity: theme.palette.mode === "dark" ? 0.72 : 0.48,
-        stagePadding: 8,
-        stageRadius: 12,
-        showProgress: true,
-        popoverClass: `orchestrator-guidance-popover orchestrator-guidance-popover--${theme.palette.mode}`,
-        onCloseClick: (_element, _step, { driver: activeDriver }) => {
-          activeDriver.destroy();
-        },
-        onDoneClick: (_element, _step, { driver: activeDriver }) => {
-          activeDriver.destroy();
-        },
-        onDestroyed: () => {
-          finishDriverSession(token);
-        },
-      });
+      void loadDriverModule()
+        .then(({ driver }) => {
+          if (
+            sessionTokenRef.current !== token ||
+            activeSessionRef.current !== "tour"
+          ) {
+            return;
+          }
 
-      driverRef.current = instance;
-      instance.setSteps(tour.steps);
-      instance.drive();
+          const instance = driver({
+            animate: true,
+            allowClose: true,
+            allowKeyboardControl: true,
+            allowScroll: true,
+            smoothScroll: true,
+            overlayColor: theme.palette.common.black,
+            overlayOpacity: theme.palette.mode === "dark" ? 0.72 : 0.48,
+            stagePadding: 8,
+            stageRadius: 12,
+            showProgress: true,
+            popoverClass: `orchestrator-guidance-popover orchestrator-guidance-popover--${theme.palette.mode}`,
+            onCloseClick: (_element, _step, { driver: activeDriver }) => {
+              activeDriver.destroy();
+            },
+            onDoneClick: (_element, _step, { driver: activeDriver }) => {
+              activeDriver.destroy();
+            },
+            onDestroyed: () => {
+              finishDriverSession(token);
+            },
+          });
+
+          driverRef.current = instance;
+          instance.setSteps(tour.steps);
+          instance.drive();
+        })
+        .catch(() => {
+          if (sessionTokenRef.current !== token) return;
+          activeSessionRef.current = null;
+          activeTourIdRef.current = null;
+        });
 
       return true;
     },
-    [catalog.tours, currentTour?.id, destroyDriver, finishDriverSession],
+    [catalog.tours, currentTour?.id, destroyDriver, finishDriverSession, theme],
   );
 
   const requestAutoTour = useCallback(
@@ -294,41 +322,57 @@ export const ProductGuidanceProvider = ({
       activeSessionRef.current = "announcement";
       activeTourIdRef.current = null;
 
-      const instance = driver({
-        animate: true,
-        allowClose: true,
-        allowKeyboardControl: true,
-        allowScroll: true,
-        smoothScroll: true,
-        overlayColor: theme.palette.common.black,
-        overlayOpacity: theme.palette.mode === "dark" ? 0.72 : 0.48,
-        stagePadding: 8,
-        stageRadius: 12,
-        showButtons: ["close"],
-        popoverClass: `orchestrator-guidance-popover orchestrator-guidance-popover--${theme.palette.mode}`,
-        onCloseClick: (_element, _step, { driver: activeDriver }) => {
-          activeDriver.destroy();
-        },
-        onDoneClick: (_element, _step, { driver: activeDriver }) => {
-          activeDriver.destroy();
-        },
-        onDestroyed: () => {
-          finishDriverSession(token);
-        },
-      });
+      void loadDriverModule()
+        .then(({ driver }) => {
+          if (
+            sessionTokenRef.current !== token ||
+            activeSessionRef.current !== "announcement"
+          ) {
+            return;
+          }
 
-      driverRef.current = instance;
-      sessionSeenAnnouncementsRef.current.add(announcementKey(announcement));
-      instance.highlight({
-        element: target,
-        popover: {
-          title: spotlight.title,
-          description: spotlight.description,
-          side: spotlight.side ?? "bottom",
-          align: spotlight.align ?? "center",
-          showButtons: ["close"],
-        },
-      });
+          const instance = driver({
+            animate: true,
+            allowClose: true,
+            allowKeyboardControl: true,
+            allowScroll: true,
+            smoothScroll: true,
+            overlayColor: theme.palette.common.black,
+            overlayOpacity: theme.palette.mode === "dark" ? 0.72 : 0.48,
+            stagePadding: 8,
+            stageRadius: 12,
+            showButtons: ["close"],
+            popoverClass: `orchestrator-guidance-popover orchestrator-guidance-popover--${theme.palette.mode}`,
+            onCloseClick: (_element, _step, { driver: activeDriver }) => {
+              activeDriver.destroy();
+            },
+            onDoneClick: (_element, _step, { driver: activeDriver }) => {
+              activeDriver.destroy();
+            },
+            onDestroyed: () => {
+              finishDriverSession(token);
+            },
+          });
+
+          driverRef.current = instance;
+          sessionSeenAnnouncementsRef.current.add(
+            announcementKey(announcement),
+          );
+          instance.highlight({
+            element: target,
+            popover: {
+              title: spotlight.title,
+              description: spotlight.description,
+              side: spotlight.side ?? "bottom",
+              align: spotlight.align ?? "center",
+              showButtons: ["close"],
+            },
+          });
+        })
+        .catch(() => {
+          if (sessionTokenRef.current !== token) return;
+          activeSessionRef.current = null;
+        });
 
       return true;
     },
@@ -337,6 +381,7 @@ export const ProductGuidanceProvider = ({
       destroyDriver,
       finishDriverSession,
       location.pathname,
+      theme,
     ],
   );
 
