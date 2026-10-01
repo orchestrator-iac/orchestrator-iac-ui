@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import apiService from "../../../services/apiService";
+import styles from "../Orchestrator.module.css";
 import {
   CloudConfig,
   CloudProvider,
@@ -153,12 +154,20 @@ const InitPopup = ({
           onClose();
         }
       }}
+      slotProps={{
+        paper: {
+          className: styles.initDialogPaper,
+        },
+      }}
       fullWidth
       disableEnforceFocus
       disableAutoFocus
     >
-      <DialogTitle>Initialize Template</DialogTitle>
+      <DialogTitle className={styles.initDialogTitle}>
+        Initialize Template
+      </DialogTitle>
       <DialogContent
+        className={styles.initDialogContent}
         sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
       >
         <Grid container spacing={2}>
@@ -316,7 +325,7 @@ const InitPopup = ({
                 mt: 1,
                 borderRadius: 2,
                 textTransform: "none",
-                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                transition: "transform 180ms cubic-bezier(0.16, 1, 0.3, 1)",
                 "&:hover": {
                   transform: "translateY(-2px)",
                 },
@@ -341,6 +350,7 @@ const InitPopup = ({
         {submitError ? <Alert severity="error">{submitError}</Alert> : null}
       </DialogContent>
       <DialogActions
+        className={styles.initDialogActions}
         sx={{
           px: 3,
           pb: 3,
@@ -367,7 +377,7 @@ const InitPopup = ({
             borderRadius: 2,
             px: 3,
             textTransform: "none",
-            transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            transition: "transform 180ms cubic-bezier(0.16, 1, 0.3, 1)",
             "&:hover": {
               transform: "translateY(-2px)",
             },
