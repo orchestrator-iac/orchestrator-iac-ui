@@ -75,7 +75,6 @@
 .menuPaper {
   min-width: 276px !important;
   border: 1px solid var(--product-line) !important;
-  border-radius: var(--product-radius-surface) !important;
   background: var(--product-surface) !important;
   box-shadow: 0 24px 60px var(--product-shadow-strong) !important;
 }
