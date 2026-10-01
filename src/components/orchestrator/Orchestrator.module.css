@@ -195,6 +195,7 @@
 
 .routeLoadingCard {
   display: grid;
+  justify-items: center;
   max-width: 360px;
   gap: var(--product-space-3);
   padding: var(--product-space-6);
