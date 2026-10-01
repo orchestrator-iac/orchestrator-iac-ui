@@ -103,9 +103,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Publish dist/ to gh-pages using gh-pages package
+          # Add new hashed assets without deleting older ones. GitHub Pages can
+          # serve cached index.html files for several minutes after a deploy;
+          # retaining old chunks prevents those cached shells from 404ing.
           # -r forces the authenticated remote (uses GH_TOKEN)
-          npx --yes gh-pages -d dist -r "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          npx --yes gh-pages -d dist --add -r "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
 
       - name: Deployment complete
         run: echo "🚀 Deployment complete! Visit https://orchestrator.next-zen.dev"
