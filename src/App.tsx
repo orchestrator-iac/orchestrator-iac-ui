@@ -6,7 +6,7 @@ import "@xyflow/react/dist/style.css";
 import "driver.js/dist/driver.css";
 import "./App.css";
 
-import React, { useEffect } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
@@ -21,26 +21,56 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ChatLayoutProvider, useChatLayout } from "./context/ChatLayoutContext";
 import { ProductGuidanceProvider } from "./components/shared/guidance/ProductGuidanceProvider";
 
-import Home from "./components/home/Home";
-import Resources from "./components/resources/Resources";
-import Orchestrator from "./components/orchestrator/Orchestrator";
-import Login from "./components/auth/login/Login";
-import Register from "./components/auth/register/Register";
-import RegisterSuccessPage from "./components/auth/register/RegisterSuccessPage";
-import ProtectedRoute from "./components/shared/ProtectedRoute";
 import Layout from "./components/shared/layout/Layout";
 import Header from "./components/shared/header/Header";
-import Profile from "./components/auth/profile/Profile";
-import ConfirmEmail from "./components/auth/ConfirmEmail";
-import NotFound from "./components/shared/NotFound";
-import ResendEmailForm from "./components/auth/ResendEmailForm";
-import UpdatePassword from "./components/auth/login/UpdatePassword";
-import Chatbot from "./components/chatbot/Chatbot";
-import LandingPage from "./components/landing/LandingPage";
-import LandingPreviewPage from "./components/landing-preview/LandingPreviewPage";
-import TemplatesGallery from "./components/templates/TemplatesGallery";
-import TemplateDetail from "./components/templates/TemplateDetail";
-import ResourcesGallery from "./components/resources/ResourcesGallery";
+import ProtectedRoute from "./components/shared/ProtectedRoute";
+
+const Login = lazy(() => import("./components/auth/login/Login"));
+const Home = lazy(() => import("./components/home/Home"));
+const Resources = lazy(() => import("./components/resources/Resources"));
+const Orchestrator = lazy(
+  () => import("./components/orchestrator/Orchestrator"),
+);
+const Register = lazy(() => import("./components/auth/register/Register"));
+const RegisterSuccessPage = lazy(
+  () => import("./components/auth/register/RegisterSuccessPage"),
+);
+const Profile = lazy(() => import("./components/auth/profile/Profile"));
+const ConfirmEmail = lazy(() => import("./components/auth/ConfirmEmail"));
+const NotFound = lazy(() => import("./components/shared/NotFound"));
+const ResendEmailForm = lazy(() => import("./components/auth/ResendEmailForm"));
+const UpdatePassword = lazy(
+  () => import("./components/auth/login/UpdatePassword"),
+);
+const Chatbot = lazy(() => import("./components/chatbot/Chatbot"));
+const LandingPage = lazy(() => import("./components/landing/LandingPage"));
+const LandingPreviewPage = lazy(
+  () => import("./components/landing-preview/LandingPreviewPage"),
+);
+const TemplatesGallery = lazy(
+  () => import("./components/templates/TemplatesGallery"),
+);
+const TemplateDetail = lazy(
+  () => import("./components/templates/TemplateDetail"),
+);
+const ResourcesGallery = lazy(
+  () => import("./components/resources/ResourcesGallery"),
+);
+
+const RouteLoadingFallback = () => (
+  <Box
+    sx={{
+      minHeight: "240px",
+      display: "grid",
+      placeItems: "center",
+      color: "text.secondary",
+    }}
+    role="status"
+    aria-live="polite"
+  >
+    Loading workspace…
+  </Box>
+);
 
 const SITE_URL = "https://orchestrator.next-zen.dev";
 
@@ -99,10 +129,14 @@ const upsertMetaTag = (
   attribute: string,
   value: string,
 ) => {
-  let element = document.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
+  let element = document.querySelector<HTMLMetaElement | HTMLLinkElement>(
+    selector,
+  );
 
   if (!element) {
-    element = document.createElement(tagName) as HTMLMetaElement | HTMLLinkElement;
+    element = document.createElement(tagName) as
+      | HTMLMetaElement
+      | HTMLLinkElement;
     Object.entries(seedAttributes).forEach(([name, seedValue]) => {
       element?.setAttribute(name, seedValue);
     });
@@ -124,7 +158,9 @@ const AppShell: React.FC<{
   const { token, isInitializing } = useAuth();
   const hideHeader = NO_HEADER_ROUTES.has(location.pathname);
   const showChatbot =
-    !isInitializing && Boolean(token) && !isMaestroDisabledRoute(location.pathname);
+    !isInitializing &&
+    Boolean(token) &&
+    !isMaestroDisabledRoute(location.pathname);
 
   useEffect(() => {
     if (!isPrivateSeoRoute(location.pathname)) {
@@ -169,10 +205,14 @@ const AppShell: React.FC<{
             transition: isDragging ? "none" : "width 0.2s ease",
           }}
         >
-          <Routes>
-            <Route path="/" element={<Layout />}>
+          <Suspense fallback={<RouteLoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Layout />}>
                 <Route index element={<LandingPreviewPage />} />
-                <Route path="landing-preview" element={<LandingPreviewPage />} />
+                <Route
+                  path="landing-preview"
+                  element={<LandingPreviewPage />}
+                />
                 <Route
                   path="landing-legacy"
                   element={<LandingPage legacyMode />}
@@ -249,7 +289,8 @@ const AppShell: React.FC<{
                   }
                 />
               </Route>
-          </Routes>
+            </Routes>
+          </Suspense>
         </Box>
         {showChatbot && <Chatbot />}
       </Box>
