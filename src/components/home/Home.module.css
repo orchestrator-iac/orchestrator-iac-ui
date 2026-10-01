@@ -204,15 +204,26 @@
   padding: 0.2rem 0.1rem 0.65rem;
   overflow-x: auto;
   scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.carouselViewport::-webkit-scrollbar {
+  height: 0;
+}
+
+.carouselViewport:hover,
+.carouselViewport:focus-within {
   scrollbar-width: thin;
   scrollbar-color: var(--product-line) transparent;
 }
 
-.carouselViewport::-webkit-scrollbar {
+.carouselViewport:hover::-webkit-scrollbar,
+.carouselViewport:focus-within::-webkit-scrollbar {
   height: 5px;
 }
 
-.carouselViewport::-webkit-scrollbar-thumb {
+.carouselViewport:hover::-webkit-scrollbar-thumb,
+.carouselViewport:focus-within::-webkit-scrollbar-thumb {
   border-radius: 99px;
   background: var(--product-line);
 }
