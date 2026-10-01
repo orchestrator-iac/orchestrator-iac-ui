@@ -10,7 +10,7 @@
     "postbuild": "node scripts/generate-static-pages.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist",
+    "deploy": "gh-pages -d dist --add",
     "format": "prettier --write ."
   },
   "dependencies": {
