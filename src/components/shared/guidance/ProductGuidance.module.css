@@ -1,0 +1,228 @@
+.dialogPaper {
+  width: min(100% - 32px, 700px) !important;
+  max-height: min(720px, calc(100dvh - 32px));
+  margin: 16px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-preview) !important;
+  background: var(--product-surface) !important;
+  color: var(--product-text) !important;
+  box-shadow: 0 30px 80px var(--product-shadow-strong) !important;
+}
+
+.dialogTitle {
+  padding: 28px 28px 22px !important;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--product-space-5);
+}
+
+.titleGroup {
+  min-width: 0;
+}
+
+.title {
+  margin: 0 !important;
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: clamp(1.8rem, 4vw, 2.25rem) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1 !important;
+}
+
+.subtitle {
+  display: block;
+  max-width: 42ch;
+  margin-top: var(--product-space-2) !important;
+  color: var(--product-text-muted) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.55 !important;
+}
+
+.updateCount {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid var(--product-line);
+  border-radius: 999px;
+  background: var(--product-accent-soft);
+  color: var(--product-accent-strong);
+  font-family: var(--product-mono-font);
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: var(--product-label-spacing);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.divider {
+  border-color: var(--product-line-subtle) !important;
+}
+
+.dialogContent {
+  overflow-y: auto !important;
+  padding: 24px 28px 28px !important;
+  scrollbar-color: var(--product-line) transparent;
+}
+
+.announcementList {
+  display: grid;
+  gap: var(--product-space-4);
+}
+
+.announcementCard {
+  padding: 20px !important;
+  border: 1px solid var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  background: var(--product-surface-raised) !important;
+  color: var(--product-text) !important;
+}
+
+.announcementCardHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--product-space-4);
+}
+
+.announcementTitle {
+  color: var(--product-text) !important;
+  font-family: var(--product-display-font) !important;
+  font-size: 1.35rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.15 !important;
+}
+
+.version {
+  flex: 0 0 auto;
+  color: var(--product-text-subtle) !important;
+  font-family: var(--product-mono-font) !important;
+  font-size: 0.62rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase;
+}
+
+.announcementBody {
+  color: var(--product-text-muted) !important;
+  font-size: 0.92rem !important;
+  line-height: 1.65 !important;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--product-space-2);
+}
+
+.primaryButton,
+.secondaryButton,
+.textButton,
+.closeButton {
+  min-height: 38px !important;
+  border-radius: var(--product-radius-control) !important;
+  font-family: var(--product-mono-font) !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease !important;
+}
+
+.primaryButton,
+.closeButton {
+  background: var(--product-accent-strong) !important;
+  color: var(--product-button-text) !important;
+}
+
+.primaryButton:hover,
+.closeButton:hover {
+  background: var(--product-accent) !important;
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  border: 1px solid var(--product-line) !important;
+  color: var(--product-text) !important;
+}
+
+.secondaryButton:hover {
+  border-color: var(--product-accent) !important;
+  background: var(--product-accent-soft) !important;
+  color: var(--product-accent-strong) !important;
+}
+
+.textButton {
+  color: var(--product-text-muted) !important;
+}
+
+.textButton:hover {
+  background: var(--product-accent-soft) !important;
+  color: var(--product-text) !important;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.textButton:focus-visible,
+.closeButton:focus-visible {
+  outline: 2px solid var(--product-focus);
+  outline-offset: 3px;
+}
+
+.emptyState {
+  border: 1px dashed var(--product-line) !important;
+  border-radius: var(--product-radius-control) !important;
+  background: transparent !important;
+  color: var(--product-text-muted) !important;
+}
+
+.dialogActions {
+  justify-content: flex-end !important;
+  padding: 0 28px 28px !important;
+}
+
+.closeButton {
+  min-width: 112px !important;
+  min-height: var(--product-control-height) !important;
+}
+
+@media (max-width: 560px) {
+  .dialogPaper {
+    width: calc(100% - 24px) !important;
+    max-height: calc(100dvh - 24px);
+    margin: 12px !important;
+    border-radius: var(--product-radius-surface) !important;
+  }
+
+  .dialogTitle {
+    padding: 22px 20px 18px !important;
+  }
+
+  .titleRow,
+  .announcementCardHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--product-space-3);
+  }
+
+  .dialogContent {
+    padding: 20px !important;
+  }
+
+  .dialogActions {
+    padding: 0 20px 20px !important;
+  }
+
+  .closeButton {
+    width: 100%;
+  }
+}
