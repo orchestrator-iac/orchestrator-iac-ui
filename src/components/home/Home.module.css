@@ -270,7 +270,8 @@
 .resourceInsightCard {
   min-width: 220px;
   align-self: flex-start;
-  display: flex;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
   align-items: center;
   gap: var(--product-space-3);
 }
@@ -342,8 +343,8 @@
 
 .resourceInsightMedia {
   display: flex;
-  align-items: flex-start;
-  flex: 0 0 56px;
+  align-items: center;
+  justify-content: center;
   width: 56px;
   height: 56px;
   padding: 0;
@@ -358,6 +359,10 @@
 }
 
 .resourceInsightContent {
+  display: flex;
+  min-height: 56px;
+  flex-direction: column;
+  justify-content: center;
   min-width: 0;
 }
 
