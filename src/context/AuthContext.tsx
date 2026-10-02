@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }: PropsWithChildren<object>) => {
   useEffect(() => {
     if (!token) return;
 
-    let refreshTimer: number | undefined;
+    let refreshTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
 
     try {
       const decoded = jwtDecode<{ exp: number }>(token);

@@ -952,7 +952,14 @@ const DynamicForm: React.FC<Props> = ({
                         ...values,
                         ...formData,
                       }) && (
-                        <Grid size={field.size ?? 12} key={field.name}>
+                        <Grid
+                          size={
+                            typeof field.size === "number"
+                              ? field.size
+                              : Number(field.size) || 12
+                          }
+                          key={field.name}
+                        >
                           {field.label && (
                             <Typography
                               component="label"

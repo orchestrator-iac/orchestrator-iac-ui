@@ -37,7 +37,7 @@ const faArrowUpRight = {
   iconName: "arrow-up-right",
 } as IconDefinition;
 
-library.add(
+library.add([
   faArrowLeft,
   faArrowRotateRight,
   faArrowUpRight,
@@ -66,4 +66,4 @@ library.add(
   faUpRightFromSquare,
   faUser,
   faXmark,
-);
+] as IconDefinition[]);

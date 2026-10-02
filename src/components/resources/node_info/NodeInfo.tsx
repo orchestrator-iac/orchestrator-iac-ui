@@ -6,6 +6,7 @@ import type { Ace } from "ace-builds";
 import CodeEditor from "../../shared/code-editor/CodeEditor";
 import { useThemeContext } from "../../shared/theme/useThemeContext";
 import CustomNode from "../../orchestrator/CustomNode";
+import type { OrchestratorNodeData } from "../../orchestrator/types";
 import { NodeInfoSchema } from "../../../types/node-info-schema";
 import { NodeInfo as NodeInfoType } from "../../../types/node-info";
 
@@ -203,7 +204,24 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
                 }}
               >
                 {hasData ? (
-                  <CustomNode data={resourceNode.data} isOrchestrator={false} />
+                  <CustomNode
+                    id="node-info-preview"
+                    type="customNode"
+                    zIndex={0}
+                    draggable={false}
+                    selected={false}
+                    dragging={false}
+                    selectable={false}
+                    deletable={false}
+                    isConnectable={false}
+                    positionAbsoluteX={0}
+                    positionAbsoluteY={0}
+                    data={
+                      resourceNode.data as unknown as OrchestratorNodeData &
+                        Record<string, unknown>
+                    }
+                    isOrchestrator={false}
+                  />
                 ) : (
                   <Box textAlign="center">
                     <Typography variant="body1" color="error" fontWeight="bold">

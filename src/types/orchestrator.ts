@@ -119,6 +119,7 @@ export interface SaveOrchestratorRequest {
 // Response from save operation
 export interface SaveOrchestratorResponse {
   _id: string;
+  id?: string;
   templateInfo: TemplateInfo;
   nodes: OrchestratorNode[];
   edges: OrchestratorEdge[];

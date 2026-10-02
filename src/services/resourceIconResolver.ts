@@ -60,7 +60,10 @@ const scoreCatalogIcon = (
     ...(icon.aliases ?? []),
     icon.type,
   ]
-    .filter((value): value is string => typeof value === "string" && value.trim())
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && Boolean(value.trim()),
+    )
     .map(normalizeToken);
 
   if (candidates.includes(normalizedQuery)) {

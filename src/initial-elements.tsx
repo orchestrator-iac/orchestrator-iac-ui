@@ -1,4 +1,3 @@
-import React from "react";
 import { MarkerType, Position } from "@xyflow/react";
 
 export const nodes = [

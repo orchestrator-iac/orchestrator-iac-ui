@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useSelector, useDispatch } from "react-redux";
 import { useDebouncedCallback } from "use-debounce";
 import { useNavigate } from "react-router-dom";
@@ -43,7 +44,7 @@ const CLOUD_LABELS: Record<CloudFilter, string> = {
 
 type ResourceSortBy = "popular" | "newest" | "az";
 
-const SORT_OPTIONS: { value: ResourceSortBy; label: string; icon: string }[] = [
+const SORT_OPTIONS: { value: ResourceSortBy; label: string; icon: IconProp }[] = [
   { value: "popular", label: "Popular", icon: "fire" },
   { value: "newest", label: "Newest", icon: "clock" },
   { value: "az", label: "A-Z", icon: "arrow-down-a-z" },
