@@ -8,6 +8,17 @@ export type ResourceLookup =
       cloudProvider?: string;
     };
 
+export type ResourceBatchLookup = {
+  id: string;
+  cloudProvider?: string;
+};
+
+export type ResourceBatchItem = {
+  id: string;
+  cloudProvider?: string;
+  data: any;
+};
+
 export const fetchResourceById = createAsyncThunk(
   "resource/fetchById",
   async (lookup: ResourceLookup) => {
@@ -33,6 +44,53 @@ export const fetchResourceById = createAsyncThunk(
       throw new Error(`Resource catalog entry not found for ${id}`);
     }
     return { id, data };
+  },
+);
+
+/** Fetch several provider-aware resource catalog entries in one request. */
+export const fetchResourcesByLookups = createAsyncThunk(
+  "resource/fetchBatch",
+  async (lookups: ResourceBatchLookup[]) => {
+    const normalizedLookups = Array.from(
+      new Map(
+        lookups
+          .map(({ id, cloudProvider }) => ({
+            id: String(id).trim(),
+            cloudProvider: cloudProvider?.toLowerCase(),
+          }))
+          .filter(({ id }) => Boolean(id))
+          .map((lookup) => [
+            `${lookup.id}|${lookup.cloudProvider ?? ""}`,
+            lookup,
+          ]),
+      ).values(),
+    );
+
+    if (!normalizedLookups.length) {
+      return { items: [] as ResourceBatchItem[] };
+    }
+
+    const response = await apiService.post("/configs/batch", {
+      lookups: normalizedLookups.map(({ id, cloudProvider }) => ({
+        resourceId: id,
+        ...(cloudProvider ? { cloudProvider } : {}),
+      })),
+    });
+    const configs = Array.isArray(response)
+      ? response
+      : Array.isArray(response?.configs)
+        ? response.configs
+        : [];
+
+    return {
+      items: configs
+        .filter((data: any) => data && typeof data === "object" && data.resourceId)
+        .map((data: any) => ({
+          id: String(data.resourceId),
+          cloudProvider: data.cloudProvider?.toLowerCase(),
+          data,
+        })),
+    };
   },
 );
 
@@ -80,6 +138,20 @@ const resourceSlice = createSlice({
       .addCase(fetchResourceById.fulfilled, (state, action) => {
         state.loading = false;
         state.resources[action.payload.id] = action.payload.data;
+      })
+      .addCase(fetchResourcesByLookups.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchResourcesByLookups.fulfilled, (state, action) => {
+        state.loading = false;
+        for (const item of action.payload.items) {
+          state.resources[item.id] = item.data;
+        }
+      })
+      .addCase(fetchResourcesByLookups.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch resources";
       })
       .addCase(fetchResourceByDocumentId.pending, (state) => {
         state.loading = true;

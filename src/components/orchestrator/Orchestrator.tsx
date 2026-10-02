@@ -50,7 +50,12 @@ import Sidebar from "./sidebar/Sidebar";
 import { useDnD } from "./sidebar/DnDContext";
 
 import { AppDispatch, RootState } from "../../store";
-import { fetchResourceById } from "../../store/resourceSlice";
+import {
+  fetchResourceById,
+  fetchResourcesByLookups,
+  type ResourceBatchItem,
+  type ResourceBatchLookup,
+} from "../../store/resourceSlice";
 import { updateSession, setCanvasContext } from "../../store/chatSlice";
 import InitPopup from "./orchestrator-info/InitPopup";
 import { useAuth } from "../../context/AuthContext";
@@ -103,6 +108,12 @@ const getResourceLookupCandidates = (node: Record<string, any>): string[] =>
         .filter(Boolean),
     ),
   );
+
+const getResourceLookupKey = ({
+  id,
+  cloudProvider,
+}: ResourceBatchLookup): string =>
+  `${id}|${cloudProvider?.toLowerCase() ?? ""}`;
 const defaultOptions: Record<string, string> = {
   "elk.algorithm": "layered",
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
@@ -789,6 +800,23 @@ const OrchestratorReactFlow: React.FC = () => {
   const loadedOrchestratorIdRef = useRef<string | null>(null);
   const routeLoadCountRef = useRef(0);
 
+  const fetchCatalogResources = useCallback(
+    async (lookups: ResourceBatchLookup[]) => {
+      const result = await dispatch(fetchResourcesByLookups(lookups));
+      if (!fetchResourcesByLookups.fulfilled.match(result)) {
+        return null;
+      }
+
+      return new Map<string, ResourceBatchItem>(
+        result.payload.items.map((item: ResourceBatchItem) => [
+          getResourceLookupKey(item),
+          item,
+        ]),
+      );
+    },
+    [dispatch],
+  );
+
   useGuidedTour(
     "orchestrator",
     isCustomTemplateFlow && Boolean(templateInfo.cloud) && !initOpen,
@@ -842,40 +870,53 @@ const OrchestratorReactFlow: React.FC = () => {
       appliedTemplateInfo: CloudConfig,
     ) =>
       runWithRouteLoading(async () => {
-        const fetchPromises = (serializedNodes || []).map(async (dbNode) => {
-          for (const candidate of getResourceLookupCandidates(dbNode)) {
-            const result = await dispatch(
-              fetchResourceById({
-                id: candidate,
-                cloudProvider: appliedTemplateInfo.cloud,
-              }),
-            );
-            if (
-              fetchResourceById.fulfilled.match(result) &&
-              result.payload.data?.resourceNode?.data
-            ) {
-              return result;
+        const candidateLists = (serializedNodes || []).map((dbNode) =>
+          getResourceLookupCandidates(dbNode).map((id) => ({
+            id,
+            cloudProvider: appliedTemplateInfo.cloud,
+          })),
+        );
+        const batchLookups = Array.from(
+          new Map(
+            candidateLists
+              .flat()
+              .map((lookup) => [getResourceLookupKey(lookup), lookup]),
+          ).values(),
+        );
+        const batchResources = await fetchCatalogResources(batchLookups);
+        const resourceDataByNode = await Promise.all(
+          candidateLists.map(async (candidates) => {
+            if (batchResources) {
+              for (const candidate of candidates) {
+                const item = batchResources.get(getResourceLookupKey(candidate));
+                if (item?.data?.resourceNode?.data) return item.data;
+              }
+              return null;
             }
-          }
 
-          return null;
-        });
-
-        const results = await Promise.all(fetchPromises);
+            // Keep the existing per-resource path as a resilience fallback
+            // while older deployments are being rolled forward.
+            for (const candidate of candidates) {
+              const result = await dispatch(fetchResourceById(candidate));
+              if (
+                fetchResourceById.fulfilled.match(result) &&
+                result.payload.data?.resourceNode?.data
+              ) {
+                return result.payload.data;
+              }
+            }
+            return null;
+          }),
+        );
         const resourceNodes: Node[] = [];
 
-        for (let i = 0; i < results.length; i += 1) {
-          const resultAction = results[i];
+        for (let i = 0; i < resourceDataByNode.length; i += 1) {
+          const resourceData = resourceDataByNode[i];
           const dbNode = serializedNodes[i];
 
-          if (
-            resultAction &&
-            fetchResourceById.fulfilled.match(resultAction) &&
-            resultAction.payload.data?.resourceNode?.data
-          ) {
-            const resourceData = resultAction.payload;
+          if (resourceData?.resourceNode?.data) {
             const catalogResourceId =
-              resourceData.data.resourceId ||
+              resourceData.resourceId ||
               dbNode.__nodeType ||
               dbNode.resourceId;
             resourceNodes.push({
@@ -883,7 +924,7 @@ const OrchestratorReactFlow: React.FC = () => {
               type: "customNode",
               position: dbNode.position || { x: 0, y: 0 },
               data: {
-                ...resourceData?.data?.resourceNode?.data,
+                ...resourceData.resourceNode.data,
                 values: dbNode.values || {},
                 __nodeType:
                   dbNode.__nodeType ||
@@ -893,8 +934,8 @@ const OrchestratorReactFlow: React.FC = () => {
                 isExpanded: dbNode.isExpanded ?? true,
                 friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
                 header: {
-                  ...resourceData?.data?.resourceNode?.data?.header,
-                  icon: resourceData?.data?.resourceIcon,
+                  ...resourceData.resourceNode.data.header,
+                  icon: resourceData.resourceIcon,
                 },
                 templateInfo: appliedTemplateInfo,
                 userInfo: user,
@@ -990,6 +1031,7 @@ const OrchestratorReactFlow: React.FC = () => {
       }),
     [
       dispatch,
+      fetchCatalogResources,
       getLayoutElements,
       runWithRouteLoading,
       setEdges,
@@ -1364,36 +1406,45 @@ const OrchestratorReactFlow: React.FC = () => {
           setTemplateInfo(appliedTemplateInfo);
           setInitOpen(false);
 
-          // Fetch the full resource template for each prefill node.
-          // Use the same extractCatalogId convention as the saved-orchestrator path:
-          // node.id = `${mongodb_catalog_id}-${uuid}`, this recovers the catalog _id.
-          const fetchPromises = (prefill.nodes || []).map((dbNode: any) =>
-            dispatch(
-              fetchResourceById({
-                id: extractCatalogId(dbNode.id),
-                cloudProvider: appliedTemplateInfo.cloud,
-              }),
-            ),
-          );
+          // Fetch all resource templates in one catalog request. Keep the
+          // single-resource path below as a rollout fallback.
+          const prefillNodes = prefill.nodes || [];
+          const lookups: ResourceBatchLookup[] = prefillNodes.map((dbNode: any) => ({
+            id: extractCatalogId(dbNode.id),
+            cloudProvider: appliedTemplateInfo.cloud,
+          }));
 
-          Promise.all(fetchPromises).then((results) => {
+          void (async () => {
+            const batchResources = await fetchCatalogResources(lookups);
+            const results = batchResources
+              ? lookups.map(
+                  (lookup) =>
+                    batchResources.get(getResourceLookupKey(lookup))?.data ?? null,
+                )
+              : await Promise.all(
+                  lookups.map(async (lookup) => {
+                    const result = await dispatch(fetchResourceById(lookup));
+                    return fetchResourceById.fulfilled.match(result)
+                      ? result.payload.data
+                      : null;
+                  }),
+                );
             const resourceNodes: Node[] = [];
 
             for (let i = 0; i < results.length; i++) {
-              const resultAction = results[i];
-              const dbNode = (prefill.nodes || [])[i];
+              const resourceData = results[i];
+              const dbNode = prefillNodes[i];
 
               let reconstructedNode: Node;
 
-              if (fetchResourceById.fulfilled.match(resultAction)) {
+              if (resourceData?.resourceNode?.data) {
                 // We have the full resource template — build a proper node identical to the saved-orchestrator path
-                const resourceData = resultAction.payload;
                 reconstructedNode = {
                   id: dbNode.id,
                   type: "customNode",
                   position: dbNode.position || { x: 0, y: 0 },
                   data: {
-                    ...resourceData?.data?.resourceNode?.data,
+                    ...resourceData.resourceNode.data,
                     values: dbNode.values || {},
                     __nodeType:
                       dbNode.__nodeType ||
@@ -1403,8 +1454,8 @@ const OrchestratorReactFlow: React.FC = () => {
                     isExpanded: dbNode.isExpanded ?? true,
                     friendlyId: dbNode.friendlyId,
                     header: {
-                      ...resourceData?.data?.resourceNode?.data?.header,
-                      icon: resourceData?.data?.resourceIcon,
+                      ...resourceData.resourceNode.data.header,
+                      icon: resourceData.resourceIcon,
                     },
                     templateInfo: appliedTemplateInfo,
                     userInfo: user,
@@ -1500,7 +1551,7 @@ const OrchestratorReactFlow: React.FC = () => {
                 "elk.direction": "RIGHT",
               });
             }, 150);
-          });
+          })();
         } catch (err) {
           console.error("Failed to apply Maestro prefill:", err);
           setInitOpen(true);
@@ -1524,39 +1575,46 @@ const OrchestratorReactFlow: React.FC = () => {
         };
         setTemplateInfo(templateInfo);
         setPolicyScan(orchestratorData.policyScan || DEFAULT_POLICY_SCAN);
-        const customNodes = [];
         const resourceNodes: Node[] = [];
-        for (const node of orchestratorData?.nodes || []) {
-          const id = extractCatalogId(node.id);
-          customNodes.push(
-            dispatch(
-              fetchResourceById({
-                id,
-                cloudProvider: templateInfo.cloud,
-              }),
-            ),
-          );
-        }
-        Promise.all(customNodes).then((results) => {
-          for (let i = 0; i < results.length; i += 1) {
-            const resultAction = results[i];
+        const loadSavedResources = async () => {
+          const savedNodes = orchestratorData?.nodes || [];
+          const lookups = savedNodes.map((node) => ({
+            id: extractCatalogId(node.id),
+            cloudProvider: templateInfo.cloud,
+          }));
+          const batchResources = await fetchCatalogResources(lookups);
+          const resourceData = batchResources
+            ? lookups.map(
+                (lookup) =>
+                  batchResources.get(getResourceLookupKey(lookup))?.data ?? null,
+              )
+            : await Promise.all(
+                lookups.map(async (lookup) => {
+                  const result = await dispatch(fetchResourceById(lookup));
+                  return fetchResourceById.fulfilled.match(result)
+                    ? result.payload.data
+                    : null;
+                }),
+              );
+
+          for (let i = 0; i < resourceData.length; i += 1) {
+            const resourceDataForNode = resourceData[i];
             const dbNode = orchestratorData.nodes[i];
-            if (fetchResourceById.fulfilled.match(resultAction)) {
-              const resourceData = resultAction.payload;
+            if (resourceDataForNode?.resourceNode?.data) {
               const reconstructedNode: Node = {
                 id: dbNode.id,
                 type: "customNode",
                 position: dbNode.position,
                 data: {
-                  ...resourceData?.data?.resourceNode?.data,
+                  ...resourceDataForNode.resourceNode.data,
                   values: dbNode.values,
                   __nodeType: dbNode.__nodeType || dbNode.resourceId,
                   __resourceId: dbNode.resourceId,
                   isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
                   friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
                   header: {
-                    ...resourceData?.data?.resourceNode?.data?.header,
-                    icon: resourceData?.data?.resourceIcon,
+                    ...resourceDataForNode.resourceNode.data.header,
+                    icon: resourceDataForNode.resourceIcon,
                   },
                   templateInfo,
                   userInfo: user,
@@ -1610,13 +1668,15 @@ const OrchestratorReactFlow: React.FC = () => {
               nextEdges.filter((edge) => !existingIds.has(edge.id)),
             );
           });
-        });
+        };
+        void loadSavedResources();
       }
     }
   }, [
     template_id,
     template_type,
     orchestrators,
+    fetchCatalogResources,
     searchParams,
     setNodes,
     setEdges,
@@ -1799,6 +1859,7 @@ const OrchestratorReactFlow: React.FC = () => {
       });
   }, [
     dispatch,
+    fetchCatalogResources,
     loadSerializedGraph,
     maestroDraftToken,
     orchestrators,
