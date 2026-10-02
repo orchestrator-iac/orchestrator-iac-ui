@@ -148,4 +148,4 @@ const AnimatedGradientEdge: React.FC<EdgeProps> = (props) => {
   );
 };
 
-export default AnimatedGradientEdge;
+export default React.memo(AnimatedGradientEdge);

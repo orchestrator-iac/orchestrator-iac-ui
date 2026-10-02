@@ -12,7 +12,10 @@ import { Handle } from "@xyflow/react";
 import { useTheme } from "@mui/material/styles";
 
 import { getFriendlyId, resolveValueByPath } from "./utils/nodePresentation";
-import { OrchestratorNodeProps } from "./types";
+import {
+  areOrchestratorNodePropsEqual,
+  OrchestratorNodeProps,
+} from "./types";
 import ResourceIconView from "../shared/ResourceIconView";
 import { DriftStatus } from "../../types/orchestrator";
 
@@ -69,8 +72,10 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
   const theme = useTheme();
 
   const friendlyId = React.useMemo(
-    () => getFriendlyId(id, data?.__nodeType, data?.__helpers?.allNodes),
-    [id, data?.__nodeType, data?.__helpers?.allNodes],
+    () =>
+      (data as any)?.friendlyId ??
+      getFriendlyId(id, data?.__nodeType, data?.__helpers?.getAllNodes?.()),
+    [id, data, data?.__nodeType, data?.__helpers?.getAllNodes],
   );
 
   const driftStatus = data?.__driftStatus;
@@ -354,4 +359,4 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
   );
 };
 
-export default ArchitectureNode;
+export default React.memo(ArchitectureNode, areOrchestratorNodePropsEqual);

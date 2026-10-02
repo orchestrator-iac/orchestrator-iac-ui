@@ -45,8 +45,7 @@ type Props = {
 
   nodeId: string;
   links?: LinkRule[];
-  allNodes?: any[];
-  allEdges?: any[];
+  getAllNodes?: () => any[];
   userInfo?: UserProfile;
   templateInfo?: CloudConfig;
   validationErrors?: Record<string, string>;
@@ -74,7 +73,7 @@ const DynamicForm: React.FC<Props> = ({
   config,
   values,
   links,
-  allNodes,
+  getAllNodes,
   userInfo,
   templateInfo,
   validationErrors,
@@ -219,7 +218,7 @@ const DynamicForm: React.FC<Props> = ({
     const [, , filter] = options.split(":"); // e.g., "resourceId=vpc" or "type=internet_gateway|nat_gateway"
     const [k, v] = filter.split("=");
 
-    const nodes = allNodes ?? [];
+    const nodes = getAllNodes?.() ?? [];
     const allowedTypes = computeAllowedTypes(k, v, contextData);
 
     const candidates = nodes.filter((n: any) => {
