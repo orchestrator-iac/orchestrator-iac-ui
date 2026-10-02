@@ -1,5 +1,9 @@
 import React, { useId } from "react";
 import { EdgeProps, getSmoothStepPath } from "@xyflow/react";
+import {
+  memoizeOrchestratorComponent,
+  recordOrchestratorRender,
+} from "./renderMetrics";
 
 /**
  * AnimatedGradientEdge - Custom edge with animated gradient flow
@@ -29,6 +33,7 @@ import { EdgeProps, getSmoothStepPath } from "@xyflow/react";
  * - Purple: { start: '#9c27b0', mid: '#ab47bc', end: '#ba68c8' }
  */
 const AnimatedGradientEdge: React.FC<EdgeProps> = (props) => {
+  recordOrchestratorRender("AnimatedGradientEdge", props.id);
   const {
     sourceX,
     sourceY,
@@ -148,4 +153,4 @@ const AnimatedGradientEdge: React.FC<EdgeProps> = (props) => {
   );
 };
 
-export default React.memo(AnimatedGradientEdge);
+export default memoizeOrchestratorComponent(AnimatedGradientEdge);

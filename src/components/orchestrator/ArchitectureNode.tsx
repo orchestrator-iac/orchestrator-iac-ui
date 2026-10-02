@@ -18,6 +18,10 @@ import {
 } from "./types";
 import ResourceIconView from "../shared/ResourceIconView";
 import { DriftStatus } from "../../types/orchestrator";
+import {
+  memoizeOrchestratorComponent,
+  recordOrchestratorRender,
+} from "./renderMetrics";
 
 /** Border treatment for the drift status attached by Tier 1 state reconciliation. */
 const getDriftBorder = (status: DriftStatus | undefined, fallback: string): string => {
@@ -69,6 +73,7 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
   data,
   isConnectable,
 }) => {
+  recordOrchestratorRender("ArchitectureNode", id);
   const theme = useTheme();
 
   const friendlyId = React.useMemo(
@@ -359,4 +364,7 @@ const ArchitectureNode: React.FC<OrchestratorNodeProps> = ({
   );
 };
 
-export default React.memo(ArchitectureNode, areOrchestratorNodePropsEqual);
+export default memoizeOrchestratorComponent(
+  ArchitectureNode,
+  areOrchestratorNodePropsEqual,
+);
