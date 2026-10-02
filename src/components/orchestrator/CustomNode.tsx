@@ -23,7 +23,10 @@ import OverflowTooltipText from "../shared/OverflowTooltipText";
 import ResourceIconView from "../shared/ResourceIconView";
 import DynamicForm from "./DynamicForm";
 import { getFriendlyId } from "./utils/nodePresentation";
-import { OrchestratorNodeProps } from "./types";
+import {
+  areOrchestratorNodePropsEqual,
+  OrchestratorNodeProps,
+} from "./types";
 import { DriftStatus } from "../../types/orchestrator";
 
 const CUSTOM_NODE_ICON_SIZE = 56;
@@ -98,8 +101,10 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   };
 
   const friendlyId = React.useMemo(
-    () => getFriendlyId(id, data?.__nodeType, data?.__helpers?.allNodes),
-    [id, data?.__nodeType, data?.__helpers?.allNodes],
+    () =>
+      (data as any)?.friendlyId ??
+      getFriendlyId(id, data?.__nodeType, data?.__helpers?.getAllNodes?.()),
+    [id, data, data?.__nodeType, data?.__helpers?.getAllNodes],
   );
 
   const driftStatus = data?.__driftStatus;
@@ -384,8 +389,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
           /* graph-aware props for dynamic options + link sync */
           nodeId={id}
           links={data?.links}
-          allNodes={data?.__helpers?.allNodes}
-          allEdges={data?.__helpers?.allEdges}
+          getAllNodes={data?.__helpers?.getAllNodes}
           templateInfo={data?.templateInfo}
           userInfo={data?.userInfo}
           validationErrors={data?.__validationErrors}
@@ -401,4 +405,4 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   );
 };
 
-export default CustomNode;
+export default React.memo(CustomNode, areOrchestratorNodePropsEqual);

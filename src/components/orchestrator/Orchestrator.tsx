@@ -799,6 +799,12 @@ const OrchestratorReactFlow: React.FC = () => {
   const requestedTemplateIdsRef = useRef<Set<string>>(new Set());
   const loadedOrchestratorIdRef = useRef<string | null>(null);
   const routeLoadCountRef = useRef(0);
+  const graphNodesRef = useRef<Node[]>(nodes);
+  const graphEdgesRef = useRef<Edge[]>(edges);
+  graphNodesRef.current = nodes;
+  graphEdgesRef.current = edges;
+
+  const getAllNodes = useCallback(() => graphNodesRef.current, []);
 
   const fetchCatalogResources = useCallback(
     async (lookups: ResourceBatchLookup[]) => {
@@ -1985,8 +1991,9 @@ const OrchestratorReactFlow: React.FC = () => {
         sourceId = String(newSourceId || "");
       }
 
-      const sourceNodeExists = nodes.some((n) => n.id === sourceId);
-      const target = nodes.find((n) => n.id === nodeId);
+      const currentNodes = graphNodesRef.current;
+      const sourceNodeExists = currentNodes.some((n) => n.id === sourceId);
+      const target = currentNodes.find((n) => n.id === nodeId);
       if (!target) return;
       const baseBind = bindStr.includes("[") ? bindStr.split("[")[0] : bindStr;
       const rules = (target.data as any)?.links ?? [];
@@ -2094,7 +2101,7 @@ const OrchestratorReactFlow: React.FC = () => {
         return working;
       });
     },
-    [nodes, setNodes, setEdges, isArchitectureMode],
+    [setNodes, setEdges, isArchitectureMode],
   );
 
   const onCloneNode = useCallback(
@@ -2142,12 +2149,15 @@ const OrchestratorReactFlow: React.FC = () => {
     (nodeId: string) => {
       if (isArchitectureMode) return;
       // snapshot for undo
-      setUndoStack({ nodes: [...nodes], edges: [...edges] });
+      setUndoStack({
+        nodes: [...graphNodesRef.current],
+        edges: [...graphEdgesRef.current],
+      });
       setSnackOpen(true);
       // perform delete
       actuallyDeleteNode(nodeId);
     },
-    [nodes, edges, actuallyDeleteNode, isArchitectureMode],
+    [actuallyDeleteNode, isArchitectureMode],
   );
 
   // Delete selected edges via keyboard/backspace is automatic if you enable deleteKeyCode,
@@ -2155,18 +2165,24 @@ const OrchestratorReactFlow: React.FC = () => {
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
       if (isArchitectureMode) return;
-      setUndoStack({ nodes: [...nodes], edges: [...edges] });
+      setUndoStack({
+        nodes: [...graphNodesRef.current],
+        edges: [...graphEdgesRef.current],
+      });
       setSnackOpen(true);
       setEdges((eds) => eds.filter((e) => !deleted.some((d) => d.id === e.id)));
     },
-    [nodes, edges, setEdges, isArchitectureMode],
+    [setEdges, isArchitectureMode],
   );
 
   // Optional: onNodesDelete for consistency (if you allow multi-select deletions)
   const onNodesDelete = useCallback(
     (deleted: Node[]) => {
       if (isArchitectureMode) return;
-      setUndoStack({ nodes: [...nodes], edges: [...edges] });
+      setUndoStack({
+        nodes: [...graphNodesRef.current],
+        edges: [...graphEdgesRef.current],
+      });
       setSnackOpen(true);
       const ids = new Set(deleted.map((n) => n.id));
       setNodes((nds) => nds.filter((n) => !ids.has(n.id)));
@@ -2174,7 +2190,7 @@ const OrchestratorReactFlow: React.FC = () => {
         eds.filter((e) => !ids.has(e.source) && !ids.has(e.target)),
       );
     },
-    [nodes, edges, setNodes, setEdges, isArchitectureMode],
+    [setNodes, setEdges, isArchitectureMode],
   );
 
   // Undo handler
@@ -2382,9 +2398,7 @@ const OrchestratorReactFlow: React.FC = () => {
           data: {
             ...n.data,
             __helpers: {
-              ...(n.data as any).__helpers,
-              allNodes: nodes,
-              allEdges: edges,
+              getAllNodes,
               // Adapter so child components can call (bind, newSourceId)
               onLinkFieldChange: (
                 bind: string,
@@ -2406,7 +2420,7 @@ const OrchestratorReactFlow: React.FC = () => {
       }),
     [
       nodes,
-      edges,
+      getAllNodes,
       isArchitectureMode,
       onLinkFieldChange,
       onValuesChange,
