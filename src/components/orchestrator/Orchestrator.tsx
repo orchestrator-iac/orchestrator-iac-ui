@@ -1441,13 +1441,10 @@ const OrchestratorReactFlow: React.FC = () => {
               }
 
               resourceNodes.push(reconstructedNode);
-              setNodes((nds) => {
-                const exists = nds.some((n) => n.id === reconstructedNode.id);
-                return exists ? nds : nds.concat(reconstructedNode);
-              });
             }
 
             // Reconstruct edges using the same rule-lookup as the saved orchestrator path
+            const nextEdges: Edge[] = [];
             for (const dbEdge of prefill.edges || []) {
               const source = resourceNodes.find((n) => n.id === dbEdge.source);
               const target = resourceNodes.find((n) => n.id === dbEdge.target);
@@ -1462,7 +1459,7 @@ const OrchestratorReactFlow: React.FC = () => {
                   r.fromTypes.includes(sourceType),
               );
 
-              const newEdge: Edge = {
+              nextEdges.push({
                 id: rule
                   ? `${source.id}->${target.id}:${rule.bind}`
                   : dbEdge.id || `${source.id}->${target.id}`,
@@ -1480,10 +1477,21 @@ const OrchestratorReactFlow: React.FC = () => {
                   width: 12,
                   height: 12,
                 },
-              };
-
-              setEdges((eds) => addEdge(newEdge, eds));
+              });
             }
+
+            setNodes((nds) => {
+              const existingIds = new Set(nds.map((node) => node.id));
+              return nds.concat(
+                resourceNodes.filter((node) => !existingIds.has(node.id)),
+              );
+            });
+            setEdges((eds) => {
+              const existingIds = new Set(eds.map((edge) => edge.id));
+              return eds.concat(
+                nextEdges.filter((edge) => !existingIds.has(edge.id)),
+              );
+            });
 
             // Auto-layout after all nodes are placed
             setTimeout(() => {
@@ -1555,14 +1563,10 @@ const OrchestratorReactFlow: React.FC = () => {
                 },
               };
               resourceNodes.push(reconstructedNode);
-              // Only add node if it doesn't already exist
-              setNodes((nds) => {
-                const exists = nds.some((n) => n.id === reconstructedNode.id);
-                return exists ? nds : nds.concat(reconstructedNode);
-              });
             }
           }
 
+          const nextEdges: Edge[] = [];
           for (const dbEdge of orchestratorData?.edges || []) {
             const source = resourceNodes.find((n) => n.id === dbEdge.source);
             const target = resourceNodes.find((n) => n.id === dbEdge.target);
@@ -1577,7 +1581,7 @@ const OrchestratorReactFlow: React.FC = () => {
             );
             if (!rule) continue;
 
-            const newEdge: Edge = {
+            nextEdges.push({
               id: `${source.id}->${target.id}:${rule.bind}`,
               source: source.id,
               target: target.id,
@@ -1591,10 +1595,21 @@ const OrchestratorReactFlow: React.FC = () => {
                 width: 12,
                 height: 12,
               },
-            };
-
-            setEdges((eds) => addEdge(newEdge, eds));
+            });
           }
+
+          setNodes((nds) => {
+            const existingIds = new Set(nds.map((node) => node.id));
+            return nds.concat(
+              resourceNodes.filter((node) => !existingIds.has(node.id)),
+            );
+          });
+          setEdges((eds) => {
+            const existingIds = new Set(eds.map((edge) => edge.id));
+            return eds.concat(
+              nextEdges.filter((edge) => !existingIds.has(edge.id)),
+            );
+          });
         });
       }
     }
