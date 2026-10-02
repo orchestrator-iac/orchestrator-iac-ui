@@ -28,6 +28,10 @@ import {
   OrchestratorNodeProps,
 } from "./types";
 import { DriftStatus } from "../../types/orchestrator";
+import {
+  memoizeOrchestratorComponent,
+  recordOrchestratorRender,
+} from "./renderMetrics";
 
 const CUSTOM_NODE_ICON_SIZE = 56;
 
@@ -66,6 +70,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   isOrchestrator = true,
   isConnectable,
 }) => {
+  recordOrchestratorRender("CustomNode", id);
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -405,4 +410,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   );
 };
 
-export default React.memo(CustomNode, areOrchestratorNodePropsEqual);
+export default memoizeOrchestratorComponent(
+  CustomNode,
+  areOrchestratorNodePropsEqual,
+);
