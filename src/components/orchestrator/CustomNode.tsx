@@ -79,6 +79,9 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   const [expanded, setExpanded] = React.useState<boolean>(
     data?.isExpanded ?? true,
   );
+  // Let the node shell paint before mounting the expensive dynamic form. This
+  // keeps route hydration responsive when several saved nodes start expanded.
+  const [isFormReady, setIsFormReady] = React.useState(false);
 
   // Update expanded state when data changes (e.g., when loading saved orchestrator)
   React.useEffect(() => {
@@ -86,6 +89,18 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
       setExpanded(data.isExpanded);
     }
   }, [data?.isExpanded]);
+
+  React.useEffect(() => {
+    if (!expanded || isFormReady) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setIsFormReady(true);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [expanded, isFormReady]);
 
   const handleAccordionChange = (
     _event: React.SyntheticEvent,
@@ -387,24 +402,26 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
         className="nowheel"
         sx={{ maxHeight: "min(calc(100vh - 300px), 400px)", overflowY: "auto" }}
       >
-        <DynamicForm
-          /* form schema + current values */
-          config={data?.fields ?? []}
-          values={data?.values ?? {}}
-          /* graph-aware props for dynamic options + link sync */
-          nodeId={id}
-          links={data?.links}
-          getAllNodes={data?.__helpers?.getAllNodes}
-          templateInfo={data?.templateInfo}
-          userInfo={data?.userInfo}
-          validationErrors={data?.__validationErrors}
-          onLinkFieldChange={(bind, newSourceId, context) =>
-            data?.__helpers?.onLinkFieldChange?.(bind, newSourceId, context)
-          }
-          onValuesChange={(name, value) =>
-            data?.__helpers?.onValuesChange?.(name, value)
-          }
-        />
+        {isFormReady && (
+          <DynamicForm
+            /* form schema + current values */
+            config={data?.fields ?? []}
+            values={data?.values ?? {}}
+            /* graph-aware props for dynamic options + link sync */
+            nodeId={id}
+            links={data?.links}
+            getAllNodes={data?.__helpers?.getAllNodes}
+            templateInfo={data?.templateInfo}
+            userInfo={data?.userInfo}
+            validationErrors={data?.__validationErrors}
+            onLinkFieldChange={(bind, newSourceId, context) =>
+              data?.__helpers?.onLinkFieldChange?.(bind, newSourceId, context)
+            }
+            onValuesChange={(name, value) =>
+              data?.__helpers?.onValuesChange?.(name, value)
+            }
+          />
+        )}
       </AccordionDetails>
     </Accordion>
   );
