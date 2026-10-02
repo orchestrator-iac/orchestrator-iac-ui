@@ -37,6 +37,8 @@ import awsLogoDark from "./../../assets/aws_logo_dark.svg";
 import azLogo from "./../../assets/az_logo.svg";
 import gcpLogo from "./../../assets/gcp_logo.svg";
 
+const HOME_ORCHESTRATOR_CARD_FADE_TIMEOUT_MS = 400;
+
 const logoMap: Record<
   string,
   { light: string; dark: string; default: string }
@@ -569,7 +571,6 @@ const HomeInsightsSection: React.FC<HomeInsightsSectionProps> = ({
 
 interface OrchestratorCardProps {
   orchestrator: OrchestratorListItem;
-  index: number;
   showContent: boolean;
   onOpen: (id: string | undefined) => void;
   onPublishClick: (orchestrator: OrchestratorListItem) => void;
@@ -578,7 +579,6 @@ interface OrchestratorCardProps {
 
 const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
   orchestrator,
-  index,
   showContent,
   onOpen,
   onPublishClick,
@@ -588,7 +588,7 @@ const OrchestratorCard: React.FC<OrchestratorCardProps> = ({
 
   return (
     <Box className={styles.orchestratorCardShell}>
-      <Fade in={showContent} timeout={1000 + index * 100}>
+      <Fade in={showContent} timeout={HOME_ORCHESTRATOR_CARD_FADE_TIMEOUT_MS}>
         <Box
           className={styles.card}
           onClick={() => onOpen(orchestrator._id)}
@@ -899,11 +899,10 @@ const HomeOrchestratorsSection: React.FC<HomeOrchestratorsSectionProps> = ({
         ) : (
           <>
             {hasOrchestrators ? (
-              filteredOrchestrators.map((orchestrator, index) => (
+              filteredOrchestrators.map((orchestrator) => (
                 <OrchestratorCard
                   key={orchestrator._id}
                   orchestrator={orchestrator}
-                  index={index}
                   showContent={showContent}
                   onOpen={onOpenOrchestrator}
                   onPublishClick={onPublishClick}
