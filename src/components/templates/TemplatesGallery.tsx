@@ -23,7 +23,6 @@ import {
   fetchTemplates,
   setSearchQuery,
   setSortBy,
-  resetTemplates,
 } from "../../store/templatesSlice";
 import { TemplateListItem } from "../../types/template";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
@@ -187,6 +186,7 @@ const TemplatesGallery: React.FC = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null,
   );
+  const hasRetriedFailedLoad = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { items, total, status, hasMore, page, searchQuery, sortBy } =
@@ -247,9 +247,32 @@ const TemplatesGallery: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    dispatch(resetTemplates());
-    dispatch(fetchTemplates({ page: 1, size: PAGE_SIZE, sort: "popularity" }));
-  }, [dispatch]);
+    // Reuse the catalog already held in Redux when revisiting the route.
+    // Only fetch on the first load, with one recovery retry after failure.
+    if (status === "idle") {
+      dispatch(
+        fetchTemplates({
+          page: 1,
+          size: PAGE_SIZE,
+          search: searchQuery || undefined,
+          sort: sortBy,
+        }),
+      );
+      return;
+    }
+
+    if (status === "failed" && !hasRetriedFailedLoad.current) {
+      hasRetriedFailedLoad.current = true;
+      dispatch(
+        fetchTemplates({
+          page: 1,
+          size: PAGE_SIZE,
+          search: searchQuery || undefined,
+          sort: sortBy,
+        }),
+      );
+    }
+  }, [dispatch, searchQuery, sortBy, status]);
 
   useEffect(() => {
     if (!selectedTemplateId && items[0]) {
