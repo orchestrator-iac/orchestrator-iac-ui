@@ -86,6 +86,7 @@ const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 const elk = new ELK();
 const RESOURCE_BATCH_TIMEOUT_MS = 8_000;
+const RESOURCE_FALLBACK_TIMEOUT_MS = 2_000;
 const FORM_HYDRATION_STAGGER_MS = 120;
 const INITIAL_FORM_HYDRATION_COUNT = 1;
 
@@ -886,9 +887,27 @@ const OrchestratorReactFlow: React.FC = () => {
       }
 
       // A 200 batch can be partial while a catalog is being migrated. Retry
-      // only the missing node instead of treating the whole batch as complete.
+      // only the missing node, but do not let a slow fallback hold the entire
+      // canvas behind its loading overlay.
       for (const candidate of candidates) {
-        const result = await dispatch(fetchResourceById(candidate));
+        const request = dispatch(fetchResourceById(candidate));
+        let timeoutId: number | undefined;
+        const timeout = new Promise<null>((resolve) => {
+          timeoutId = window.setTimeout(() => {
+            request.abort();
+            resolve(null);
+          }, RESOURCE_FALLBACK_TIMEOUT_MS);
+        });
+
+        let result: Awaited<typeof request> | null = null;
+        try {
+          result = await Promise.race([request, timeout]);
+        } finally {
+          if (timeoutId !== undefined) {
+            window.clearTimeout(timeoutId);
+          }
+        }
+
         if (
           fetchResourceById.fulfilled.match(result) &&
           result.payload.data?.resourceNode?.data
