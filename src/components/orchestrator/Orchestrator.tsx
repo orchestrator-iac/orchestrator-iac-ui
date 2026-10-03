@@ -87,6 +87,7 @@ const initialEdges: Edge[] = [];
 const elk = new ELK();
 const RESOURCE_BATCH_TIMEOUT_MS = 8_000;
 const FORM_HYDRATION_STAGGER_MS = 120;
+const INITIAL_FORM_HYDRATION_COUNT = 1;
 
 // Canvas node ids are always `${catalogId}-${uuidv4()}`. Older catalog ids are
 // plain Mongo ObjectIds (no hyphens), but newer catalog entries (all current
@@ -2491,6 +2492,8 @@ const OrchestratorReactFlow: React.FC = () => {
             __driftStatus: driftByNode[n.id]?.status,
             __driftFindings: driftByNode[n.id] ? [driftByNode[n.id]] : undefined,
             __formHydrationReady: !isRouteLoading && isCanvasHydrated,
+            __formHydrationEnabled:
+              nodeIndex < INITIAL_FORM_HYDRATION_COUNT,
             __formHydrationDelayMs: nodeIndex * FORM_HYDRATION_STAGGER_MS,
           },
         };

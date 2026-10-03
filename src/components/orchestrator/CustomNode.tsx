@@ -121,10 +121,11 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const hasInteractedWithAccordion = React.useRef(false);
 
   // Controlled accordion state - defaults to expanded, but can be saved/restored
   const [expanded, setExpanded] = React.useState<boolean>(
-    data?.isExpanded ?? true,
+    data?.__formHydrationEnabled === false ? false : data?.isExpanded ?? true,
   );
   // Let the node shell paint before mounting the expensive dynamic form. This
   // keeps route hydration responsive when several saved nodes start expanded.
@@ -133,12 +134,24 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   // Update expanded state when data changes (e.g., when loading saved orchestrator)
   React.useEffect(() => {
     if (data?.isExpanded !== undefined) {
+      if (
+        data?.__formHydrationEnabled === false &&
+        !hasInteractedWithAccordion.current
+      ) {
+        setExpanded(false);
+        return;
+      }
       setExpanded(data.isExpanded);
     }
-  }, [data?.isExpanded]);
+  }, [data?.isExpanded, data?.__formHydrationEnabled]);
 
   React.useEffect(() => {
-    if (!expanded || isFormReady || data?.__formHydrationReady === false) {
+    if (
+      !expanded ||
+      isFormReady ||
+      data?.__formHydrationReady === false ||
+      data?.__formHydrationEnabled === false
+    ) {
       return;
     }
 
@@ -153,6 +166,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
     );
   }, [
     data?.__formHydrationDelayMs,
+    data?.__formHydrationEnabled,
     data?.__formHydrationReady,
     expanded,
     id,
@@ -163,7 +177,11 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
     _event: React.SyntheticEvent,
     isExpanded: boolean,
   ) => {
+    hasInteractedWithAccordion.current = true;
     setExpanded(isExpanded);
+    if (isExpanded) {
+      setIsFormReady(true);
+    }
     // Save the expanded state back to node data via a special handler
     // We need to update node.data.isExpanded, not node.data.values.__isExpanded
     if (data?.__helpers?.onValuesChange) {
