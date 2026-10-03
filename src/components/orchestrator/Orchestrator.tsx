@@ -87,6 +87,7 @@ const initialEdges: Edge[] = [];
 const elk = new ELK();
 const RESOURCE_BATCH_TIMEOUT_MS = 8_000;
 const RESOURCE_FALLBACK_TIMEOUT_MS = 2_000;
+const ROUTE_LOAD_TIMEOUT_MS = 15_000;
 const FORM_HYDRATION_STAGGER_MS = 120;
 const INITIAL_FORM_HYDRATION_COUNT = 0;
 
@@ -842,20 +843,24 @@ const OrchestratorReactFlow: React.FC = () => {
   const fetchCatalogResources = useCallback(
     async (lookups: ResourceBatchLookup[]) => {
       const request = dispatch(fetchResourcesByLookups(lookups));
-      let timedOut = false;
-      const timeoutId = window.setTimeout(() => {
-        timedOut = true;
-        request.abort();
-      }, RESOURCE_BATCH_TIMEOUT_MS);
+      let timeoutId: number | undefined;
+      const timeout = new Promise<null>((resolve) => {
+        timeoutId = window.setTimeout(() => {
+          request.abort();
+          resolve(null);
+        }, RESOURCE_BATCH_TIMEOUT_MS);
+      });
 
       try {
-        const result = await request;
+        const result = await Promise.race([request, timeout]);
+        if (result === null) {
+          console.warn(
+            `Resource catalog batch timed out after ${RESOURCE_BATCH_TIMEOUT_MS}ms; using the single-resource fallback.`,
+          );
+          return null;
+        }
+
         if (!fetchResourcesByLookups.fulfilled.match(result)) {
-          if (timedOut) {
-            console.warn(
-              `Resource catalog batch timed out after ${RESOURCE_BATCH_TIMEOUT_MS}ms; using the single-resource fallback.`,
-            );
-          }
           return null;
         }
 
@@ -866,7 +871,9 @@ const OrchestratorReactFlow: React.FC = () => {
           ]),
         );
       } finally {
-        window.clearTimeout(timeoutId);
+        if (timeoutId !== undefined) {
+          window.clearTimeout(timeoutId);
+        }
       }
     },
     [dispatch],
@@ -976,14 +983,28 @@ const OrchestratorReactFlow: React.FC = () => {
   const runWithRouteLoading = useCallback(
     async <T,>(work: () => Promise<T>) => {
       beginRouteLoad();
+      let timeoutId: number | undefined;
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+          reject(
+            new Error(
+              `Orchestrator route loading timed out after ${ROUTE_LOAD_TIMEOUT_MS}ms`,
+            ),
+          );
+        }, ROUTE_LOAD_TIMEOUT_MS);
+      });
+
       try {
-        return await work();
+        return await Promise.race([work(), timeout]);
       } catch (error) {
         setRouteLoadError(
           "We could not finish loading this orchestrator. Check the local API and try again.",
         );
         throw error;
       } finally {
+        if (timeoutId !== undefined) {
+          window.clearTimeout(timeoutId);
+        }
         endRouteLoad();
       }
     },
