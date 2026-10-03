@@ -79,6 +79,9 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   const [expanded, setExpanded] = React.useState<boolean>(
     data?.isExpanded ?? true,
   );
+  // Let the node shell paint before mounting the expensive dynamic form. This
+  // keeps route hydration responsive when several saved nodes start expanded.
+  const [isFormReady, setIsFormReady] = React.useState(false);
 
   // Update expanded state when data changes (e.g., when loading saved orchestrator)
   React.useEffect(() => {
@@ -86,6 +89,31 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
       setExpanded(data.isExpanded);
     }
   }, [data?.isExpanded]);
+
+  React.useEffect(() => {
+    if (!expanded || isFormReady || data?.__formHydrationReady === false) {
+      return;
+    }
+
+    let frameId: number | null = null;
+    const timeoutId = window.setTimeout(() => {
+      frameId = window.requestAnimationFrame(() => {
+        setIsFormReady(true);
+      });
+    }, data?.__formHydrationDelayMs ?? 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [
+    data?.__formHydrationDelayMs,
+    data?.__formHydrationReady,
+    expanded,
+    isFormReady,
+  ]);
 
   const handleAccordionChange = (
     _event: React.SyntheticEvent,
@@ -150,6 +178,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
           sx={{
             minHeight: 64,
             px: 2,
+            pr: 6,
             py: 0.375,
             borderBottom: `1px solid ${alpha(theme.palette.divider, 0.75)}`,
             alignItems: "center",
@@ -290,121 +319,126 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
               />
             ))}
 
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
-              flexShrink: 0,
-              ml: 0.5,
-            }}
-          >
-            {friendlyId && (
-              <Tooltip title={friendlyId} arrow placement="top">
-                <Chip
-                  size="small"
-                  label={friendlyId}
-                  onMouseDown={(event) => event.stopPropagation()}
-                  onClick={(event) => event.stopPropagation()}
-                  sx={{
-                    color: theme.palette.textVariants.text4,
-                    maxWidth: "96px",
-                    backgroundColor: alpha(theme.palette.text.primary, 0.08),
-                    border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
-                    "& .MuiChip-label": {
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    },
-                  }}
-                  variant="filled"
-                />
-              </Tooltip>
-            )}
-
-            {driftBadge && (
+        </AccordionSummary>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            right: 4,
+            zIndex: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.75,
+            transform: "translateY(-50%)",
+          }}
+        >
+          {friendlyId && (
+            <Tooltip title={friendlyId} arrow placement="top">
               <Chip
                 size="small"
-                label={driftBadge.label}
-                color={driftBadge.color}
+                label={friendlyId}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
-                sx={{ height: 22, fontSize: "0.68rem", fontWeight: 700 }}
+                sx={{
+                  color: theme.palette.textVariants.text4,
+                  maxWidth: "96px",
+                  backgroundColor: alpha(theme.palette.text.primary, 0.08),
+                  border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                  "& .MuiChip-label": {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  },
+                }}
+                variant="filled"
               />
-            )}
+            </Tooltip>
+          )}
 
-            <IconButton
+          {driftBadge && (
+            <Chip
               size="small"
-              aria-label="Node actions"
+              label={driftBadge.label}
+              color={driftBadge.color}
               onMouseDown={(event) => event.stopPropagation()}
-              onClick={(event: React.MouseEvent<HTMLElement>) => {
-                event.stopPropagation();
-                handleMenuOpen(event);
-              }}
-              sx={{
-                width: 32,
-                height: 32,
-                color: theme.palette.textVariants.text3,
-                "&:hover": {
-                  color: theme.palette.text.primary,
-                  backgroundColor: alpha(theme.palette.action.active, 0.1),
-                },
-                "&:focus-visible": {
-                  outline: `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: 2,
-                },
-              }}
-            >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={open}
-              onClose={(e) => {
-                (e as any)?.stopPropagation?.();
-                handleMenuClose();
-              }}
-              onClick={(e) => (e as any).stopPropagation()}
-              elevation={3}
-            >
-              <MenuItem onClick={handleDuplicate}>
-                <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
-                Duplicate
-              </MenuItem>
-              <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
-                <DeleteOutlineIcon
-                  fontSize="small"
-                  style={{ marginRight: 8 }}
-                />
-                Delete
-              </MenuItem>
-            </Menu>
-          </Box>
-        </AccordionSummary>
+              onClick={(event) => event.stopPropagation()}
+              sx={{ height: 22, fontSize: "0.68rem", fontWeight: 700 }}
+            />
+          )}
+
+          <IconButton
+            size="small"
+            aria-label="Node actions"
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event: React.MouseEvent<HTMLElement>) => {
+              event.stopPropagation();
+              handleMenuOpen(event);
+            }}
+            sx={{
+              width: 32,
+              height: 32,
+              color: theme.palette.textVariants.text3,
+              "&:hover": {
+                color: theme.palette.text.primary,
+                backgroundColor: alpha(theme.palette.action.active, 0.1),
+              },
+              "&:focus-visible": {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+            }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
+            onClose={(e) => {
+              (e as any)?.stopPropagation?.();
+              handleMenuClose();
+            }}
+            onClick={(e) => (e as any).stopPropagation()}
+            elevation={3}
+          >
+            <MenuItem onClick={handleDuplicate}>
+              <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
+              Duplicate
+            </MenuItem>
+            <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+              <DeleteOutlineIcon
+                fontSize="small"
+                style={{ marginRight: 8 }}
+              />
+              Delete
+            </MenuItem>
+          </Menu>
+        </Box>
       </Box>
 
       <AccordionDetails
         className="nowheel"
         sx={{ maxHeight: "min(calc(100vh - 300px), 400px)", overflowY: "auto" }}
       >
-        <DynamicForm
-          /* form schema + current values */
-          config={data?.fields ?? []}
-          values={data?.values ?? {}}
-          /* graph-aware props for dynamic options + link sync */
-          nodeId={id}
-          links={data?.links}
-          getAllNodes={data?.__helpers?.getAllNodes}
-          templateInfo={data?.templateInfo}
-          userInfo={data?.userInfo}
-          validationErrors={data?.__validationErrors}
-          onLinkFieldChange={(bind, newSourceId, context) =>
-            data?.__helpers?.onLinkFieldChange?.(bind, newSourceId, context)
-          }
-          onValuesChange={(name, value) =>
-            data?.__helpers?.onValuesChange?.(name, value)
-          }
-        />
+        {isFormReady && (
+          <DynamicForm
+            /* form schema + current values */
+            config={data?.fields ?? []}
+            values={data?.values ?? {}}
+            /* graph-aware props for dynamic options + link sync */
+            nodeId={id}
+            links={data?.links}
+            getAllNodes={data?.__helpers?.getAllNodes}
+            templateInfo={data?.templateInfo}
+            userInfo={data?.userInfo}
+            validationErrors={data?.__validationErrors}
+            onLinkFieldChange={(bind, newSourceId, context) =>
+              data?.__helpers?.onLinkFieldChange?.(bind, newSourceId, context)
+            }
+            onValuesChange={(name, value) =>
+              data?.__helpers?.onValuesChange?.(name, value)
+            }
+          />
+        )}
       </AccordionDetails>
     </Accordion>
   );

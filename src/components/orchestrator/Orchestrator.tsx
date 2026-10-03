@@ -85,6 +85,8 @@ import styles from "./Orchestrator.module.css";
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 const elk = new ELK();
+const RESOURCE_BATCH_TIMEOUT_MS = 8_000;
+const FORM_HYDRATION_STAGGER_MS = 120;
 
 // Canvas node ids are always `${catalogId}-${uuidv4()}`. Older catalog ids are
 // plain Mongo ObjectIds (no hyphens), but newer catalog entries (all current
@@ -656,6 +658,32 @@ const RouteLoadingOverlay: React.FC = () => {
   );
 };
 
+const RouteLoadErrorOverlay: React.FC<{ onRetry: () => void }> = ({
+  onRetry,
+}) => (
+  <Box
+    className={styles.routeLoadingOverlay}
+    aria-live="assertive"
+    role="alert"
+  >
+    <Box className={styles.routeLoadingCard}>
+      <Alert severity="error" sx={{ width: "100%" }}>
+        Orchestrator loading did not finish.
+      </Alert>
+      <Typography
+        variant="body2"
+        className={styles.routeLoadingDescription}
+      >
+        The resource catalog did not respond in time. Retry the local request
+        to continue.
+      </Typography>
+      <Button variant="contained" onClick={onRetry}>
+        Retry loading
+      </Button>
+    </Box>
+  </Box>
+);
+
 // Template name/cloud/region chips (+ read-only badge) shown on the canvas.
 // Extracted from OrchestratorReactFlow's render; markup/conditions unchanged.
 const TemplateInfoChips: React.FC<{
@@ -788,6 +816,9 @@ const OrchestratorReactFlow: React.FC = () => {
     useState<MaestroDraftPayload | null>(null);
   const [replaceDraftDialogOpen, setReplaceDraftDialogOpen] = useState(false);
   const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const [routeLoadError, setRouteLoadError] = useState<string | null>(null);
+  const [routeLoadAttempt, setRouteLoadAttempt] = useState(0);
+  const [isCanvasHydrated, setIsCanvasHydrated] = useState(false);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
     if (typeof window === "undefined") {
       return false;
@@ -808,17 +839,33 @@ const OrchestratorReactFlow: React.FC = () => {
 
   const fetchCatalogResources = useCallback(
     async (lookups: ResourceBatchLookup[]) => {
-      const result = await dispatch(fetchResourcesByLookups(lookups));
-      if (!fetchResourcesByLookups.fulfilled.match(result)) {
-        return null;
-      }
+      const request = dispatch(fetchResourcesByLookups(lookups));
+      let timedOut = false;
+      const timeoutId = window.setTimeout(() => {
+        timedOut = true;
+        request.abort();
+      }, RESOURCE_BATCH_TIMEOUT_MS);
 
-      return new Map<string, ResourceBatchItem>(
-        result.payload.items.map((item: ResourceBatchItem) => [
-          getResourceLookupKey(item),
-          item,
-        ]),
-      );
+      try {
+        const result = await request;
+        if (!fetchResourcesByLookups.fulfilled.match(result)) {
+          if (timedOut) {
+            console.warn(
+              `Resource catalog batch timed out after ${RESOURCE_BATCH_TIMEOUT_MS}ms; using the single-resource fallback.`,
+            );
+          }
+          return null;
+        }
+
+        return new Map<string, ResourceBatchItem>(
+          result.payload.items.map((item: ResourceBatchItem) => [
+            getResourceLookupKey(item),
+            item,
+          ]),
+        );
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
     },
     [dispatch],
   );
@@ -843,9 +890,20 @@ const OrchestratorReactFlow: React.FC = () => {
     setSearchParams(nextParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
+  const retryRouteLoad = useCallback(() => {
+    if (template_id) {
+      requestedOrchestratorIdsRef.current.delete(template_id);
+      requestedTemplateIdsRef.current.delete(template_id);
+      loadedOrchestratorIdRef.current = null;
+    }
+    setRouteLoadError(null);
+    setRouteLoadAttempt((attempt) => attempt + 1);
+  }, [template_id]);
+
   const beginRouteLoad = useCallback(() => {
     routeLoadCountRef.current += 1;
     if (routeLoadCountRef.current === 1) {
+      setRouteLoadError(null);
       setIsRouteLoading(true);
     }
   }, []);
@@ -862,6 +920,11 @@ const OrchestratorReactFlow: React.FC = () => {
       beginRouteLoad();
       try {
         return await work();
+      } catch (error) {
+        setRouteLoadError(
+          "We could not finish loading this orchestrator. Check the local API and try again.",
+        );
+        throw error;
       } finally {
         endRouteLoad();
       }
@@ -1392,6 +1455,19 @@ const OrchestratorReactFlow: React.FC = () => {
   }, [edges, setNodes]);
 
   useEffect(() => {
+    if (isRouteLoading) {
+      setIsCanvasHydrated(false);
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setIsCanvasHydrated(true);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [isRouteLoading]);
+
+  useEffect(() => {
     if (!template_id || !template_type || searchParams.has("template_type"))
       return;
     else if (template_id === "new") {
@@ -1871,6 +1947,7 @@ const OrchestratorReactFlow: React.FC = () => {
     orchestrators,
     runWithRouteLoading,
     isViewMode,
+    routeLoadAttempt,
     template_id,
     template_type,
   ]);
@@ -2390,7 +2467,7 @@ const OrchestratorReactFlow: React.FC = () => {
 
   const nodesWithHelpers = useMemo(
     () =>
-      nodes.map((n) => {
+      nodes.map((n, nodeIndex) => {
         const baseType = n.type ?? "customNode";
         return {
           ...n,
@@ -2415,13 +2492,17 @@ const OrchestratorReactFlow: React.FC = () => {
             __validationErrors: validationErrorsByNode[n.id],
             __driftStatus: driftByNode[n.id]?.status,
             __driftFindings: driftByNode[n.id] ? [driftByNode[n.id]] : undefined,
+            __formHydrationReady: !isRouteLoading && isCanvasHydrated,
+            __formHydrationDelayMs: nodeIndex * FORM_HYDRATION_STAGGER_MS,
           },
         };
       }),
     [
       nodes,
       getAllNodes,
+      isCanvasHydrated,
       isArchitectureMode,
+      isRouteLoading,
       onLinkFieldChange,
       onValuesChange,
       onCloneNode,
@@ -2456,6 +2537,9 @@ const OrchestratorReactFlow: React.FC = () => {
         position="relative"
       >
         {isRouteLoading && <RouteLoadingOverlay />}
+        {!isRouteLoading && routeLoadError && (
+          <RouteLoadErrorOverlay onRetry={retryRouteLoad} />
+        )}
         <ReactFlow
           nodes={nodesWithHelpers}
           edges={edges}

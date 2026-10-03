@@ -19,6 +19,31 @@ export type ResourceBatchItem = {
   data: any;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object";
+
+const parseBatchResponse = (response: unknown): unknown[] => {
+  let payload = response;
+
+  if (typeof payload === "string") {
+    try {
+      payload = JSON.parse(payload) as unknown;
+    } catch {
+      throw new Error("Resource batch response was not valid JSON");
+    }
+  }
+
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (isRecord(payload) && Array.isArray(payload.configs)) {
+    return payload.configs;
+  }
+
+  throw new Error("Resource batch response had an unexpected shape");
+};
+
 export const fetchResourceById = createAsyncThunk(
   "resource/fetchById",
   async (lookup: ResourceLookup) => {
@@ -50,7 +75,7 @@ export const fetchResourceById = createAsyncThunk(
 /** Fetch several provider-aware resource catalog entries in one request. */
 export const fetchResourcesByLookups = createAsyncThunk(
   "resource/fetchBatch",
-  async (lookups: ResourceBatchLookup[]) => {
+  async (lookups: ResourceBatchLookup[], thunkApi) => {
     const normalizedLookups = Array.from(
       new Map(
         lookups
@@ -70,21 +95,24 @@ export const fetchResourcesByLookups = createAsyncThunk(
       return { items: [] as ResourceBatchItem[] };
     }
 
-    const response = await apiService.post("/configs/batch", {
-      lookups: normalizedLookups.map(({ id, cloudProvider }) => ({
-        resourceId: id,
-        ...(cloudProvider ? { cloudProvider } : {}),
-      })),
-    });
-    const configs = Array.isArray(response)
-      ? response
-      : Array.isArray(response?.configs)
-        ? response.configs
-        : [];
+    const response = await apiService.post(
+      "/configs/batch",
+      {
+        lookups: normalizedLookups.map(({ id, cloudProvider }) => ({
+          resourceId: id,
+          ...(cloudProvider ? { cloudProvider } : {}),
+        })),
+      },
+      { signal: thunkApi.signal },
+    );
+    const configs = parseBatchResponse(response);
 
     return {
       items: configs
-        .filter((data: any) => data && typeof data === "object" && data.resourceId)
+        .filter(
+          (data): data is Record<string, any> =>
+            isRecord(data) && Boolean(data.resourceId),
+        )
         .map((data: any) => ({
           id: String(data.resourceId),
           cloudProvider: data.cloudProvider?.toLowerCase(),
