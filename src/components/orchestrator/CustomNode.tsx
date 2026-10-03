@@ -64,6 +64,53 @@ const getDriftBadge = (
   }
 };
 
+type FormHydrationJob = {
+  key: string;
+  run: () => void;
+};
+
+// DynamicForm can be expensive when several saved nodes start expanded. Keep
+// the shell responsive by mounting one form per event-loop turn instead of
+// letting staggered timers mount several forms at the same time.
+const pendingFormHydrationJobs: FormHydrationJob[] = [];
+let formHydrationDrainScheduled = false;
+
+const scheduleFormHydrationDrain = () => {
+  if (formHydrationDrainScheduled) return;
+  formHydrationDrainScheduled = true;
+
+  window.setTimeout(() => {
+    formHydrationDrainScheduled = false;
+    const job = pendingFormHydrationJobs.shift();
+    job?.run();
+
+    if (pendingFormHydrationJobs.length > 0) {
+      scheduleFormHydrationDrain();
+    }
+  }, 0);
+};
+
+const enqueueFormHydration = (
+  job: FormHydrationJob,
+  delayMs: number,
+): (() => void) => {
+  let cancelled = false;
+  const timeoutId = window.setTimeout(() => {
+    if (cancelled) return;
+    pendingFormHydrationJobs.push(job);
+    scheduleFormHydrationDrain();
+  }, Math.max(0, delayMs));
+
+  return () => {
+    cancelled = true;
+    window.clearTimeout(timeoutId);
+    const pendingIndex = pendingFormHydrationJobs.indexOf(job);
+    if (pendingIndex >= 0) {
+      pendingFormHydrationJobs.splice(pendingIndex, 1);
+    }
+  };
+};
+
 const CustomNode: React.FC<OrchestratorNodeProps> = ({
   id,
   data,
@@ -95,23 +142,20 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
       return;
     }
 
-    let frameId: number | null = null;
-    const timeoutId = window.setTimeout(() => {
-      frameId = window.requestAnimationFrame(() => {
-        setIsFormReady(true);
-      });
-    }, data?.__formHydrationDelayMs ?? 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
+    const hydrationJob: FormHydrationJob = {
+      key: id,
+      run: () => setIsFormReady(true),
     };
+
+    return enqueueFormHydration(
+      hydrationJob,
+      data?.__formHydrationDelayMs ?? 0,
+    );
   }, [
     data?.__formHydrationDelayMs,
     data?.__formHydrationReady,
     expanded,
+    id,
     isFormReady,
   ]);
 
