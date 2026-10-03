@@ -870,6 +870,37 @@ const OrchestratorReactFlow: React.FC = () => {
     [dispatch],
   );
 
+  const resolveResourceData = useCallback(
+    async (
+      candidates: ResourceBatchLookup[],
+      batchResources: Map<string, ResourceBatchItem> | null,
+    ) => {
+      if (batchResources) {
+        for (const candidate of candidates) {
+          const item = batchResources.get(getResourceLookupKey(candidate));
+          if (item?.data?.resourceNode?.data) {
+            return item.data;
+          }
+        }
+      }
+
+      // A 200 batch can be partial while a catalog is being migrated. Retry
+      // only the missing node instead of treating the whole batch as complete.
+      for (const candidate of candidates) {
+        const result = await dispatch(fetchResourceById(candidate));
+        if (
+          fetchResourceById.fulfilled.match(result) &&
+          result.payload.data?.resourceNode?.data
+        ) {
+          return result.payload.data;
+        }
+      }
+
+      return null;
+    },
+    [dispatch],
+  );
+
   useGuidedTour(
     "orchestrator",
     isCustomTemplateFlow && Boolean(templateInfo.cloud) && !initOpen,
@@ -954,28 +985,9 @@ const OrchestratorReactFlow: React.FC = () => {
         );
         const batchResources = await fetchCatalogResources(batchLookups);
         const resourceDataByNode = await Promise.all(
-          candidateLists.map(async (candidates) => {
-            if (batchResources) {
-              for (const candidate of candidates) {
-                const item = batchResources.get(getResourceLookupKey(candidate));
-                if (item?.data?.resourceNode?.data) return item.data;
-              }
-              return null;
-            }
-
-            // Keep the existing per-resource path as a resilience fallback
-            // while older deployments are being rolled forward.
-            for (const candidate of candidates) {
-              const result = await dispatch(fetchResourceById(candidate));
-              if (
-                fetchResourceById.fulfilled.match(result) &&
-                result.payload.data?.resourceNode?.data
-              ) {
-                return result.payload.data;
-              }
-            }
-            return null;
-          }),
+          candidateLists.map((candidates) =>
+            resolveResourceData(candidates, batchResources),
+          ),
         );
         const resourceNodes: Node[] = [];
 
@@ -1102,6 +1114,7 @@ const OrchestratorReactFlow: React.FC = () => {
       dispatch,
       fetchCatalogResources,
       getLayoutElements,
+      resolveResourceData,
       runWithRouteLoading,
       setEdges,
       setNodes,
@@ -1498,19 +1511,11 @@ const OrchestratorReactFlow: React.FC = () => {
 
           void (async () => {
             const batchResources = await fetchCatalogResources(lookups);
-            const results = batchResources
-              ? lookups.map(
-                  (lookup) =>
-                    batchResources.get(getResourceLookupKey(lookup))?.data ?? null,
-                )
-              : await Promise.all(
-                  lookups.map(async (lookup) => {
-                    const result = await dispatch(fetchResourceById(lookup));
-                    return fetchResourceById.fulfilled.match(result)
-                      ? result.payload.data
-                      : null;
-                  }),
-                );
+            const results = await Promise.all(
+              lookups.map((lookup) =>
+                resolveResourceData([lookup], batchResources),
+              ),
+            );
             const resourceNodes: Node[] = [];
 
             for (let i = 0; i < results.length; i++) {
@@ -1665,19 +1670,11 @@ const OrchestratorReactFlow: React.FC = () => {
             cloudProvider: templateInfo.cloud,
           }));
           const batchResources = await fetchCatalogResources(lookups);
-          const resourceData = batchResources
-            ? lookups.map(
-                (lookup) =>
-                  batchResources.get(getResourceLookupKey(lookup))?.data ?? null,
-              )
-            : await Promise.all(
-                lookups.map(async (lookup) => {
-                  const result = await dispatch(fetchResourceById(lookup));
-                  return fetchResourceById.fulfilled.match(result)
-                    ? result.payload.data
-                    : null;
-                }),
-              );
+          const resourceData = await Promise.all(
+            lookups.map((lookup) =>
+              resolveResourceData([lookup], batchResources),
+            ),
+          );
 
           for (let i = 0; i < resourceData.length; i += 1) {
             const resourceDataForNode = resourceData[i];
@@ -1759,6 +1756,7 @@ const OrchestratorReactFlow: React.FC = () => {
     template_type,
     orchestrators,
     fetchCatalogResources,
+    resolveResourceData,
     searchParams,
     setNodes,
     setEdges,

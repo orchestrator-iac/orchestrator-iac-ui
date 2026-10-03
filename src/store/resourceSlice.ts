@@ -111,13 +111,30 @@ export const fetchResourcesByLookups = createAsyncThunk(
       items: configs
         .filter(
           (data): data is Record<string, any> =>
-            isRecord(data) && Boolean(data.resourceId),
+            isRecord(data) && Boolean(data.resourceId ?? data.resource_id),
         )
-        .map((data: any) => ({
-          id: String(data.resourceId),
-          cloudProvider: data.cloudProvider?.toLowerCase(),
-          data,
-        })),
+        .map((data: any) => {
+          const id = String(data.resourceId ?? data.resource_id).trim();
+          const responseProvider = String(
+            data.cloudProvider ?? data.cloud_provider ?? "",
+          )
+            .trim()
+            .toLowerCase();
+          const matchingLookup = normalizedLookups.find(
+            (lookup) =>
+              lookup.id === id &&
+              (!responseProvider || lookup.cloudProvider === responseProvider),
+          );
+
+          return {
+            id,
+            // Keep the request's provider when an older catalog document omits
+            // it. Without this fallback the batch is successful, but the UI
+            // cannot match the response back to a provider-aware lookup.
+            cloudProvider: responseProvider || matchingLookup?.cloudProvider,
+            data,
+          };
+        }),
     };
   },
 );
