@@ -88,7 +88,7 @@ const elk = new ELK();
 const RESOURCE_BATCH_TIMEOUT_MS = 8_000;
 const RESOURCE_FALLBACK_TIMEOUT_MS = 2_000;
 const FORM_HYDRATION_STAGGER_MS = 120;
-const INITIAL_FORM_HYDRATION_COUNT = 1;
+const INITIAL_FORM_HYDRATION_COUNT = 0;
 
 // Canvas node ids are always `${catalogId}-${uuidv4()}`. Older catalog ids are
 // plain Mongo ObjectIds (no hyphens), but newer catalog entries (all current
@@ -889,14 +889,21 @@ const OrchestratorReactFlow: React.FC = () => {
       // A 200 batch can be partial while a catalog is being migrated. Retry
       // only the missing node, but do not let a slow fallback hold the entire
       // canvas behind its loading overlay.
+      const fallbackDeadline =
+        Date.now() + RESOURCE_FALLBACK_TIMEOUT_MS;
       for (const candidate of candidates) {
+        const remainingMs = fallbackDeadline - Date.now();
+        if (remainingMs <= 0) {
+          break;
+        }
+
         const request = dispatch(fetchResourceById(candidate));
         let timeoutId: number | undefined;
         const timeout = new Promise<null>((resolve) => {
           timeoutId = window.setTimeout(() => {
             request.abort();
             resolve(null);
-          }, RESOURCE_FALLBACK_TIMEOUT_MS);
+          }, remainingMs);
         });
 
         let result: Awaited<typeof request> | null = null;
