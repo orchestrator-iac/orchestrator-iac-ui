@@ -1934,63 +1934,57 @@ const OrchestratorReactFlow: React.FC = () => {
       return;
     }
 
-    const orchestratorData = orchestrators.find(
-      (item) => item._id === template_id,
-    );
-    if (!orchestratorData) {
-      if (requestedOrchestratorIdsRef.current.has(template_id)) {
-        return;
-      }
-
-      requestedOrchestratorIdsRef.current.add(template_id);
-      void runWithRouteLoading(async () =>
-        dispatch(fetchOrchestratorById(template_id)).unwrap(),
-      ).catch((error) => {
-        requestedOrchestratorIdsRef.current.delete(template_id);
-        console.error("Failed to fetch orchestrator by id:", error);
-      });
-      return;
-    }
-
-    requestedOrchestratorIdsRef.current.delete(template_id);
-
     if (loadedOrchestratorIdRef.current === template_id) {
       return;
     }
-    loadedOrchestratorIdRef.current = template_id;
 
-    const appliedTemplateInfo = normalizeTemplateInfo(
-      orchestratorData.templateInfo,
-    );
-    setCurrentOrchestratorId(template_id);
-    setMaestroReviewDraft(null);
-    setIsMaestroReviewDraftBannerDismissed(false);
-    setPendingMaestroDraft(null);
-    setReplaceDraftDialogOpen(false);
+    // Do not wait for the paginated list to contain this item. The list route
+    // can be slower than the detail route and may only return summary nodes;
+    // either condition leaves the canvas waiting even though the batch catalog
+    // request has already completed. Load the route's complete graph directly
+    // and keep the detail fetch plus catalog hydration in one bounded operation.
+    if (requestedOrchestratorIdsRef.current.has(template_id)) {
+      return;
+    }
 
-    loadSerializedGraph(
-      orchestratorData.nodes as Array<Record<string, any>>,
-      orchestratorData.edges as Array<Record<string, any>>,
-      appliedTemplateInfo,
-    )
-      .then(() => {
-        setBaselineSnapshot(
-          serializePersistedSnapshot({
-            templateInfo: orchestratorData.templateInfo,
-            nodes: orchestratorData.nodes as Array<Record<string, any>>,
-            edges: orchestratorData.edges as Array<Record<string, any>>,
-          }),
-        );
-      })
-      .catch((error) => {
-        console.error("Failed to load orchestrator graph:", error);
-      });
+    requestedOrchestratorIdsRef.current.add(template_id);
+    void runWithRouteLoading(async () => {
+      const orchestratorData = await dispatch(
+        fetchOrchestratorById(template_id),
+      ).unwrap();
+      loadedOrchestratorIdRef.current = template_id;
+
+      const appliedTemplateInfo = normalizeTemplateInfo(
+        orchestratorData.templateInfo,
+      );
+      setCurrentOrchestratorId(template_id);
+      setPolicyScan(orchestratorData.policyScan || DEFAULT_POLICY_SCAN);
+      setMaestroReviewDraft(null);
+      setIsMaestroReviewDraftBannerDismissed(false);
+      setPendingMaestroDraft(null);
+      setReplaceDraftDialogOpen(false);
+
+      await loadSerializedGraph(
+        orchestratorData.nodes as Array<Record<string, any>>,
+        orchestratorData.edges as Array<Record<string, any>>,
+        appliedTemplateInfo,
+      );
+      setBaselineSnapshot(
+        serializePersistedSnapshot({
+          templateInfo: orchestratorData.templateInfo,
+          nodes: orchestratorData.nodes as Array<Record<string, any>>,
+          edges: orchestratorData.edges as Array<Record<string, any>>,
+        }),
+      );
+    }).catch((error) => {
+      loadedOrchestratorIdRef.current = null;
+      requestedOrchestratorIdsRef.current.delete(template_id);
+      console.error("Failed to load orchestrator by id:", error);
+    });
   }, [
     dispatch,
-    fetchCatalogResources,
     loadSerializedGraph,
     maestroDraftToken,
-    orchestrators,
     runWithRouteLoading,
     isViewMode,
     routeLoadAttempt,
