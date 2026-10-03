@@ -27,6 +27,7 @@ export type OrchestratorNodeData = NodeData & {
   __driftStatus?: DriftStatus;
   __driftFindings?: DriftFinding[];
   __formHydrationReady?: boolean;
+  __formHydrationEnabled?: boolean;
   __formHydrationDelayMs?: number;
 };
 
@@ -55,6 +56,7 @@ const sameRenderableData = (
     previous?.__driftStatus === next?.__driftStatus &&
     previous?.__driftFindings === next?.__driftFindings &&
     previous?.__formHydrationReady === next?.__formHydrationReady &&
+    previous?.__formHydrationEnabled === next?.__formHydrationEnabled &&
     previous?.__formHydrationDelayMs === next?.__formHydrationDelayMs &&
     (previous as any)?.friendlyId === (next as any)?.friendlyId);
 
