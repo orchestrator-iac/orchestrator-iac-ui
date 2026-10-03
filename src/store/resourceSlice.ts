@@ -75,7 +75,7 @@ export const fetchResourceById = createAsyncThunk(
 /** Fetch several provider-aware resource catalog entries in one request. */
 export const fetchResourcesByLookups = createAsyncThunk(
   "resource/fetchBatch",
-  async (lookups: ResourceBatchLookup[]) => {
+  async (lookups: ResourceBatchLookup[], thunkApi) => {
     const normalizedLookups = Array.from(
       new Map(
         lookups
@@ -95,12 +95,16 @@ export const fetchResourcesByLookups = createAsyncThunk(
       return { items: [] as ResourceBatchItem[] };
     }
 
-    const response = await apiService.post("/configs/batch", {
-      lookups: normalizedLookups.map(({ id, cloudProvider }) => ({
-        resourceId: id,
-        ...(cloudProvider ? { cloudProvider } : {}),
-      })),
-    });
+    const response = await apiService.post(
+      "/configs/batch",
+      {
+        lookups: normalizedLookups.map(({ id, cloudProvider }) => ({
+          resourceId: id,
+          ...(cloudProvider ? { cloudProvider } : {}),
+        })),
+      },
+      { signal: thunkApi.signal },
+    );
     const configs = parseBatchResponse(response);
 
     return {

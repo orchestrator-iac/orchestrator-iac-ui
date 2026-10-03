@@ -91,16 +91,29 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   }, [data?.isExpanded]);
 
   React.useEffect(() => {
-    if (!expanded || isFormReady) {
+    if (!expanded || isFormReady || data?.__formHydrationReady === false) {
       return;
     }
 
-    const frameId = window.requestAnimationFrame(() => {
-      setIsFormReady(true);
-    });
+    let frameId: number | null = null;
+    const timeoutId = window.setTimeout(() => {
+      frameId = window.requestAnimationFrame(() => {
+        setIsFormReady(true);
+      });
+    }, data?.__formHydrationDelayMs ?? 0);
 
-    return () => window.cancelAnimationFrame(frameId);
-  }, [expanded, isFormReady]);
+    return () => {
+      window.clearTimeout(timeoutId);
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [
+    data?.__formHydrationDelayMs,
+    data?.__formHydrationReady,
+    expanded,
+    isFormReady,
+  ]);
 
   const handleAccordionChange = (
     _event: React.SyntheticEvent,
@@ -165,6 +178,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
           sx={{
             minHeight: 64,
             px: 2,
+            pr: 6,
             py: 0.375,
             borderBottom: `1px solid ${alpha(theme.palette.divider, 0.75)}`,
             alignItems: "center",
@@ -305,97 +319,100 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
               />
             ))}
 
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
-              flexShrink: 0,
-              ml: 0.5,
-            }}
-          >
-            {friendlyId && (
-              <Tooltip title={friendlyId} arrow placement="top">
-                <Chip
-                  size="small"
-                  label={friendlyId}
-                  onMouseDown={(event) => event.stopPropagation()}
-                  onClick={(event) => event.stopPropagation()}
-                  sx={{
-                    color: theme.palette.textVariants.text4,
-                    maxWidth: "96px",
-                    backgroundColor: alpha(theme.palette.text.primary, 0.08),
-                    border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
-                    "& .MuiChip-label": {
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    },
-                  }}
-                  variant="filled"
-                />
-              </Tooltip>
-            )}
-
-            {driftBadge && (
+        </AccordionSummary>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            right: 4,
+            zIndex: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.75,
+            transform: "translateY(-50%)",
+          }}
+        >
+          {friendlyId && (
+            <Tooltip title={friendlyId} arrow placement="top">
               <Chip
                 size="small"
-                label={driftBadge.label}
-                color={driftBadge.color}
+                label={friendlyId}
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
-                sx={{ height: 22, fontSize: "0.68rem", fontWeight: 700 }}
+                sx={{
+                  color: theme.palette.textVariants.text4,
+                  maxWidth: "96px",
+                  backgroundColor: alpha(theme.palette.text.primary, 0.08),
+                  border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                  "& .MuiChip-label": {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  },
+                }}
+                variant="filled"
               />
-            )}
+            </Tooltip>
+          )}
 
-            <IconButton
+          {driftBadge && (
+            <Chip
               size="small"
-              aria-label="Node actions"
+              label={driftBadge.label}
+              color={driftBadge.color}
               onMouseDown={(event) => event.stopPropagation()}
-              onClick={(event: React.MouseEvent<HTMLElement>) => {
-                event.stopPropagation();
-                handleMenuOpen(event);
-              }}
-              sx={{
-                width: 32,
-                height: 32,
-                color: theme.palette.textVariants.text3,
-                "&:hover": {
-                  color: theme.palette.text.primary,
-                  backgroundColor: alpha(theme.palette.action.active, 0.1),
-                },
-                "&:focus-visible": {
-                  outline: `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: 2,
-                },
-              }}
-            >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={open}
-              onClose={(e) => {
-                (e as any)?.stopPropagation?.();
-                handleMenuClose();
-              }}
-              onClick={(e) => (e as any).stopPropagation()}
-              elevation={3}
-            >
-              <MenuItem onClick={handleDuplicate}>
-                <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
-                Duplicate
-              </MenuItem>
-              <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
-                <DeleteOutlineIcon
-                  fontSize="small"
-                  style={{ marginRight: 8 }}
-                />
-                Delete
-              </MenuItem>
-            </Menu>
-          </Box>
-        </AccordionSummary>
+              onClick={(event) => event.stopPropagation()}
+              sx={{ height: 22, fontSize: "0.68rem", fontWeight: 700 }}
+            />
+          )}
+
+          <IconButton
+            size="small"
+            aria-label="Node actions"
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event: React.MouseEvent<HTMLElement>) => {
+              event.stopPropagation();
+              handleMenuOpen(event);
+            }}
+            sx={{
+              width: 32,
+              height: 32,
+              color: theme.palette.textVariants.text3,
+              "&:hover": {
+                color: theme.palette.text.primary,
+                backgroundColor: alpha(theme.palette.action.active, 0.1),
+              },
+              "&:focus-visible": {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: 2,
+              },
+            }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
+            onClose={(e) => {
+              (e as any)?.stopPropagation?.();
+              handleMenuClose();
+            }}
+            onClick={(e) => (e as any).stopPropagation()}
+            elevation={3}
+          >
+            <MenuItem onClick={handleDuplicate}>
+              <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
+              Duplicate
+            </MenuItem>
+            <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+              <DeleteOutlineIcon
+                fontSize="small"
+                style={{ marginRight: 8 }}
+              />
+              Delete
+            </MenuItem>
+          </Menu>
+        </Box>
       </Box>
 
       <AccordionDetails

@@ -26,6 +26,8 @@ export type OrchestratorNodeData = NodeData & {
   __validationErrors?: Record<string, string>;
   __driftStatus?: DriftStatus;
   __driftFindings?: DriftFinding[];
+  __formHydrationReady?: boolean;
+  __formHydrationDelayMs?: number;
 };
 
 export type OrchestratorNodeProps = NodeProps & {
@@ -52,6 +54,8 @@ const sameRenderableData = (
     previous?.__validationErrors === next?.__validationErrors &&
     previous?.__driftStatus === next?.__driftStatus &&
     previous?.__driftFindings === next?.__driftFindings &&
+    previous?.__formHydrationReady === next?.__formHydrationReady &&
+    previous?.__formHydrationDelayMs === next?.__formHydrationDelayMs &&
     (previous as any)?.friendlyId === (next as any)?.friendlyId);
 
 export const areOrchestratorNodePropsEqual = (
