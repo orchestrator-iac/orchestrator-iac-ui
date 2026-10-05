@@ -6,7 +6,6 @@ import {
   Tooltip,
   useTheme,
   Box,
-  Typography,
   Chip,
   IconButton,
   alpha,
@@ -18,15 +17,13 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import parse from "html-react-parser";
 import OverflowTooltipText from "../shared/OverflowTooltipText";
 import ResourceIconView from "../shared/ResourceIconView";
 import DynamicForm from "./DynamicForm";
 import { getFriendlyId } from "./utils/nodePresentation";
-import {
-  areOrchestratorNodePropsEqual,
-  OrchestratorNodeProps,
-} from "./types";
+import { areOrchestratorNodePropsEqual, OrchestratorNodeProps } from "./types";
 import { DriftStatus } from "../../types/orchestrator";
 import {
   memoizeOrchestratorComponent,
@@ -36,7 +33,10 @@ import {
 const CUSTOM_NODE_ICON_SIZE = 56;
 
 /** Border treatment for the drift status attached by Tier 1 state reconciliation. */
-const getDriftBorder = (status: DriftStatus | undefined, fallback: string): string => {
+const getDriftBorder = (
+  status: DriftStatus | undefined,
+  fallback: string,
+): string => {
   switch (status) {
     case "drifted":
       return "0 0 0 2px #ed6c02";
@@ -95,11 +95,14 @@ const enqueueFormHydration = (
   delayMs: number,
 ): (() => void) => {
   let cancelled = false;
-  const timeoutId = window.setTimeout(() => {
-    if (cancelled) return;
-    pendingFormHydrationJobs.push(job);
-    scheduleFormHydrationDrain();
-  }, Math.max(0, delayMs));
+  const timeoutId = window.setTimeout(
+    () => {
+      if (cancelled) return;
+      pendingFormHydrationJobs.push(job);
+      scheduleFormHydrationDrain();
+    },
+    Math.max(0, delayMs),
+  );
 
   return () => {
     cancelled = true;
@@ -125,7 +128,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
 
   // Controlled accordion state - defaults to expanded, but can be saved/restored
   const [expanded, setExpanded] = React.useState<boolean>(
-    data?.__formHydrationEnabled === false ? false : data?.isExpanded ?? true,
+    data?.__formHydrationEnabled === false ? false : (data?.isExpanded ?? true),
   );
   // Let the node shell paint before mounting the expensive dynamic form. This
   // keeps route hydration responsive when several saved nodes start expanded.
@@ -203,7 +206,10 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
   );
 
   const driftStatus = data?.__driftStatus;
-  const driftBorder = getDriftBorder(driftStatus, theme.palette.background.paper);
+  const driftBorder = getDriftBorder(
+    driftStatus,
+    theme.palette.background.paper,
+  );
   const driftBadge = getDriftBadge(driftStatus);
 
   const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) =>
@@ -239,22 +245,23 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
           expandIcon={<ExpandMoreIcon />}
           sx={{
             minHeight: 64,
-            px: 2,
-            pr: 6,
+            px: 1.5,
             py: 0.375,
             borderBottom: `1px solid ${alpha(theme.palette.divider, 0.75)}`,
             alignItems: "center",
-            gap: 1.5,
+            gap: 1,
             "& .MuiAccordionSummary-content": {
               alignItems: "center",
-              gap: 1.5,
+              gap: 1.25,
               margin: 0,
               minWidth: 0,
+              flex: "1 1 auto",
             },
             "&.Mui-expanded": {
               minHeight: 64,
             },
             "& .MuiAccordionSummary-expandIconWrapper": {
+              flexShrink: 0,
               ml: 0.25,
               color: theme.palette.textVariants.text3,
             },
@@ -265,7 +272,6 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
               sx={{
                 width: CUSTOM_NODE_ICON_SIZE,
                 height: CUSTOM_NODE_ICON_SIZE,
-                mr: 1.5,
                 flexShrink: 0,
                 display: "inline-flex",
                 alignItems: "center",
@@ -290,7 +296,7 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
             </Box>
           )}
 
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>
             <Box
               sx={{
                 fontSize: "1.08rem",
@@ -334,17 +340,23 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
                     },
                   }}
                 >
-                  <Typography
-                    component="strong"
+                  <IconButton
+                    size="small"
+                    aria-label="Show node information"
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onClick={(event) => event.stopPropagation()}
                     sx={{
-                      fontSize: "0.75rem",
-                      fontWeight: 800,
+                      width: 24,
+                      height: 24,
                       color: "primary.main",
-                      cursor: "pointer",
+                      flexShrink: 0,
+                      "&:hover": {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      },
                     }}
                   >
-                    info
-                  </Typography>
+                    <InfoOutlinedIcon sx={{ fontSize: 17 }} />
+                  </IconButton>
                 </Tooltip>
               )}
             </Box>
@@ -381,100 +393,111 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
               />
             ))}
 
-        </AccordionSummary>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            right: 4,
-            zIndex: 2,
-            display: "flex",
-            alignItems: "center",
-            gap: 0.75,
-            transform: "translateY(-50%)",
-          }}
-        >
-          {friendlyId && (
-            <Tooltip title={friendlyId} arrow placement="top">
-              <Chip
-                size="small"
-                label={friendlyId}
-                onMouseDown={(event) => event.stopPropagation()}
-                onClick={(event) => event.stopPropagation()}
-                sx={{
-                  color: theme.palette.textVariants.text4,
-                  maxWidth: "96px",
-                  backgroundColor: alpha(theme.palette.text.primary, 0.08),
-                  border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
-                  "& .MuiChip-label": {
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  },
-                }}
-                variant="filled"
-              />
-            </Tooltip>
-          )}
-
-          {driftBadge && (
-            <Chip
-              size="small"
-              label={driftBadge.label}
-              color={driftBadge.color}
-              onMouseDown={(event) => event.stopPropagation()}
-              onClick={(event) => event.stopPropagation()}
-              sx={{ height: 22, fontSize: "0.68rem", fontWeight: 700 }}
-            />
-          )}
-
-          <IconButton
-            size="small"
-            aria-label="Node actions"
-            onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event: React.MouseEvent<HTMLElement>) => {
-              event.stopPropagation();
-              handleMenuOpen(event);
-            }}
+          <Box
             sx={{
-              width: 32,
-              height: 32,
-              color: theme.palette.textVariants.text3,
-              "&:hover": {
-                color: theme.palette.text.primary,
-                backgroundColor: alpha(theme.palette.action.active, 0.1),
-              },
-              "&:focus-visible": {
-                outline: `2px solid ${theme.palette.primary.main}`,
-                outlineOffset: 2,
-              },
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              flexShrink: 0,
+              ml: 0.5,
             }}
           >
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={(e) => {
-              (e as any)?.stopPropagation?.();
-              handleMenuClose();
-            }}
-            onClick={(e) => (e as any).stopPropagation()}
-            elevation={3}
-          >
-            <MenuItem onClick={handleDuplicate}>
-              <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
-              Duplicate
-            </MenuItem>
-            <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
-              <DeleteOutlineIcon
-                fontSize="small"
-                style={{ marginRight: 8 }}
-              />
-              Delete
-            </MenuItem>
-          </Menu>
-        </Box>
+            {friendlyId && (
+              <Tooltip title={friendlyId} arrow placement="top">
+                <Chip
+                  size="small"
+                  label={friendlyId}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                  sx={{
+                    color: theme.palette.textVariants.text4,
+                    maxWidth: "96px",
+                    height: 24,
+                    backgroundColor: alpha(theme.palette.text.primary, 0.08),
+                    border: `1px solid ${alpha(theme.palette.divider, 0.7)}`,
+                    "& .MuiChip-label": {
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      px: 1,
+                    },
+                  }}
+                  variant="filled"
+                />
+              </Tooltip>
+            )}
+
+            {driftBadge && (
+              <Tooltip title={driftBadge.label} arrow placement="top">
+                <Chip
+                  size="small"
+                  label={driftBadge.label}
+                  color={driftBadge.color}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                  sx={{
+                    maxWidth: 104,
+                    height: 24,
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    "& .MuiChip-label": {
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    },
+                  }}
+                />
+              </Tooltip>
+            )}
+
+            <IconButton
+              size="small"
+              aria-label="Node actions"
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event: React.MouseEvent<HTMLElement>) => {
+                event.stopPropagation();
+                handleMenuOpen(event);
+              }}
+              sx={{
+                width: 32,
+                height: 32,
+                color: theme.palette.textVariants.text3,
+                "&:hover": {
+                  color: theme.palette.text.primary,
+                  backgroundColor: alpha(theme.palette.action.active, 0.1),
+                },
+                "&:focus-visible": {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
+              }}
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={(e) => {
+                (e as any)?.stopPropagation?.();
+                handleMenuClose();
+              }}
+              onClick={(e) => (e as any).stopPropagation()}
+              elevation={3}
+            >
+              <MenuItem onClick={handleDuplicate}>
+                <ContentCopyIcon fontSize="small" style={{ marginRight: 8 }} />
+                Duplicate
+              </MenuItem>
+              <MenuItem onClick={handleDelete} sx={{ color: "error.main" }}>
+                <DeleteOutlineIcon
+                  fontSize="small"
+                  style={{ marginRight: 8 }}
+                />
+                Delete
+              </MenuItem>
+            </Menu>
+          </Box>
+        </AccordionSummary>
       </Box>
 
       <AccordionDetails
