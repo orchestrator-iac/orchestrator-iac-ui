@@ -311,7 +311,8 @@ const CustomNode: React.FC<OrchestratorNodeProps> = ({
               <Box
                 sx={{
                   minWidth: 0,
-                  flex: "1 1 auto",
+                  maxWidth: "100%",
+                  flex: "0 1 auto",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
