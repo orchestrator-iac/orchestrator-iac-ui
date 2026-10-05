@@ -80,12 +80,11 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
     event.dataTransfer.effectAllowed = "move";
   };
 
-  // Fetch once when idle. AbortController cancels the inflight request on
-  // StrictMode's double-invoke so we don't leave a stale request running.
+  // Redux owns these shared loads. Aborting in a status-dependent cleanup
+  // would cancel the request as soon as pending changes idle to loading.
   useEffect(() => {
     if (resourcesStatus !== "idle") return;
-    const promise = dispatch(fetchResources());
-    return () => promise.abort();
+    void dispatch(fetchResources());
   }, [dispatch, resourcesStatus]);
 
   // Best-effort popularity data, fetched independently — a failure or
@@ -93,14 +92,12 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen, cloudProvider }) => {
   // just leaves every resource at usage count 0 (original-order fallback).
   useEffect(() => {
     if (analyticsStatus === "idle") {
-      const promise = dispatch(fetchTopResources());
-      return () => promise.abort();
+      void dispatch(fetchTopResources());
     }
 
     if (analyticsStatus === "failed" && !hasRetriedAnalyticsLoad.current) {
       hasRetriedAnalyticsLoad.current = true;
-      const promise = dispatch(fetchTopResources());
-      return () => promise.abort();
+      void dispatch(fetchTopResources());
     }
   }, [analyticsStatus, dispatch]);
 

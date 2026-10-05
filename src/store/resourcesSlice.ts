@@ -10,6 +10,12 @@ export const fetchResources = createAsyncThunk(
     );
     return response ?? [];
   },
+  {
+    // Synchronous pending dispatch makes this guard effective even when
+    // StrictMode or another component dispatches again before a render.
+    condition: (_, { getState }) =>
+      (getState() as { resources: ResourcesState }).resources.status !== "loading",
+  },
 );
 
 type Status = "idle" | "loading" | "succeeded" | "failed";
@@ -41,7 +47,10 @@ const resourcesSlice = createSlice({
         // Ignore cancellations from AbortController (e.g. StrictMode's
         // mount/cleanup/remount, or component unmount) — only a real
         // failure should flip status to "failed".
-        if (action.meta.aborted) return;
+        if (action.meta.aborted) {
+          state.status = "idle";
+          return;
+        }
         state.status = "failed";
       });
   },

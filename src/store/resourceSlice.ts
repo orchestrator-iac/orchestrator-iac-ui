@@ -11,10 +11,12 @@ export type ResourceLookup =
 export type ResourceBatchLookup = {
   id: string;
   cloudProvider?: string;
+  configId?: string;
 };
 
 export type ResourceBatchItem = {
   id: string;
+  configId?: string;
   cloudProvider?: string;
   data: any;
 };
@@ -68,7 +70,13 @@ export const fetchResourceById = createAsyncThunk(
     if (!data || typeof data !== "object") {
       throw new Error(`Resource catalog entry not found for ${id}`);
     }
-    return { id, data };
+    const configId = String(
+      (data as Record<string, unknown>).configId ??
+        (data as Record<string, unknown>).id ??
+        (data as Record<string, unknown>)._id ??
+        "",
+    ).trim();
+    return { id, configId: configId || undefined, data };
   },
 );
 
@@ -79,9 +87,10 @@ export const fetchResourcesByLookups = createAsyncThunk(
     const normalizedLookups = Array.from(
       new Map(
         lookups
-          .map(({ id, cloudProvider }) => ({
+          .map(({ id, cloudProvider, configId }) => ({
             id: String(id).trim(),
             cloudProvider: cloudProvider?.toLowerCase(),
+            configId: configId ? String(configId).trim() : undefined,
           }))
           .filter(({ id }) => Boolean(id))
           .map((lookup) => [
@@ -95,16 +104,29 @@ export const fetchResourcesByLookups = createAsyncThunk(
       return { items: [] as ResourceBatchItem[] };
     }
 
-    const response = await apiService.post(
-      "/configs/batch",
-      {
-        lookups: normalizedLookups.map(({ id, cloudProvider }) => ({
-          resourceId: id,
-          ...(cloudProvider ? { cloudProvider } : {}),
-        })),
-      },
-      { signal: thunkApi.signal },
-    );
+    let response: unknown;
+    try {
+      response = await apiService.post(
+        "/configs/batch",
+        {
+          lookups: normalizedLookups.map(({ id, cloudProvider, configId }) => ({
+            resourceId: id,
+            ...(cloudProvider ? { cloudProvider } : {}),
+            ...(configId ? { configId } : {}),
+          })),
+        },
+        { signal: thunkApi.signal },
+      );
+      console.debug("Resource config batch resolved", {
+        lookupCount: normalizedLookups.length,
+      });
+    } catch (error) {
+      console.error("Resource config batch failed", {
+        lookupCount: normalizedLookups.length,
+        error,
+      });
+      throw error;
+    }
     const configs = parseBatchResponse(response);
 
     return {
@@ -115,6 +137,9 @@ export const fetchResourcesByLookups = createAsyncThunk(
         )
         .map((data: any) => {
           const id = String(data.resourceId ?? data.resource_id).trim();
+          const configId = String(
+            data.configId ?? data.id ?? data._id ?? "",
+          ).trim();
           const responseProvider = String(
             data.cloudProvider ?? data.cloud_provider ?? "",
           )
@@ -128,6 +153,7 @@ export const fetchResourcesByLookups = createAsyncThunk(
 
           return {
             id,
+            configId: configId || undefined,
             // Keep the request's provider when an older catalog document omits
             // it. Without this fallback the batch is successful, but the UI
             // cannot match the response back to a provider-aware lookup.

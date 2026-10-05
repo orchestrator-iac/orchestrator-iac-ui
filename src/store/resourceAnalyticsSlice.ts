@@ -16,6 +16,11 @@ export const fetchTopResources = createAsyncThunk(
       return rejectWithValue([]);
     }
   },
+  {
+    condition: (_, { getState }) =>
+      (getState() as { resourceAnalytics: ResourceAnalyticsState })
+        .resourceAnalytics.status !== "loading",
+  },
 );
 
 type Status = "idle" | "loading" | "succeeded" | "failed";

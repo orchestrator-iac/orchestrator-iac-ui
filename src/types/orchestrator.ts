@@ -6,6 +6,7 @@
 export interface OrchestratorNode {
   id: string; // Unique node instance ID
   resourceId: string; // Resource template ID (e.g., "aws-vpc", "aws-subnet")
+  configId?: string; // Stable catalog config document ID used for batch hydration
   position: {
     x: number;
     y: number;
