@@ -134,6 +134,8 @@ export interface SaveOrchestratorResponse {
   userId: string;
   createdAt?: string;
   updatedAt?: string;
+  nodeCount?: number;
+  edgeCount?: number;
   downloadIaCUrl?: string;
   iacValidationIssues?: IaCValidationIssue[];
   policyValidationIssues?: IaCValidationIssue[];
@@ -146,8 +148,6 @@ export interface SaveOrchestratorResponse {
 export interface OrchestratorListItem {
   _id: string;
   templateInfo: TemplateInfo;
-  nodes: OrchestratorNode[];
-  edges: OrchestratorEdge[];
   nodeCount: number;
   edgeCount: number;
   previewImageUrl?: string; // URL or data URL of the preview image

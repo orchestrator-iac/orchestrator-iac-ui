@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { orchestratorService } from "../services/orchestratorService";
-import { OrchestratorListItem } from "../types/orchestrator";
+import {
+  OrchestratorListItem,
+  SaveOrchestratorResponse,
+} from "../types/orchestrator";
 
 export const fetchOrchestrators = createAsyncThunk(
   "orchestrators/fetchOrchestrators",
@@ -14,10 +17,8 @@ const mapOrchestratorToListItem = (item: any): OrchestratorListItem => ({
   _id: item._id,
   templateInfo: item.templateInfo,
   templateId: item.templateId || undefined,
-  nodes: item.nodes || [],
-  edges: item.edges || [],
-  nodeCount: item.nodeCount ?? item.nodes?.length ?? 0,
-  edgeCount: item.edgeCount ?? item.edges?.length ?? 0,
+  nodeCount: Number(item.nodeCount ?? 0),
+  edgeCount: Number(item.edgeCount ?? 0),
   previewImageUrl: item.previewImageUrl,
   createdAt: item.metadata?.createdAt ?? item.createdAt ?? new Date().toISOString(),
   updatedAt: item.metadata?.updatedAt ?? item.updatedAt ?? new Date().toISOString(),
@@ -25,11 +26,13 @@ const mapOrchestratorToListItem = (item: any): OrchestratorListItem => ({
   policyScan: item.policyScan,
 });
 
-export const fetchOrchestratorById = createAsyncThunk(
+export const fetchOrchestratorById = createAsyncThunk<
+  SaveOrchestratorResponse,
+  string
+>(
   "orchestrators/fetchOrchestratorById",
   async (id: string) => {
-    const response = await orchestratorService.getOrchestrator(id);
-    return mapOrchestratorToListItem(response);
+    return orchestratorService.getOrchestrator(id);
   },
 );
 
@@ -95,12 +98,13 @@ const orchestratorsSlice = createSlice({
       .addCase(fetchOrchestratorById.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.error = null;
-        const index = state.data.findIndex((item) => item._id === action.payload._id);
+        const summary = mapOrchestratorToListItem(action.payload);
+        const index = state.data.findIndex((item) => item._id === summary._id);
         if (index >= 0) {
-          state.data[index] = action.payload;
+          state.data[index] = summary;
           return;
         }
-        state.data.unshift(action.payload);
+        state.data.unshift(summary);
       })
       // Delete orchestrator
       .addCase(deleteOrchestrator.fulfilled, (state, action) => {

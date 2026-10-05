@@ -163,15 +163,13 @@ export const orchestratorService = {
         _id: item.id || item._id,
         templateInfo: item.templateInfo,
         templateId: item.templateId || undefined,
-        nodes: item.nodes || [],
-        edges: item.edges || [],
-        // Calculate counts from arrays if not provided
-        nodeCount: item.nodeCount ?? item.nodes?.length ?? 0,
-        edgeCount: item.edgeCount ?? item.edges?.length ?? 0,
+        nodeCount: Number(item.nodeCount ?? 0),
+        edgeCount: Number(item.edgeCount ?? 0),
         previewImageUrl: item?.previewImageUrl,
         createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
         updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
         metadata: normalizeMetadataDates(item.metadata),
+        policyScan: item.policyScan,
       }));
 
       return {

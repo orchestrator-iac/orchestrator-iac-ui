@@ -1799,13 +1799,19 @@ const OrchestratorReactFlow: React.FC = () => {
         setPolicyScan(orchestratorData.policyScan || DEFAULT_POLICY_SCAN);
         const resourceNodes: Node[] = [];
         const loadSavedResources = async () => {
-          const savedNodes = orchestratorData?.nodes || [];
+          const fullOrchestrator = await dispatch(
+            fetchOrchestratorById(template_id),
+          ).unwrap();
+          const routeEpoch = routeEpochRef.current;
+          const isCurrentRoute = () => routeEpoch === routeEpochRef.current;
+          const savedNodes = fullOrchestrator.nodes || [];
           const lookups = savedNodes.map((node) => ({
             id: extractCatalogId(node.id),
             cloudProvider: templateInfo.cloud,
             ...(node.configId ? { configId: node.configId } : {}),
           }));
           const batchResources = await fetchCatalogResources(lookups);
+          if (!isCurrentRoute()) return;
           const resourceData = await Promise.all(
             lookups.map((lookup) =>
               resolveResourceData([lookup], batchResources),
@@ -1813,8 +1819,9 @@ const OrchestratorReactFlow: React.FC = () => {
           );
 
           for (let i = 0; i < resourceData.length; i += 1) {
+            if (!isCurrentRoute()) return;
             const resourceDataForNode = resourceData[i];
-            const dbNode = orchestratorData.nodes[i];
+            const dbNode = fullOrchestrator.nodes[i];
             if (resourceDataForNode?.resourceNode?.data) {
               const reconstructedNode: Node = {
                 id: dbNode.id,
@@ -1826,7 +1833,7 @@ const OrchestratorReactFlow: React.FC = () => {
                   __nodeType: dbNode.__nodeType || dbNode.resourceId,
                   __resourceId: dbNode.resourceId,
                   __configId:
-                    dbNode.configId || resourceDataForNode.configId,
+                    resourceDataForNode.configId || dbNode.configId,
                   isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
                   friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
                   header: {
@@ -1842,7 +1849,7 @@ const OrchestratorReactFlow: React.FC = () => {
           }
 
           const nextEdges: Edge[] = [];
-          for (const dbEdge of orchestratorData?.edges || []) {
+          for (const dbEdge of fullOrchestrator.edges || []) {
             const source = resourceNodes.find((n) => n.id === dbEdge.source);
             const target = resourceNodes.find((n) => n.id === dbEdge.target);
             if (!source || !target) continue;
@@ -1874,12 +1881,14 @@ const OrchestratorReactFlow: React.FC = () => {
           }
 
           setNodes((nds) => {
+            if (!isCurrentRoute()) return nds;
             const existingIds = new Set(nds.map((node) => node.id));
             return nds.concat(
               resourceNodes.filter((node) => !existingIds.has(node.id)),
             );
           });
           setEdges((eds) => {
+            if (!isCurrentRoute()) return eds;
             const existingIds = new Set(eds.map((edge) => edge.id));
             return eds.concat(
               nextEdges.filter((edge) => !existingIds.has(edge.id)),
