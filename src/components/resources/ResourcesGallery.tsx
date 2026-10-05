@@ -621,19 +621,16 @@ const ResourcesGallery: React.FC = () => {
     showContent && status === "succeeded" && (resources?.length ?? 0) > 0,
   );
 
-  // Fetch resources on first visit and recover once from a stale failed
-  // load. AbortController cancels the inflight request on StrictMode's
-  // double-invoke so we don't leave a stale request running.
+  // Redux owns these shared loads across mounts. A status-dependent cleanup
+  // must not abort the load when pending changes idle to loading.
   useEffect(() => {
     if (status === "idle") {
-      const promise = dispatch(fetchResources());
-      return () => promise.abort();
+      void dispatch(fetchResources());
     }
 
     if (status === "failed" && !hasRetriedFailedLoad.current) {
       hasRetriedFailedLoad.current = true;
-      const promise = dispatch(fetchResources());
-      return () => promise.abort();
+      void dispatch(fetchResources());
     }
   }, [dispatch, status]);
 
@@ -642,14 +639,12 @@ const ResourcesGallery: React.FC = () => {
   // it just leaves every resource at usage count 0 (alphabetical fallback).
   useEffect(() => {
     if (analyticsStatus === "idle") {
-      const promise = dispatch(fetchTopResources());
-      return () => promise.abort();
+      void dispatch(fetchTopResources());
     }
 
     if (analyticsStatus === "failed" && !hasRetriedAnalyticsLoad.current) {
       hasRetriedAnalyticsLoad.current = true;
-      const promise = dispatch(fetchTopResources());
-      return () => promise.abort();
+      void dispatch(fetchTopResources());
     }
   }, [analyticsStatus, dispatch]);
 

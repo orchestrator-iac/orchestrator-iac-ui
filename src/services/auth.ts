@@ -126,6 +126,9 @@ export const refreshAccessToken = async (
       {
         withCredentials: true,
         headers: { "Content-Type": "application/json" },
+        // Never let an unavailable refresh endpoint hold every protected
+        // request in a pending state indefinitely.
+        timeout: 10_000,
         signal,
       },
     );

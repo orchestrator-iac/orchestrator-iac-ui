@@ -275,6 +275,9 @@ export const transformNodeForDB = (
   return {
     id: node.id,
     resourceId: resourceId,
+    configId:
+      (node.data?.__configId as string | undefined) ||
+      (node.data?.configId as string | undefined),
     position: {
       x: node.position.x,
       y: node.position.y,
@@ -439,6 +442,7 @@ export const reconstructNodeFromDB = (
       values: values,
       __nodeType: dbNode.__nodeType || dbNode.resourceId,
       __resourceId: dbNode.resourceId,
+      __configId: dbNode.configId,
       isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
       friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
     },

@@ -108,7 +108,12 @@ const extractCatalogId = (nodeId: string): string => {
 const getResourceLookupCandidates = (node: Record<string, any>): string[] =>
   Array.from(
     new Set(
-      [node.resourceId, node.__nodeType, node.resourceType, extractCatalogId(node.id)]
+      [
+        node.resourceId,
+        node.__nodeType,
+        node.resourceType,
+        extractCatalogId(node.id),
+      ]
         .map((candidate) => String(candidate ?? "").trim())
         .filter(Boolean),
     ),
@@ -495,7 +500,12 @@ const applyManyObjectIndexBind = (
     prevArrObjs[objIndex] = objAtIndex;
 
     // Remove duplicate occurrences of the same id for this key across other indices
-    clearDuplicateObjectBindOccurrences(prevArrObjs, objIndex, objKey, sourceId);
+    clearDuplicateObjectBindOccurrences(
+      prevArrObjs,
+      objIndex,
+      objKey,
+      sourceId,
+    );
   } else {
     // Clearing this field keeps placeholder so UI row persists
     objAtIndex[objKey] = "";
@@ -640,20 +650,12 @@ const RouteLoadingOverlay: React.FC = () => {
       aria-live="polite"
       role="status"
     >
-      <Box
-        className={styles.routeLoadingCard}
-      >
+      <Box className={styles.routeLoadingCard}>
         <LumaSpin size={56} />
-        <Typography
-          variant="h6"
-          className={styles.routeLoadingTitle}
-        >
+        <Typography variant="h6" className={styles.routeLoadingTitle}>
           Loading orchestrator
         </Typography>
-        <Typography
-          variant="body2"
-          className={styles.routeLoadingDescription}
-        >
+        <Typography variant="body2" className={styles.routeLoadingDescription}>
           Preparing your resources and canvas so the workflow opens cleanly.
         </Typography>
       </Box>
@@ -673,12 +675,9 @@ const RouteLoadErrorOverlay: React.FC<{ onRetry: () => void }> = ({
       <Alert severity="error" sx={{ width: "100%" }}>
         Orchestrator loading did not finish.
       </Alert>
-      <Typography
-        variant="body2"
-        className={styles.routeLoadingDescription}
-      >
-        The resource catalog did not respond in time. Retry the local request
-        to continue.
+      <Typography variant="body2" className={styles.routeLoadingDescription}>
+        The resource catalog did not respond in time. Retry the local request to
+        continue.
       </Typography>
       <Button variant="contained" onClick={onRetry}>
         Retry loading
@@ -798,9 +797,8 @@ const OrchestratorReactFlow: React.FC = () => {
   const [snackOpen, setSnackOpen] = useState(false);
   const [templateInfo, setTemplateInfo] =
     useState<CloudConfig>(EMPTY_TEMPLATE_INFO);
-  const [policyScan, setPolicyScan] = useState<PolicyScanSettings>(
-    DEFAULT_POLICY_SCAN,
-  );
+  const [policyScan, setPolicyScan] =
+    useState<PolicyScanSettings>(DEFAULT_POLICY_SCAN);
   const [currentOrchestratorId, setCurrentOrchestratorId] = useState<
     string | null
   >(null);
@@ -813,8 +811,10 @@ const OrchestratorReactFlow: React.FC = () => {
   );
   const [maestroReviewDraft, setMaestroReviewDraft] =
     useState<MaestroDraftPayload | null>(null);
-  const [isMaestroReviewDraftBannerDismissed, setIsMaestroReviewDraftBannerDismissed] =
-    useState(false);
+  const [
+    isMaestroReviewDraftBannerDismissed,
+    setIsMaestroReviewDraftBannerDismissed,
+  ] = useState(false);
   const [pendingMaestroDraft, setPendingMaestroDraft] =
     useState<MaestroDraftPayload | null>(null);
   const [replaceDraftDialogOpen, setReplaceDraftDialogOpen] = useState(false);
@@ -896,8 +896,7 @@ const OrchestratorReactFlow: React.FC = () => {
       // A 200 batch can be partial while a catalog is being migrated. Retry
       // only the missing node, but do not let a slow fallback hold the entire
       // canvas behind its loading overlay.
-      const fallbackDeadline =
-        Date.now() + RESOURCE_FALLBACK_TIMEOUT_MS;
+      const fallbackDeadline = Date.now() + RESOURCE_FALLBACK_TIMEOUT_MS;
       for (const candidate of candidates) {
         const remainingMs = fallbackDeadline - Date.now();
         if (remainingMs <= 0) {
@@ -1016,148 +1015,225 @@ const OrchestratorReactFlow: React.FC = () => {
       serializedNodes: Array<Record<string, any>>,
       serializedEdges: Array<Record<string, any>>,
       appliedTemplateInfo: CloudConfig,
-    ) =>
-      runWithRouteLoading(async () => {
-        const candidateLists = (serializedNodes || []).map((dbNode) =>
-          getResourceLookupCandidates(dbNode).map((id) => ({
-            id,
-            cloudProvider: appliedTemplateInfo.cloud,
-          })),
-        );
-        const batchLookups = Array.from(
-          new Map(
-            candidateLists
-              .flat()
-              .map((lookup) => [getResourceLookupKey(lookup), lookup]),
-          ).values(),
-        );
-        const batchResources = await fetchCatalogResources(batchLookups);
-        const resourceDataByNode = await Promise.all(
-          candidateLists.map((candidates) =>
-            resolveResourceData(candidates, batchResources),
-          ),
-        );
-        const resourceNodes: Node[] = [];
-
-        for (let i = 0; i < resourceDataByNode.length; i += 1) {
-          const resourceData = resourceDataByNode[i];
-          const dbNode = serializedNodes[i];
-
-          if (resourceData?.resourceNode?.data) {
-            const catalogResourceId =
-              resourceData.resourceId ||
-              dbNode.__nodeType ||
-              dbNode.resourceId;
-            resourceNodes.push({
-              id: dbNode.id,
-              type: "customNode",
-              position: dbNode.position || { x: 0, y: 0 },
-              data: {
-                ...resourceData.resourceNode.data,
-                values: dbNode.values || {},
-                __nodeType:
-                  dbNode.__nodeType ||
-                  dbNode.resourceType ||
-                  catalogResourceId,
-                __resourceId: catalogResourceId,
-                isExpanded: dbNode.isExpanded ?? true,
-                friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
-                header: {
-                  ...resourceData.resourceNode.data.header,
-                  icon: resourceData.resourceIcon,
-                },
-                templateInfo: appliedTemplateInfo,
-                userInfo: user,
-              },
-            });
-            continue;
-          }
-
-          resourceNodes.push({
-            id: dbNode.id,
-            type: "customNode",
-            position: dbNode.position || { x: 0, y: 0 },
-            data: {
-              values: dbNode.values || {},
-              __nodeType:
-                dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
-              __resourceId: dbNode.resourceId,
-              isExpanded: dbNode.isExpanded ?? true,
-              friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
-              header: {
-                label:
-                  dbNode.resourceName ||
-                  dbNode.__nodeType ||
-                  dbNode.resourceId ||
-                  "Unknown Resource",
-                icon: dbNode.previewIcon,
-              },
-              handles: [],
-              links: [],
-              templateInfo: appliedTemplateInfo,
-              userInfo: user,
+      manageRouteLoading = true,
+      deferCatalogHydration = false,
+    ) => {
+      const hydrateGraph = async () => {
+        const fallbackNodes: Node[] = (serializedNodes || []).map((dbNode) => ({
+          id: dbNode.id,
+          type: "customNode",
+          position: dbNode.position || { x: 0, y: 0 },
+          data: {
+            values: dbNode.values || {},
+            __nodeType:
+              dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+            __resourceId: dbNode.resourceId,
+            __configId: dbNode.configId,
+            isExpanded: dbNode.isExpanded ?? true,
+            friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
+            header: {
+              label:
+                dbNode.resourceName ||
+                dbNode.__nodeType ||
+                dbNode.resourceId ||
+                "Unknown Resource",
+              icon: dbNode.previewIcon,
             },
-          });
-        }
-
-        const nextEdges: Edge[] = [];
-        for (const dbEdge of serializedEdges || []) {
-          const source = resourceNodes.find(
-            (node) => node.id === dbEdge.source,
-          );
-          const target = resourceNodes.find(
-            (node) => node.id === dbEdge.target,
-          );
-          if (!source || !target) {
-            continue;
-          }
-
-          const sourceType = (source.data as any)?.__nodeType ?? source.type;
-          const rules = (target.data as any)?.links ?? [];
-          const rule = rules.find(
-            (candidate: any) =>
-              Array.isArray(candidate.fromTypes) &&
-              candidate.fromTypes.includes(sourceType),
-          );
-
-          nextEdges.push({
-            id: rule
-              ? `${source.id}->${target.id}:${rule.bind}`
-              : dbEdge.id || `${source.id}->${target.id}`,
-            source: source.id,
-            target: target.id,
+            handles: [],
+            links: [],
+            templateInfo: appliedTemplateInfo,
+            userInfo: user,
+          },
+        }));
+        const fallbackNodeIds = new Set(fallbackNodes.map((node) => node.id));
+        const fallbackEdges: Edge[] = (serializedEdges || [])
+          .filter(
+            (edge) =>
+              fallbackNodeIds.has(edge.source) &&
+              fallbackNodeIds.has(edge.target),
+          )
+          .map((edge) => ({
+            id: edge.id || `${edge.source}->${edge.target}`,
+            source: edge.source,
+            target: edge.target,
             type: "animatedGradient",
-            data: rule
-              ? {
-                  ...(rule.edgeData ?? { kind: rule.bind }),
-                  bindKey: dbEdge.data?.bindKey,
-                  animated: rule.edgeData?.animated ?? true,
-                }
-              : {
-                  kind: dbEdge.data?.kind || "depends_on",
-                  bindKey: dbEdge.data?.bindKey,
-                  animated: true,
-                },
+            data: edge.data || { kind: "depends_on", animated: true },
             markerEnd: {
               type: MarkerType.ArrowClosed,
               width: 12,
               height: 12,
             },
-          });
-        }
+          }));
 
+        // Paint the persisted graph immediately. Catalog hydration can be
+        // large and should not block the first usable canvas frame.
         setTemplateInfo(appliedTemplateInfo);
-        setNodes(resourceNodes);
-        setEdges(nextEdges);
+        setNodes(fallbackNodes);
+        setEdges(fallbackEdges);
         setInitOpen(false);
 
-        setTimeout(() => {
-          getLayoutElements({
-            "elk.algorithm": "layered",
-            "elk.direction": "RIGHT",
+        const hydrateCatalog = async () => {
+          const candidateLists = (serializedNodes || []).map((dbNode) =>
+            getResourceLookupCandidates(dbNode).map((id, index) => ({
+              id,
+              cloudProvider: appliedTemplateInfo.cloud,
+              ...(index === 0 && dbNode.configId
+                ? { configId: String(dbNode.configId) }
+                : {}),
+            })),
+          );
+          const batchLookups = Array.from(
+            new Map(
+              candidateLists
+                .flat()
+                .map((lookup) => [getResourceLookupKey(lookup), lookup]),
+            ).values(),
+          );
+          const batchResources = await fetchCatalogResources(batchLookups);
+          const resourceDataByNode = await Promise.all(
+            candidateLists.map((candidates) =>
+              resolveResourceData(candidates, batchResources),
+            ),
+          );
+          const resourceNodes: Node[] = [];
+
+          for (let i = 0; i < resourceDataByNode.length; i += 1) {
+            const resourceData = resourceDataByNode[i];
+            const dbNode = serializedNodes[i];
+
+            if (resourceData?.resourceNode?.data) {
+              const catalogResourceId =
+                resourceData.resourceId ||
+                dbNode.__nodeType ||
+                dbNode.resourceId;
+              resourceNodes.push({
+                id: dbNode.id,
+                type: "customNode",
+                position: dbNode.position || { x: 0, y: 0 },
+                data: {
+                  ...resourceData.resourceNode.data,
+                  values: dbNode.values || {},
+                  __nodeType:
+                    dbNode.__nodeType ||
+                    dbNode.resourceType ||
+                    catalogResourceId,
+                  __resourceId: catalogResourceId,
+                  __configId: dbNode.configId || resourceData.configId,
+                  isExpanded: dbNode.isExpanded ?? true,
+                  friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
+                  header: {
+                    ...resourceData.resourceNode.data.header,
+                    icon: resourceData.resourceIcon,
+                  },
+                  templateInfo: appliedTemplateInfo,
+                  userInfo: user,
+                },
+              });
+              continue;
+            }
+
+            resourceNodes.push({
+              id: dbNode.id,
+              type: "customNode",
+              position: dbNode.position || { x: 0, y: 0 },
+              data: {
+                values: dbNode.values || {},
+                __nodeType:
+                  dbNode.__nodeType || dbNode.resourceType || dbNode.resourceId,
+                __resourceId: dbNode.resourceId,
+                __configId: dbNode.configId,
+                isExpanded: dbNode.isExpanded ?? true,
+                friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
+                header: {
+                  label:
+                    dbNode.resourceName ||
+                    dbNode.__nodeType ||
+                    dbNode.resourceId ||
+                    "Unknown Resource",
+                  icon: dbNode.previewIcon,
+                },
+                handles: [],
+                links: [],
+                templateInfo: appliedTemplateInfo,
+                userInfo: user,
+              },
+            });
+          }
+
+          const nextEdges: Edge[] = [];
+          for (const dbEdge of serializedEdges || []) {
+            const source = resourceNodes.find(
+              (node) => node.id === dbEdge.source,
+            );
+            const target = resourceNodes.find(
+              (node) => node.id === dbEdge.target,
+            );
+            if (!source || !target) {
+              continue;
+            }
+
+            const sourceType = (source.data as any)?.__nodeType ?? source.type;
+            const rules = (target.data as any)?.links ?? [];
+            const rule = rules.find(
+              (candidate: any) =>
+                Array.isArray(candidate.fromTypes) &&
+                candidate.fromTypes.includes(sourceType),
+            );
+
+            nextEdges.push({
+              id: rule
+                ? `${source.id}->${target.id}:${rule.bind}`
+                : dbEdge.id || `${source.id}->${target.id}`,
+              source: source.id,
+              target: target.id,
+              type: "animatedGradient",
+              data: rule
+                ? {
+                    ...(rule.edgeData ?? { kind: rule.bind }),
+                    bindKey: dbEdge.data?.bindKey,
+                    animated: rule.edgeData?.animated ?? true,
+                  }
+                : {
+                    kind: dbEdge.data?.kind || "depends_on",
+                    bindKey: dbEdge.data?.bindKey,
+                    animated: true,
+                  },
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                width: 12,
+                height: 12,
+              },
+            });
+          }
+
+          setNodes(resourceNodes);
+          setEdges(nextEdges);
+
+          setTimeout(() => {
+            getLayoutElements({
+              "elk.algorithm": "layered",
+              "elk.direction": "RIGHT",
+            });
+          }, 150);
+        };
+
+        if (deferCatalogHydration) {
+          void hydrateCatalog().catch((error) => {
+            console.warn(
+              "Resource catalog hydration failed; keeping the graph shell visible.",
+              error,
+            );
           });
-        }, 150);
-      }),
+          return;
+        }
+
+        await hydrateCatalog();
+      };
+
+      return manageRouteLoading
+        ? runWithRouteLoading(hydrateGraph)
+        : hydrateGraph();
+    },
     [
       dispatch,
       fetchCatalogResources,
@@ -1204,7 +1280,11 @@ const OrchestratorReactFlow: React.FC = () => {
   // themselves for the same reason as the effects above: those lengths only
   // change on add/remove, not on every keystroke while editing a resource.
   useEffect(() => {
-    if (nodes.length === 0 && edges.length === 0 && !templateInfo.templateName) {
+    if (
+      nodes.length === 0 &&
+      edges.length === 0 &&
+      !templateInfo.templateName
+    ) {
       dispatch(setCanvasContext(null));
       return;
     }
@@ -1232,7 +1312,8 @@ const OrchestratorReactFlow: React.FC = () => {
 
     dispatch(
       setCanvasContext({
-        orchestratorId: currentOrchestratorId || (template_id !== "new" ? template_id : null),
+        orchestratorId:
+          currentOrchestratorId || (template_id !== "new" ? template_id : null),
         templateType: template_type,
         templateName: templateInfo.templateName || undefined,
         cloudProvider: templateInfo.cloud,
@@ -1456,6 +1537,7 @@ const OrchestratorReactFlow: React.FC = () => {
             data: {
               ...newNode.data,
               __nodeType: resourceType, // keep the real resource type for rules/labels
+              __configId: resourceData.configId,
               header: {
                 ...newNode.data.header,
                 icon: resourceData?.data?.resourceIcon,
@@ -1552,10 +1634,13 @@ const OrchestratorReactFlow: React.FC = () => {
           // Fetch all resource templates in one catalog request. Keep the
           // single-resource path below as a rollout fallback.
           const prefillNodes = prefill.nodes || [];
-          const lookups: ResourceBatchLookup[] = prefillNodes.map((dbNode: any) => ({
-            id: extractCatalogId(dbNode.id),
-            cloudProvider: appliedTemplateInfo.cloud,
-          }));
+          const lookups: ResourceBatchLookup[] = prefillNodes.map(
+            (dbNode: any) => ({
+              id: extractCatalogId(dbNode.id),
+              cloudProvider: appliedTemplateInfo.cloud,
+              ...(dbNode.configId ? { configId: dbNode.configId } : {}),
+            }),
+          );
 
           void (async () => {
             const batchResources = await fetchCatalogResources(lookups);
@@ -1586,6 +1671,7 @@ const OrchestratorReactFlow: React.FC = () => {
                       dbNode.resourceType ||
                       dbNode.resourceId,
                     __resourceId: dbNode.resourceId,
+                    __configId: dbNode.configId || resourceData.configId,
                     isExpanded: dbNode.isExpanded ?? true,
                     friendlyId: dbNode.friendlyId,
                     header: {
@@ -1609,6 +1695,7 @@ const OrchestratorReactFlow: React.FC = () => {
                       dbNode.resourceType ||
                       dbNode.resourceId,
                     __resourceId: dbNode.resourceId,
+                    __configId: dbNode.configId,
                     isExpanded: dbNode.isExpanded ?? true,
                     friendlyId: dbNode.friendlyId,
                     header: {
@@ -1716,6 +1803,7 @@ const OrchestratorReactFlow: React.FC = () => {
           const lookups = savedNodes.map((node) => ({
             id: extractCatalogId(node.id),
             cloudProvider: templateInfo.cloud,
+            ...(node.configId ? { configId: node.configId } : {}),
           }));
           const batchResources = await fetchCatalogResources(lookups);
           const resourceData = await Promise.all(
@@ -1737,6 +1825,8 @@ const OrchestratorReactFlow: React.FC = () => {
                   values: dbNode.values,
                   __nodeType: dbNode.__nodeType || dbNode.resourceId,
                   __resourceId: dbNode.resourceId,
+                  __configId:
+                    dbNode.configId || resourceDataForNode.configId,
                   isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
                   friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
                   header: {
@@ -1926,6 +2016,7 @@ const OrchestratorReactFlow: React.FC = () => {
           template.nodes || [],
           template.edges || [],
           appliedTemplateInfo,
+          false,
         );
       }).catch((error) => {
         requestedTemplateIdsRef.current.delete(template_id);
@@ -1968,6 +2059,8 @@ const OrchestratorReactFlow: React.FC = () => {
         orchestratorData.nodes as Array<Record<string, any>>,
         orchestratorData.edges as Array<Record<string, any>>,
         appliedTemplateInfo,
+        false,
+        true,
       );
       setBaselineSnapshot(
         serializePersistedSnapshot({
@@ -2531,10 +2624,11 @@ const OrchestratorReactFlow: React.FC = () => {
             __viewMode: isArchitectureMode ? "architecture" : "detailed",
             __validationErrors: validationErrorsByNode[n.id],
             __driftStatus: driftByNode[n.id]?.status,
-            __driftFindings: driftByNode[n.id] ? [driftByNode[n.id]] : undefined,
+            __driftFindings: driftByNode[n.id]
+              ? [driftByNode[n.id]]
+              : undefined,
             __formHydrationReady: !isRouteLoading && isCanvasHydrated,
-            __formHydrationEnabled:
-              nodeIndex < INITIAL_FORM_HYDRATION_COUNT,
+            __formHydrationEnabled: nodeIndex < INITIAL_FORM_HYDRATION_COUNT,
             __formHydrationDelayMs: nodeIndex * FORM_HYDRATION_STAGGER_MS,
           },
         };
@@ -2674,10 +2768,9 @@ const OrchestratorReactFlow: React.FC = () => {
             pannable
           />
         </ReactFlow>
-        {!isRouteLoading &&
-          !initOpen &&
-          !isViewMode &&
-          nodes.length === 0 && <EmptyCanvasState />}
+        {!isRouteLoading && !initOpen && !isViewMode && nodes.length === 0 && (
+          <EmptyCanvasState />
+        )}
       </Box>
       <InitPopup
         open={initOpen}
