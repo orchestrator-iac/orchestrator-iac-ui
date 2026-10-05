@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -70,6 +71,15 @@ import { orchestratorService } from "../../services/orchestratorService";
 import { templateService } from "../../services/templateService";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
 import {
+  mergeHydratedNodes,
+  mergeHydratedEdges,
+} from "../../utils/graphHydration";
+import {
+  getResourceLookupKey,
+  primaryResourceLookups,
+  indexResourceBatch,
+} from "../../services/resourceLookup";
+import {
   fetchOrchestratorById,
   fetchOrchestrators,
 } from "@/store/orchestratorsSlice";
@@ -119,11 +129,6 @@ const getResourceLookupCandidates = (node: Record<string, any>): string[] =>
     ),
   );
 
-const getResourceLookupKey = ({
-  id,
-  cloudProvider,
-}: ResourceBatchLookup): string =>
-  `${id}|${cloudProvider?.toLowerCase() ?? ""}`;
 const defaultOptions: Record<string, string> = {
   "elk.algorithm": "layered",
   "elk.layered.spacing.nodeNodeBetweenLayers": "100",
@@ -833,6 +838,35 @@ const OrchestratorReactFlow: React.FC = () => {
   const requestedTemplateIdsRef = useRef<Set<string>>(new Set());
   const loadedOrchestratorIdRef = useRef<string | null>(null);
   const routeLoadCountRef = useRef(0);
+  const routeEpochRef = useRef(0);
+  const graphHydrationGenerationRef = useRef(0);
+  const routeIdentityRef = useRef<string | null>(null);
+  const isMountedRef = useRef(false);
+  const appliedPrefillEpochRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    isMountedRef.current = true;
+    const routeIdentity = JSON.stringify([
+      template_id,
+      template_type,
+      routeLoadAttempt,
+    ]);
+    if (routeIdentityRef.current !== routeIdentity) {
+      routeIdentityRef.current = routeIdentity;
+      routeEpochRef.current += 1;
+      graphHydrationGenerationRef.current += 1;
+      routeLoadCountRef.current = 0;
+      setIsRouteLoading(false);
+      setRouteLoadError(null);
+      loadedOrchestratorIdRef.current = null;
+      requestedOrchestratorIdsRef.current.clear();
+      requestedTemplateIdsRef.current.clear();
+    }
+    return () => {
+      // StrictMode may immediately set up the same route again. Keep its
+      // in-flight work valid; actual unmounts remain blocked by this flag.
+      isMountedRef.current = false;
+    };
+  }, [template_id, template_type, routeLoadAttempt]);
   const graphNodesRef = useRef<Node[]>(nodes);
   const graphEdgesRef = useRef<Edge[]>(edges);
   graphNodesRef.current = nodes;
@@ -864,12 +898,7 @@ const OrchestratorReactFlow: React.FC = () => {
           return null;
         }
 
-        return new Map<string, ResourceBatchItem>(
-          result.payload.items.map((item: ResourceBatchItem) => [
-            getResourceLookupKey(item),
-            item,
-          ]),
-        );
+        return indexResourceBatch(lookups, result.payload.items);
       } finally {
         if (timeoutId !== undefined) {
           window.clearTimeout(timeoutId);
@@ -897,7 +926,15 @@ const OrchestratorReactFlow: React.FC = () => {
       // only the missing node, but do not let a slow fallback hold the entire
       // canvas behind its loading overlay.
       const fallbackDeadline = Date.now() + RESOURCE_FALLBACK_TIMEOUT_MS;
-      for (const candidate of candidates) {
+      const fallbackCandidates = candidates.flatMap((candidate) =>
+        candidate.configId
+          ? [
+              ...(!batchResources ? [candidate] : []),
+              { ...candidate, configId: undefined },
+            ]
+          : [candidate],
+      );
+      for (const candidate of fallbackCandidates) {
         const remainingMs = fallbackDeadline - Date.now();
         if (remainingMs <= 0) {
           break;
@@ -981,6 +1018,9 @@ const OrchestratorReactFlow: React.FC = () => {
 
   const runWithRouteLoading = useCallback(
     async <T,>(work: () => Promise<T>) => {
+      const routeEpoch = routeEpochRef.current;
+      const isCurrentRoute = () =>
+        isMountedRef.current && routeEpoch === routeEpochRef.current;
       beginRouteLoad();
       let timeoutId: number | undefined;
       const timeout = new Promise<never>((_, reject) => {
@@ -996,15 +1036,17 @@ const OrchestratorReactFlow: React.FC = () => {
       try {
         return await Promise.race([work(), timeout]);
       } catch (error) {
-        setRouteLoadError(
-          "We could not finish loading this orchestrator. Check the local API and try again.",
-        );
+        if (isCurrentRoute()) {
+          setRouteLoadError(
+            "We could not finish loading this orchestrator. Check the local API and try again.",
+          );
+        }
         throw error;
       } finally {
         if (timeoutId !== undefined) {
           window.clearTimeout(timeoutId);
         }
-        endRouteLoad();
+        if (isCurrentRoute()) endRouteLoad();
       }
     },
     [beginRouteLoad, endRouteLoad],
@@ -1018,7 +1060,12 @@ const OrchestratorReactFlow: React.FC = () => {
       manageRouteLoading = true,
       deferCatalogHydration = false,
     ) => {
+      const generation = ++graphHydrationGenerationRef.current;
+      const isCurrentLoad = () =>
+        isMountedRef.current &&
+        generation === graphHydrationGenerationRef.current;
       const hydrateGraph = async () => {
+        if (!isCurrentLoad()) return;
         const fallbackNodes: Node[] = (serializedNodes || []).map((dbNode) => ({
           id: dbNode.id,
           type: "customNode",
@@ -1082,19 +1129,15 @@ const OrchestratorReactFlow: React.FC = () => {
                 : {}),
             })),
           );
-          const batchLookups = Array.from(
-            new Map(
-              candidateLists
-                .flat()
-                .map((lookup) => [getResourceLookupKey(lookup), lookup]),
-            ).values(),
-          );
+          const batchLookups = primaryResourceLookups(candidateLists);
           const batchResources = await fetchCatalogResources(batchLookups);
+          if (!isCurrentLoad()) return;
           const resourceDataByNode = await Promise.all(
             candidateLists.map((candidates) =>
               resolveResourceData(candidates, batchResources),
             ),
           );
+          if (!isCurrentLoad()) return;
           const resourceNodes: Node[] = [];
 
           for (let i = 0; i < resourceDataByNode.length; i += 1) {
@@ -1118,7 +1161,7 @@ const OrchestratorReactFlow: React.FC = () => {
                     dbNode.resourceType ||
                     catalogResourceId,
                   __resourceId: catalogResourceId,
-                  __configId: dbNode.configId || resourceData.configId,
+                  __configId: resourceData.configId || dbNode.configId,
                   isExpanded: dbNode.isExpanded ?? true,
                   friendlyId: dbNode.friendlyId ?? dbNode.friendly_id,
                   header: {
@@ -1181,9 +1224,7 @@ const OrchestratorReactFlow: React.FC = () => {
             );
 
             nextEdges.push({
-              id: rule
-                ? `${source.id}->${target.id}:${rule.bind}`
-                : dbEdge.id || `${source.id}->${target.id}`,
+              id: dbEdge.id || `${source.id}->${target.id}`,
               source: source.id,
               target: target.id,
               type: "animatedGradient",
@@ -1206,15 +1247,18 @@ const OrchestratorReactFlow: React.FC = () => {
             });
           }
 
-          setNodes(resourceNodes);
-          setEdges(nextEdges);
-
-          setTimeout(() => {
-            getLayoutElements({
-              "elk.algorithm": "layered",
-              "elk.direction": "RIGHT",
-            });
-          }, 150);
+          setNodes((current) =>
+            isCurrentLoad()
+              ? mergeHydratedNodes(current, fallbackNodes, resourceNodes)
+              : current,
+          );
+          setEdges((current) =>
+            isCurrentLoad()
+              ? mergeHydratedEdges(current, fallbackEdges, nextEdges)
+              : current,
+          );
+          // Keep saved positions and any moves made while loading. Catalog
+          // hydration must not trigger a delayed layout of the current graph.
         };
 
         if (deferCatalogHydration) {
@@ -1237,7 +1281,6 @@ const OrchestratorReactFlow: React.FC = () => {
     [
       dispatch,
       fetchCatalogResources,
-      getLayoutElements,
       resolveResourceData,
       runWithRouteLoading,
       setEdges,
@@ -1396,15 +1439,28 @@ const OrchestratorReactFlow: React.FC = () => {
 
   const applyMaestroDraft = useCallback(
     async (draft: MaestroDraftPayload) => {
+      // A draft replaces this graph. Invalidate pending saved-graph reads,
+      // while allowing removal of the one-shot draft query parameter.
+      const routeEpoch = ++routeEpochRef.current;
+      routeLoadCountRef.current = 0;
+      loadedOrchestratorIdRef.current =
+        draft.action === "update" ? (draft.targetOrchestratorId ?? null) : null;
       const appliedTemplateInfo = normalizeTemplateInfo(
         draft.saveRequest.templateInfo,
       );
 
-      await loadSerializedGraph(
+      const loading = loadSerializedGraph(
         draft.saveRequest.nodes as Array<Record<string, any>>,
         draft.saveRequest.edges as Array<Record<string, any>>,
         appliedTemplateInfo,
       );
+      const generation = graphHydrationGenerationRef.current;
+      await loading;
+      if (
+        !isMountedRef.current ||
+        routeEpoch !== routeEpochRef.current ||
+        generation !== graphHydrationGenerationRef.current
+      ) return;
 
       setCurrentOrchestratorId(
         draft.action === "update" ? (draft.targetOrchestratorId ?? null) : null,
@@ -1620,6 +1676,7 @@ const OrchestratorReactFlow: React.FC = () => {
         try {
           const prefill = JSON.parse(prefillRaw);
           sessionStorage.removeItem("maestro_prefill");
+          appliedPrefillEpochRef.current = routeEpochRef.current;
 
           const appliedTemplateInfo = {
             templateName: prefill.templateInfo?.templateName || "",
@@ -1643,13 +1700,19 @@ const OrchestratorReactFlow: React.FC = () => {
           );
 
           void (async () => {
+            const routeEpoch = routeEpochRef.current;
+            const isCurrentRoute = () =>
+              isMountedRef.current && routeEpoch === routeEpochRef.current;
             const batchResources = await fetchCatalogResources(lookups);
+            if (!isCurrentRoute()) return;
             const results = await Promise.all(
               lookups.map((lookup) =>
                 resolveResourceData([lookup], batchResources),
               ),
             );
             const resourceNodes: Node[] = [];
+
+            if (!isCurrentRoute()) return;
 
             for (let i = 0; i < results.length; i++) {
               const resourceData = results[i];
@@ -1671,7 +1734,7 @@ const OrchestratorReactFlow: React.FC = () => {
                       dbNode.resourceType ||
                       dbNode.resourceId,
                     __resourceId: dbNode.resourceId,
-                    __configId: dbNode.configId || resourceData.configId,
+                    __configId: resourceData.configId || dbNode.configId,
                     isExpanded: dbNode.isExpanded ?? true,
                     friendlyId: dbNode.friendlyId,
                     header: {
@@ -1754,12 +1817,14 @@ const OrchestratorReactFlow: React.FC = () => {
             }
 
             setNodes((nds) => {
+              if (!isCurrentRoute()) return nds;
               const existingIds = new Set(nds.map((node) => node.id));
               return nds.concat(
                 resourceNodes.filter((node) => !existingIds.has(node.id)),
               );
             });
             setEdges((eds) => {
+              if (!isCurrentRoute()) return eds;
               const existingIds = new Set(eds.map((edge) => edge.id));
               return eds.concat(
                 nextEdges.filter((edge) => !existingIds.has(edge.id)),
@@ -1768,6 +1833,7 @@ const OrchestratorReactFlow: React.FC = () => {
 
             // Auto-layout after all nodes are placed
             setTimeout(() => {
+              if (!isCurrentRoute()) return;
               getLayoutElements({
                 "elk.algorithm": "layered",
                 "elk.direction": "RIGHT",
@@ -1775,10 +1841,11 @@ const OrchestratorReactFlow: React.FC = () => {
             }, 150);
           })();
         } catch (err) {
+          appliedPrefillEpochRef.current = null;
           console.error("Failed to apply Maestro prefill:", err);
           setInitOpen(true);
         }
-      } else {
+      } else if (appliedPrefillEpochRef.current !== routeEpochRef.current) {
         setInitOpen(true);
       }
     } else {
@@ -1799,11 +1866,13 @@ const OrchestratorReactFlow: React.FC = () => {
         setPolicyScan(orchestratorData.policyScan || DEFAULT_POLICY_SCAN);
         const resourceNodes: Node[] = [];
         const loadSavedResources = async () => {
+          const routeEpoch = routeEpochRef.current;
+          const isCurrentRoute = () =>
+            isMountedRef.current && routeEpoch === routeEpochRef.current;
           const fullOrchestrator = await dispatch(
             fetchOrchestratorById(template_id),
           ).unwrap();
-          const routeEpoch = routeEpochRef.current;
-          const isCurrentRoute = () => routeEpoch === routeEpochRef.current;
+          if (!isCurrentRoute()) return;
           const savedNodes = fullOrchestrator.nodes || [];
           const lookups = savedNodes.map((node) => ({
             id: extractCatalogId(node.id),
@@ -1899,6 +1968,7 @@ const OrchestratorReactFlow: React.FC = () => {
       }
     }
   }, [
+    dispatch,
     template_id,
     template_type,
     orchestrators,
@@ -1999,6 +2069,10 @@ const OrchestratorReactFlow: React.FC = () => {
       return;
     }
 
+    const routeEpoch = routeEpochRef.current;
+    const isCurrentRoute = () =>
+      isMountedRef.current && routeEpoch === routeEpochRef.current;
+
     if (isViewMode) {
       if (requestedTemplateIdsRef.current.has(template_id)) {
         return;
@@ -2007,6 +2081,7 @@ const OrchestratorReactFlow: React.FC = () => {
       requestedTemplateIdsRef.current.add(template_id);
       void runWithRouteLoading(async () => {
         const template = await templateService.getTemplate(template_id);
+        if (!isCurrentRoute()) return;
         const appliedTemplateInfo = normalizeTemplateInfo({
           templateName: template.templateName,
           description: template.description,
@@ -2028,6 +2103,7 @@ const OrchestratorReactFlow: React.FC = () => {
           false,
         );
       }).catch((error) => {
+        if (!isCurrentRoute()) return;
         requestedTemplateIdsRef.current.delete(template_id);
         console.error("Failed to fetch template by id:", error);
       });
@@ -2052,6 +2128,7 @@ const OrchestratorReactFlow: React.FC = () => {
       const orchestratorData = await dispatch(
         fetchOrchestratorById(template_id),
       ).unwrap();
+      if (!isCurrentRoute()) return;
       loadedOrchestratorIdRef.current = template_id;
 
       const appliedTemplateInfo = normalizeTemplateInfo(
@@ -2071,6 +2148,7 @@ const OrchestratorReactFlow: React.FC = () => {
         false,
         true,
       );
+      if (!isCurrentRoute()) return;
       setBaselineSnapshot(
         serializePersistedSnapshot({
           templateInfo: orchestratorData.templateInfo,
@@ -2079,6 +2157,7 @@ const OrchestratorReactFlow: React.FC = () => {
         }),
       );
     }).catch((error) => {
+      if (!isCurrentRoute()) return;
       loadedOrchestratorIdRef.current = null;
       requestedOrchestratorIdsRef.current.delete(template_id);
       console.error("Failed to load orchestrator by id:", error);
