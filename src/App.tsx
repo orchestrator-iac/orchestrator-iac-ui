@@ -150,6 +150,9 @@ const AppShell: React.FC<{
   const location = useLocation();
   const { token, isInitializing } = useAuth();
   const hideHeader = NO_HEADER_ROUTES.has(location.pathname);
+  const isOrchestratorRoute =
+    location.pathname === "/orchestrator" ||
+    location.pathname.startsWith("/orchestrator/");
   const showChatbot =
     !isInitializing &&
     Boolean(token) &&
@@ -187,7 +190,7 @@ const AppShell: React.FC<{
         overflow: "hidden",
       }}
     >
-      {!hideHeader && <Header />}
+      {!hideHeader && <Header fullWidth={isOrchestratorRoute} />}
       <Box sx={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
         <Box
           sx={{
