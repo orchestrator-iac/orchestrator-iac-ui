@@ -28,7 +28,11 @@ import { useProductGuidance } from "../guidance/ProductGuidanceProvider";
 import styles from "./Header.module.css";
 import MinimalThemeToggle from "../theme/MinimalThemeToggle";
 
-const Header: React.FC = () => {
+type HeaderProps = {
+  fullWidth?: boolean;
+};
+
+const Header: React.FC<HeaderProps> = ({ fullWidth = false }) => {
   const theme = useTheme();
   const { mode } = useThemeContext();
   const { user, logout } = useAuth();
@@ -135,7 +139,7 @@ const Header: React.FC = () => {
       }}
     >
       <Toolbar
-        className={styles.toolbar}
+        className={`${styles.toolbar} ${fullWidth ? styles.toolbarFullWidth : ""}`}
         sx={{ py: 1.5, minHeight: "72px !important" }}
       >
         <Typography

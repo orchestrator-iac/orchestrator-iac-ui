@@ -17,6 +17,14 @@
   padding: 0 !important;
 }
 
+.toolbar.toolbarFullWidth {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 0 24px !important;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -150,6 +158,11 @@
     width: min(100% - 32px, var(--product-content-width));
   }
 
+  .toolbar.toolbarFullWidth {
+    width: 100%;
+    padding: 0 16px !important;
+  }
+
   .logo {
     font-size: 0.66rem !important;
     letter-spacing: 0.1em !important;
@@ -164,6 +177,11 @@
 @media (max-width: 420px) {
   .toolbar {
     width: min(100% - 24px, var(--product-content-width));
+  }
+
+  .toolbar.toolbarFullWidth {
+    width: 100%;
+    padding: 0 12px !important;
   }
 
   .logo {
