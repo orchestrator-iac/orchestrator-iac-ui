@@ -1,25 +1,22 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiService from "../services/apiService";
+import {
+  getResourceLookupKey,
+  type ResourceBatchLookup,
+  type ResourceBatchItem,
+} from "../services/resourceLookup";
+export type {
+  ResourceBatchLookup,
+  ResourceBatchItem,
+} from "../services/resourceLookup";
 
 export type ResourceLookup =
   | string
   | {
       id: string;
       cloudProvider?: string;
+      configId?: string;
     };
-
-export type ResourceBatchLookup = {
-  id: string;
-  cloudProvider?: string;
-  configId?: string;
-};
-
-export type ResourceBatchItem = {
-  id: string;
-  configId?: string;
-  cloudProvider?: string;
-  data: any;
-};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object";
@@ -48,24 +45,31 @@ const parseBatchResponse = (response: unknown): unknown[] => {
 
 export const fetchResourceById = createAsyncThunk(
   "resource/fetchById",
-  async (lookup: ResourceLookup) => {
+  async (lookup: ResourceLookup, thunkApi) => {
     const id = typeof lookup === "string" ? lookup : lookup.id;
     const cloudProvider =
       typeof lookup === "string" ? undefined : lookup.cloudProvider;
+    const requestedConfigId =
+      typeof lookup === "string" ? undefined : lookup.configId;
 
-    // `id` here is a resourceId (e.g. "vpc"), not the config document's
-    // internal database id, so this must go through the `resource_id`
-    // filter on the list endpoint rather than the by-id path lookup
-    // (GET /configs/{id} looks up the internal id and 404s for a
-    // resourceId like "vpc").
-    const response = await apiService.get("/configs", {
-      params: {
-        resource_id: id,
-        ...(cloudProvider
-          ? { cloud_provider: cloudProvider.toLowerCase() }
-          : {}),
+    // Keep the exact config version when its document ID is known. Legacy
+    // resource types such as "vpc" must use the resource_id list filter.
+    const response = await apiService.get(
+      requestedConfigId
+        ? `/configs/${encodeURIComponent(requestedConfigId)}`
+        : "/configs",
+      {
+        signal: thunkApi.signal,
+        params: requestedConfigId
+          ? undefined
+          : {
+              resource_id: id,
+              ...(cloudProvider
+                ? { cloud_provider: cloudProvider.toLowerCase() }
+                : {}),
+            },
       },
-    });
+    );
     const data = Array.isArray(response) ? response[0] : response;
     if (!data || typeof data !== "object") {
       throw new Error(`Resource catalog entry not found for ${id}`);
@@ -76,7 +80,7 @@ export const fetchResourceById = createAsyncThunk(
         (data as Record<string, unknown>)._id ??
         "",
     ).trim();
-    return { id, configId: configId || undefined, data };
+    return { id, cloudProvider, configId: configId || undefined, data };
   },
 );
 
@@ -89,14 +93,11 @@ export const fetchResourcesByLookups = createAsyncThunk(
         lookups
           .map(({ id, cloudProvider, configId }) => ({
             id: String(id).trim(),
-            cloudProvider: cloudProvider?.toLowerCase(),
+            cloudProvider: cloudProvider?.trim().toLowerCase(),
             configId: configId ? String(configId).trim() : undefined,
           }))
           .filter(({ id }) => Boolean(id))
-          .map((lookup) => [
-            `${lookup.id}|${lookup.cloudProvider ?? ""}`,
-            lookup,
-          ]),
+          .map((lookup) => [getResourceLookupKey(lookup), lookup]),
       ).values(),
     );
 
@@ -145,11 +146,16 @@ export const fetchResourcesByLookups = createAsyncThunk(
           )
             .trim()
             .toLowerCase();
-          const matchingLookup = normalizedLookups.find(
-            (lookup) =>
-              lookup.id === id &&
-              (!responseProvider || lookup.cloudProvider === responseProvider),
-          );
+          const matchingLookup =
+            normalizedLookups.find(
+              (lookup) => configId && lookup.configId === configId,
+            ) ??
+            normalizedLookups.find(
+              (lookup) =>
+                lookup.id === id &&
+                (!responseProvider ||
+                  lookup.cloudProvider === responseProvider),
+            );
 
           return {
             id,
@@ -208,7 +214,8 @@ const resourceSlice = createSlice({
       })
       .addCase(fetchResourceById.fulfilled, (state, action) => {
         state.loading = false;
-        state.resources[action.payload.id] = action.payload.data;
+        state.resources[getResourceLookupKey(action.payload)] =
+          action.payload.data;
       })
       .addCase(fetchResourcesByLookups.pending, (state) => {
         state.loading = true;
@@ -217,7 +224,7 @@ const resourceSlice = createSlice({
       .addCase(fetchResourcesByLookups.fulfilled, (state, action) => {
         state.loading = false;
         for (const item of action.payload.items) {
-          state.resources[item.id] = item.data;
+          state.resources[getResourceLookupKey(item)] = item.data;
         }
       })
       .addCase(fetchResourcesByLookups.rejected, (state, action) => {

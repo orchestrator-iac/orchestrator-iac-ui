@@ -442,7 +442,8 @@ export const reconstructNodeFromDB = (
       values: values,
       __nodeType: dbNode.__nodeType || dbNode.resourceId,
       __resourceId: dbNode.resourceId,
-      __configId: dbNode.configId,
+      __configId:
+        resourceTemplate?.configId || resourceTemplate?._id || dbNode.configId,
       isExpanded: dbNode.isExpanded ?? true, // Restore accordion state
       friendlyId: dbNode.friendlyId ?? (dbNode as any)?.friendly_id,
     },
