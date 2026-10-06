@@ -10,4 +10,17 @@ export default defineConfig({
       "@": "/src",
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Keep Ace's browser editor runtime separate from the CodeEditor
+          // wrapper. This is a cacheable editor dependency, not route logic.
+          if (id.includes("node_modules/ace-builds/src-noconflict/ace.js")) {
+            return "ace-core";
+          }
+        },
+      },
+    },
+  },
 });

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Box, Grid, Typography, useTheme } from "@mui/material";
 import type { Ace } from "ace-builds";
 
-import CodeEditor from "../../shared/code-editor/CodeEditor";
+import CodeEditor from "../../shared/code-editor/LazyCodeEditor";
 import { useThemeContext } from "../../shared/theme/useThemeContext";
 import CustomNode from "../../orchestrator/CustomNode";
 import type { OrchestratorNodeData } from "../../orchestrator/types";
