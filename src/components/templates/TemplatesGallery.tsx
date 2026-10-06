@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { RootState, AppDispatch } from "../../store";
 import {
   fetchTemplates,
+  MAX_TEMPLATE_FETCH_RETRIES,
   setSearchQuery,
   setSortBy,
 } from "../../store/templatesSlice";
@@ -188,7 +189,6 @@ const TemplatesGallery: React.FC = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null,
   );
-  const hasRetriedFailedLoad = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { items, total, status, hasMore, page, searchQuery, sortBy } =
@@ -248,33 +248,23 @@ const TemplatesGallery: React.FC = () => {
     return () => clearTimeout(timeout);
   }, []);
 
+  const loadFirstPage = useCallback(() => {
+    dispatch(
+      fetchTemplates({
+        page: 1,
+        size: PAGE_SIZE,
+        search: searchQuery || undefined,
+        sort: sortBy,
+      }),
+    );
+  }, [dispatch, searchQuery, sortBy]);
+
   useEffect(() => {
     // Reuse the catalog already held in Redux when revisiting the route.
-    // Only fetch on the first load, with one recovery retry after failure.
     if (status === "idle") {
-      dispatch(
-        fetchTemplates({
-          page: 1,
-          size: PAGE_SIZE,
-          search: searchQuery || undefined,
-          sort: sortBy,
-        }),
-      );
-      return;
+      loadFirstPage();
     }
-
-    if (status === "failed" && !hasRetriedFailedLoad.current) {
-      hasRetriedFailedLoad.current = true;
-      dispatch(
-        fetchTemplates({
-          page: 1,
-          size: PAGE_SIZE,
-          search: searchQuery || undefined,
-          sort: sortBy,
-        }),
-      );
-    }
-  }, [dispatch, searchQuery, sortBy, status]);
+  }, [loadFirstPage, status]);
 
   useEffect(() => {
     if (!selectedTemplateId && items[0]) {
@@ -330,7 +320,7 @@ const TemplatesGallery: React.FC = () => {
   };
 
   const loadMore = useCallback(() => {
-    if (status !== "loading" && hasMore) {
+    if (status === "succeeded" && hasMore) {
       dispatch(
         fetchTemplates({
           page: page + 1,
@@ -360,11 +350,13 @@ const TemplatesGallery: React.FC = () => {
   const selectedTemplate =
     items.find((template) => template.id === selectedTemplateId) || items[0];
 
+  const isLoadFailure = status === "failed";
+
   const renderEmptyState = () => (
     <Fade in timeout={600}>
       <Box className={styles.galleryEmpty} role="status" aria-live="polite">
         <span className={styles.galleryEmptyIndex}>00</span>
-        {!localSearch && (
+        {!localSearch && !isLoadFailure && (
           <Box className={styles.galleryEmptyFigure}>
             <iframe
               key={mode}
@@ -377,20 +369,28 @@ const TemplatesGallery: React.FC = () => {
             />
           </Box>
         )}
-        {localSearch && (
+        {(localSearch || isLoadFailure) && (
           <FontAwesomeIcon icon="search" aria-hidden="true" />
         )}
         <Typography component="h2">
-          {localSearch
-            ? 'No patterns match "' + localSearch + '".'
-            : "The gallery is ready for its first pattern."}
+          {isLoadFailure
+            ? "Templates are unavailable right now."
+            : localSearch
+              ? 'No patterns match "' + localSearch + '".'
+              : "The gallery is ready for its first pattern."}
         </Typography>
         <Typography component="p">
-          {localSearch
-            ? "Try a provider, service, or architecture keyword."
-            : "Design an architecture on the canvas, then publish it as a reusable starting point for the community."}
+          {isLoadFailure
+            ? `We tried ${MAX_TEMPLATE_FETCH_RETRIES + 1} times. Please try again in a moment.`
+            : localSearch
+              ? "Try a provider, service, or architecture keyword."
+              : "Design an architecture on the canvas, then publish it as a reusable starting point for the community."}
         </Typography>
-        {localSearch ? (
+        {isLoadFailure ? (
+          <Button variant="outlined" onClick={loadFirstPage}>
+            Try again
+          </Button>
+        ) : localSearch ? (
           <>
             <Box className={styles.gallerySearchSuggestions}>
               {["VPC", "EKS", "Lambda", "S3", "Aurora", "Terraform"].map(
@@ -638,7 +638,8 @@ const TemplatesGallery: React.FC = () => {
 
       {isLoading ? (
         renderLoadingState()
-      ) : items.length === 0 && status === "succeeded" ? (
+      ) : items.length === 0 &&
+        (status === "succeeded" || status === "failed") ? (
         renderEmptyState()
       ) : (
         <Box className={styles.galleryLayout} aria-busy={status === "loading"}>

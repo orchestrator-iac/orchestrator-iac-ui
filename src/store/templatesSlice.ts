@@ -5,6 +5,9 @@ import { TemplateListItem } from "../types/template";
 type SortBy = "popularity" | "newest";
 type Status = "idle" | "loading" | "succeeded" | "failed";
 
+/** Number of additional attempts after the initial request fails. */
+export const MAX_TEMPLATE_FETCH_RETRIES = 3;
+
 interface FetchTemplatesArg extends ListTemplatesParams {
   /** When true, append results to the existing list (infinite scroll).
    *  When false (default), replace the list (new search / sort reset). */
@@ -35,19 +38,27 @@ const initialState: TemplatesState = {
 
 export const fetchTemplates = createAsyncThunk(
   "templates/fetchTemplates",
-  async ({
-    page = 1,
-    size = 20,
-    search,
-    sort = "popularity",
-  }: FetchTemplatesArg) => {
-    const response = await templateService.listTemplates({
-      page,
-      size,
-      search,
-      sort,
-    });
-    return { response, page };
+  async (
+    { page = 1, size = 20, search, sort = "popularity" }: FetchTemplatesArg,
+    { signal },
+  ) => {
+    for (let retry = 0; retry <= MAX_TEMPLATE_FETCH_RETRIES; retry += 1) {
+      try {
+        const response = await templateService.listTemplates({
+          page,
+          size,
+          search,
+          sort,
+        });
+        return { response, page };
+      } catch (error) {
+        if (signal.aborted || retry === MAX_TEMPLATE_FETCH_RETRIES) {
+          throw error;
+        }
+      }
+    }
+
+    throw new Error("Failed to fetch templates");
   },
 );
 
@@ -83,7 +94,13 @@ const templatesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchTemplates.pending, (state) => {
+      .addCase(fetchTemplates.pending, (state, action) => {
+        if ((action.meta.arg.page ?? 1) === 1) {
+          state.items = [];
+          state.total = 0;
+          state.page = 1;
+          state.hasMore = true;
+        }
         state.status = "loading";
         state.error = null;
       })
