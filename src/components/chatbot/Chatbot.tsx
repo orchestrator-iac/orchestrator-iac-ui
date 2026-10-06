@@ -70,7 +70,6 @@ import DiffAlert from "./DiffAlert";
 import MicLevelVisualizer from "./MicLevelVisualizer";
 import usePageContext from "@/hooks/usePageContext";
 import MaestroRobot, { type MaestroRobotState } from "./MaestroRobot";
-import { IoMdClose } from "react-icons/io";
 import styles from "./Maestro.module.css";
 
 // ── Typing indicator ───────────────────────────────────────────────────────────
@@ -225,50 +224,6 @@ const computeMaestroState = ({
   if (isInputFocused || hasDraftInput) return "listening";
   return "idle";
 };
-
-// ── Floating launcher button ────────────────────────────────────────────────────
-
-interface MaestroLauncherButtonProps {
-  openChat: boolean;
-  maestroState: MaestroRobotState;
-  launcherRobotColor: string | undefined;
-  onToggle: () => void;
-}
-
-const MaestroLauncherButton: React.FC<MaestroLauncherButtonProps> = ({
-  openChat,
-  maestroState,
-  launcherRobotColor,
-  onToggle,
-}) => (
-  <Box className={styles.launcher}>
-    <Tooltip title={openChat ? "Close Maestro" : "Open Maestro"}>
-      <IconButton
-        className={styles.launcherButton}
-        aria-label={openChat ? "Close Maestro" : "Open Maestro"}
-        color="primary"
-        onClick={onToggle}
-        size="large"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 4,
-          "&:hover": { boxShadow: 6 },
-        }}
-      >
-        {openChat ? (
-          <IoMdClose size={36} />
-        ) : (
-          <MaestroRobot
-            state={maestroState}
-            size={36}
-            decorative
-            robotColor={launcherRobotColor}
-          />
-        )}
-      </IconButton>
-    </Tooltip>
-  </Box>
-);
 
 // ── Chat panel header ────────────────────────────────────────────────────────────
 
@@ -924,7 +879,12 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-const Chatbot: React.FC = () => {
+interface ChatbotProps {
+  openChat: boolean;
+  onClose: () => void;
+}
+
+const Chatbot: React.FC<ChatbotProps> = ({ openChat, onClose }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -944,7 +904,6 @@ const Chatbot: React.FC = () => {
     (s) => s.resources,
   );
 
-  const [openChat, setOpenChat] = useState(false);
   const [input, setInput] = useState("");
   const [notesOpen, setNotesOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -1027,9 +986,6 @@ const Chatbot: React.FC = () => {
   }, []);
 
   const handleToggleSplitView = () => {
-    if (!isSplitView) {
-      setOpenChat(true);
-    }
     toggleSplitView();
   };
 
@@ -1690,8 +1646,6 @@ const Chatbot: React.FC = () => {
     }
   };
 
-  const handleToggleLauncher = () => setOpenChat((o) => !o);
-
   const handleNewChat = () => {
     wantsNewSessionRef.current = true;
     setShowHistory(false);
@@ -1707,7 +1661,7 @@ const Chatbot: React.FC = () => {
 
   const handleCloseChat = () => {
     if (isSplitView) setSplitView(false);
-    setOpenChat(false);
+    onClose();
   };
 
   const handleSelectSession = (sessionId: string) => {
@@ -1729,7 +1683,6 @@ const Chatbot: React.FC = () => {
   const isWaitingForSessionSend =
     isCreatingSession && Boolean(pendingMessageRef.current);
   const hasDraftInput = input.trim().length > 0;
-  const launcherRobotColor = dark ? theme.palette.secondary.light : undefined;
   const headerRobotColor = dark
     ? theme.palette.secondary.light
     : theme.palette.primary.light;
@@ -1782,16 +1735,6 @@ const Chatbot: React.FC = () => {
 
   return (
     <>
-      {/* Floating launcher */}
-      {!isSplitView && (
-        <MaestroLauncherButton
-          openChat={openChat}
-          maestroState={maestroState}
-          launcherRobotColor={launcherRobotColor}
-          onToggle={handleToggleLauncher}
-        />
-      )}
-
       {/* Chat panel */}
       {(openChat || isSplitView) && (
         <Box
