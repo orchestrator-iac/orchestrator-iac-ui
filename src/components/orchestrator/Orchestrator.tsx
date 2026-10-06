@@ -67,6 +67,13 @@ import {
   PolicyScanSettings,
   ReconciliationResult,
 } from "../../types/orchestrator";
+import type { OrchestratorNodeHelpers } from "./types";
+import {
+  buildIncomingEdgesByTarget,
+  getChangedEdgeTargetIds,
+  updateNodeById,
+  updateNodesByIds,
+} from "./utils/canvasGraphUpdates";
 import { orchestratorService } from "../../services/orchestratorService";
 import { templateService } from "../../services/templateService";
 import { prepareOrchestratorForSave } from "../../utils/orchestratorUtils";
@@ -418,12 +425,12 @@ const applySingleCardinalityRule = (
 // mutating nextValues and reporting whether it changed.
 const applyLinkRuleToValues = (
   rule: any,
-  edges: Edge[],
+  incomingEdgesByTarget: ReadonlyMap<string, Edge[]>,
   nodeId: string,
   nextValues: Record<string, any>,
 ): boolean => {
   const edgeKind = rule?.edgeData?.kind ?? rule.bind;
-  const incoming = edges.filter(
+  const incoming = (incomingEdgesByTarget.get(nodeId) ?? []).filter(
     (e) => e.target === nodeId && (e.data?.kind ?? rule.bind) === edgeKind,
   );
 
@@ -436,7 +443,10 @@ const applyLinkRuleToValues = (
 // Recomputes a node's link-bound values from the current edges. Extracted
 // from the "sync edge-driven values" effect to keep nesting/cognitive
 // complexity within limits; logic is unchanged from the original inline code.
-const applyLinkRulesToNode = (node: Node, edges: Edge[]): Node => {
+const applyLinkRulesToNode = (
+  node: Node,
+  incomingEdgesByTarget: ReadonlyMap<string, Edge[]>,
+): Node => {
   const rules = (node.data as any)?.links ?? [];
   if (!Array.isArray(rules) || rules.length === 0) return node;
 
@@ -445,7 +455,9 @@ const applyLinkRulesToNode = (node: Node, edges: Edge[]): Node => {
   let changed = false;
 
   rules.forEach((rule: any) => {
-    if (applyLinkRuleToValues(rule, edges, node.id, nextValues)) {
+    if (
+      applyLinkRuleToValues(rule, incomingEdgesByTarget, node.id, nextValues)
+    ) {
       changed = true;
     }
   });
@@ -869,6 +881,26 @@ const OrchestratorReactFlow: React.FC = () => {
   }, [template_id, template_type, routeLoadAttempt]);
   const graphNodesRef = useRef<Node[]>(nodes);
   const graphEdgesRef = useRef<Edge[]>(edges);
+  const previousLinkEdgesRef = useRef<Edge[]>(edges);
+  const nodeHelpersCacheRef = useRef(
+    new Map<string, OrchestratorNodeHelpers>(),
+  );
+  const renderedNodeCacheRef = useRef(
+    new Map<
+      string,
+      {
+        sourceNode: Node;
+        type: string;
+        helpers: OrchestratorNodeHelpers;
+        validationErrors?: Record<string, string>;
+        driftFinding?: DriftFinding;
+        formHydrationReady: boolean;
+        formHydrationEnabled: boolean;
+        formHydrationDelayMs: number;
+        renderedNode: Node;
+      }
+    >(),
+  );
   graphNodesRef.current = nodes;
   graphEdgesRef.current = edges;
 
@@ -1650,7 +1682,17 @@ const OrchestratorReactFlow: React.FC = () => {
   }, [theme.palette.mode]);
 
   useEffect(() => {
-    setNodes((nds) => nds.map((n) => applyLinkRulesToNode(n, edges)));
+    const previousEdges = previousLinkEdgesRef.current;
+    previousLinkEdgesRef.current = edges;
+    const changedTargetIds = getChangedEdgeTargetIds(previousEdges, edges);
+    if (changedTargetIds.size === 0) return;
+
+    const incomingEdgesByTarget = buildIncomingEdgesByTarget(edges);
+    setNodes((nds) =>
+      updateNodesByIds(nds, changedTargetIds, (node) =>
+        applyLinkRulesToNode(node, incomingEdgesByTarget),
+      ),
+    );
   }, [edges, setNodes]);
 
   useEffect(() => {
@@ -2229,14 +2271,13 @@ const OrchestratorReactFlow: React.FC = () => {
 
       // mirror into target's bound field immediately
       setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== target.id) return n;
-          const currentValues = (n.data as any)?.values ?? {};
+        updateNodeById(nds, target.id, (node) => {
+          const currentValues = (node.data as any)?.values ?? {};
           if (cardinality === "1") {
             return {
-              ...n,
+              ...node,
               data: {
-                ...n.data,
+                ...node.data,
                 values: { ...currentValues, [rule.bind]: source.id },
               },
             };
@@ -2246,9 +2287,9 @@ const OrchestratorReactFlow: React.FC = () => {
             : [];
           const next = arr.includes(source.id) ? arr : [...arr, source.id];
           return {
-            ...n,
+            ...node,
             data: {
-              ...n.data,
+              ...node.data,
               values: { ...currentValues, [rule.bind]: next },
             },
           };
@@ -2320,8 +2361,8 @@ const OrchestratorReactFlow: React.FC = () => {
         : null;
 
       setNodes((nds) =>
-        nds.map((n) =>
-          computeNodeValuesForLinkChange(n, {
+        updateNodeById(nds, nodeId, (node) =>
+          computeNodeValuesForLinkChange(node, {
             nodeId,
             cardinality,
             baseBind,
@@ -2526,27 +2567,25 @@ const OrchestratorReactFlow: React.FC = () => {
       });
 
       setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== nodeId) return n;
-
+        updateNodeById(nds, nodeId, (node) => {
           // Special handling for accordion state
           if (name === "__isExpanded") {
             return {
-              ...n,
+              ...node,
               data: {
-                ...n.data,
+                ...node.data,
                 isExpanded: value,
-                values: { ...(n.data as any)?.values, [name]: value },
+                values: { ...(node.data as any)?.values, [name]: value },
               },
             };
           }
 
           // Regular field update
           return {
-            ...n,
+            ...node,
             data: {
-              ...n.data,
-              values: { ...(n.data as any)?.values, [name]: value },
+              ...node.data,
+              values: { ...(node.data as any)?.values, [name]: value },
             },
           };
         }),
@@ -2686,55 +2725,112 @@ const OrchestratorReactFlow: React.FC = () => {
     [],
   );
 
-  const nodesWithHelpers = useMemo(
-    () =>
-      nodes.map((n, nodeIndex) => {
-        const baseType = n.type ?? "customNode";
-        return {
-          ...n,
-          type: isArchitectureMode ? "architectureNode" : baseType,
-          data: {
-            ...n.data,
-            __helpers: {
-              getAllNodes,
-              // Adapter so child components can call (bind, newSourceId)
-              onLinkFieldChange: (
-                bind: string,
-                newSourceId: string,
-                context?: { objectSnapshot?: Record<string, any> },
-              ) =>
-                onLinkFieldChange({ nodeId: n.id, bind, newSourceId, context }),
-              onValuesChange: (name: string, value: any) =>
-                onValuesChange(n.id, name, value),
-              onCloneNode,
-              onDeleteNode,
-            },
-            __viewMode: isArchitectureMode ? "architecture" : "detailed",
-            __validationErrors: validationErrorsByNode[n.id],
-            __driftStatus: driftByNode[n.id]?.status,
-            __driftFindings: driftByNode[n.id]
-              ? [driftByNode[n.id]]
-              : undefined,
-            __formHydrationReady: !isRouteLoading && isCanvasHydrated,
-            __formHydrationEnabled: nodeIndex < INITIAL_FORM_HYDRATION_COUNT,
-            __formHydrationDelayMs: nodeIndex * FORM_HYDRATION_STAGGER_MS,
-          },
-        };
-      }),
-    [
-      nodes,
-      getAllNodes,
-      isCanvasHydrated,
-      isArchitectureMode,
-      isRouteLoading,
-      onLinkFieldChange,
-      onValuesChange,
-      onCloneNode,
-      onDeleteNode,
-      validationErrorsByNode,
-      driftByNode,
-    ],
-  );
+  const getNodeHelpers = useMemo(() => {
+    nodeHelpersCacheRef.current.clear();
+    return (nodeId: string): OrchestratorNodeHelpers => {
+      const cachedHelpers = nodeHelpersCacheRef.current.get(nodeId);
+      if (cachedHelpers) return cachedHelpers;
+
+      const helpers: OrchestratorNodeHelpers = {
+        getAllNodes,
+        // Adapter so child components can call (bind, newSourceId)
+        onLinkFieldChange: (
+          bind: string,
+          newSourceId: string,
+          context?: { objectSnapshot?: Record<string, any> },
+        ) => onLinkFieldChange({ nodeId, bind, newSourceId, context }),
+        onValuesChange: (name: string, value: any) =>
+          onValuesChange(nodeId, name, value),
+        onCloneNode,
+        onDeleteNode,
+      };
+      nodeHelpersCacheRef.current.set(nodeId, helpers);
+      return helpers;
+    };
+  }, [
+    getAllNodes,
+    onLinkFieldChange,
+    onValuesChange,
+    onCloneNode,
+    onDeleteNode,
+  ]);
+
+  const nodesWithHelpers = useMemo(() => {
+    const activeNodeIds = new Set<string>();
+    const renderedNodes = nodes.map((n, nodeIndex) => {
+      const baseType = n.type ?? "customNode";
+      const renderedType = isArchitectureMode ? "architectureNode" : baseType;
+      const helpers = getNodeHelpers(n.id);
+      const validationErrors = validationErrorsByNode[n.id];
+      const driftFinding = driftByNode[n.id];
+      const formHydrationReady = !isRouteLoading && isCanvasHydrated;
+      const formHydrationEnabled = nodeIndex < INITIAL_FORM_HYDRATION_COUNT;
+      const formHydrationDelayMs = nodeIndex * FORM_HYDRATION_STAGGER_MS;
+      activeNodeIds.add(n.id);
+
+      const cachedNode = renderedNodeCacheRef.current.get(n.id);
+      if (
+        cachedNode?.sourceNode === n &&
+        cachedNode.type === renderedType &&
+        cachedNode.helpers === helpers &&
+        cachedNode.validationErrors === validationErrors &&
+        cachedNode.driftFinding === driftFinding &&
+        cachedNode.formHydrationReady === formHydrationReady &&
+        cachedNode.formHydrationEnabled === formHydrationEnabled &&
+        cachedNode.formHydrationDelayMs === formHydrationDelayMs
+      ) {
+        return cachedNode.renderedNode;
+      }
+
+      const renderedNode: Node = {
+        ...n,
+        type: renderedType,
+        data: {
+          ...n.data,
+          __helpers: helpers,
+          __viewMode: isArchitectureMode ? "architecture" : "detailed",
+          __validationErrors: validationErrors,
+          __driftStatus: driftFinding?.status,
+          __driftFindings: driftFinding ? [driftFinding] : undefined,
+          __formHydrationReady: formHydrationReady,
+          __formHydrationEnabled: formHydrationEnabled,
+          __formHydrationDelayMs: formHydrationDelayMs,
+        },
+      };
+      renderedNodeCacheRef.current.set(n.id, {
+        sourceNode: n,
+        type: renderedType,
+        helpers,
+        validationErrors,
+        driftFinding,
+        formHydrationReady,
+        formHydrationEnabled,
+        formHydrationDelayMs,
+        renderedNode,
+      });
+      return renderedNode;
+    });
+
+    for (const nodeId of nodeHelpersCacheRef.current.keys()) {
+      if (!activeNodeIds.has(nodeId))
+        nodeHelpersCacheRef.current.delete(nodeId);
+    }
+    for (const nodeId of renderedNodeCacheRef.current.keys()) {
+      if (!activeNodeIds.has(nodeId)) {
+        renderedNodeCacheRef.current.delete(nodeId);
+      }
+    }
+
+    return renderedNodes;
+  }, [
+    nodes,
+    getNodeHelpers,
+    isCanvasHydrated,
+    isArchitectureMode,
+    isRouteLoading,
+    validationErrorsByNode,
+    driftByNode,
+  ]);
 
   return (
     <Box className={styles.editorShell}>
