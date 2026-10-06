@@ -551,6 +551,24 @@
   font-size: 2rem;
 }
 
+.galleryEmptyFigure {
+  width: min(100%, 400px);
+  height: 224px;
+  margin: calc(var(--product-space-4) * -1) auto var(--product-space-3);
+  overflow: hidden;
+  border-bottom: 1px solid var(--product-line-subtle);
+}
+
+.galleryEmptyFigure iframe {
+  display: block;
+  width: 400px;
+  height: 320px;
+  max-width: none;
+  border: 0;
+  transform: translateY(-36px) scale(0.92);
+  transform-origin: top center;
+}
+
 .galleryEmpty h2 {
   margin: 0;
   color: var(--product-text);
@@ -578,6 +596,17 @@
   justify-content: center;
   gap: 0.5rem;
   margin-bottom: var(--product-space-4);
+}
+
+@media (max-width: 520px) {
+  .galleryEmptyFigure {
+    height: 202px;
+    margin-inline: -8px;
+  }
+
+  .galleryEmptyFigure iframe {
+    transform: translate(-28px, -40px) scale(0.82);
+  }
 }
 
 .gallerySearchSuggestions .MuiChip-root {
