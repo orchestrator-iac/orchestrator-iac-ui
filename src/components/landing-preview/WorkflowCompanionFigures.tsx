@@ -38,8 +38,9 @@ const ResourceBlock: React.FC<{
 const ConfigureResourcesFigure: React.FC = () => (
   <div
     className="template-blueprint workflow-figure workflow-figure--configure"
-    role="img"
-    aria-label="Isometric architecture board with connected resources and one raised, highlighted resource"
+    role="group"
+    tabIndex={0}
+    aria-label="Isometric architecture board with connected resources. Hover or focus to seat the highlighted resource in its socket."
   >
     <svg viewBox="0 0 600 460" aria-hidden="true" focusable="false">
       <GroundGrid />
@@ -105,12 +106,9 @@ const ConfigureResourcesFigure: React.FC = () => (
         d="m270 301 30-16 30 16-30 16Z"
       />
       <ResourceBlock x={307} y={379} scale={0.87} />
-      <path
-        className="workflow-figure__lift-tether"
-        d="M300 277V119M340 277V119"
-      />
+      <path className="workflow-figure__lift-tether" d="M300 199v78" />
       <g className="workflow-figure__lift">
-        <ResourceBlock x={320} y={92} scale={1.4} highlighted />
+        <ResourceBlock x={300} y={122} scale={1.4} highlighted />
       </g>
     </svg>
   </div>

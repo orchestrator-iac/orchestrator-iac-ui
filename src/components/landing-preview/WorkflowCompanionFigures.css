@@ -85,14 +85,20 @@ body[data-theme="dark"] .workflow-figure {
 }
 
 .workflow-figure__lift {
-  transform-origin: 320px 119px;
-  transition: transform 700ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .workflow-figure__lift-tether {
   stroke: var(--blueprint-ink);
   stroke-width: 1.2;
   stroke-dasharray: 3 7;
+  transform-origin: 300px 277px;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.workflow-figure--configure:focus-visible {
+  outline: 2px solid var(--blueprint-mint);
+  outline-offset: 4px;
 }
 
 .workflow-figure__resource--highlight .workflow-figure__resource-top,
@@ -197,10 +203,6 @@ body[data-theme="dark"] .workflow-figure {
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .workflow-figure--configure:hover .workflow-figure__lift {
-    transform: translateY(-8px);
-  }
-
   .workflow-figure--review:hover .workflow-figure__terminal-row--second {
     transform: translateY(-3px);
   }
@@ -222,8 +224,21 @@ body[data-theme="dark"] .workflow-figure {
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .workflow-figure--configure:is(:hover, :focus-visible)
+    .workflow-figure__lift {
+    transform: translateY(68px);
+  }
+
+  .workflow-figure--configure:is(:hover, :focus-visible)
+    .workflow-figure__lift-tether {
+    transform: scaleY(0.13);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .workflow-figure__lift,
+  .workflow-figure__lift-tether,
   .workflow-figure__terminal-row {
     transition: none;
   }
