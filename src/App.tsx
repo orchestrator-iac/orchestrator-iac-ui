@@ -5,7 +5,7 @@ import "@fontsource/roboto/700.css";
 import "@xyflow/react/dist/style.css";
 import "./App.css";
 
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 
 import { Box } from "@mui/material";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
@@ -20,6 +20,7 @@ import "./config/fontAwesome";
 import Layout from "./components/shared/layout/Layout";
 import Header from "./components/shared/header/Header";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
+import ChatbotLauncher from "./components/chatbot/ChatbotLauncher";
 
 const Login = lazy(() => import("./components/auth/login/Login"));
 const Home = lazy(() => import("./components/home/Home"));
@@ -65,6 +66,31 @@ const RouteLoadingFallback = () => (
     aria-live="polite"
   >
     Loading workspace…
+  </Box>
+);
+
+const ChatbotLoadingFallback = () => (
+  <Box
+    sx={{
+      position: "fixed",
+      right: { xs: 16, md: 24 },
+      bottom: { xs: 86, md: 90 },
+      width: { xs: "calc(100vw - 32px)", sm: 360, md: 560 },
+      minHeight: 120,
+      display: "grid",
+      placeItems: "center",
+      border: "1px solid",
+      borderColor: "divider",
+      borderRadius: 3,
+      bgcolor: "background.paper",
+      color: "text.secondary",
+      boxShadow: 8,
+      zIndex: 1299,
+    }}
+    role="status"
+    aria-live="polite"
+  >
+    Loading Maestro…
   </Box>
 );
 
@@ -157,6 +183,21 @@ const AppShell: React.FC<{
     !isInitializing &&
     Boolean(token) &&
     !isMaestroDisabledRoute(location.pathname);
+  const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [chatbotLoaded, setChatbotLoaded] = useState(false);
+  const { setSplitView } = useChatLayout();
+
+  useEffect(() => {
+    if (!showChatbot) {
+      setChatbotOpen(false);
+      setSplitView(false);
+    }
+  }, [setSplitView, showChatbot]);
+
+  const handleChatbotToggle = () => {
+    setChatbotLoaded(true);
+    setChatbotOpen((current) => !current);
+  };
 
   useEffect(() => {
     if (!isPrivateSeoRoute(location.pathname)) {
@@ -288,7 +329,22 @@ const AppShell: React.FC<{
             </Routes>
           </Suspense>
         </Box>
-        {showChatbot && <Chatbot />}
+        {showChatbot && (
+          <>
+            <ChatbotLauncher
+              openChat={chatbotOpen}
+              onToggle={handleChatbotToggle}
+            />
+            {chatbotLoaded && (
+              <Suspense fallback={<ChatbotLoadingFallback />}>
+                <Chatbot
+                  openChat={chatbotOpen}
+                  onClose={() => setChatbotOpen(false)}
+                />
+              </Suspense>
+            )}
+          </>
+        )}
       </Box>
     </Box>
   );
