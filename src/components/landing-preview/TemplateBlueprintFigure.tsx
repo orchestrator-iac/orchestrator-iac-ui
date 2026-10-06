@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import "./TemplateBlueprintFigure.css";
 
 const CARD_POSES = [
-  [1.175, -0.565, 0.064, 0.56, 145, 242],
-  [1.175, -0.53, 0.155, 0.6, 178, 259],
-  [1.12, -0.53, 0.195, 0.65, 216, 271],
-  [0.965, -0.46, 0.315, 0.94, 298, 245],
+  [1.12, -0.53, 0.2, 0.7, 116, 211],
+  [1.12, -0.53, 0.2, 0.7, 166, 236],
+  [1.12, -0.53, 0.2, 0.7, 216, 261],
+  [1.12, -0.53, 0.2, 0.7, 266, 286],
 ] as const;
 
 const poseFor = (index: number, active: number | null): string => {
@@ -94,7 +94,7 @@ const TemplateBlueprintFigure: React.FC = () => {
         if (event.pointerType === "touch") return;
         const bounds = event.currentTarget.getBoundingClientRect();
         const x = ((event.clientX - bounds.left) / bounds.width) * 600;
-        setActiveCard(x < 210 ? 0 : x < 285 ? 1 : x < 360 ? 2 : 3);
+        setActiveCard(x < 225 ? 0 : x < 275 ? 1 : x < 325 ? 2 : 3);
       }}
       onPointerLeave={() => setActiveCard(null)}
       onBlur={() => setActiveCard(null)}
@@ -155,7 +155,7 @@ const TemplateBlueprintFigure: React.FC = () => {
           ))}
           <path
             className="template-blueprint__seat"
-            d="m346 450 204-98 25 8-205 103Z"
+            d="m298 438 226-110 24 8-226 111Z"
           />
           <g
             className={`template-blueprint__card template-blueprint__selected${activeCard === null || activeCard === 3 ? " template-blueprint__card--highlight" : ""}`}
@@ -169,8 +169,8 @@ const TemplateBlueprintFigure: React.FC = () => {
             <BlueprintSheet detailed />
           </g>
           <g className="template-blueprint__mounts">
-            <path d="m354 445 14-7 5 15-14 7ZM544 355l14-7 5 15-14 7Z" />
-            <path d="m354 445 5 2 14-7M359 447l5 14M544 355l5 2 14-7M549 357l5 14" />
+            <path d="m297 433 14-7 5 15-14 7ZM518 329l14-7 5 15-14 7Z" />
+            <path d="m297 433 5 2 14-7M302 435l5 14M518 329l5 2 14-7M523 331l5 14" />
           </g>
           <path
             className="template-blueprint__wall-left"
