@@ -28,6 +28,7 @@ import {
 import { TemplateListItem } from "../../types/template";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 import { useThemeContext } from "../shared/theme/useThemeContext";
+import TemplateConnectivityFigure from "./TemplateConnectivityFigure";
 import styles from "./Templates.module.css";
 
 const PAGE_SIZE = 20;
@@ -361,20 +362,25 @@ const TemplatesGallery: React.FC = () => {
             <iframe
               key={mode}
               title="An empty rack of infrastructure templates"
-              src={
-                "/hairline/template-rack.html" +
-                (mode === "light" || mode === "dark" ? "?theme=" + mode : "")
-              }
+              src={`/figure/template-rack.html?${new URLSearchParams({
+                ...(mode === "light" || mode === "dark" ? { theme: mode } : {}),
+                intensity: "1",
+              }).toString()}`}
               loading="lazy"
             />
           </Box>
         )}
-        {(localSearch || isLoadFailure) && (
+        {isLoadFailure && (
+          <Box className={styles.galleryFailureFigure}>
+            <TemplateConnectivityFigure />
+          </Box>
+        )}
+        {localSearch && !isLoadFailure && (
           <FontAwesomeIcon icon="search" aria-hidden="true" />
         )}
         <Typography component="h2">
           {isLoadFailure
-            ? "Templates are unavailable right now."
+            ? "The pattern library didn't answer."
             : localSearch
               ? 'No patterns match "' + localSearch + '".'
               : "The gallery is ready for its first pattern."}

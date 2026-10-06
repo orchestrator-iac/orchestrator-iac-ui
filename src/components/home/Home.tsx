@@ -27,6 +27,7 @@ import PublishTemplateDialog from "../orchestrator/publish-template/PublishTempl
 import { useAuth } from "../../context/AuthContext";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
 import ResourceIconView from "../shared/ResourceIconView";
+import WorkflowRailFigure from "./WorkflowRailFigure";
 import { hasRenderableResourceIcon } from "@/types/resourceIcon";
 import type { OrchestratorListItem } from "@/types/orchestrator";
 
@@ -745,10 +746,6 @@ const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
   onCreateNew,
 }) => {
   const theme = useTheme();
-  const emptyStateLogo =
-    theme.palette.mode === "dark"
-      ? "/hairline/workflow-rack-dark.svg"
-      : "/hairline/workflow-rack.svg";
 
   return (
     <Box className={styles.emptyStateShell}>
@@ -756,13 +753,7 @@ const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
         <Box role="status" aria-live="polite" className={styles.emptyState}>
           {!searchQuery ? (
             <Box className={styles.emptyStateFigure}>
-              <Box
-                component="img"
-                className={styles.emptyStateLogo}
-                src={emptyStateLogo}
-                alt=""
-                aria-hidden="true"
-              />
+              <WorkflowRailFigure dark={theme.palette.mode === "dark"} />
             </Box>
           ) : (
             <FontAwesomeIcon

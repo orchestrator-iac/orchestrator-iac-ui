@@ -189,7 +189,7 @@ function mount({ stage, svg, read }, value) {
     destroy: bag.dispose,
   };
 }
-hairline({
+figure({
   name: "template-rack",
   means: "Five empty blueprint cards wait in a rack; the card under the pointer stands up, but every card still holds zero patterns.",
   rules: [1, 2, 4, 5, 8, 9, 10],

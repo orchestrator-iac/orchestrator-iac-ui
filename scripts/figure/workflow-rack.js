@@ -105,4 +105,4 @@ function mount({ stage, svg, read }, value) {
   return { set: (next) => { stagger = next; }, destroy: bag.dispose };
 }
 
-hairline({ name: "workflow-rack", means: "Four empty workflow cards wait in a rack; the card under the pointer stands up, but every card still holds zero nodes.", rules: [1, 2, 4, 5, 8, 9, 10], range: [0, 42, 90], mount });
+figure({ name: "workflow-rack", means: "Four empty workflow cards wait in a rack; the card under the pointer stands up, but every card still holds zero nodes.", rules: [1, 2, 4, 5, 8, 9, 10], range: [0, 42, 90], mount });
