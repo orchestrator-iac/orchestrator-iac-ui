@@ -1,0 +1,164 @@
+.template-blueprint {
+  --blueprint-face: var(--preview-paper);
+  --blueprint-floor: var(--preview-bg);
+  --blueprint-wall: var(--preview-paper-deep);
+  --blueprint-edge: color-mix(
+    in srgb,
+    var(--preview-text) 65%,
+    var(--preview-bg)
+  );
+  --blueprint-ink: color-mix(
+    in srgb,
+    var(--preview-text) 44%,
+    var(--preview-bg)
+  );
+  --blueprint-mint: var(--preview-moss-dark);
+  width: 100%;
+  aspect-ratio: 600 / 460;
+}
+
+body[data-theme="dark"] .template-blueprint {
+  --blueprint-face: #202625;
+  --blueprint-floor: #141b1a;
+  --blueprint-wall: #1b2120;
+  --blueprint-edge: #bebcaf;
+  --blueprint-ink: #858b80;
+  --blueprint-mint: #acd9bd;
+}
+
+.template-blueprint svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.template-blueprint__ground {
+  stroke: var(--blueprint-ink);
+  stroke-width: 0.6;
+  opacity: 0.16;
+}
+
+.template-blueprint__floor,
+.template-blueprint__back-wall,
+.template-blueprint__wall-left,
+.template-blueprint__wall-front {
+  fill: var(--blueprint-floor);
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.1;
+}
+
+.template-blueprint__back-wall,
+.template-blueprint__wall-left {
+  fill: var(--blueprint-wall);
+}
+
+.template-blueprint__wall-front {
+  fill: var(--blueprint-face);
+}
+
+.template-blueprint__rim {
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.8;
+}
+
+.template-blueprint__crease,
+.template-blueprint__slots,
+.template-blueprint__handle {
+  fill: var(--blueprint-floor);
+  stroke: var(--blueprint-ink);
+  stroke-width: 0.8;
+}
+
+.template-blueprint__sheet-edge {
+  fill: var(--blueprint-floor);
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.2;
+}
+
+.template-blueprint__sheet {
+  fill: var(--blueprint-face);
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.5;
+}
+
+.template-blueprint__inset {
+  stroke: var(--blueprint-ink);
+  stroke-width: 0.7;
+  opacity: 0.45;
+}
+
+.template-blueprint__ink,
+.template-blueprint__block {
+  stroke: var(--blueprint-ink);
+  stroke-width: 1.2;
+}
+
+.template-blueprint__block {
+  fill: var(--blueprint-face);
+}
+
+.template-blueprint__fine-ink {
+  stroke: var(--blueprint-edge);
+  stroke-width: 0.45;
+  opacity: 0.5;
+}
+
+.template-blueprint__seat {
+  fill: var(--blueprint-wall);
+  stroke: var(--blueprint-ink);
+  stroke-width: 1.1;
+}
+
+.template-blueprint__card {
+  transform: var(--card-pose);
+  transform-origin: 0 0;
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.template-blueprint[data-riffling] .template-blueprint__card {
+  transition-duration: 460ms;
+}
+
+.template-blueprint__card--highlight .template-blueprint__sheet {
+  stroke: var(--blueprint-mint);
+  stroke-width: 2.8;
+}
+
+.template-blueprint:focus-visible {
+  outline: 2px solid var(--blueprint-mint);
+  outline-offset: 4px;
+}
+
+.template-blueprint__selected .template-blueprint__inset {
+  opacity: 0;
+}
+
+.template-blueprint__selected .template-blueprint__ink {
+  stroke: var(--blueprint-edge);
+}
+
+.template-blueprint__selected .template-blueprint__block {
+  stroke: var(--blueprint-edge);
+}
+
+.template-blueprint__mounts {
+  fill: color-mix(in srgb, var(--blueprint-mint) 60%, var(--blueprint-face));
+  stroke: var(--blueprint-mint);
+  stroke-width: 1.5;
+}
+
+.template-blueprint__handle-highlight {
+  stroke: var(--blueprint-mint);
+  stroke-width: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-blueprint__card {
+    transform: var(--card-rest-pose);
+    transition: none;
+  }
+}

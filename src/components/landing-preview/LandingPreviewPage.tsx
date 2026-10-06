@@ -13,6 +13,11 @@ import awsLogo from "../../assets/aws_logo.svg";
 import azureLogo from "../../assets/az_logo.svg";
 import gcpLogo from "../../assets/gcp_logo.svg";
 import "./LandingPreviewPage.css";
+import TemplateBlueprintFigure from "./TemplateBlueprintFigure";
+import {
+  ConfigureResourcesFigure,
+  ReviewOutputFigure,
+} from "./WorkflowCompanionFigures";
 
 const SITE_URL = "https://orchestrator.next-zen.dev";
 const PREVIEW_SEO = {
@@ -588,18 +593,21 @@ const workflow = [
     title: "Choose a template",
     description:
       "Start from a published architecture instead of a blank Terraform folder.",
+    figure: "template" as const,
   },
   {
     number: "02",
     title: "Configure the resources",
     description:
       "Shape the graph and complete provider-specific fields in structured forms.",
+    figure: "configure" as const,
   },
   {
     number: "03",
     title: "Review the output",
     description:
       "See warnings before export and take the generated Terraform into your process.",
+    figure: "review" as const,
   },
 ];
 
@@ -1135,12 +1143,17 @@ const WorkflowSection: React.FC = () => {
           {workflow.map((step, index) => (
             <React.Fragment key={step.number}>
               <article className="preview-workflow-step">
-                <span className="preview-workflow-step__number">
-                  {step.number}
-                </span>
-                <div>
-                  <h3>{step.title}</h3>
-                  <p>{step.description}</p>
+                {step.figure === "template" && <TemplateBlueprintFigure />}
+                {step.figure === "configure" && <ConfigureResourcesFigure />}
+                {step.figure === "review" && <ReviewOutputFigure />}
+                <div className="preview-workflow-step__copy">
+                  <span className="preview-workflow-step__number">
+                    {step.number}
+                  </span>
+                  <div>
+                    <h3>{step.title}</h3>
+                    <p>{step.description}</p>
+                  </div>
                 </div>
               </article>
               {index < workflow.length - 1 && (

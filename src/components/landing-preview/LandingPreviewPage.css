@@ -924,17 +924,24 @@ body[data-theme="dark"] .landing-preview .preview-providers img {
 
 .preview-workflow-list {
   display: grid;
-  grid-template-columns: 1fr 80px 1fr 80px 1fr;
-  align-items: center;
-  margin-top: 70px;
+  grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr) 64px minmax(0, 1fr);
+  align-items: end;
+  margin-top: 58px;
 }
 
 .preview-workflow-step {
   display: grid;
-  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+  min-width: 0;
+}
+
+.preview-workflow-step__copy {
+  display: grid;
+  min-height: 112px;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 18px;
   align-items: start;
-  min-height: 120px;
 }
 
 .preview-workflow-step h3,
@@ -956,6 +963,8 @@ body[data-theme="dark"] .landing-preview .preview-providers img {
 
 .preview-workflow-line {
   position: relative;
+  margin-right: 16px;
+  margin-bottom: 98px;
   display: block;
   height: 1px;
   background: var(--preview-line);
@@ -1493,13 +1502,20 @@ body[data-theme="dark"] .landing-preview .preview-providers img {
 
   .preview-workflow-step {
     min-height: 0;
+    gap: 14px;
     padding: 18px 0;
+  }
+
+  .preview-workflow-step__copy {
+    gap: 14px;
+    min-height: 0;
   }
 
   .preview-workflow-line {
     width: 1px;
     height: 32px;
     margin-left: 4px;
+    margin-bottom: 0;
   }
 
   .preview-workflow-line::after {
