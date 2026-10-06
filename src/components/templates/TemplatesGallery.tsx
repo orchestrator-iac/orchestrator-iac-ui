@@ -26,6 +26,7 @@ import {
 } from "../../store/templatesSlice";
 import { TemplateListItem } from "../../types/template";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
+import { useThemeContext } from "../shared/theme/useThemeContext";
 import styles from "./Templates.module.css";
 
 const PAGE_SIZE = 20;
@@ -180,6 +181,7 @@ const TemplatePreviewPanel: React.FC<TemplatePreviewPanelProps> = ({
 const TemplatesGallery: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { mode } = useThemeContext();
   const [localSearch, setLocalSearch] = useState("");
   const [showContent, setShowContent] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -362,10 +364,22 @@ const TemplatesGallery: React.FC = () => {
     <Fade in timeout={600}>
       <Box className={styles.galleryEmpty} role="status" aria-live="polite">
         <span className={styles.galleryEmptyIndex}>00</span>
-        <FontAwesomeIcon
-          icon={localSearch ? "search" : "layer-group"}
-          aria-hidden="true"
-        />
+        {!localSearch && (
+          <Box className={styles.galleryEmptyFigure}>
+            <iframe
+              key={mode}
+              title="An empty rack of infrastructure templates"
+              src={
+                "/hairline/template-rack.html" +
+                (mode === "light" || mode === "dark" ? "?theme=" + mode : "")
+              }
+              loading="lazy"
+            />
+          </Box>
+        )}
+        {localSearch && (
+          <FontAwesomeIcon icon="search" aria-hidden="true" />
+        )}
         <Typography component="h2">
           {localSearch
             ? 'No patterns match "' + localSearch + '".'
