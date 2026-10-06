@@ -55,7 +55,6 @@ const SORT_OPTIONS: { value: ResourceSortBy; label: string; icon: IconProp }[] =
 // so the badge count grows/shrinks with real usage instead of always
 // spotlighting a fixed number of cards.
 const POPULAR_USAGE_THRESHOLD = 3;
-const RESOURCE_CARD_FADE_TIMEOUT_MS = 400;
 
 const matchesCloudFilter = (
   resource: ResourceItem,
@@ -227,40 +226,35 @@ const LoadingSkeletonGrid: React.FC = () => {
                   ? alpha(theme.palette.common.white, 0.06)
                   : alpha(theme.palette.common.black, 0.06)
               }`,
-              animation: `sk-rise 0.5s ease ${i * 50}ms both`,
-              "@keyframes sk-rise": {
-                from: { opacity: 0, transform: "translateY(14px)" },
-                to: { opacity: 1, transform: "translateY(0)" },
-              },
             }}
           >
             <Skeleton
               variant="rectangular"
-              animation="wave"
+              animation={false}
               height={140}
               sx={{ borderRadius: "8px", mb: 1.5 }}
             />
             <Skeleton
               variant="text"
-              animation="wave"
+              animation={false}
               width="70%"
               sx={{ fontSize: "1rem", mb: 0.5 }}
             />
             <Skeleton
               variant="text"
-              animation="wave"
+              animation={false}
               width="100%"
               sx={{ fontSize: "0.875rem" }}
             />
             <Skeleton
               variant="text"
-              animation="wave"
+              animation={false}
               width="85%"
               sx={{ fontSize: "0.875rem", mb: 1.5 }}
             />
             <Skeleton
               variant="rounded"
-              animation="wave"
+              animation={false}
               width={80}
               height={28}
               sx={{ borderRadius: 1 }}
@@ -702,17 +696,15 @@ const ResourcesGallery: React.FC = () => {
         size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
         display="flex"
       >
-        <Fade in={showContent} timeout={RESOURCE_CARD_FADE_TIMEOUT_MS}>
-          <Box sx={{ width: "100%", display: "flex" }}>
-            <ResourceCard
-              resource={resource}
-              usageCount={usageById[resource.resourceId] || 0}
-              isPopular={
-                (usageById[resource.resourceId] || 0) >= POPULAR_USAGE_THRESHOLD
-              }
-            />
-          </Box>
-        </Fade>
+        <Box sx={{ width: "100%", display: "flex" }}>
+          <ResourceCard
+            resource={resource}
+            usageCount={usageById[resource.resourceId] || 0}
+            isPopular={
+              (usageById[resource.resourceId] || 0) >= POPULAR_USAGE_THRESHOLD
+            }
+          />
+        </Box>
       </Grid>
     ));
   }

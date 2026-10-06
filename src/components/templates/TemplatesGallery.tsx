@@ -422,34 +422,34 @@ const TemplatesGallery: React.FC = () => {
           <Skeleton
             className={styles.galleryLoadingNumber}
             variant="text"
-            animation="wave"
+            animation={false}
           />
           <Box className={styles.galleryLoadingCopy}>
             <Skeleton
               className={styles.galleryLoadingMeta}
               variant="text"
-              animation="wave"
+              animation={false}
             />
             <Skeleton
               className={styles.galleryLoadingTitle}
               variant="text"
-              animation="wave"
+              animation={false}
             />
             <Skeleton
               className={styles.galleryLoadingDescription}
               variant="text"
-              animation="wave"
+              animation={false}
             />
             <Skeleton
               className={styles.galleryLoadingFacts}
               variant="text"
-              animation="wave"
+              animation={false}
             />
           </Box>
           <Skeleton
             className={styles.galleryLoadingAction}
             variant="rounded"
-            animation="wave"
+            animation={false}
           />
         </Box>
       ))}
@@ -467,12 +467,12 @@ const TemplatesGallery: React.FC = () => {
           <Skeleton
             className={styles.galleryLoadingHeading}
             variant="text"
-            animation="wave"
+            animation={false}
           />
           <Skeleton
             className={styles.galleryLoadingCount}
             variant="text"
-            animation="wave"
+            animation={false}
           />
         </Box>
         {renderLoadingRows()}
@@ -482,44 +482,44 @@ const TemplatesGallery: React.FC = () => {
           <Skeleton
             className={styles.galleryLoadingLabel}
             variant="text"
-            animation="wave"
+            animation={false}
           />
           <Skeleton
             className={styles.galleryLoadingProvider}
             variant="text"
-            animation="wave"
+            animation={false}
           />
           <Skeleton
             className={styles.galleryLoadingButton}
             variant="rounded"
-            animation="wave"
+            animation={false}
           />
         </Box>
         <Skeleton
           className={styles.galleryPreviewSkeletonMedia}
           variant="rectangular"
-          animation="wave"
+          animation={false}
         />
         <Box className={styles.galleryPreviewSkeletonFooter}>
           <Skeleton
             className={styles.galleryLoadingPreviewTitle}
             variant="text"
-            animation="wave"
+            animation={false}
           />
           <Skeleton
             className={styles.galleryLoadingPreviewDescription}
             variant="text"
-            animation="wave"
+            animation={false}
           />
           <Skeleton
             className={styles.galleryLoadingPreviewDescriptionShort}
             variant="text"
-            animation="wave"
+            animation={false}
           />
           <Box className={styles.galleryPreviewSkeletonStats}>
-            <Skeleton variant="text" animation="wave" />
-            <Skeleton variant="text" animation="wave" />
-            <Skeleton variant="text" animation="wave" />
+            <Skeleton variant="text" animation={false} />
+            <Skeleton variant="text" animation={false} />
+            <Skeleton variant="text" animation={false} />
           </Box>
         </Box>
       </Box>
