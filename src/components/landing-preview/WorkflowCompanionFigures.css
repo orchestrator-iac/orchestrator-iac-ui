@@ -1,0 +1,230 @@
+.workflow-figure svg {
+  overflow: visible;
+}
+
+.workflow-figure {
+  --workflow-accent-top: #d5e8d7;
+  --workflow-accent-side: #b9d6c2;
+  --workflow-warning: var(--preview-clay);
+}
+
+body[data-theme="dark"] .workflow-figure {
+  --workflow-accent-top: #a9cfb7;
+  --workflow-accent-side: #6ea08a;
+}
+
+.workflow-figure__board-side {
+  fill: var(--blueprint-wall);
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.4;
+}
+
+.workflow-figure__board-top {
+  fill: var(--blueprint-floor);
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.4;
+}
+
+.workflow-figure__board-crease {
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.5;
+}
+
+.workflow-figure__board-grid {
+  stroke: var(--blueprint-ink);
+  stroke-width: 0.65;
+  opacity: 0.23;
+}
+
+.workflow-figure__wires {
+  stroke: var(--blueprint-ink);
+  stroke-width: 2;
+  stroke-dasharray: 4 8;
+}
+
+.workflow-figure__wire--highlight {
+  stroke: var(--blueprint-mint);
+  opacity: 0.8;
+}
+
+.workflow-figure__ports {
+  fill: var(--blueprint-mint);
+  stroke: var(--blueprint-floor);
+  stroke-width: 1.5;
+}
+
+.workflow-figure__resource-left,
+.workflow-figure__socket-side {
+  fill: var(--blueprint-wall);
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.7;
+}
+
+.workflow-figure__resource-right {
+  fill: var(--blueprint-floor);
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.7;
+}
+
+.workflow-figure__resource-top,
+.workflow-figure__socket-top {
+  fill: var(--blueprint-face);
+  stroke: var(--blueprint-edge);
+  stroke-width: 2;
+}
+
+.workflow-figure__fine,
+.workflow-figure__socket-core {
+  stroke: var(--blueprint-ink);
+  stroke-width: 1;
+}
+
+.workflow-figure__socket-core {
+  fill: var(--blueprint-floor);
+  stroke-width: 1.5;
+}
+
+.workflow-figure__lift {
+  transform-origin: 320px 119px;
+  transition: transform 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.workflow-figure__lift-tether {
+  stroke: var(--blueprint-ink);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 7;
+}
+
+.workflow-figure__resource--highlight .workflow-figure__resource-top,
+.workflow-figure__resource--highlight .workflow-figure__resource-left {
+  stroke: var(--blueprint-mint);
+  stroke-width: 2.8;
+}
+
+.workflow-figure__resource--highlight .workflow-figure__resource-top {
+  fill: var(--workflow-accent-top);
+}
+
+.workflow-figure__resource--highlight .workflow-figure__resource-left {
+  fill: var(--workflow-accent-side);
+}
+
+.workflow-figure__terminal-back {
+  fill: var(--blueprint-floor);
+  stroke: var(--blueprint-ink);
+  stroke-width: 1.5;
+}
+
+.workflow-figure__terminal-side {
+  fill: var(--blueprint-wall);
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.5;
+}
+
+.workflow-figure__terminal-face {
+  fill: var(--blueprint-face);
+  stroke: var(--blueprint-edge);
+  stroke-width: 2.4;
+}
+
+.workflow-figure__terminal-header {
+  fill: var(--blueprint-wall);
+}
+
+.workflow-figure__terminal-divider {
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.1;
+}
+
+.workflow-figure__terminal-controls {
+  stroke: var(--blueprint-edge);
+  stroke-width: 1.2;
+}
+
+.workflow-figure__terminal-controls circle,
+.workflow-figure__terminal-controls rect {
+  fill: var(--blueprint-floor);
+}
+
+.workflow-figure__terminal-inset {
+  stroke: var(--blueprint-ink);
+  stroke-width: 0.8;
+  opacity: 0.38;
+}
+
+.workflow-figure__terminal-row {
+  stroke: var(--blueprint-ink);
+  stroke-width: 1.8;
+  transition: transform 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.workflow-figure__terminal-row rect {
+  fill: var(--blueprint-face);
+}
+
+.workflow-figure__terminal-row circle {
+  fill: var(--blueprint-ink);
+}
+
+.workflow-figure__terminal-row--warning {
+  stroke: var(--workflow-warning);
+  stroke-width: 2;
+}
+
+.workflow-figure__terminal-row .workflow-figure__terminal-warning-bed {
+  fill: color-mix(in srgb, var(--workflow-warning) 13%, var(--blueprint-face));
+  opacity: 0.95;
+}
+
+.workflow-figure__terminal-warning-mark {
+  fill: none;
+  stroke: var(--workflow-warning);
+  stroke-width: 2.3;
+}
+
+.workflow-figure__terminal-row--ready {
+  stroke: var(--blueprint-mint);
+  stroke-width: 2;
+}
+
+.workflow-figure__terminal-row--ready circle {
+  fill: var(--blueprint-mint);
+}
+
+.workflow-figure__terminal-footer {
+  stroke: var(--blueprint-ink);
+  stroke-width: 1.1;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .workflow-figure--configure:hover .workflow-figure__lift {
+    transform: translateY(-8px);
+  }
+
+  .workflow-figure--review:hover .workflow-figure__terminal-row--second {
+    transform: translateY(-3px);
+  }
+
+  .workflow-figure--review:hover .workflow-figure__terminal-row--third {
+    transform: translateY(-5px);
+  }
+
+  .workflow-figure--review:hover .workflow-figure__terminal-row--fourth {
+    transform: translateY(-8px);
+  }
+
+  .workflow-figure--review:hover .workflow-figure__terminal-row--warning {
+    transform: translateY(-15px);
+  }
+
+  .workflow-figure--review:hover .workflow-figure__terminal-row--ready {
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-figure__lift,
+  .workflow-figure__terminal-row {
+    transition: none;
+  }
+}
