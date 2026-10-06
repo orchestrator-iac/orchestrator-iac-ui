@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hairline figure</title>
+<title>Figure</title>
 <link rel="icon" href="data:,">
 <style>
   :root { color-scheme: light; --ground: #ffffff; --ink: #232327; --muted: #6f6f78; --line: #e0e0e4; }
@@ -67,7 +67,7 @@
   <p id="error" role="alert" hidden></p>
 </main>
 <script id="hl-kernel">
-/* hairline kernel sha256:8e2abcbdf63c7755195ee942c39e9c8ea6a539d1147e986dd1c153559121f075 */
+/* figure kernel sha256:8e2abcbdf63c7755195ee942c39e9c8ea6a539d1147e986dd1c153559121f075 */
 /*
  * HL: everything a figure may call. Read this index; the code under it is the
  * package's src/core, unchanged, and a figure should not need to read it.
@@ -166,7 +166,7 @@ var HL = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // packages/hairline/src/core/kernel.ts
+  // packages/figure/src/core/kernel.ts
   var kernel_exports = {};
   __export(kernel_exports, {
     Cam: () => Cam,
@@ -215,7 +215,7 @@ var HL = (() => {
     unproj: () => unproj
   });
 
-  // packages/hairline/src/core/iso.ts
+  // packages/figure/src/core/iso.ts
   var clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   var lerp = (a, b, t) => a + (b - a) * t;
   var rad = (d) => d * Math.PI / 180;
@@ -347,7 +347,7 @@ var HL = (() => {
     };
   }
 
-  // packages/hairline/src/core/motion.ts
+  // packages/figure/src/core/motion.ts
   var reduced = false;
   var setReducedMotion = (on) => {
     reduced = on;
@@ -418,7 +418,7 @@ var HL = (() => {
   };
   var tdone = (tw, now) => reduced || now >= tw.t0 + tw.dur;
 
-  // packages/hairline/src/core/stage.ts
+  // packages/figure/src/core/stage.ts
   var NS = "http://www.w3.org/2000/svg";
   function mk(tag, attrs, parent) {
     const e = document.createElementNS(NS, tag);
@@ -576,29 +576,29 @@ var HL = (() => {
     };
   }
 
-  // packages/hairline/src/core/styles.ts
+  // packages/figure/src/core/styles.ts
   var LIGHT = { plate: "#ffffff", hi: "#232327", edge: "#a4a4ac", mid: "#c3c3c9", lo: "#e0e0e4" };
   var DARK = { plate: "#08090a", hi: "#d0d6e0", edge: "#5b5d64", mid: "#3e3e44", lo: "#29292d" };
   var KEYS = ["plate", "hi", "edge", "mid", "lo"];
-  var vars = (p) => KEYS.map((k) => `--hl-${k}:var(--hairline-${k},${p[k]});`).join("");
+  var vars = (p) => KEYS.map((k) => `--hl-${k}:var(--figure-${k},${p[k]});`).join("");
   var EASE = "cubic-bezier(0.5,0,0.1,1)";
-  var SVG = ":where([data-hairline]>svg)";
+  var SVG = ":where([data-figure]>svg)";
   function css(lightDark) {
     const both = Object.fromEntries(KEYS.map((k) => [k, `light-dark(${LIGHT[k]},${DARK[k]})`]));
     return [
       // the box, and the palette: light unless something below says otherwise
-      `:where([data-hairline]){display:block;position:relative;aspect-ratio:5/4;touch-action:pan-y;user-select:none;-webkit-user-select:none;--hl-sw:var(--hairline-stroke,0.9);${vars(LIGHT)}}`,
+      `:where([data-figure]){display:block;position:relative;aspect-ratio:5/4;touch-action:pan-y;user-select:none;-webkit-user-select:none;--hl-sw:var(--figure-stroke,0.9);${vars(LIGHT)}}`,
       // the page's color-scheme
-      lightDark ? `:where([data-hairline]){${vars(both)}}` : "",
+      lightDark ? `:where([data-figure]){${vars(both)}}` : "",
       // an ancestor that says dark
-      `:where(.dark,[data-theme="dark"]) :where([data-hairline]){${vars(DARK)}}`,
+      `:where(.dark,[data-theme="dark"]) :where([data-figure]){${vars(DARK)}}`,
       // the figure's own theme option
-      `:where([data-hairline][data-hairline-theme="light"]){${vars(LIGHT)}}`,
-      `:where([data-hairline][data-hairline-theme="dark"]){${vars(DARK)}}`,
-      `:where([data-hairline]:focus-visible){outline:1.5px solid var(--hl-hi);outline-offset:2px}`,
+      `:where([data-figure][data-figure-theme="light"]){${vars(LIGHT)}}`,
+      `:where([data-figure][data-figure-theme="dark"]){${vars(DARK)}}`,
+      `:where([data-figure]:focus-visible){outline:1.5px solid var(--hl-hi);outline-offset:2px}`,
       `${SVG}{position:absolute;inset:0;width:100%;height:100%;display:block}`,
       // Riffle's live region: read, not seen
-      `:where([data-hairline]>[data-hairline-live]){position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}`,
+      `:where([data-figure]>[data-figure-live]){position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}`,
       // the drawing: plates are filled with the plate colour and painted back to front
       `${SVG} :where(path,polygon,ellipse,line){fill:var(--hl-plate);stroke:var(--hl-mid);stroke-width:var(--hl-sw);vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;transition:stroke 260ms ${EASE}}`,
       `${SVG} :where(.nf){fill:none}`,
@@ -630,13 +630,13 @@ var HL = (() => {
       }
     }
     const style = doc.createElement("style");
-    style.setAttribute("data-hairline-style", "");
+    style.setAttribute("data-figure-style", "");
     style.textContent = text;
     (root.nodeType === 9 ? doc.head ?? doc.documentElement : root).appendChild(style);
   }
   return __toCommonJS(kernel_exports);
 })();
-/* /hairline kernel */
+/* /figure kernel */
 </script>
 <script id="hl-bench">
 /*
@@ -672,8 +672,8 @@ var HL = (() => {
   });
 
   let mounted = false;
-  window.hairline = (figure) => {
-    if (mounted) throw new Error("hairline: one figure per page.");
+  window.figure = (figure) => {
+    if (mounted) throw new Error("figure: one figure per page.");
     mounted = true;
     const stage = $("stage"), slider = $("intensity");
 
@@ -682,7 +682,7 @@ var HL = (() => {
     const at = (i) => Math.round((i <= 0.5 ? lo + (i / 0.5) * (mid - lo) : mid + ((i - 0.5) / 0.5) * (hi - mid)) * 1000) / 1000;
 
     HL.inject(document);
-    stage.setAttribute("data-hairline", figure.name);
+    stage.setAttribute("data-figure", figure.name);
     stage.setAttribute("role", "img");
     stage.setAttribute("aria-label", figure.means);
     const svg = HL.mk("svg", { viewBox: "0 0 400 320", "aria-hidden": "true" }, stage);
@@ -693,7 +693,7 @@ var HL = (() => {
       set textContent(value) { text = value == null ? "" : String(value); $("read").textContent = text; },
     };
 
-    document.title = "Hairline · " + figure.name;
+    document.title = "figure · " + figure.name;
     $("name").textContent = figure.name;
     $("means").textContent = figure.means;
     $("rules").textContent = figure.rules.map((n) => String(n).padStart(2, "0") + " " + RULES[n - 1]).join(" · ");
@@ -703,7 +703,7 @@ var HL = (() => {
     const handle = figure.mount({ stage, svg, read }, at(Number(slider.value)));
     if (text === null) read.textContent = "rest";
     slider.addEventListener("input", () => { show(); handle.set(at(Number(slider.value))); });
-    window.hairline.figure = handle;
+    window.figure.figure = handle;
 
     /* ?at=200,160 holds the pointer at a viewBox point, for a picture of the answer without a mouse */
     const p = (params.get("at") || "").split(",").map(Number);
@@ -719,203 +719,113 @@ var HL = (() => {
 </script>
 <script type="module" id="hl-figure">
 const { Cam, clamp, facing, fillet, fit, hull, open, poly, proj, rad, ringAt, rrect, run, tdone, tset, tval, tween, disposer, mk, pointer, reflect, register } = HL;
-const N = 5, W = 82, H = 56, G = 15;
-const TAB_W = 24;
-const TAB_H = 7;
-const TAB_X = [7, 30, 53];
-const REST = [-11, -7, -13, -8, -12];
-const REST_LIFT = [1.5, 0, 2.5, 0.5, 1.5];
-const BACK = -26;
-const FWD = 22;
-const LIFT = 17;
-const X0 = -6;
-const X1 = W + 6;
-const Y0 = -10;
-const Y1 = (N - 1) * G + 10;
-const TRAY_H = 18;
-const TRAY_R = 6;
-const TRAY_WALL = 2.4;
-const REST_MARK = 2;
+const N = 4, W = 86, H = 54, G = 18, TAB_W = 25, TAB_H = 7;
+const TAB_X = [7, 31, 55], REST = [-10, -7, -12, -8], REST_LIFT = [1, 0, 2, 0.5];
+const BACK = -25, FWD = 21, LIFT = 17, X0 = -6, X1 = W + 6, Y0 = -10, Y1 = (N - 1) * G + 10;
+const TRAY_H = 18, TRAY_R = 6, TRAY_WALL = 2.4, REST_MARK = 1;
 const LR = (points) => points[0][0] <= points[points.length - 1][0] ? points : points.slice().reverse();
+
 function tray(P, front, outer, inner) {
   const far = [
     [poly(hull(ringAt(P, outer, 0).concat(ringAt(P, outer, TRAY_H)))), "sil"],
     [poly(ringAt(P, inner, TRAY_H)), "nf"],
-    [open(ringAt(P, run(inner, (point) => !front(point)), 2.5)), "nf lo"],
+    [open(ringAt(P, run(inner, (q) => !front(q)), 2.5)), "nf lo"],
   ];
   const innerFront = LR(ringAt(P, run(inner, front), TRAY_H));
   const outerTop = LR(ringAt(P, run(outer, front), TRAY_H));
   const outerBottom = LR(ringAt(P, run(outer, front), 0));
+  const onFront = (ring) => ring.map((q) => P(q.u, Y1, q.v));
   const handleX = (X0 + X1) / 2;
-  const onFront = (ring) => ring.map((point) => P(point.u, Y1, point.v));
   const near = [
-    [
-      poly([
-        ...innerFront,
-        outerTop[outerTop.length - 1],
-        ...outerBottom.slice().reverse(),
-        outerTop[0],
-      ]),
-      "fo",
-    ],
+    [poly([...innerFront, outerTop.at(-1), ...outerBottom.slice().reverse(), outerTop[0]]), "fo"],
     [open(outerTop), "nf lo"],
     [open(innerFront), "nf"],
-    [open([outerTop[0], ...outerBottom, outerTop[outerTop.length - 1]]), "nf sil"],
+    [open([outerTop[0], ...outerBottom, outerTop.at(-1)]), "nf sil"],
     [poly(onFront(rrect(handleX - 11, 6.5, handleX + 11, 12.5, 3, 5))), "nf"],
     [poly(onFront(rrect(handleX - 9.4, 8, handleX + 9.4, 11, 1.5, 5))), "nf lo"],
   ];
   return { far, near };
 }
+
 function cardShape(i) {
   const tab = TAB_X[(N - 1 - i) % TAB_X.length];
-  const shape = fillet(
-    [
-      [0, 0],
-      [W, 0],
-      [W, H],
-      [tab + TAB_W, H],
-      [tab + TAB_W, H + TAB_H],
-      [tab, H + TAB_H],
-      [tab, H],
-      [0, H],
-    ],
-    [1, 1, 3.2, 1.8, 2.4, 2.4, 1.8, 3.2],
-  );
+  const shape = fillet([[0, 0], [W, 0], [W, H], [tab + TAB_W, H], [tab + TAB_W, H + TAB_H], [tab, H + TAB_H], [tab, H], [0, H]], [1, 1, 3.2, 1.8, 2.4, 2.4, 1.8, 3.2]);
   return { tab, shape };
 }
+
 function pose(P, shape, tab, row, angle, lift) {
-  const yb = row * G;
-  const sine = Math.sin(rad(angle));
-  const cosine = Math.cos(rad(angle));
+  const yb = row * G, sine = Math.sin(rad(angle)), cosine = Math.cos(rad(angle));
   const point = (u, v) => P(u, yb + v * sine, v * cosine + lift);
-  const back = (u, v) => P(u, yb + v * sine - 2.2 * cosine, v * cosine + 2.2 * sine + lift);
   const line = (u, v) => open([point(u, v), point(W - u, v)]);
   return {
-    back: poly(shape.map((part) => back(part[0], part[1]))),
-    face: poly(shape.map((part) => point(part[0], part[1]))),
+    back: poly(shape.map((q) => P(q[0], yb + q[1] * sine - 2.2 * cosine, q[1] * cosine + 2.2 * sine + lift))),
+    face: poly(shape.map((q) => point(q[0], q[1]))),
     crease: line(6, H - 10),
     detail: line(8, H - 20) + line(8, H - 28),
-    tab: poly([
-      point(tab + 3, H + 1.5),
-      point(tab + TAB_W - 3, H + 1.5),
-      point(tab + TAB_W - 3, H + TAB_H - 2),
-      point(tab + 3, H + TAB_H - 2),
-    ]),
+    tab: poly([point(tab + 3, H + 1.5), point(tab + TAB_W - 3, H + 1.5), point(tab + TAB_W - 3, H + TAB_H - 2), point(tab + 3, H + TAB_H - 2)]),
   };
 }
+
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let stagger = value;
   const camera = Cam(45, 0.5, 1.67);
-  fit(
-    camera,
-    [
-      [X0, Y0, 0],
-      [X1, Y1, -8],
-      [X0, Y0, H + TAB_H],
-      [X1, Y0, H + TAB_H + LIFT],
-    ],
-    200,
-    166,
-  );
-  const P = proj(camera);
-  const front = facing(camera);
+  fit(camera, [[X0, Y0, 0], [X1, Y1, -8], [X0, Y0, H + TAB_H], [X1, Y0, H + TAB_H + LIFT]], 200, 166);
+  const P = proj(camera), front = facing(camera);
   const outer = rrect(X0, Y0, X1, Y1, TRAY_R, 6);
   const inner = rrect(X0 + TRAY_WALL, Y0 + TRAY_WALL, X1 - TRAY_WALL, Y1 - TRAY_WALL, TRAY_R - TRAY_WALL, 6);
-  const paths = tray(P, front, outer, inner);
-  const group = mk("g", {}, svg);
+  const paths = tray(P, front, outer, inner), group = mk("g", {}, svg);
   reflect(svg, group, P, front, outer, 0, 14);
-  for (const [d, cls] of paths.far) mk("path", { d, class: cls }, group);
+  paths.far.forEach(([d, cls]) => mk("path", { d, class: cls }, group));
   const cards = [];
   for (let i = 0; i < N; i += 1) {
-    const { tab, shape } = cardShape(i);
-    const cardGroup = mk("g", {}, group);
-    cards.push({
-      tab,
-      shape,
-      back: mk("path", { class: "lo" }, cardGroup),
-      face: mk("path", { class: "sil" }, cardGroup),
-      crease: mk("path", { class: "nf" }, cardGroup),
-      detail: mk("path", { class: "nf lo" }, cardGroup),
-      tabPath: mk("path", { class: "nf lo" }, cardGroup),
-      angle: tween(REST[i]),
-      lift: tween(REST_LIFT[i]),
-    });
+    const { tab, shape } = cardShape(i), cardGroup = mk("g", {}, group);
+    cards.push({ tab, shape, back: mk("path", { class: "lo" }, cardGroup), face: mk("path", { class: "sil" }, cardGroup), crease: mk("path", { class: "nf" }, cardGroup), detail: mk("path", { class: "nf lo" }, cardGroup), tabPath: mk("path", { class: "nf lo" }, cardGroup), angle: tween(REST[i]), lift: tween(REST_LIFT[i]) });
   }
-  for (const [d, cls] of paths.near) mk("path", { d, class: cls }, group);
+  paths.near.forEach(([d, cls]) => mk("path", { d, class: cls }, group));
+
   const top = (i) => P(W / 2, i * G + H * Math.sin(rad(REST[i])), H * Math.cos(rad(REST[i])));
-  const c0 = top(0);
-  const c1 = top(1);
-  const direction = [c1[0] - c0[0], c1[1] - c0[1]];
-  const px0 = P(0, 0, 0);
-  const px1 = P(1, 0, 0);
-  const across = [px1[0] - px0[0], px1[1] - px0[1]];
-  const half = W / 2 + 6;
-  const determinant = direction[0] * across[1] - direction[1] * across[0];
+  const c0 = top(0), c1 = top(1), direction = [c1[0] - c0[0], c1[1] - c0[1]];
+  const px0 = P(0, 0, 0), px1 = P(1, 0, 0), across = [px1[0] - px0[0], px1[1] - px0[1]];
+  const half = W / 2 + 6, determinant = direction[0] * across[1] - direction[1] * across[0];
   function hit([x, y]) {
-    const qx = x - c0[0];
-    const qy = y - c0[1];
-    const s = (qx * across[1] - qy * across[0]) / determinant;
-    const r = (direction[0] * qy - direction[1] * qx) / determinant;
+    const qx = x - c0[0], qy = y - c0[1];
+    const s = (qx * across[1] - qy * across[0]) / determinant, r = (direction[0] * qy - direction[1] * qx) / determinant;
     if (Math.abs(r) > half || s < -0.5 || s > N + 1) return -1;
     return clamp(Math.round(s), 0, N - 1);
   }
   function draw(i, angle, lift) {
-    const card = cards[i];
-    const next = pose(P, card.shape, card.tab, i, angle, lift);
-    card.back.setAttribute("d", next.back);
-    card.face.setAttribute("d", next.face);
-    card.crease.setAttribute("d", next.crease);
-    card.detail.setAttribute("d", next.detail);
-    card.tabPath.setAttribute("d", next.tab);
+    const card = cards[i], next = pose(P, card.shape, card.tab, i, angle, lift);
+    card.back.setAttribute("d", next.back); card.face.setAttribute("d", next.face); card.crease.setAttribute("d", next.crease); card.detail.setAttribute("d", next.detail); card.tabPath.setAttribute("d", next.tab);
   }
   const clock = register(stage, (_dt, now) => {
     let moving = false;
-    cards.forEach((card, i) => {
-      draw(i, tval(card.angle, now), tval(card.lift, now));
-      if (!tdone(card.angle, now) || !tdone(card.lift, now)) moving = true;
-    });
+    cards.forEach((card, i) => { draw(i, tval(card.angle, now), tval(card.lift, now)); if (!tdone(card.angle, now) || !tdone(card.lift, now)) moving = true; });
     return moving;
   });
   bag.add(clock.unregister);
   let active = -1;
   function setActive(next) {
     if (next === active) return;
-    const now = performance.now();
-    const from = next >= 0 ? next : active;
+    const now = performance.now(), from = next >= 0 ? next : active;
     active = next;
     cards.forEach((card, i) => {
       const delay = Math.abs(i - from) * stagger;
-      const angle = next < 0 ? REST[i] : i < next ? BACK : i > next ? FWD : 0;
-      const lift = next < 0 ? REST_LIFT[i] : i === next ? LIFT : 0;
-      tset(card.angle, angle, now, delay);
-      tset(card.lift, lift, now, delay);
+      tset(card.angle, next < 0 ? REST[i] : i < next ? BACK : i > next ? FWD : 0, now, delay);
+      tset(card.lift, next < 0 ? REST_LIFT[i] : i === next ? LIFT : 0, now, delay);
       const highlighted = next < 0 ? i === REST_MARK : i === next;
-      card.face.classList.toggle("hi", highlighted);
-      card.crease.classList.toggle("hi", highlighted);
+      card.face.classList.toggle("hi", highlighted); card.crease.classList.toggle("hi", highlighted);
     });
-    read.textContent = next < 0 ? "rest" : "template " + (next + 1) + " · 0";
+    read.textContent = next < 0 ? "rest" : "workflow " + (next + 1) + " · 0";
     clock.wake();
   }
-  cards[REST_MARK].face.classList.add("hi");
-  cards[REST_MARK].crease.classList.add("hi");
-  read.textContent = "rest";
+  cards[REST_MARK].face.classList.add("hi"); cards[REST_MARK].crease.classList.add("hi"); read.textContent = "rest";
   bag.add(pointer(stage, { move: (point) => setActive(hit(point)), leave: () => setActive(-1) }));
   bag.add(() => svg.replaceChildren());
-  return {
-    set: (next) => {
-      stagger = next;
-    },
-    destroy: bag.dispose,
-  };
+  return { set: (next) => { stagger = next; }, destroy: bag.dispose };
 }
-hairline({
-  name: "template-rack",
-  means: "Five empty blueprint cards wait in a rack; the card under the pointer stands up, but every card still holds zero patterns.",
-  rules: [1, 2, 4, 5, 8, 9, 10],
-  range: [0, 42, 90],
-  mount,
-});
+
+figure({ name: "workflow-rack", means: "Four empty workflow cards wait in a rack; the card under the pointer stands up, but every card still holds zero nodes.", rules: [1, 2, 4, 5, 8, 9, 10], range: [0, 42, 90], mount });
 </script>
 </body>
 </html>

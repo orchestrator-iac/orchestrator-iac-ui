@@ -774,16 +774,20 @@
 .emptyStateFigure {
   display: flex;
   width: min(100%, 240px);
-  height: 160px;
+  height: auto;
+  min-height: 160px;
   margin: -8px auto var(--product-space-2);
   align-items: center;
   justify-content: center;
 }
 
-.emptyStateLogo {
+.emptyStateFigure :global(.workflowRailFigure) {
   display: block;
   width: 100%;
   height: auto;
+  aspect-ratio: 5 / 4;
+  touch-action: pan-y;
+  user-select: none;
 }
 
 .emptyStateTitle {
