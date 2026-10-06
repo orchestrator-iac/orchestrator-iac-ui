@@ -772,20 +772,18 @@
 }
 
 .emptyStateFigure {
-  width: min(100%, 400px);
-  height: 202px;
-  margin: -16px auto 4px;
-  overflow: hidden;
+  display: flex;
+  width: min(100%, 240px);
+  height: 160px;
+  margin: -8px auto var(--product-space-2);
+  align-items: center;
+  justify-content: center;
 }
 
-.emptyStateFigure iframe {
+.emptyStateLogo {
   display: block;
-  width: 400px;
-  height: 320px;
-  max-width: none;
-  border: 0;
-  transform: translateY(-42px) scale(0.82);
-  transform-origin: top center;
+  width: 100%;
+  height: auto;
 }
 
 .emptyStateTitle {

@@ -26,7 +26,6 @@ import apiService from "../../services/apiService";
 import PublishTemplateDialog from "../orchestrator/publish-template/PublishTemplateDialog";
 import { useAuth } from "../../context/AuthContext";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
-import { useThemeContext } from "../shared/theme/useThemeContext";
 import ResourceIconView from "../shared/ResourceIconView";
 import { hasRenderableResourceIcon } from "@/types/resourceIcon";
 import type { OrchestratorListItem } from "@/types/orchestrator";
@@ -745,7 +744,11 @@ const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
   canCreateOrchestrators,
   onCreateNew,
 }) => {
-  const { mode } = useThemeContext();
+  const theme = useTheme();
+  const emptyStateLogo =
+    theme.palette.mode === "dark"
+      ? "/hairline/workflow-rack-dark.svg"
+      : "/hairline/workflow-rack.svg";
 
   return (
     <Box className={styles.emptyStateShell}>
@@ -753,14 +756,12 @@ const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
         <Box role="status" aria-live="polite" className={styles.emptyState}>
           {!searchQuery ? (
             <Box className={styles.emptyStateFigure}>
-              <iframe
-                key={mode}
-                title="An empty rack of infrastructure workflows"
-                src={
-                  "/hairline/workflow-rack.html" +
-                  (mode === "light" || mode === "dark" ? "?theme=" + mode : "")
-                }
-                loading="lazy"
+              <Box
+                component="img"
+                className={styles.emptyStateLogo}
+                src={emptyStateLogo}
+                alt=""
+                aria-hidden="true"
               />
             </Box>
           ) : (
