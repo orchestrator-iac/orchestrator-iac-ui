@@ -5,16 +5,6 @@ import * as ace from "ace-builds";
 import workerJsonUrl from "ace-builds/src-noconflict/worker-json?url";
 import workerJavascriptUrl from "ace-builds/src-noconflict/worker-javascript?url";
 import workerYamlUrl from "ace-builds/src-noconflict/worker-yaml?url";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/mode-text";
-import "ace-builds/src-noconflict/mode-yaml";
-import "ace-builds/src-noconflict/mode-javascript";
-import "ace-builds/src-noconflict/mode-sh";
-import "ace-builds/src-noconflict/theme-monokai";
-import "ace-builds/src-noconflict/theme-github";
-import "ace-builds/src-noconflict/ext-language_tools";
-import "ace-builds/src-noconflict/ext-searchbox";
-import "ace-builds/src-noconflict/ext-beautify";
 
 import styles from "./CodeEditor.module.css";
 import { Box, Typography, useMediaQuery } from "@mui/material";
@@ -25,7 +15,20 @@ ace.config.setModuleUrl("ace/mode/json_worker", workerJsonUrl);
 ace.config.setModuleUrl("ace/mode/javascript_worker", workerJavascriptUrl);
 ace.config.setModuleUrl("ace/mode/yaml_worker", workerYamlUrl);
 
-interface CodeEditorProps {
+const aceExtensionsReady = Promise.all([
+  import("ace-builds/src-noconflict/mode-json"),
+  import("ace-builds/src-noconflict/mode-text"),
+  import("ace-builds/src-noconflict/mode-yaml"),
+  import("ace-builds/src-noconflict/mode-javascript"),
+  import("ace-builds/src-noconflict/mode-sh"),
+  import("ace-builds/src-noconflict/theme-monokai"),
+  import("ace-builds/src-noconflict/theme-github"),
+  import("ace-builds/src-noconflict/ext-language_tools"),
+  import("ace-builds/src-noconflict/ext-searchbox"),
+  import("ace-builds/src-noconflict/ext-beautify"),
+]);
+
+export interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   language?: string; // e.g. "json", "yaml", "javascript"
@@ -61,14 +64,37 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const containerClass =
     effectiveMode === "dark" ? styles.darkTheme : styles.lightTheme;
 
+  const [aceReady, setAceReady] = React.useState(false);
+
   useEffect(() => {
+    let active = true;
+    void aceExtensionsReady.then(() => {
+      if (active) setAceReady(true);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!aceReady) return;
+
     const langTools = ace.require("ace/ext/language_tools");
     langTools.setCompleters([]);
 
     for (const completer of completers) {
       langTools.addCompleter(completer);
     }
-  }, [completers]);
+  }, [aceReady, completers]);
+
+  if (!aceReady) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        Loading code editor…
+      </Typography>
+    );
+  }
 
   return (
     <>

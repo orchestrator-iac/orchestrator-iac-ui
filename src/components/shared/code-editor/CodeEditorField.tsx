@@ -1,9 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useThemeContext } from "../theme/useThemeContext";
 import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
-
-const CodeEditor = lazy(() => import("./CodeEditor"));
+import LazyCodeEditor from "./LazyCodeEditor";
 
 const toEditorValue = (val: any) => {
   if (val === null || val === undefined) return ""; // empty editor
@@ -48,23 +46,15 @@ export const CodeEditorField: React.FC<{
 
   return (
     <Grid size={12}>
-      <Suspense
-        fallback={
-          <Typography variant="body2" color="text.secondary">
-            Loading code editor…
-          </Typography>
-        }
-      >
-        <CodeEditor
-          value={resourceNodeTemp}
-          onChange={setResourceNodeTemp}
-          language="json"
-          themeMode={mode}
-          placeholder={placeholder}
-          errorMessage={tempErrorMessage}
-          height={height ?? "calc(50vh)"}
-        />
-      </Suspense>
+      <LazyCodeEditor
+        value={resourceNodeTemp}
+        onChange={setResourceNodeTemp}
+        language="json"
+        themeMode={mode}
+        placeholder={placeholder}
+        errorMessage={tempErrorMessage}
+        height={height ?? "calc(50vh)"}
+      />
     </Grid>
   );
 };

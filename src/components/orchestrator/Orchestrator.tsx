@@ -23,7 +23,9 @@ import {
   Panel,
 } from "@xyflow/react";
 import { useDispatch, useSelector } from "react-redux";
-import ELK, { ElkNode } from "elkjs/lib/elk.bundled.js";
+import ELK from "elkjs/lib/elk-api.js";
+import type { ElkNode } from "elkjs/lib/elk-api.js";
+import elkWorkerUrl from "elkjs/lib/elk-worker.min.js?url";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { useTheme } from "@mui/material/styles";
@@ -101,7 +103,7 @@ import styles from "./Orchestrator.module.css";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
-const elk = new ELK();
+const elk = new ELK({ workerUrl: elkWorkerUrl });
 const RESOURCE_BATCH_TIMEOUT_MS = 8_000;
 const RESOURCE_FALLBACK_TIMEOUT_MS = 2_000;
 const ROUTE_LOAD_TIMEOUT_MS = 15_000;
