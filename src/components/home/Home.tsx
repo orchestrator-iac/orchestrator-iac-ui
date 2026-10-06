@@ -26,6 +26,7 @@ import apiService from "../../services/apiService";
 import PublishTemplateDialog from "../orchestrator/publish-template/PublishTemplateDialog";
 import { useAuth } from "../../context/AuthContext";
 import { useGuidedTour } from "../shared/guidance/ProductGuidanceProvider";
+import { useThemeContext } from "../shared/theme/useThemeContext";
 import ResourceIconView from "../shared/ResourceIconView";
 import { hasRenderableResourceIcon } from "@/types/resourceIcon";
 import type { OrchestratorListItem } from "@/types/orchestrator";
@@ -744,16 +745,32 @@ const OrchestratorsEmptyState: React.FC<OrchestratorsEmptyStateProps> = ({
   canCreateOrchestrators,
   onCreateNew,
 }) => {
+  const { mode } = useThemeContext();
+
   return (
     <Box className={styles.emptyStateShell}>
       <Fade in={showContent} timeout={1200}>
         <Box role="status" aria-live="polite" className={styles.emptyState}>
-          <FontAwesomeIcon
-            icon="sitemap"
-            size="3x"
-            aria-hidden="true"
-            className={styles.emptyStateIcon}
-          />
+          {!searchQuery ? (
+            <Box className={styles.emptyStateFigure}>
+              <iframe
+                key={mode}
+                title="An empty rack of infrastructure workflows"
+                src={
+                  "/hairline/workflow-rack.html" +
+                  (mode === "light" || mode === "dark" ? "?theme=" + mode : "")
+                }
+                loading="lazy"
+              />
+            </Box>
+          ) : (
+            <FontAwesomeIcon
+              icon="sitemap"
+              size="3x"
+              aria-hidden="true"
+              className={styles.emptyStateIcon}
+            />
+          )}
           <Typography variant="h6" className={styles.emptyStateTitle}>
             {searchQuery ? "No orchestrators found" : "No orchestrators yet"}
           </Typography>
