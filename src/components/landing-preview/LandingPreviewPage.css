@@ -31,6 +31,8 @@
   --preview-cta-stone-one: var(--product-cta-stone-one);
   --preview-cta-stone-two: var(--product-cta-stone-two);
   --preview-cta-stone-three: var(--product-cta-stone-three);
+  width: 100%;
+  min-width: 0;
   min-height: 100%;
   overflow: hidden;
   color: var(--preview-text);
@@ -85,6 +87,7 @@
 
 .landing-preview > .preview-header {
   position: fixed;
+  width: 100%;
   top: 0;
   right: 0;
   left: 0;
@@ -199,7 +202,10 @@
 }
 
 .preview-hero {
-  min-height: calc(650px + 76px);
+  width: 100%;
+  min-width: 0;
+  min-height: max(100vh, 680px);
+  min-height: max(100svh, 680px);
   border-bottom: 1px solid var(--preview-line-light);
   background-color: var(--preview-bg);
   background-image: url("/landingpage/orchestrator-wabi-sabi-ink-landscape.webp");
@@ -218,7 +224,8 @@ body[data-theme="dark"] .landing-preview .preview-hero {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
   align-items: center;
-  min-height: calc(650px + 76px);
+  min-height: max(100vh, 680px);
+  min-height: max(100svh, 680px);
   gap: clamp(24px, 7vw, 110px);
   padding: 152px 0 86px;
 }
@@ -1368,7 +1375,8 @@ body[data-theme="dark"] .landing-preview .preview-site-footer {
 
   .preview-hero,
   .preview-hero__grid {
-    min-height: 0;
+    min-height: max(100vh, 640px);
+    min-height: max(100svh, 640px);
   }
 
   .preview-hero__grid {
