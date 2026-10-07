@@ -8,7 +8,13 @@ import "./App.css";
 import React, { lazy, Suspense, useEffect, useState } from "react";
 
 import { Box } from "@mui/material";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { ThemeProvider } from "./components/shared/theme/ThemeContext";
@@ -174,6 +180,7 @@ const AppShell: React.FC<{
   isDragging: boolean;
 }> = ({ isSplitView, splitWidth, isDragging }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { token, isInitializing } = useAuth();
   const hideHeader = NO_HEADER_ROUTES.has(location.pathname);
   const isOrchestratorRoute =
@@ -193,6 +200,30 @@ const AppShell: React.FC<{
       setSplitView(false);
     }
   }, [setSplitView, showChatbot]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (!showChatbot || params.get("maestro") !== "open") return;
+
+    setChatbotLoaded(true);
+    setChatbotOpen(true);
+    params.delete("maestro");
+    navigate(
+      {
+        pathname: location.pathname,
+        search: params.toString() ? `?${params}` : "",
+        hash: location.hash,
+      },
+      { replace: true, state: location.state },
+    );
+  }, [
+    location.hash,
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+    showChatbot,
+  ]);
 
   const handleChatbotToggle = () => {
     setChatbotLoaded(true);
