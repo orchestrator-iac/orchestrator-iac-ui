@@ -34,9 +34,9 @@ const API_BASE = process.env.VITE_API_BASE_URL;
 const SITE_BASE =
   process.env.VITE_SITE_URL || "https://orchestrator.next-zen.dev";
 const LANDING_PREVIEW_TITLE =
-  "Visual Cloud Infrastructure Templates | Orchestrator";
+  "Maestro Infrastructure Planning & Terraform | Orchestrator";
 const LANDING_PREVIEW_DESCRIPTION =
-  "Design reusable AWS, Azure, and GCP infrastructure visually, review connected resources, and export Terraform with Orchestrator.";
+  "Plan infrastructure with Maestro or start from a reusable template, review the connected resources visually, and export Terraform with Orchestrator.";
 const LEGACY_LANDING_TITLE = "Orchestrator Legacy Landing";
 const LEGACY_LANDING_DESCRIPTION =
   "The previous Orchestrator landing page, retained temporarily as a rollback path.";

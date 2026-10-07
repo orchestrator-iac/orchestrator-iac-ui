@@ -9,11 +9,14 @@ import { fetchTemplates } from "../../store/templatesSlice";
 import type { AppDispatch, RootState } from "../../store";
 import type { TemplateListItem } from "../../types/template";
 import MinimalThemeToggle from "../shared/theme/MinimalThemeToggle";
+import { useAuth } from "../../context/AuthContext";
 import awsLogo from "../../assets/aws_logo.svg";
 import azureLogo from "../../assets/az_logo.svg";
 import gcpLogo from "../../assets/gcp_logo.svg";
 import "./LandingPreviewPage.css";
 import TemplateBlueprintFigure from "./TemplateBlueprintFigure";
+import BenefitFigure from "./BenefitFigures";
+import MaestroShowcase from "./MaestroShowcase";
 import {
   ConfigureResourcesFigure,
   ReviewOutputFigure,
@@ -21,9 +24,9 @@ import {
 
 const SITE_URL = "https://orchestrator.next-zen.dev";
 const PREVIEW_SEO = {
-  title: "Visual Cloud Infrastructure Templates | Orchestrator",
+  title: "Maestro Infrastructure Planning & Terraform | Orchestrator",
   description:
-    "Design reusable AWS, Azure, and GCP infrastructure visually, review connected resources, and export Terraform with Orchestrator.",
+    "Plan infrastructure with Maestro or start from a reusable template, review the connected resources visually, and export Terraform with Orchestrator.",
   url: `${SITE_URL}/`,
   image: `${SITE_URL}/og-landing.png`,
 };
@@ -616,21 +619,25 @@ const benefits = [
     title: "Reusable",
     description:
       "Publish proven orchestrators as templates your team can fork and adapt.",
+    figure: "reusable" as const,
   },
   {
     title: "Connected",
     description:
       "Keep resource relationships visible while the architecture changes.",
+    figure: "connected" as const,
   },
   {
     title: "Reviewable",
     description:
       "Surface incomplete configuration before generated code reaches a pipeline.",
+    figure: "reviewable" as const,
   },
   {
     title: "Portable",
     description:
       "Export Terraform bundles without locking the workflow to one deployment path.",
+    figure: "portable" as const,
   },
 ];
 
@@ -737,7 +744,9 @@ const useHeroParallax = () => {
   return { offset, onPointerMove, reset };
 };
 
-const PreviewHeader: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
+const PreviewHeader: React.FC<{
+  onStartMaestro: () => void;
+}> = ({ onStartMaestro }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -771,15 +780,18 @@ const PreviewHeader: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
           className={open ? "preview-nav is-open" : "preview-nav"}
           aria-label="Preview page navigation"
         >
+          <a href="#maestro" onClick={() => setOpen(false)}>
+            Maestro
+          </a>
           <a href="/login" onClick={() => setOpen(false)}>
             Sign in
           </a>
           <button
             className="preview-header__cta"
             type="button"
-            onClick={onExplore}
+            onClick={onStartMaestro}
           >
-            Explore templates <ArrowOutwardIcon fontSize="inherit" />
+            Plan with Maestro <ArrowOutwardIcon fontSize="inherit" />
           </button>
         </nav>
       </div>
@@ -858,10 +870,10 @@ const InfrastructureSculpture: React.FC<{
   );
 };
 
-const Hero: React.FC<{ onExplore: () => void; onStart: () => void }> = ({
-  onExplore,
-  onStart,
-}) => {
+const Hero: React.FC<{
+  onExplore: () => void;
+  onStartMaestro: () => void;
+}> = ({ onExplore, onStartMaestro }) => {
   const reveal = useReveal();
   const parallax = useHeroParallax();
 
@@ -884,27 +896,27 @@ const Hero: React.FC<{ onExplore: () => void; onStart: () => void }> = ({
             <em>that holds together.</em>
           </h1>
           <p className="preview-hero__lede">
-            Start with a reusable cloud template, shape the architecture
-            visually, and export Terraform your team can review.
+            Describe your infrastructure to Maestro, refine the plan, and review
+            the draft on a visual canvas before exporting Terraform.
           </p>
           <div className="preview-actions">
             <button
               className="preview-button preview-button--primary"
               type="button"
-              onClick={onExplore}
+              onClick={onStartMaestro}
             >
-              Explore templates <ArrowOutwardIcon fontSize="small" />
+              Plan with Maestro <ArrowOutwardIcon fontSize="small" />
             </button>
             <button
               className="preview-button preview-button--quiet"
               type="button"
-              onClick={onStart}
+              onClick={onExplore}
             >
-              Start designing <NorthEastIcon fontSize="small" />
+              Explore templates <NorthEastIcon fontSize="small" />
             </button>
           </div>
           <div className="preview-proof-row" aria-label="Product capabilities">
-            <span>Published blueprints</span>
+            <span>Conversational planning</span>
             <span>Visual resource graph</span>
             <span>Terraform export</span>
           </div>
@@ -1226,7 +1238,7 @@ const BenefitsSection: React.FC = () => {
         <div className="preview-benefit-grid">
           {benefits.map((benefit) => (
             <article className="preview-benefit" key={benefit.title}>
-              <span className="preview-benefit__mark" aria-hidden="true" />
+              <BenefitFigure kind={benefit.figure} />
               <h3>{benefit.title}</h3>
               <p>{benefit.description}</p>
             </article>
@@ -1237,10 +1249,10 @@ const BenefitsSection: React.FC = () => {
   );
 };
 
-const FinalCta: React.FC<{ onExplore: () => void; onStart: () => void }> = ({
-  onExplore,
-  onStart,
-}) => (
+const FinalCta: React.FC<{
+  onExplore: () => void;
+  onStartMaestro: () => void;
+}> = ({ onExplore, onStartMaestro }) => (
   <section className="preview-final-cta">
     <div className="preview-container preview-final-cta__inner">
       <div className="preview-final-cta__sculpture" aria-hidden="true">
@@ -1252,23 +1264,23 @@ const FinalCta: React.FC<{ onExplore: () => void; onStart: () => void }> = ({
         <p className="preview-kicker">Build once. Use everywhere.</p>
         <h2>A better first move for infrastructure.</h2>
         <p>
-          Browse a blueprint, make it yours, and leave with an artifact your
-          team can inspect.
+          Plan with Maestro or begin with a blueprint. Either way, leave with an
+          artifact your team can inspect.
         </p>
         <div className="preview-actions">
           <button
             className="preview-button preview-button--primary"
             type="button"
-            onClick={onExplore}
+            onClick={onStartMaestro}
           >
-            Explore templates <ArrowOutwardIcon fontSize="small" />
+            Plan with Maestro <ArrowOutwardIcon fontSize="small" />
           </button>
           <button
             className="preview-button preview-button--quiet"
             type="button"
-            onClick={onStart}
+            onClick={onExplore}
           >
-            Open the canvas <NorthEastIcon fontSize="small" />
+            Explore templates <NorthEastIcon fontSize="small" />
           </button>
         </div>
       </div>
@@ -1451,15 +1463,23 @@ const LandingPreviewPage: React.FC = () => {
     navigate("/templates");
   };
 
+  const { token } = useAuth();
+  const startWithMaestro = () => {
+    const destination = "/home?maestro=open";
+    if (token) navigate(destination);
+    else navigate("/login", { state: { redirect: destination } });
+  };
+
   return (
     <div className="landing-preview">
-      <PreviewHeader onExplore={() => openTemplates()} />
+      <PreviewHeader onStartMaestro={startWithMaestro} />
       <main>
         <Hero
           onExplore={() => openTemplates()}
-          onStart={() => navigate("/home")}
+          onStartMaestro={startWithMaestro}
         />
         <ProviderStrip />
+        <MaestroShowcase onStart={startWithMaestro} />
         <TemplatesSection onOpen={openTemplates} />
         <CodeInfrastructureSection />
         <WorkflowSection />
@@ -1467,7 +1487,7 @@ const LandingPreviewPage: React.FC = () => {
         <BenefitsSection />
         <FinalCta
           onExplore={() => openTemplates()}
-          onStart={() => navigate("/home")}
+          onStartMaestro={startWithMaestro}
         />
       </main>
       <PreviewFooter />
