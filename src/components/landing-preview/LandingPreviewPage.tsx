@@ -749,9 +749,27 @@ const PreviewHeader: React.FC<{
   onStartMaestro: () => void;
 }> = ({ onStartMaestro }) => {
   const [open, setOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const updateScrollState = () => {
+      const nextIsScrolled = window.scrollY > 24;
+      setIsScrolled((current) =>
+        current === nextIsScrolled ? current : nextIsScrolled,
+      );
+    };
+
+    updateScrollState();
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+    return () => window.removeEventListener("scroll", updateScrollState);
+  }, []);
 
   return (
-    <header className="preview-header">
+    <header
+      className={
+        isScrolled ? "preview-header is-scrolled" : "preview-header"
+      }
+    >
       <div className="preview-container preview-header__inner">
         <a className="preview-brand" href="#top" aria-label="Orchestrator home">
           <BrandLockup />

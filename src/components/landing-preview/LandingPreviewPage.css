@@ -83,13 +83,29 @@
   margin: 0 auto;
 }
 
-.preview-header {
-  position: absolute;
+.landing-preview > .preview-header {
+  position: fixed;
   top: 0;
   right: 0;
   left: 0;
   z-index: 5;
   background: transparent;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    backdrop-filter 220ms ease;
+  -webkit-backdrop-filter: blur(0);
+  backdrop-filter: blur(0);
+}
+
+.landing-preview > .preview-header.is-scrolled {
+  background: color-mix(in srgb, var(--preview-bg) 86%, transparent);
+  border-bottom-color: var(--preview-line-light);
+  box-shadow: 0 10px 28px var(--preview-shadow);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
 }
 
 .preview-header__inner,
