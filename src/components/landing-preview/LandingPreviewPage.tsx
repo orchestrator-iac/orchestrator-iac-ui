@@ -1288,21 +1288,27 @@ const FinalCta: React.FC<{
   </section>
 );
 
-const PreviewFooter: React.FC = () => (
-  <footer className="preview-footer">
-    <div className="preview-container preview-footer__inner">
-      <a className="preview-brand" href="#top">
-        <img src="/one-color-teal-print.svg" alt="" aria-hidden="true" />
-        <span>Orchestrator</span>
-      </a>
-      <a
-        className="preview-footer__note"
-        href="https://next-zen.dev/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Built by Next Zen
-      </a>
+const PreviewFooter: React.FC<{
+  onExplore: () => void;
+  onStartMaestro: () => void;
+}> = ({ onExplore, onStartMaestro }) => (
+  <footer className="preview-site-footer">
+    <FinalCta onExplore={onExplore} onStartMaestro={onStartMaestro} />
+    <div className="preview-footer">
+      <div className="preview-container preview-footer__inner">
+        <a className="preview-brand" href="#top">
+          <img src="/one-color-teal-print.svg" alt="" aria-hidden="true" />
+          <span>Orchestrator</span>
+        </a>
+        <a
+          className="preview-footer__note"
+          href="https://next-zen.dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Built by Next Zen
+        </a>
+      </div>
     </div>
   </footer>
 );
@@ -1485,12 +1491,11 @@ const LandingPreviewPage: React.FC = () => {
         <WorkflowSection />
         <StackSection />
         <BenefitsSection />
-        <FinalCta
-          onExplore={() => openTemplates()}
-          onStartMaestro={startWithMaestro}
-        />
       </main>
-      <PreviewFooter />
+      <PreviewFooter
+        onExplore={() => openTemplates()}
+        onStartMaestro={startWithMaestro}
+      />
     </div>
   );
 };
