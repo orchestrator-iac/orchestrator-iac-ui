@@ -104,24 +104,8 @@
 .preview-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   color: var(--preview-text);
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
   text-decoration: none;
-  text-transform: uppercase;
-}
-
-.preview-brand img {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  filter: grayscale(1) sepia(0.26) saturate(0.7) brightness(0.62);
-}
-
-body[data-theme="dark"] .landing-preview .preview-brand img {
-  filter: brightness(0) invert(1) opacity(0.88);
 }
 
 .preview-nav {
@@ -1137,8 +1121,7 @@ body[data-theme="dark"] .landing-preview .preview-providers img {
 
 .preview-site-footer {
   background-color: var(--preview-paper-deep);
-  background-image:
-    url("/landingpage/orchestrator-wabi-sabi-layered-mountains.webp");
+  background-image: url("/landingpage/orchestrator-wabi-sabi-layered-mountains.webp");
   background-position: center 58%;
   background-repeat: no-repeat;
   background-size: cover;

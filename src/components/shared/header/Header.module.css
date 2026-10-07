@@ -26,27 +26,15 @@
 }
 
 .logo {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
   text-decoration: none;
   color: var(--product-text) !important;
-  font-family: var(--product-mono-font);
-  font-size: 0.74rem !important;
-  font-weight: 800 !important;
-  letter-spacing: var(--product-label-spacing) !important;
-  text-transform: uppercase;
   transition: color 180ms ease;
 }
 
 .logo:hover {
   color: var(--product-accent-strong) !important;
-}
-
-.logo img {
-  width: 62px !important;
-  height: 38px !important;
-  object-fit: contain;
 }
 
 .controls {
@@ -64,7 +52,10 @@
   border-radius: var(--product-radius-control) !important;
   color: var(--product-text) !important;
   background: transparent !important;
-  transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease !important;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease !important;
 }
 
 .controls > button:hover,
@@ -162,16 +153,6 @@
     width: 100%;
     padding: 0 16px !important;
   }
-
-  .logo {
-    font-size: 0.66rem !important;
-    letter-spacing: 0.1em !important;
-  }
-
-  .logo img {
-    width: 52px !important;
-    height: 34px !important;
-  }
 }
 
 @media (max-width: 420px) {
@@ -182,11 +163,6 @@
   .toolbar.toolbarFullWidth {
     width: 100%;
     padding: 0 12px !important;
-  }
-
-  .logo {
-    gap: 6px;
-    font-size: 0.58rem !important;
   }
 
   .controls {
