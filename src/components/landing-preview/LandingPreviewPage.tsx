@@ -752,16 +752,40 @@ const PreviewHeader: React.FC<{
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    const header = document.querySelector<HTMLElement>(
+      ".landing-preview > .preview-header",
+    );
+    let ancestor = header?.parentElement ?? null;
+    let scrollContainer: HTMLElement | Window = window;
+
+    while (ancestor && ancestor !== document.body) {
+      const overflowY = window.getComputedStyle(ancestor).overflowY;
+      if (
+        /(auto|scroll|overlay)/.test(overflowY) &&
+        ancestor.scrollHeight > ancestor.clientHeight
+      ) {
+        scrollContainer = ancestor;
+        break;
+      }
+      ancestor = ancestor.parentElement;
+    }
+
     const updateScrollState = () => {
-      const nextIsScrolled = window.scrollY > 24;
+      const scrollTop =
+        scrollContainer === window ? window.scrollY : scrollContainer.scrollTop;
+      const nextIsScrolled = scrollTop > 24;
       setIsScrolled((current) =>
         current === nextIsScrolled ? current : nextIsScrolled,
       );
     };
 
     updateScrollState();
-    window.addEventListener("scroll", updateScrollState, { passive: true });
-    return () => window.removeEventListener("scroll", updateScrollState);
+    scrollContainer.addEventListener("scroll", updateScrollState, {
+      passive: true,
+    });
+    return () => {
+      scrollContainer.removeEventListener("scroll", updateScrollState);
+    };
   }, []);
 
   return (
