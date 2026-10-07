@@ -84,10 +84,12 @@
 }
 
 .preview-header {
-  position: relative;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
   z-index: 5;
-  border-bottom: 1px solid var(--preview-line-light);
-  background: color-mix(in srgb, var(--preview-bg) 94%, transparent);
+  background: transparent;
 }
 
 .preview-header__inner,
@@ -197,17 +199,28 @@ body[data-theme="dark"] .landing-preview .preview-brand img {
 }
 
 .preview-hero {
-  min-height: 650px;
+  min-height: calc(650px + 76px);
   border-bottom: 1px solid var(--preview-line-light);
+  background-color: var(--preview-bg);
+  background-image: url("/landingpage/orchestrator-wabi-sabi-ink-landscape.webp");
+  background-position: center 48%;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+body[data-theme="dark"] .landing-preview .preview-hero {
+  background-image:
+    linear-gradient(rgba(15, 20, 18, 0.68), rgba(15, 20, 18, 0.68)),
+    url("/landingpage/orchestrator-wabi-sabi-ink-landscape.webp");
 }
 
 .preview-hero__grid {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
   align-items: center;
-  min-height: 650px;
+  min-height: calc(650px + 76px);
   gap: clamp(24px, 7vw, 110px);
-  padding: 76px 0 86px;
+  padding: 152px 0 86px;
 }
 
 .preview-hero__copy {
@@ -1119,7 +1132,22 @@ body[data-theme="dark"] .landing-preview .preview-providers img {
 .preview-final-cta {
   padding: clamp(90px, 12vw, 150px) 0;
   border-top: 1px solid var(--preview-line-light);
-  background: var(--preview-paper-deep);
+  background: transparent;
+}
+
+.preview-site-footer {
+  background-color: var(--preview-paper-deep);
+  background-image:
+    url("/landingpage/orchestrator-wabi-sabi-layered-mountains.webp");
+  background-position: center 58%;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+body[data-theme="dark"] .landing-preview .preview-site-footer {
+  background-image:
+    linear-gradient(rgba(15, 20, 18, 0.68), rgba(15, 20, 18, 0.68)),
+    url("/landingpage/orchestrator-wabi-sabi-layered-mountains.webp");
 }
 
 .preview-final-cta__inner {
@@ -1209,8 +1237,7 @@ body[data-theme="dark"] .landing-preview .preview-providers img {
 }
 
 .preview-footer {
-  border-top: 1px solid var(--preview-line);
-  background: var(--preview-bg);
+  background: transparent;
 }
 
 .preview-footer__inner {
@@ -1260,7 +1287,7 @@ body[data-theme="dark"] .landing-preview .preview-providers img {
   }
 
   .preview-hero__grid {
-    padding-top: 62px;
+    padding-top: calc(62px + 76px);
   }
 
   .preview-hero__visual {
@@ -1347,7 +1374,7 @@ body[data-theme="dark"] .landing-preview .preview-providers img {
 
   .preview-hero__grid {
     display: block;
-    padding: 62px 0 56px;
+    padding: calc(62px + 68px) 0 56px;
   }
 
   .preview-hero h1 {
