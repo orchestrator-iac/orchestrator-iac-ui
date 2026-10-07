@@ -758,7 +758,6 @@ const PreviewHeader: React.FC<{
         </a>
 
         <span className="preview-theme-control">
-          <span className="preview-theme-label">Theme</span>
           <MinimalThemeToggle size="small" />
         </span>
 
@@ -780,9 +779,6 @@ const PreviewHeader: React.FC<{
           className={open ? "preview-nav is-open" : "preview-nav"}
           aria-label="Preview page navigation"
         >
-          <a href="#maestro" onClick={() => setOpen(false)}>
-            Maestro
-          </a>
           <a href="/login" onClick={() => setOpen(false)}>
             Sign in
           </a>
