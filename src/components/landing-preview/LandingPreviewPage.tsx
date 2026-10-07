@@ -9,6 +9,7 @@ import { fetchTemplates } from "../../store/templatesSlice";
 import type { AppDispatch, RootState } from "../../store";
 import type { TemplateListItem } from "../../types/template";
 import MinimalThemeToggle from "../shared/theme/MinimalThemeToggle";
+import BrandLockup from "../shared/brand/BrandLockup";
 import { useAuth } from "../../context/AuthContext";
 import awsLogo from "../../assets/aws_logo.svg";
 import azureLogo from "../../assets/az_logo.svg";
@@ -753,8 +754,7 @@ const PreviewHeader: React.FC<{
     <header className="preview-header">
       <div className="preview-container preview-header__inner">
         <a className="preview-brand" href="#top" aria-label="Orchestrator home">
-          <img src="/one-color-teal-print.svg" alt="" aria-hidden="true" />
-          <span>Orchestrator</span>
+          <BrandLockup />
         </a>
 
         <span className="preview-theme-control">
@@ -1293,8 +1293,7 @@ const PreviewFooter: React.FC<{
     <div className="preview-footer">
       <div className="preview-container preview-footer__inner">
         <a className="preview-brand" href="#top">
-          <img src="/one-color-teal-print.svg" alt="" aria-hidden="true" />
-          <span>Orchestrator</span>
+          <BrandLockup />
         </a>
         <a
           className="preview-footer__note"

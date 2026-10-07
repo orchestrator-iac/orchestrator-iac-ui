@@ -27,6 +27,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { useProductGuidance } from "../guidance/ProductGuidanceProvider";
 import styles from "./Header.module.css";
 import MinimalThemeToggle from "../theme/MinimalThemeToggle";
+import BrandLockup from "../brand/BrandLockup";
 
 type HeaderProps = {
   fullWidth?: boolean;
@@ -94,10 +95,6 @@ const Header: React.FC<HeaderProps> = ({ fullWidth = false }) => {
       : "No unread announcements";
 
   const menuSurface = theme.palette.background.paper;
-  const brandLogoSrc =
-    theme.palette.mode === "dark"
-      ? "/dark-luminous.svg"
-      : "/full-color.svg";
   const menuPaperSx = {
     mt: 1.5,
     minWidth: 220,
@@ -146,31 +143,13 @@ const Header: React.FC<HeaderProps> = ({ fullWidth = false }) => {
           component={Link}
           to={user ? "/home" : "/"}
           className={styles.logo}
+          aria-label="Orchestrator home"
           sx={{
-            fontSize: "2rem",
             textDecoration: "none",
-            color: theme.palette.primary.main,
-            fontWeight: 600,
-            letterSpacing: "0.1em",
-            transition: "all 0.2s ease",
-            "&:hover": {
-              color: theme.palette.secondary.main,
-            },
+            color: "var(--product-text)",
           }}
         >
-          <Box
-            component="img"
-            src={brandLogoSrc}
-            alt=""
-            sx={{
-              height: 56,
-              width: 96,
-              display: "block",
-              objectFit: "contain",
-              flexShrink: 0,
-            }}
-          />
-          Orchestrator
+          <BrandLockup />
         </Typography>
 
         <div className={styles.controls}>
@@ -238,8 +217,16 @@ const Header: React.FC<HeaderProps> = ({ fullWidth = false }) => {
                 <ReplayIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText
-                primary={currentTour ? `Replay ${currentTour.title} tour` : "No tour on this page"}
-                secondary={currentTour ? "Walk through the current screen again" : "Open a page with a guided tour"}
+                primary={
+                  currentTour
+                    ? `Replay ${currentTour.title} tour`
+                    : "No tour on this page"
+                }
+                secondary={
+                  currentTour
+                    ? "Walk through the current screen again"
+                    : "Open a page with a guided tour"
+                }
                 slotProps={{
                   primary: { sx: { fontWeight: 600 } },
                   secondary: { sx: { fontSize: "0.78rem" } },
@@ -359,7 +346,11 @@ const Header: React.FC<HeaderProps> = ({ fullWidth = false }) => {
                     },
                   }}
                 >
-                  <FontAwesomeIcon aria-hidden="true" icon="user" style={{ fontSize: "0.9rem" }} />
+                  <FontAwesomeIcon
+                    aria-hidden="true"
+                    icon="user"
+                    style={{ fontSize: "0.9rem" }}
+                  />
                   View Profile
                 </MenuItem>
                 <MenuItem

@@ -1,6 +1,7 @@
 import React, { type ReactNode } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import MinimalThemeToggle from "../shared/theme/MinimalThemeToggle";
+import BrandLockup from "../shared/brand/BrandLockup";
 import "./AuthFrame.css";
 
 type AuthFrameProps = {
@@ -63,8 +64,7 @@ const AuthFrame: React.FC<AuthFrameProps> = ({
           to="/"
           aria-label="Orchestrator home"
         >
-          <img src="/one-color-teal-print.svg" alt="" aria-hidden="true" />
-          <span>Orchestrator</span>
+          <BrandLockup />
         </RouterLink>
       </div>
 

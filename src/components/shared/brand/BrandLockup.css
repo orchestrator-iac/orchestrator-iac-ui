@@ -1,0 +1,39 @@
+.product-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  font-family: var(--product-mono-font, "Roboto Mono", ui-monospace, monospace);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: var(--product-label-spacing, 0.1em);
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.product-brand-lockup__mark {
+  display: block;
+  width: 62px;
+  height: 38px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+@media (max-width: 760px) {
+  .product-brand-lockup {
+    font-size: 0.66rem;
+  }
+
+  .product-brand-lockup__mark {
+    width: 52px;
+    height: 34px;
+  }
+}
+
+@media (max-width: 420px) {
+  .product-brand-lockup {
+    gap: 6px;
+    font-size: 0.58rem;
+  }
+}
