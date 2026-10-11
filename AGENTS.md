@@ -53,3 +53,12 @@ This repo is the React + TypeScript front end for a SaaS product. Optimize for p
 - Preserve link metadata on connected values (`id`, `friendlyId`, `__nodeType`, `outputRef`) so the backend can render module references correctly.
 - Prefer plain `cardinality = "1"` and `cardinality = "many"` for new mappings. Avoid range syntax unless a specific resource contract truly needs it.
 - When editing a resource form, verify the options source, the saved value shape, and the Terraform template together so the picker, graph, and generated IaC stay in sync.
+## Codex delivery workflow
+
+- Use this repository's integration branch (`dev` for `diagramwise-mcp`; `develop` for the orchestrator repositories).
+- Make requested commits only on the integration branch, and push it to the matching remote branch.
+- Open a pull request from the integration branch to `main`.
+- Merge changes through that pull request; keep `main` as the post-delivery checkout.
+- Stage only files belonging to the requested change and preserve unrelated worktree edits.
+- Before reporting completion, verify the integration branch, default branch, remote refs, PR URL, and merge status.
+- If GitHub protection is unavailable for a private repository, follow this workflow manually; never use that limitation as permission for a direct `main` commit or push.
